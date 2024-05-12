@@ -9,7 +9,7 @@ const InventoryList = observer(() => {
     const { user } = useContext(Context);
     //const inventory_new = localStorage.getItem("inventory_new")|| {};// Provide a fallback to prevent undefined errors
     const inventory_new = user.inventory_new || {}; 
-    console.log(inventory_new)
+    //console.log(inventory_new)
 
     if (!Object.keys(inventory_new).length) {
         return <div>No inventory data available</div>; // Display a message if inventory is empty

@@ -17,7 +17,7 @@ const Prepare = () => {
         };
     
         fetchPlayer(user_id); // Call the function to fetch the player data when the component is mounted
-      }); // Dependency array ensures it runs when `id` changes
+      }, [user_id]); // Dependency array ensures it runs when `user_id` changes
 
   return (
     <div>

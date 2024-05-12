@@ -7,7 +7,7 @@ import InventoryList from "../components/InventoryList";
 
 const Inventory = () => {
     const location = useLocation()
-    console.log(location)
+    //console.log(location)
     return (
       <Container>
         <Row className="d-flex justify-content-start align-items-start">
