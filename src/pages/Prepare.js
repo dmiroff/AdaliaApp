@@ -2,6 +2,7 @@ import React, { useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import GetDataById from "../http/GetData"; // Correct relative path
 import { Context } from "../index";
+import { Spinner } from 'react-bootstrap';
 
 const Prepare = () => {
     const { user } = useContext(Context);
@@ -19,11 +20,7 @@ const Prepare = () => {
         fetchPlayer(user_id); // Call the function to fetch the player data when the component is mounted
       }, [user_id]); // Dependency array ensures it runs when `user_id` changes
 
-  return (
-    <div>
-      Auth Page - Authenticating...
-    </div>
-  );
+  return <Spinner animation='grow'></Spinner>
 };
 
 export default Prepare;
