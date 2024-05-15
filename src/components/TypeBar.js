@@ -1,30 +1,52 @@
 import { observer } from "mobx-react-lite";
-import { Context } from "../index";
 import { useContext } from "react";
 import { Dropdown, DropdownButton } from 'react-bootstrap'; // Import Dropdown components
 import '../index.css'; // Importing custom styles from index.css
+import { Context } from "../index";
+
+// Translation dictionary
+const translations = {
+  "head": "Шлем",
+  "cloak": "Плащ",
+  "breast_armor": "Доспех",
+  "arm_armor": "Наручи",
+  "gloves": "Перчатки",
+  "belt": "Пояс",
+  "leg_armor": "Поножи",
+  "boots": "Обувь",
+  "necklace": "Амулет",
+  "ring": "Кольцо",
+  "right_hand": "Оружие",
+  "left_hand": "Снаряжение в левой руке",
+  "secondary_weapon": "Запасное оружие",
+  "supplies": "Расходник",
+  "potions": "Зелье",
+  "scroll": "Свиток",
+  "reagent": "Реагент",
+};
 
 const TypeBar = observer(() => {
-  const { rating } = useContext(Context);
+  const { user } = useContext(Context);
+  const inventory_new = user.inventory_new || {}; 
+  const selected_type = user.selected_type || NaN;
 
-  const selectedType = rating.Types.find(
-    (type) => type.id === rating.SelectedType
-  );
+  // Extract unique types from inventory_new
+  const uniqueTypes = Array.from(new Set(Object.values(inventory_new).map(item => item.type)));
 
   return (
     <DropdownButton
       id="type-dropdown"
-      title={selectedType ? selectedType.name : 'Выберите тип'}
+      title={selected_type ? translations[selected_type] : 'Выберите тип'}
       variant="dark" // Apply dark variant for dropdown
     >
-      {rating.Types.map((type) => (
+      {uniqueTypes.map((type) => (
         <Dropdown.Item
-          key={type.id}
+          key={type}
           style={{cursor:"pointer"}}
-          active={type.id === rating.SelectedType} // Apply active styling
-          onClick={() => rating.setSelectedType(type)} // Handle click to set selected type
+          active={type === selected_type} // Apply active styling
+          onClick={() => user.setSelectedType(type)} // Handle click to set selected type
         >
-          {type.name}
+          {translations[type]}
         </Dropdown.Item>
       ))}
     </DropdownButton>

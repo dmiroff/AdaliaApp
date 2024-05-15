@@ -1,6 +1,6 @@
 import React from "react";
 import { Card, Col, Image } from "react-bootstrap";
-import exampleImage from "../assets/Images/Weapon/Кинжал/Громовой Кинжал.png";
+import exampleImage from "../assets/Images/WIP.png";
 import star from "../assets/Images/coin.jpeg";
 import { useNavigate } from 'react-router-dom';
 import { INVENTORY_ROUTE } from "../utils/constants"

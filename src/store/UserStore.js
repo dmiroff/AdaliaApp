@@ -6,6 +6,7 @@ export default class UserStore {
         this._user_id = 0
         this._player_data = {}
         this._inventory_new = {}
+        this._selected_type = NaN
         makeAutoObservable(this)
     }
 
@@ -22,6 +23,10 @@ export default class UserStore {
         this._inventory_new = inventory_new
     }
 
+    setSelectedType(_selected_type) {
+        this._selected_type = _selected_type
+    }
+
     get IsAuth() {
         return this._isAuth
     }
@@ -34,5 +39,8 @@ export default class UserStore {
     }
     get inventory_new() {
         return this._inventory_new
+    }
+    get selected_type() {
+        return this._selected_type
     }
 }
