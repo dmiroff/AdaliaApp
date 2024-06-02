@@ -14,6 +14,7 @@ const Prepare = () => {
           const player_data = await GetDataById(user_id); // Fetch player data by ID
           //localStorage.setItem("inventory_new", player_data.inventory_new)
           user.setPlayerInventory(player_data.inventory_new); // Update the state with fetched data
+          user.setPlayer(player_data); // Set player data
           navigate("/inventory"); // Redirect to inventory
         };
     

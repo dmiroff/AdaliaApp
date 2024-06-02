@@ -1,4 +1,4 @@
-import React from "react";
+import React, { Suspense } from 'react';
 import Container from "react-bootstrap/esm/Container";
 import Row from "react-bootstrap/Row";
 import { useLocation } from "react-router-dom";
@@ -15,7 +15,9 @@ const Inventory = () => {
         </Row>
         <Row
           className="d-flex justify-content-center align-items-center">
-          <InventoryList></InventoryList>
+          <Suspense fallback={<div>Loading...</div>}>
+            <InventoryList />
+          </Suspense>
         </Row>
         
       </Container>

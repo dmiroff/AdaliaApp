@@ -1,27 +1,56 @@
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+/* index.css */
+
+/* Dropdown button styling */
+#type-dropdown, #inventory-item-dropdown {
+  color: #fff;
+  background-color: #343a40; /* Dark variant background */
 }
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+#type-dropdown .dropdown-menu, #inventory-item-dropdown .dropdown-menu {
+  background-color: #343a40;
+  color: #fff;
 }
 
-/* Style for active Dropdown.Item with a dark background */
-.dropdown-item.active,
-.dropdown-item:active {
-  background-color: #333; /* Dark gray for active background */
-  color: white; /* White text for contrast */
-  font-weight: bold; /* Optional: Bold text for emphasis */
+#type-dropdown .dropdown-item, #inventory-item-dropdown .dropdown-item {
+  color: #fff;
 }
 
-/* Optional: Hover effect for Dropdown.Item */
-.dropdown-item:hover {
-  background-color: #444; /* Dark hover color for consistency */
-  color: rgb(56, 51, 51); /* Ensure text remains visible on hover */
+#type-dropdown .dropdown-item.active, #inventory-item-dropdown .dropdown-item.active {
+  background-color: #495057;
+}
+
+#type-dropdown .dropdown-item:hover, #inventory-item-dropdown .dropdown-item:hover {
+  background-color: #495057;
+}
+
+/* Card hover details */
+.card-hover-details {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 0.5rem;
+  background: rgba(0, 0, 0, 0.5);
+  color: #fff;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.card-hover-name {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: 0.5rem;
+  background: rgba(0, 0, 0, 0.5);
+  color: #fff;
+}
+
+.card-dropdown-menu {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1;
 }

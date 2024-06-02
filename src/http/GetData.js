@@ -12,4 +12,14 @@ const GetDataById = async (playerId) => {
   }
 };
 
-export default GetDataById; // Export the function correctly
+export const GetItemById = async (itemId) => {
+  try {
+    const response = await axios.get(`${SERVER_APP_API_URL}/api/item/item/${itemId}`);
+    return response.status === 200 ? response.data : false;
+  } catch (error) {
+    console.error("Error fetching player data:", error);
+    return false;
+  }
+};
+
+export default GetDataById;
