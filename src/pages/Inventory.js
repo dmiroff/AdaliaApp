@@ -14,12 +14,13 @@ const Inventory = () => {
           <TypeBar></TypeBar>
         </Row>
         <Row
-          className="d-flex justify-content-center align-items-center">
+          className="d-flex justify-content-center align-items-center"
+          style={{ marginTop: "1rem" }}
+        >
           <Suspense fallback={<div>Loading...</div>}>
             <InventoryList />
           </Suspense>
         </Row>
-        
       </Container>
     );
 };

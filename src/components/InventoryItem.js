@@ -1,25 +1,24 @@
 // src/components/InventoryItem.js
-import React, { useState, useContext } from "react";
-import { Card, Col, Image, Dropdown, DropdownButton, Modal, ModalHeader, ModalBody, ModalFooter, Button } from "react-bootstrap";
+import React, { useState, useContext, useEffect} from "react";
+import { Card, Col, Image, Dropdown, DropdownButton, Modal, Button } from "react-bootstrap";
 import exampleImage from "../assets/Images/WIP.png";
 import coinIcon from "../assets/Images/coin.jpeg";
 import { useNavigate } from 'react-router-dom';
 import { INVENTORY_ROUTE } from "../utils/constants";
-import { modifyParameter } from "../http/playerUtils"; // Import the utility function
+import { Form } from "react-bootstrap";
 import { Context } from "../index";
-import {GetItemById} from "../http/GetData"; // Correct relative path
-import classDataToDict from "../utils/Helpers";
-import GetDataById from "../http/GetData";
+import {WearDataById, ThrowItemById} from "../http/SupportFunctions";
 
 const InventoryItem = ({ devicekey, device }) => {
   const { user } = useContext(Context);
-  const player_data = user.player_data;
   const imageSrc = device.image ? `/assets/Images/${device.image.split("Images/")[1]}` : exampleImage;
   const [showModal, setShowModal] = useState(false);
-const [modalMessage, setModalMessage] = useState("");
+  const [modalMessage, setModalMessage] = useState("");
   const navigate = useNavigate();
   const [showDetails, setShowDetails] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
+  const [toNavigate, setToNavigate] = useState(false);
+  const [rangeValue, setRangeValue] = useState(1);
 
   const handleMouseEnter = () => {
     setShowDetails(true);
@@ -40,159 +39,52 @@ const [modalMessage, setModalMessage] = useState("");
   const handleSell = () => {
     console.log("sell");
   };
-  const handleThrowAway = () => {
-    console.log("throw");
-  };
-  const handleModalClose = () => setShowModal(false);
-
-  const UpdatePlayerData = async (user_id) => {
-    const player_data = await GetDataById(user_id); // Fetch player data by ID
-    //localStorage.setItem("inventory_new", player_data.inventory_new)
+  
+  const handleThrowAway = async () => {
+    const user_id = user.user.id;
+    const response = await ThrowItemById(user_id, devicekey, rangeValue);
+    const player_data = response.data;
+    const message = response.message;
     user.setPlayerInventory(player_data.inventory_new); // Update the state with fetched data
     user.setPlayer(player_data); // Set player data
-  };
+    if (response.status){setToNavigate(true);};
 
-  const unwearItem = async (itemData, userId, playerData, mode = "unwear", ringSlot = "ring_1", printMessage = true) => {
-    const itemName = itemData.name;
-    const itemDict = classDataToDict(itemData);
-    let message;
-    UpdatePlayerData(userId);
-
-    if (!Object.keys(playerData.inventory_new).includes(devicekey)) {
-      setModalMessage(`В вашем инвентаре нет выбранного предмета`);
-      setShowModal(true);
-      return;
-    }
-
-    if (mode === "unwear") {
-      if (printMessage) {
-        message = `Вы снимаете предмет ${itemName}`;
-        console.log(message);
-      }
-
-      if (itemData.type === "implant") {
-        await modifyParameter(userId, itemData.type, {});
-      } else if (itemData.type !== "ring") {
-        await modifyParameter(userId, itemData.type, {});
-      } else {
-        await modifyParameter(userId, ringSlot, {});
-      }
-    } else {
-      if (itemData.type !== "ring") {
-        console.log(userId, itemData.type, itemDict);
-        await modifyParameter(userId, itemData.type, itemDict, true);
-      }
-
-      if (printMessage) {
-        setModalMessage(message);
-        setShowModal(true);
-      }
-    }
-
-    let multiplicator = 1;
-    if (itemData.level_scale) {
-      multiplicator += Math.floor(playerData.level / 5);
-      if (itemData.level !== undefined) {
-        itemData.level = 2 * multiplicator;
-      }
-    }
-
-    const modificator = mode === "unwear" ? -1 * multiplicator : 1 * multiplicator;
-    if (itemData.skill === "shield") {
-      const skillMultiplier = await getSkillMultiplier(playerData.shield);
-      modificator *= skillMultiplier;
-    }
-
-    const itemModificationsList = [
-      "defence", "piercing_deduction", "bludge_deduction", "slashing_deduction", 
-      "fire_deduction", "electric_deduction", "sound_deduction", "wind_deduction", 
-      "sneak_check", "consumable_items", "ice_deduction", "life_deduction", 
-      "death_deduction", "power_deduction", "dark_deduction", "light_deduction", 
-      "agility", "strength", "constitution", "perception", "intelligence", 
-      "wisdom", "charisma", "luck", "initiative", "bloodlust", "rage", 
-      "move_cost", "regeneration", "ressurect", "sign_ice", "sign_fire", 
-      "sign_electric", "sign_stone", "sign_wind", "sign_sound", "sign_power", 
-      "sign_life", "sign_death", "sign_light", "sign_dark"
-    ];
-
-    for (const itemModifier of Object.keys(itemData)) {
-      if (itemModificationsList.includes(itemModifier)) {
-        const modifierValue = itemData[itemModifier];
-        if (modifierValue !== "NaN" && modifierValue !== null && modifierValue !== 0 && !Number.isNaN(modifierValue)) {
-          console.log(modifierValue);
-          const roundedValue = Math.round(modifierValue * modificator);
-          console.log(userId, itemModifier, roundedValue);
-          if (itemModifier === "defence") {
-            await modifyParameter(userId, "current_defence", roundedValue, true);
-            await modifyParameter(userId, "equipment_defence_change", roundedValue, true);
-          }
-          await modifyParameter(userId, itemModifier, roundedValue, true);
-        }
-      }
-    }        
-
-    await calculateParams(playerData);
-  };
-
-  const getSkillMultiplier = async (shieldSkill) => {
-    // Define this function based on your logic
-    return 1; // Placeholder, replace with actual logic
-  };
-
-  const calculateParams = async (playerData) => {
-    // Define this function to update player parameters accordingly
-    console.log("Calculating params for player:", playerData);
+    setModalMessage(message);
+    setShowModal(true);
   };
 
   const handleWear = async () => {
-    if (!device.is_equippable) {
-      setModalMessage("Этот предмет нельзя надеть");
-      setShowModal(true);
-      return;
-    }
-    if (device.level && device.level > player_data.level) {
-      setModalMessage(`Вы не можете надеть предмет такого уровня (${device.level}).`);
-      setShowModal(true);
-      return;
-    }
+    const user_id = user.user.id;
+    const response = await WearDataById(user_id, devicekey);
+    const player_data = response.data;
+    const message = response.message;
+    user.setPlayerInventory(player_data.inventory_new); // Update the state with fetched data
+    user.setPlayer(player_data); // Set player data
 
-    if (device.required_class && device.required_class !== player_data.Character_class) {
-      setModalMessage(`Этот предмет не подходит для вашего класса.`);
-      setShowModal(true);
-      return;
-    }    
-
-    const item_type = device.type;
-
-    const fetchItem = async (item_id) => {
-      return await GetItemById(item_id); // Fetch item data by ID
-    };
-
-    const itemData = await fetchItem(Number(devicekey));
-    console.log("itemData", itemData);
-
-    if (item_type === "right_hand" && player_data.right_hand && player_data.right_hand.id === devicekey) {
-      console.log("Этот предмет уже на вас надет.");
-      return;
-    }
-
-    if (item_type === "right_hand") {
-      if (player_data.right_hand) {
-        await unwearItem(player_data[item_type], player_data.id, player_data, "unwear");
-      }
-      await unwearItem(itemData, player_data.id, player_data, "wear");
-      player_data.right_hand = itemData;
-    } else {
-      if (player_data[item_type]) {
-        await unwearItem(player_data[item_type], player_data.id, player_data, "unwear");
-      }
-      await unwearItem(itemData, player_data.id, player_data, "wear");
-      player_data[item_type] = itemData;
-    } // Continue for other item types...
-
-    setModalMessage(`Вы надели предмет: ${device.name}`);
+    setModalMessage(message);
     setShowModal(true);
   };
+
+  // Function to close the modal
+  const handleModalClose = () => setShowModal(false);
+
+  // Automatically close the modal after 3 seconds
+  useEffect(() => {
+    if (showModal) {
+      const timer = setTimeout(() => {
+        handleModalClose();
+      }, 1000);
+
+      // Clear the timer if the component is unmounted
+      return () => clearTimeout(timer);
+    }
+  }, [showModal]);
+
+  if (toNavigate) {
+    const timer = setTimeout(() => {
+      navigate("/prepare"); // Navigate to prepare to update item lists
+  }, 1000);
+  }
 
   return (
     <Col xs={3} md={2} className="mb-3">
@@ -216,14 +108,13 @@ const [modalMessage, setModalMessage] = useState("");
                 background: "rgba(0, 0, 0, 0.5)",
                 color: "#fff",
                 display: "flex",
-                justifyContent: "space-between",
+                justifyContent: "flex-end",
                 alignItems: "center",
               }}
             >
-              <div>{device.count}</div>
-              <div>
-                {device.value}
-                <Image src={coinIcon} width={20} height={20} style={{ marginLeft: "0.05rem" }} />
+              <div style={{ display: "flex", alignItems: "center" }}>
+                <div style={{ marginRight: "0.05rem" }}>{device.value}</div>
+                <Image src={coinIcon} width={20} height={20} />
               </div>
             </div>
           )}
@@ -263,17 +154,36 @@ const [modalMessage, setModalMessage] = useState("");
             <Dropdown.Item onClick={handleThrowAway}>выкинуть</Dropdown.Item>
           </DropdownButton>
         )}
+        <Form.Range
+          min={1}
+          max={device.count}
+          value={rangeValue}
+          onChange={(e) => setRangeValue(e.target.value)}
+        />
+        <label
+          htmlFor="custom-range"
+          className="form-label"
+          style={{
+            position: "absolute",
+            bottom: "0.75rem",
+            left: "0.5rem",
+            background: "#fff",
+            padding: "0 0.25rem",
+          }}
+        >
+          {rangeValue}
+        </label>
       </Card>
-      <Modal show={showModal} onHide={handleModalClose}>
-        <ModalHeader closeButton>
+      <Modal show={showModal} onHide={handleModalClose} backdrop="static" keyboard={false}>
+        <Modal.Header closeButton>
           <Modal.Title>Оповещение</Modal.Title>
-        </ModalHeader>
-        <ModalBody>{modalMessage}</ModalBody>
-        <ModalFooter>
+        </Modal.Header>
+        <Modal.Body style={{ whiteSpace: 'pre-wrap' }}>{modalMessage}</Modal.Body>
+        <Modal.Footer>
           <Button variant="secondary" onClick={handleModalClose}>
             Закрыть
           </Button>
-        </ModalFooter>
+        </Modal.Footer>
       </Modal>
     </Col>
   );

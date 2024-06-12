@@ -20,6 +20,7 @@ const translations = {
   "left_hand": "Снаряжение в левой руке",
   "secondary_weapon": "Запасное оружие",
   "supplies": "Расходник",
+  "food": "Еда",
   "potions": "Зелье",
   "scroll": "Свиток",
   "reagent": "Реагент",

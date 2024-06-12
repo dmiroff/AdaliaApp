@@ -6,7 +6,7 @@ const PlayerAuthCheck = async (playerId, token) => {
 
   try {
     const response = await axios.get(
-      `${SERVER_APP_API_URL}/api/player/auth/${playerId}/${token}`
+      `${SERVER_APP_API_URL}/player/auth/${playerId}/${token}`
     );
 
     if (response.status === 200 && response.data.authorized) {

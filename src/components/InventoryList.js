@@ -17,9 +17,9 @@ const InventoryList = observer(() => {
   useEffect(() => {
     const fetchPlayer = async (user_id) => {
       const playerData = await GetDataById(user_id);
-      setPlayerData(playerData);
-      user.setPlayerInventory(playerData.inventory_new);
-      user.setPlayer(playerData);
+      setPlayerData(playerData.data);
+      user.setPlayerInventory(playerData.data.inventory_new);
+      user.setPlayer(playerData.data);
       setLoading(false);
     };
 
@@ -30,7 +30,7 @@ const InventoryList = observer(() => {
     if (playerData) {
       setTimeout(() => {
         setDelay(true);
-      }, 2000); // Delay time of 2 seconds
+      }, 1000); // Delay time of 2 seconds
     }
   }, [playerData]);
 
