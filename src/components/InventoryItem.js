@@ -7,7 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import { INVENTORY_ROUTE } from "../utils/constants";
 import { Form } from "react-bootstrap";
 import { Context } from "../index";
-import {WearDataById, ThrowItemById} from "../http/SupportFunctions";
+import {WearDataById, ThrowItemById, SellItemById} from "../http/SupportFunctions";
 
 const InventoryItem = ({ devicekey, device }) => {
   const { user } = useContext(Context);
@@ -36,8 +36,18 @@ const InventoryItem = ({ devicekey, device }) => {
   const handleInspect = () => {
     navigate(INVENTORY_ROUTE + "/" + devicekey);
   };
-  const handleSell = () => {
-    console.log("sell");
+  
+  const handleSell = async () => {
+    const user_id = user.user.id;
+    const response = await SellItemById(user_id, devicekey, rangeValue);
+    const player_data = response.data;
+    const message = response.message;
+    user.setPlayerInventory(player_data.inventory_new); // Update the state with fetched data
+    user.setPlayer(player_data); // Set player data
+    if (response.status){setToNavigate(true);};
+
+    setModalMessage(message);
+    setShowModal(true);
   };
   
   const handleThrowAway = async () => {

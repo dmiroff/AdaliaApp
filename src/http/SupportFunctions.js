@@ -27,6 +27,18 @@ export const ThrowItemById = async (playerId, itemId, amount) => {
   }
 };
 
+// Define and export the function
+export const SellItemById = async (playerId, itemId, amount) => {
+  console.log(playerId,itemId);
+  try {
+    const response = await axios.get(`${SERVER_APP_API_URL}/sell/${playerId}/${itemId}/${amount}`);
+    return response.status === 200 ? response.data : false;
+  } catch (error) {
+    console.error("Error selling item:", error);
+    return false;
+  }
+};
+
 
 // Define and export the function
 export const UnwearDataById = async (playerId, itemId) => {

@@ -17,7 +17,7 @@ export const GetItemById = async (itemId) => {
     const response = await axios.get(`${SERVER_APP_API_URL}/item/${itemId}`);
     return response.status === 200 ? response.data : false;
   } catch (error) {
-    console.error("Error fetching player data:", error);
+    console.error("Error fetching item data:", error);
     return false;
   }
 };

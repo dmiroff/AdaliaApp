@@ -1,17 +1,24 @@
-import React, { Suspense } from 'react';
+import React, { Suspense, useEffect, useState } from 'react';
 import Container from "react-bootstrap/esm/Container";
 import Row from "react-bootstrap/Row";
-import { useLocation } from "react-router-dom";
+import Col from "react-bootstrap/Col";
 import TypeBar from "../components/TypeBar";
 import InventoryList from "../components/InventoryList";
 
 const Inventory = () => {
-    const location = useLocation()
+    const [showEquipment, setShowEquipment] = useState(false);
     //console.log(location)
     return (
       <Container>
-        <Row className="d-flex justify-content-start align-items-start">
-          <TypeBar></TypeBar>
+        <Row className="d-flex justify-content-between align-items-center"> {/* Use the justify-content-between class to evenly distribute the space between the two components */}
+          <Col>
+            <TypeBar></TypeBar>
+          </Col>
+          <Col className="text-right"> {/* Add the text-right class to align the button text to the right */}
+            <button onClick={() => setShowEquipment(!showEquipment)}>
+              {showEquipment ? "Спрятать снаряжение" : "Показать снаряжение"}
+            </button>
+          </Col>
         </Row>
         <Row
           className="d-flex justify-content-center align-items-center"
