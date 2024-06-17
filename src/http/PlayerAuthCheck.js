@@ -1,11 +1,11 @@
-import axios from "axios";
 import { SERVER_APP_API_URL } from "../utils/constants";
+import {$authHost} from '../http/index';
 
 const PlayerAuthCheck = async (playerId, token) => {
   // Returns a boolean to indicate if a player is authorized
 
   try {
-    const response = await axios.get(
+    const response = await $authHost.get(
       `${SERVER_APP_API_URL}/player/auth/${playerId}/${token}`
     );
 

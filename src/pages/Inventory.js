@@ -4,6 +4,7 @@ import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/Col";
 import TypeBar from "../components/TypeBar";
 import InventoryList from "../components/InventoryList";
+import Equipment from "../components/Equipment"; // Import the EquipmentPanel component
 
 const Inventory = () => {
     const [showEquipment, setShowEquipment] = useState(false);
@@ -20,6 +21,7 @@ const Inventory = () => {
             </button>
           </Col>
         </Row>
+        {showEquipment && <Equipment />} {/* Conditionally render the EquipmentPanel component */}
         <Row
           className="d-flex justify-content-center align-items-center"
           style={{ marginTop: "1rem" }}

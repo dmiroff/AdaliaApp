@@ -11,11 +11,14 @@ const Prepare = () => {
 
     useEffect(() => {
         const fetchPlayer = async (user_id) => {
-          const player_data = await GetDataById(user_id); // Fetch player data by ID
-          //localStorage.setItem("inventory_new", player_data.inventory_new)
-          user.setPlayerInventory(player_data.inventory_new); // Update the state with fetched data
-          user.setPlayer(player_data); // Set player data
-          navigate("/inventory"); // Redirect to inventory
+          if (user_id)
+          {
+            const player_data = await GetDataById(user_id); // Fetch player data by ID
+            //localStorage.setItem("inventory_new", player_data.inventory_new)
+            user.setPlayerInventory(player_data.inventory_new); // Update the state with fetched data
+            user.setPlayer(player_data); // Set player data
+            navigate("/inventory"); // Redirect to inventory
+          }
         };
     
         fetchPlayer(user_id); // Call the function to fetch the player data when the component is mounted

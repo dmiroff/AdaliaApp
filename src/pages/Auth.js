@@ -10,29 +10,39 @@ const Auth = () => {
   const { user } = useContext(Context);
 
   useEffect(() => {
+    if (!id || !token || user.isAuth) {
+      // If ID or token is null or user is already authorized, do nothing
+      return;
+    }
+
     const authenticateUser = async () => {
       try {
         const isAuthorized = await PlayerAuthCheck(id, token); // Use PlayerAuthCheck to authenticate
-        localStorage.setItem("id", id)
-        localStorage.setItem("token", token)
-
-        if (isAuthorized) {
+        localStorage.setItem("id", id);
+        localStorage.setItem("token", token);
+        setTimeout(() => {
+          if (isAuthorized) {
             user.setIsAuth(true);
             user.setUser({ id: id });
-          navigate("/prepare"); // Navigate to inventory if authorized
-        } else {
-          navigate("/rating"); // Redirect to rating if not authorized
-        }
+            navigate("/prepare"); // Navigate to inventory if authorized
+          } else {
+            navigate("/rating"); // Redirect to rating if not authorized
+          }
+        }, 2000);
       } catch (error) {
         console.error("Error during authentication:", error);
         navigate("/rating"); // Redirect to rating if there's an error
       }
     };
 
-    authenticateUser(); // Trigger authentication when the component is mounted
-  },); // Ensure correct dependencies
+    if (id)
+    {
+      authenticateUser(); // Trigger authentication when the component is mounted
+    }
+  }, [id, token, user.isAuth, navigate]); // Ensure correct dependencies
 
   return <Spinner animation='grow'></Spinner>
 };
+
 
 export default Auth;

@@ -22,10 +22,12 @@ const InventoryItem = ({ devicekey, device }) => {
 
   const handleMouseEnter = () => {
     setShowDetails(true);
+    setShowMenu(!showMenu);
   };
 
   const handleMouseLeave = () => {
     setShowDetails(false);
+    setShowMenu(!showMenu);
   };
 
   const handleMenuClick = (event) => {
@@ -36,7 +38,7 @@ const InventoryItem = ({ devicekey, device }) => {
   const handleInspect = () => {
     navigate(INVENTORY_ROUTE + "/" + devicekey);
   };
-  
+
   const handleSell = async () => {
     const user_id = user.user.id;
     const response = await SellItemById(user_id, devicekey, rangeValue);
@@ -97,7 +99,7 @@ const InventoryItem = ({ devicekey, device }) => {
   }
 
   return (
-    <Col xs={3} md={2} className="mb-3">
+    <Col xs={6} md={2} className="mb-3">
       <Card
         style={{ cursor: "pointer", position: "relative" }}
         border="dark"
@@ -106,7 +108,7 @@ const InventoryItem = ({ devicekey, device }) => {
         onMouseLeave={handleMouseLeave}
       >
         <div style={{ position: "relative" }}>
-          <Image src={imageSrc} fluid className="mb-2" onClick={handleMenuClick} />
+          <Image src={imageSrc} fluid className="mb-2" />
           {showDetails && (
             <div
               style={{
