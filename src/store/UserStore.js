@@ -23,8 +23,8 @@ export default class UserStore {
         this._inventory_new = inventory_new
     }
 
-    setSelectedType(_selected_type) {
-        this._selected_type = _selected_type
+    setSelectedType(selected_type) {
+        this._selected_type = selected_type
     }
 
     get IsAuth() {

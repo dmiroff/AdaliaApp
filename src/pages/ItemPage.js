@@ -108,11 +108,14 @@ const Item = () => {
     }
   }, [showModal]);
 
-  if (toNavigate) {
-    const timer = setTimeout(() => {
-      navigate("/prepare"); // Navigate to prepare to update item lists
-  }, 1000);
-  }
+  useEffect(() => {
+    if (toNavigate) {
+      const timer = setTimeout(() => {
+        navigate("/prepare");
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [toNavigate]);
 
 
   if (loading) {
