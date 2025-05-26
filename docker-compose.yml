@@ -1,0 +1,11 @@
+services:
+  app:
+    image: node:24-alpine
+    container_name: AdaliaApp
+    restart: always
+    working_dir: /app
+    command: ['./start.sh']
+    volumes:
+      - ./:/app
+    ports:
+      - "3000:3000"
