@@ -50,3 +50,7 @@
   background-color: #444; /* Dark hover color for consistency */
   color: rgb(56, 51, 51); /* Ensure text remains visible on hover */
 }
+
+.display-linebreak {
+  white-space: pre-line;
+}
