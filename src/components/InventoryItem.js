@@ -11,7 +11,9 @@ import {WearDataById, ThrowItemById, SellItemById} from "../http/SupportFunction
 
 const InventoryItem = ({ devicekey, device }) => {
   const { user } = useContext(Context);
-  const imageSrc = device.image ? `/assets/Images/${device.image.split("Images/")[1]}` : exampleImage;
+  const imageSrc = device.image
+  ? `../assets/Images/${device.image.replace(/^.*?Images\//i, '')}`
+  : exampleImage;
   const [showModal, setShowModal] = useState(false);
   const [modalMessage, setModalMessage] = useState("");
   const navigate = useNavigate();
@@ -108,7 +110,19 @@ const InventoryItem = ({ devicekey, device }) => {
         onMouseLeave={handleMouseLeave}
       >
         <div style={{ position: "relative" }}>
-          <Image src={imageSrc} fluid className="mb-2" />
+          <Image src={imageSrc}
+            fluid
+            className="mb-2"
+            loading="lazy"
+            onError={(e) => {
+              e.target.src = exampleImage; // Fallback
+              console.error('Image load failed:', imageSrc); // Debugging
+            }}
+            style={{
+              aspectRatio: '1/1',
+              objectFit: 'cover'
+            }}
+          />
           {showDetails && (
             <div
               style={{
@@ -151,6 +165,7 @@ const InventoryItem = ({ devicekey, device }) => {
             show={showMenu}
             onClick={(e) => e.stopPropagation()}
             variant="dark"
+            title=""
             id="inventory-item-dropdown"
             style={{
               position: "absolute",
