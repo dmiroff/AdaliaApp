@@ -1,10 +1,18 @@
 import axios from "axios";
 import { SERVER_APP_API_URL } from "../utils/constants";
 
+// Create a custom axios instance with default headers
+const apiClient = axios.create({
+  baseURL: SERVER_APP_API_URL,
+  headers: {
+    'skip_zrok_interstitial': 'true'
+  }
+});
+
 // Define and export the function
 const GetDataById = async (playerId) => {
   try {
-    const response = await axios.get(`${SERVER_APP_API_URL}/player/${playerId}`);
+    const response = await apiClient.get(`/player/${playerId}`);
     return response.status === 200 ? response.data : false;
   } catch (error) {
     console.error("Error fetching player data:", error);
@@ -14,7 +22,7 @@ const GetDataById = async (playerId) => {
 
 export const GetItemById = async (itemId) => {
   try {
-    const response = await axios.get(`${SERVER_APP_API_URL}/item/${itemId}`);
+    const response = await apiClient.get(`/item/${itemId}`);
     return response.status === 200 ? response.data : false;
   } catch (error) {
     console.error("Error fetching item data:", error);
