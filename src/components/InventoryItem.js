@@ -1,6 +1,6 @@
 // src/components/InventoryItem.js
 import React, { useState, useContext, useEffect} from "react";
-import { Card, Col, Image, Dropdown, DropdownButton, Modal, Button } from "react-bootstrap";
+import { Container, Row, Card, Col, Image, Dropdown, DropdownButton, Modal, Button } from "react-bootstrap";
 import exampleImage from "../assets/Images/WIP.png";
 import coinIcon from "../assets/Images/coin.jpeg";
 import { useNavigate } from 'react-router-dom';
@@ -101,118 +101,128 @@ const InventoryItem = ({ devicekey, device }) => {
   }
 
   return (
-    <Col xs={6} md={2} className="mb-3">
-      <Card
-        style={{ cursor: "pointer", position: "relative" }}
-        border="dark"
-        className="h-100"
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
-      >
-        <div style={{ position: "relative" }}>
-          <Image src={imageSrc}
-            fluid
-            className="mb-2"
-            loading="lazy"
-            onError={(e) => {
-              e.target.src = exampleImage; // Fallback
-              console.error('Image load failed:', imageSrc); // Debugging
-            }}
-            style={{
-              aspectRatio: '1/1',
-              objectFit: 'cover'
-            }}
-          />
-          {showDetails && (
-            <div
+      <Row backdrop="#fff">
+        <Col xs={1} md={1} className="mb-3">
+          <Card
+            style={{ cursor: "pointer", position: "relative" }}
+            border="dark"
+            className="h-100"
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
+          >
+            <div style={{ position: "relative" }}>
+              <Image src={imageSrc}
+                fluid
+                className="mb-2"
+                loading="lazy"
+                onError={(e) => {
+                  e.target.src = exampleImage; // Fallback
+                  console.error('Image load failed:', imageSrc); // Debugging
+                }}
+                style={{
+                  aspectRatio: '1/1',
+                  objectFit: 'cover'
+                }}
+              />
+              {showDetails && (
+                <div
+                  style={{
+                    position: "absolute",
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    padding: "0.5rem",
+                    background: "rgba(0, 0, 0, 0.5)",
+                    color: "#fff",
+                    display: "flex",
+                    justifyContent: "flex-end",
+                    alignItems: "center",
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center" }}>
+                    <div style={{ marginRight: "0.05rem" }}>{device.value}</div>
+                    <Image src={coinIcon} width={20} height={20} />
+                  </div>
+                </div>
+              )}
+            </div>
+            {showDetails && (
+              <div
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  padding: "0.5rem",
+                  background: "rgba(0, 0, 0, 0.5)",
+                  color: "#fff",
+                }}
+              >
+                {device.name}
+              </div>
+            )}
+            {showMenu && (
+              <DropdownButton
+                show={showMenu}
+                onClick={(e) => e.stopPropagation()}
+                variant="dark"
+                title=""
+                id="inventory-item-dropdown"
+                style={{
+                  position: "absolute",
+                  top: "50%",
+                  left: "50%",
+                  transform: "translate(-50%, -50%)",
+                  zIndex: 1,
+                }}
+              >
+                <Dropdown.Item onClick={handleInspect}>осмотреть</Dropdown.Item>
+                <Dropdown.Item onClick={handleWear}>надеть</Dropdown.Item>
+                <Dropdown.Item onClick={handleSell}>продать</Dropdown.Item>
+                <Dropdown.Item onClick={handleThrowAway}>выкинуть</Dropdown.Item>
+              </DropdownButton>
+            )}
+            <Form.Range
+              min={1}
+              max={device.count}
+              value={rangeValue}
+              onChange={(e) => setRangeValue(e.target.value)}
+            />
+            <label
+              htmlFor="custom-range"
+              className="form-label"
               style={{
                 position: "absolute",
-                bottom: 0,
-                left: 0,
-                right: 0,
-                padding: "0.5rem",
-                background: "rgba(0, 0, 0, 0.5)",
-                color: "#fff",
-                display: "flex",
-                justifyContent: "flex-end",
-                alignItems: "center",
+                bottom: "0.75rem",
+                left: "0.5rem",
+                background: "#fff",
+                padding: "0 0.25rem",
               }}
             >
-              <div style={{ display: "flex", alignItems: "center" }}>
-                <div style={{ marginRight: "0.05rem" }}>{device.value}</div>
-                <Image src={coinIcon} width={20} height={20} />
-              </div>
-            </div>
-          )}
-        </div>
-        {showDetails && (
-          <div
-            style={{
-              position: "absolute",
-              top: 0,
-              left: 0,
-              right: 0,
-              padding: "0.5rem",
-              background: "rgba(0, 0, 0, 0.5)",
-              color: "#fff",
-            }}
-          >
-            {device.name}
-          </div>
-        )}
-        {showMenu && (
-          <DropdownButton
-            show={showMenu}
-            onClick={(e) => e.stopPropagation()}
-            variant="dark"
-            title=""
-            id="inventory-item-dropdown"
-            style={{
-              position: "absolute",
-              top: "50%",
-              left: "50%",
-              transform: "translate(-50%, -50%)",
-              zIndex: 1,
-            }}
-          >
-            <Dropdown.Item onClick={handleInspect}>осмотреть</Dropdown.Item>
-            <Dropdown.Item onClick={handleWear}>надеть</Dropdown.Item>
-            <Dropdown.Item onClick={handleSell}>продать</Dropdown.Item>
-            <Dropdown.Item onClick={handleThrowAway}>выкинуть</Dropdown.Item>
-          </DropdownButton>
-        )}
-        <Form.Range
-          min={1}
-          max={device.count}
-          value={rangeValue}
-          onChange={(e) => setRangeValue(e.target.value)}
-        />
-        <label
-          htmlFor="custom-range"
-          className="form-label"
-          style={{
-            position: "absolute",
-            bottom: "0.75rem",
-            left: "0.5rem",
-            background: "#fff",
-            padding: "0 0.25rem",
-          }}
-        >
-          {rangeValue}
-        </label>
-      </Card>
-      <Modal show={showModal} onHide={handleModalClose} backdrop="static" keyboard={false}>
-        <Modal.Header closeButton>
-          <Modal.Title>Оповещение</Modal.Title>
-        </Modal.Header>
-        <Modal.Body style={{ whiteSpace: 'pre-wrap' }}>{modalMessage}</Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={handleModalClose}>
-            Закрыть
-          </Button>
-        </Modal.Footer>
-      </Modal>
-    </Col>
+              {rangeValue}
+            </label>
+          </Card>
+          <Modal show={showModal} onHide={handleModalClose} backdrop="static" keyboard={false}>
+            <Modal.Header closeButton>
+              <Modal.Title>Оповещение</Modal.Title>
+            </Modal.Header>
+            <Modal.Body style={{ whiteSpace: 'pre-wrap' }}>{modalMessage}</Modal.Body>
+            <Modal.Footer>
+              <Button variant="secondary" onClick={handleModalClose}>
+                Закрыть
+              </Button>
+            </Modal.Footer>
+          </Modal>
+        </Col>
+        {/* <Col md={10}> */}
+        <Col lg={true}>
+          {device.name}
+          <br />
+          Кол-во: {device.count}
+          <br />
+          Цена: {device.value}
+        </Col>
+      </Row>
   );
 };
 
