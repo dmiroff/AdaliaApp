@@ -5,6 +5,7 @@ import Row from "react-bootstrap/Row";
 import { Context } from "../index";
 import GetDataById from "../http/GetData";
 import { Spinner } from "react-bootstrap";
+import Fuse from "fuse.js"
 
 const InventoryList = observer(() => {
   const { user } = useContext(Context);
@@ -12,6 +13,7 @@ const InventoryList = observer(() => {
   const [playerData, setPlayerData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [delay, setDelay] = useState(false);
+  const [query, setQuery] = useState("")
   const user_id = user.user.id;
 
   useEffect(() => {
@@ -25,7 +27,7 @@ const InventoryList = observer(() => {
 
     fetchPlayer(user_id);
   }, [user_id, user]);
-
+ 
   useEffect(() => {
     if (playerData) {
       setTimeout(() => {
@@ -54,6 +56,16 @@ const InventoryList = observer(() => {
     ([key, item]) => item.type === selected_type
   );
 
+  const itemObjects = filteredItemsWithKeys.map(([id, data]) => ({ id, ...data }));
+
+  const fuse = new Fuse(itemObjects, {
+    keys: ["name"],
+    includeScore: true,
+    threshold: 0.3 
+  });
+  
+  const results = query ? fuse.search(query).map(result => result.item) : itemObjects;
+
   if (!Object.keys(inventory_new).length) {
     return <div>Вот инвентарь пустой, он предмет простой</div>;
   }
@@ -70,8 +82,17 @@ const InventoryList = observer(() => {
 
   return (
     <Row className="d-flex">
-      {filteredItemsWithKeys.map(([key, device]) => (
-        <InventoryItem key={key} devicekey={key} device={device} />
+      <div className="max-w-md mx-auto p-4">
+        <input
+          type="text"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Item name..."
+          className="w-full p-2 border rounded-lg mb-4"
+        />
+      </div>
+      {results.map((item, index) => (
+        <InventoryItem key={item.id} devicekey={item.id} device={item} />
       ))}
     </Row>
   );
