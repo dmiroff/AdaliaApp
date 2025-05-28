@@ -1,6 +1,6 @@
 // src/components/InventoryItem.js
 import React, { useState, useContext, useEffect} from "react";
-import { Container, Row, Card, Col, Image, Dropdown, DropdownButton, Modal, Button } from "react-bootstrap";
+import { Row, Card, Col, Image, Dropdown, DropdownButton, Modal, Button } from "react-bootstrap";
 import exampleImage from "../assets/Images/WIP.png";
 import coinIcon from "../assets/Images/coin.jpeg";
 import { useNavigate } from 'react-router-dom';
@@ -8,6 +8,7 @@ import { INVENTORY_ROUTE } from "../utils/constants";
 import { Form } from "react-bootstrap";
 import { Context } from "../index";
 import {WearDataById, ThrowItemById, SellItemById} from "../http/SupportFunctions";
+import ModalAction from "./ModalAction"
 
 const InventoryItem = ({ devicekey, device }) => {
   const { user } = useContext(Context);
@@ -17,20 +18,18 @@ const InventoryItem = ({ devicekey, device }) => {
   const [showModal, setShowModal] = useState(false);
   const [modalMessage, setModalMessage] = useState("");
   const navigate = useNavigate();
-  const [showDetails, setShowDetails] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [showModalSell, setShowModalSell] = useState(false);
   const [showModalDrop, setShowModalDrop] = useState(false);
   const [toNavigate, setToNavigate] = useState(false);
+  const [handleRequest, setHandleRequest] = useState(false);
   const [rangeValue, setRangeValue] = useState(1);
 
   const handleMouseEnter = () => {
-    setShowDetails(true);
     setShowMenu(!showMenu);
   };
 
   const handleMouseLeave = () => {
-    setShowDetails(false);
     setShowMenu(!showMenu);
   };
 
@@ -47,6 +46,10 @@ const InventoryItem = ({ devicekey, device }) => {
   const handleModalDrop = (event) => {
     event.stopPropagation();
     setShowModalDrop(!showModalDrop);
+  };
+
+  const toggleHandleRequest = () => {
+    setHandleRequest(!handleRequest);
   };
 
   const handleInspect = () => {
@@ -67,6 +70,7 @@ const InventoryItem = ({ devicekey, device }) => {
   };
   
   const handleThrowAway = async () => {
+    toggleHandleRequest();
     const user_id = user.user.id;
     const response = await ThrowItemById(user_id, devicekey, rangeValue);
     const player_data = response.data;
@@ -74,7 +78,7 @@ const InventoryItem = ({ devicekey, device }) => {
     user.setPlayerInventory(player_data.inventory_new); // Update the state with fetched data
     user.setPlayer(player_data); // Set player data
     if (response.status){setToNavigate(true);};
-
+    toggleHandleRequest();
     setModalMessage(message);
     setShowModal(true);
   };
@@ -101,7 +105,7 @@ const InventoryItem = ({ devicekey, device }) => {
     if (showModal) {
       const timer = setTimeout(() => {
         handleModalClose();
-      }, 1000);
+      }, 3000);
 
       // Clear the timer if the component is unmounted
       return () => clearTimeout(timer);
@@ -145,43 +149,7 @@ const InventoryItem = ({ devicekey, device }) => {
                   objectFit: 'cover'
                 }}
               />
-              {/* {showDetails && ( */}
-              {/*   <div */}
-              {/*     style={{ */}
-              {/*       position: "absolute", */}
-              {/*       bottom: 0, */}
-              {/*       left: 0, */}
-              {/*       right: 0, */}
-              {/*       padding: "0.5rem", */}
-              {/*       background: "rgba(0, 0, 0, 0.5)", */}
-              {/*       color: "#fff", */}
-              {/*       display: "flex", */}
-              {/*       justifyContent: "flex-end", */}
-              {/*       alignItems: "center", */}
-              {/*     }} */}
-              {/*   > */}
-              {/*     <div style={{ display: "flex", alignItems: "center" }}> */}
-              {/*       <div style={{ marginRight: "0.05rem" }}>{device.value}</div> */}
-              {/*       <Image src={coinIcon} width={20} height={20} /> */}
-              {/*     </div> */}
-              {/*   </div> */}
-              {/* )} */}
             </div>
-            {/* {showDetails && ( */}
-            {/*   <div */}
-            {/*     style={{ */}
-            {/*       position: "absolute", */}
-            {/*       top: 0, */}
-            {/*       left: 0, */}
-            {/*       right: 0, */}
-            {/*       padding: "0.5rem", */}
-            {/*       background: "rgba(0, 0, 0, 0.5)", */}
-            {/*       color: "#fff", */}
-            {/*     }} */}
-            {/*   > */}
-            {/*     {device.name} */}
-            {/*   </div> */}
-            {/* )} */}
             {showMenu && (
               <DropdownButton
                 show={showMenu}
@@ -198,30 +166,11 @@ const InventoryItem = ({ devicekey, device }) => {
                 }}
               >
                 <Dropdown.Item onClick={handleInspect}>осмотреть</Dropdown.Item>
-                <Dropdown.Item onClick={handleWear}>надеть</Dropdown.Item>
+                {device.is_equippable && (<Dropdown.Item onClick={handleWear}>надеть</Dropdown.Item>)}
                 <Dropdown.Item onClick={handleModalSell}>продать</Dropdown.Item>
                 <Dropdown.Item onClick={handleModalDrop}>выкинуть</Dropdown.Item>
               </DropdownButton>
             )}
-            {/* <Form.Range */}
-            {/*   min={1} */}
-            {/*   max={device.count} */}
-            {/*   value={rangeValue} */}
-            {/*   onChange={(e) => setRangeValue(e.target.value)} */}
-            {/* /> */}
-            {/* <label */}
-            {/*   htmlFor="custom-range" */}
-            {/*   className="form-label" */}
-            {/*   style={{ */}
-            {/*     position: "absolute", */}
-            {/*     bottom: "0.75rem", */}
-            {/*     left: "0.5rem", */}
-            {/*     background: "#fff", */}
-            {/*     padding: "0 0.25rem", */}
-            {/*   }} */}
-            {/* > */}
-            {/*   {rangeValue} */}
-            {/* </label> */}
           </Card>
           <Modal show={showModal} onHide={handleModalClose} backdrop="static" keyboard={false} centered>
             <Modal.Header closeButton>
@@ -235,83 +184,31 @@ const InventoryItem = ({ devicekey, device }) => {
             </Modal.Footer>
           </Modal>
 
-         {/* ---------------------------- Modal sell start ------------------------------------------------ */}
-          <Modal show={showModalSell} onHide={handleModalSellClose} backdrop="static" keyboard={false} centered>
-            <Modal.Header closeButton>
-              <Modal.Title>Продать предмет</Modal.Title>
-            </Modal.Header>
-            <Modal.Body style={{ whiteSpace: 'pre-wrap' }}>
-              <Form.Range
-                min={1}
-                max={device.count}
-                value={rangeValue}
-                onChange={(e) => setRangeValue(e.target.value)}
-              />
-              <label
-                htmlFor="custom-range"
-                className="form-label"
-                style={{
-                  position: "absolute",
-                  bottom: "0.75rem",
-                  left: "0.5rem",
-                  background: "#fff",
-                  padding: "0 0.25rem",
-                }}
-              >
-                {rangeValue}
-              </label>
+          <ModalAction
+            show={showModalSell} 
+            onClose={handleModalSellClose} 
+            device={device}
+            devicekey={devicekey}
+            action={handleSell}
+            handleRequest={handleRequest}
+            title="Продать предмет"
+            actionButtonText="Продать"
+            backdrop="static" 
+            keyboard={false} centered
+          />
 
-            </Modal.Body>
-            <Modal.Footer>
-              <Button variant="primary" onClick={handleSell}>
-                Продать
-              </Button>
-
-              <Button variant="secondary" onClick={handleModalSellClose}>
-                Закрыть
-              </Button>
-            </Modal.Footer>
-          </Modal>
-         {/* ---------------------------- Modal sell end ------------------------------------------------ */}
-
-         {/* ---------------------------- Modal drop start ------------------------------------------------ */}
-          <Modal show={showModalDrop} onHide={handleModalDropClose} backdrop="static" keyboard={false} centered>
-            <Modal.Header closeButton>
-              <Modal.Title>Выбросить предмет</Modal.Title>
-            </Modal.Header>
-            <Modal.Body style={{ whiteSpace: 'pre-wrap' }}>
-              <Form.Range
-                min={1}
-                max={device.count}
-                value={rangeValue}
-                onChange={(e) => setRangeValue(e.target.value)}
-              />
-              <label
-                htmlFor="custom-range"
-                className="form-label"
-                style={{
-                  position: "absolute",
-                  bottom: "0.75rem",
-                  left: "0.5rem",
-                  background: "#fff",
-                  padding: "0 0.25rem",
-                }}
-              >
-                {rangeValue}
-              </label>
-
-            </Modal.Body>
-            <Modal.Footer>
-              <Button variant="primary" onClick={handleThrowAway}>
-                Выбросить
-              </Button>
-
-              <Button variant="secondary" onClick={handleModalDropClose}>
-                Закрыть
-              </Button>
-            </Modal.Footer>
-          </Modal>
-         {/* ---------------------------- Modal drop end ------------------------------------------------ */}
+          <ModalAction
+            show={showModalDrop} 
+            onClose={handleModalDropClose} 
+            device={device}
+            devicekey={devicekey}
+            action={handleThrowAway}
+            handleRequest={handleRequest}
+            title="Выбросить предмет"
+            actionButtonText="Выбросить"
+            backdrop="static" 
+            keyboard={false} centered
+          />
 
         </Col>
         <Col xs={9} lg={true} style={{ fontSize: "0.9rem"}}>
