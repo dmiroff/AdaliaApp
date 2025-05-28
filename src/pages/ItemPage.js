@@ -141,7 +141,9 @@ const Item = () => {
           <Image src={imageSrc} fluid />
         </Col>
         <Col md={6} className="d-flex flex-column justify-content-center">
-          <Button variant="primary" className="mb-2" onClick={handleWear}>Надеть</Button>
+          {itemData.is_equippable && (
+            <Button variant="primary" className="mb-2" onClick={handleWear}>Надеть</Button>
+          )}
           <Button variant="success" className="mb-2" onClick={handleSell}>Продать</Button>
           <Button variant="danger" onClick={handleThrowAway}>Выбросить</Button>
         </Col>
@@ -164,15 +166,18 @@ const Item = () => {
               !["", 0, "No", {}, "{}", false, null].includes(value) &&
               !["Image", "gender", "number", "suffix"].includes(key)) {
             if (key === "ability") {
-              if (abilities_descriptions[value]) {
-                return (
-                  <div key={key}>
-                    {`${dict_translator[key]}: ${abilities_descriptions[value]}`}
-                  </div>
-                );}
-                else {
-                  return null;
-                };
+              const keysArr = Object.keys(value)
+              for (key in keysArr) {
+                if (abilities_descriptions[keysArr[key]]) {
+                  return (
+                    <div key={key}>
+                      {`${keysArr[key]}: ${abilities_descriptions[keysArr[key]]}`}
+                    </div>
+                  );}
+                  else {
+                    return null;
+                  };
+              }
             } else {
               const translatedValue = dict_translator[value] ? dict_translator[value] : value;
               return (
