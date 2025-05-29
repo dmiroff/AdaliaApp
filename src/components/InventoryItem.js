@@ -57,6 +57,7 @@ const InventoryItem = ({ devicekey, device }) => {
   };
 
   const handleSell = async () => {
+    toggleHandleRequest();
     const user_id = user.user.id;
     const response = await SellItemById(user_id, devicekey, rangeValue);
     const player_data = response.data;
@@ -64,6 +65,7 @@ const InventoryItem = ({ devicekey, device }) => {
     user.setPlayerInventory(player_data.inventory_new); // Update the state with fetched data
     user.setPlayer(player_data); // Set player data
     if (response.status){setToNavigate(true);};
+    toggleHandleRequest();
 
     setModalMessage(message);
     setShowModal(true);
@@ -79,6 +81,7 @@ const InventoryItem = ({ devicekey, device }) => {
     user.setPlayer(player_data); // Set player data
     if (response.status){setToNavigate(true);};
     toggleHandleRequest();
+
     setModalMessage(message);
     setShowModal(true);
   };

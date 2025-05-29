@@ -57,7 +57,7 @@ const Character = observer(() => {
     return translatedValue
   }
 
-  const prepareMagicValue = (value) => {
+  const prepareDataValues = (value) => {
     if (value.constructor === Array) {
       let valueString = ""
       let valueDict = arrToCountedDict(value)
@@ -73,6 +73,18 @@ const Character = observer(() => {
       }
       return valueString
     }
+
+    if (value.constructor === Object) {
+      let valueString = "\n"
+      for (const [k, v] of Object.entries(value)) {
+        if (valueString !== "\n") {
+          valueString = valueString + "\n"
+        }
+        valueString = valueString + getTranslation(k) + ": " + v 
+      }
+      return valueString
+    }
+
     if (typeof(value) == "number") {
       if (Number.isInteger(value)) {
         return value
@@ -82,30 +94,67 @@ const Character = observer(() => {
     if (typeof(value) == "string") {
       return getTranslation(value)
     }
+    if (typeof(value) == "boolean") {
+      return value ? "Да" : "Нет"
+    }
     return value
 
   }
 
-  const getMagicToShow = (magic) => {
-    const magicDict = {}
-    let _value
-    for (const [magic_key, magic_att] of Object.entries(magic)) {
-      let magic_att_value = "\n"
-      for (const [key, value] of Object.entries(magic_att)) {
+  const characterDataToShow = (data) => {
+    const dataDict = {}
+    for (const [data_key, data_values] of Object.entries(data)) {
+      let data_value = "\n"
+      for (const [key, value] of Object.entries(data_values)) {
         if (key === "name") {
           continue
         }
         if (key in dict_translator) {
-          _value = prepareMagicValue(value)
-          magic_att_value = magic_att_value + dict_translator[key] + ": " + _value + '\n'
+          data_value = data_value + dict_translator[key] + ": " + prepareDataValues(value) + '\n'
         }
       }
-      magic_att_value = magic_att_value + "\n"
-      magicDict[magic_key] = magic_att_value
+      data_value = data_value + "\n"
+      dataDict[data_key] = data_value
     };
 
-    return magicDict
+    return dataDict
   }
+
+  const getModByAtt = (att, agi = false) => {
+    let current = 10;
+    let step = 1;
+    if (agi) {
+      step = 2
+    }
+    let mod = 0;
+
+    if (att < 10) {
+      while (current - step >= att) {
+        current -= step
+        step += 1
+        mod--
+      }
+      if (current - att !== 0) {
+        mod--
+      }
+    } else {
+        while (current + step <= att) {
+          current += step;
+          step += 1;
+          mod++;
+        }
+    }
+
+    return mod < 0 ? `${mod}` : `+${mod}`
+
+  }
+
+  const prepareAttString = (att, att_inc, agi = false) => {
+    return (
+      `${att + att_inc} (${getModByAtt(att + att_inc, agi)}), ${att} + ${att_inc}`
+    )
+  }
+
 
   const getSectionData = (category) => {
     switch (category) {
@@ -113,14 +162,14 @@ const Character = observer(() => {
         return {
           type: "Атрибуты",
           data: {
-            "Восприятие 👁": playerData.perception,
-            "Сила 🏋️": playerData.strength,
-            "Ловкость 🤸": playerData.agility,
-            "Телосложение 🫀": playerData.constitution,
-            "Интеллект 🎓": playerData.intelligence,
-            "Харизма 🤝": playerData.charisma,
-            "Мудрость 🧙": playerData.wisdom,
-            "Удача 🍀": playerData.luck,
+            "Восприятие 👁": prepareAttString(playerData.perception, playerData.perception_increase),
+            "Сила 🏋️": prepareAttString(playerData.strength, playerData.strength_increase),
+            "Ловкость 🤸": prepareAttString(playerData.agility, playerData.agility_increase, true),
+            "Телосложение 🫀": prepareAttString(playerData.constitution, playerData.constitution_increase),
+            "Интеллект 🎓": prepareAttString(playerData.intelligence, playerData.intelligence_increase),
+            "Харизма 🤝": prepareAttString(playerData.charisma, playerData.charisma_increase),
+            "Мудрость 🧙": prepareAttString(playerData.wisdom, playerData.wisdom_increase),
+            "Удача 🍀": prepareAttString(playerData.luck, playerData.luck_increase),
           },
         };
       case "Навыки":
@@ -153,10 +202,9 @@ const Character = observer(() => {
           },
         };
       case "Магия":
-        // Handle magic data
         return {
           type: "Магия",
-          data: getMagicToShow(playerData.prepared_magic),
+          data: characterDataToShow(playerData.prepared_magic),
         }
 
       case "Таланты":
@@ -165,8 +213,15 @@ const Character = observer(() => {
           data: arrToCountedDict(playerData.talents),
         }
       case "Умения":
-        // Handle abilities data
-        return null;
+        return {
+          type: "Умения",
+          data: characterDataToShow(playerData.abilities)
+        }
+      case "Временные эффекты":
+        return {
+          type: "Временные эффекты",
+          data: characterDataToShow(playerData.temporary_effects)
+        }
       default:
         return null;
     }
@@ -191,7 +246,7 @@ const Character = observer(() => {
       <div>
         <strong>Уровень:</strong> {playerData.level} <span role="img" aria-label="level">🎖️</span>
         <br />
-        <strong>Опыт:</strong> {playerData.experience} <span role="img" aria-label="experience">📚</span>
+        <strong>Опыт:</strong> {playerData.experience}/{playerData.experience_next_level} <span role="img" aria-label="experience">📚</span>
         <br />
         <strong>Раса:</strong> {playerData.Race} <span role="img" aria-label="race">👨</span>
         <br />
@@ -204,6 +259,7 @@ const Character = observer(() => {
           "Магия",
           "Таланты",
           "Умения",
+          "Временные эффекты",
         ].map((category) => (
           <div key={category}>
             <h3 onClick={() => handleHeaderClick(category)} style={{ cursor: "pointer" }}>
