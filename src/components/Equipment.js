@@ -6,7 +6,7 @@ import { UnwearDataById } from "../http/SupportFunctions";
 import exampleImage from "../assets/Images/empty_slot.jpeg";
 import { Spinner } from "react-bootstrap";
 import { Context } from "../index";
-import bodyImage from "../assets/Images/CharacterBody.jpg";
+import bodyImage from "../assets/Images/kukla.png";
 import "./Equipment.css";
 
 const Equipment = () => {
