@@ -1,6 +1,6 @@
 import GetDataById from "../http/GetData";
 import React, { useState, useContext, useEffect } from "react";
-import { Spinner } from "react-bootstrap";
+import { Container, Spinner, Tabs, Tab } from "react-bootstrap";
 import { Context } from "../index";
 import { observer } from "mobx-react-lite";
 import { dict_translator } from "../utils/Helpers";
@@ -242,46 +242,83 @@ const Character = observer(() => {
   }
 
   return (
-    <div>
-      <div>
-        <strong>Уровень:</strong> {playerData.level} <span role="img" aria-label="level">🎖️</span>
-        <br />
-        <strong>Опыт:</strong> {playerData.experience}/{playerData.experience_next_level} <span role="img" aria-label="experience">📚</span>
-        <br />
-        <strong>Раса:</strong> {playerData.Race} <span role="img" aria-label="race">👨</span>
-        <br />
-        <strong>Класс:</strong> {playerData.Character_class} <span role="img" aria-label="class">🏆</span>
-      </div>
-      <div>
-        {[
-          "Атрибуты",
-          "Навыки",
-          "Магия",
-          "Таланты",
-          "Умения",
-          "Временные эффекты",
-        ].map((category) => (
-          <div key={category}>
-            <h3 onClick={() => handleHeaderClick(category)} style={{ cursor: "pointer" }}>
-              {category}
-            </h3>
-            {visibleSection === category && (
-              <div>
-                {getSectionData(category) && (
-                  <ul>
-                    {Object.entries(getSectionData(category).data).map(([key, value]) => (
-                      <li key={key} className="display-linebreak">
-                        {key}: {value}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
-    </div>
+          <Tabs
+            defaultActiveKey="Параметры"
+            transition={false}
+            id="playerInfo"
+            className="mb-3"
+          >
+            <Tab eventKey="Параметры" title="Параметры">
+              <Container>
+                <span>Имя: {playerData.name}<br /></span>
+                <span>Раса: {playerData.Race}<br /></span>
+                <span>Класс: {playerData.Character_class}<br /></span>
+                <span>Уровень: {playerData.experience}/{playerData.experience_next_level}<br /></span>
+                <span>Очки навыков за уровень: {playerData.points_per_level}<br /></span>
+                <span>Скидка: {playerData.discount}<br /><br /></span>
+
+                {playerData.bloodlust !== 0 && (<span>Кровожадность: {playerData.bloodlust}<br /></span>)}
+                {playerData.rage !== 0 && (<span>Ярость: {playerData.rage}<br /></span>)}
+                {playerData.regeneration !== 0 && (<span>Регенерация: {playerData.regeneration}<br /></span>)}
+                {playerData.ressurect !== 0 && (<span>Воскрешение: {playerData.ressurect}<br /></span>)}
+                <span>Дополнительные очки передвижения: {playerData.move_OP}<br /></span>
+                <span>Зелья за бой: {playerData.consumable_items}<br /></span>
+                <span>Модификатор проверок скрытности: {playerData.sneak_check}<br /></span>
+                <span>Очки действия🏃: {playerData.action_points}<br /></span>
+                <span>Инициатива⏳: {playerData.initiative}<br /><br /></span>
+
+                <span><strong>Атака</strong> 🗡<br /></span>
+                <span>Атака в ближнем бою: {playerData.melee_attack}<br /></span>
+                <span>Атака в дальнем бою: {playerData.range_attack}<br /></span>
+                <span>Урон в ближнем бою: {playerData.melee_damage}<br /></span>
+                <span>Урон в дальнем бою: {playerData.range_damage}<br /></span>
+                <span>Шанс критического удара: {playerData.crit_chance}<br /><br /></span>
+
+                <span><strong>Физическая ащита</strong> 🛡<br /></span>
+                <span>Класс защиты: {playerData.current_defence}<br /></span>
+                <span>Сопротивление к колющему урону: {playerData.piercing_deduction}<br /></span>
+                <span>Сопротивление к дробящему урону: {playerData.bludge_deduction}<br /></span>
+                <span>Сопротивление к рубящему урону: {playerData.slashing_deduction}<br /><br /></span>
+
+                <span><strong>Магическая защита</strong> 🪄<br /></span>
+                <span>Магическое сопротивление: {playerData.magic_resist}<br /></span>
+                <span>Сопротивление к огненному урону: {playerData.fire_deduction}<br /></span>
+                <span>Сопротивление к ледяному урону: {playerData.ice_deduction}<br /></span>
+                <span>Сопротивление к урону молнией: {playerData.electric_deduction}<br /></span>
+                <span>Сопротивление к урону тьмой: {playerData.dark_deduction}<br /></span>
+                <span>Сопротивление к урону светом: {playerData.light_deduction}<br /></span>
+                <span>Сопротивление к урону жизнью: {playerData.life_deduction}<br /></span>
+                <span>Сопротивление к звуковому урону: {playerData.sound_deduction}<br /></span>
+                <span>Сопротивление к воздушному урону: {playerData.wind_deduction}<br /></span>
+                <span>Сопротивление к урону смертью: {playerData.death_deduction}<br /></span>
+                <span>Сопротивление к Власти: {playerData.power_deduction}<br /></span>
+
+            </Container>
+            </Tab>
+            {[
+              "Атрибуты",
+              "Навыки",
+              "Магия",
+              "Таланты",
+              "Умения",
+              "Временные эффекты",
+            ].map((category) => (
+
+                <Tab eventKey={category} title={category}>
+                     {getSectionData(category) && (
+                      <Container>
+                        <ul>
+                          {Object.entries(getSectionData(category).data).map(([key, value]) => (
+                             <li key={key} className="display-linebreak">
+                               <strong>{key}:</strong> {value}
+                             </li>
+                           ))}
+                         </ul>
+                      </Container>
+                     )}
+                </Tab>
+            ))}
+          </Tabs>
   );
 });
 
