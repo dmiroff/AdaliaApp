@@ -27,15 +27,15 @@ const NavBar = observer(() => {
 
           {user.IsAuth ? (
             <Nav className="ml-auto" style={{ color: "dark" }}>
-              <Button
-                variant={"outline-dark"}
-                className="ml-2"
-                onClick={() => navigate("/admin-panel")} // Navigate to a specific path
-              >
-                АдминПанель
-              </Button>
-              <Button
-                variant={"outline-dark"}
+              {/* <Button */}
+              {/*   variant={"outline-dark"} */}
+              {/*   className="ml-2" */}
+              {/*   onClick={() => navigate("/admin-panel")} // Navigate to a specific path */}
+              {/* > */}
+              {/*   АдминПанель */}
+              {/* </Button> */}
+              <Nav.Link
+                // variant={"outline-dark"}
                 className="ml-2"
                 onClick={() => {
                   user.setIsAuth(false);
@@ -43,7 +43,7 @@ const NavBar = observer(() => {
                 }}
               >
                 Выйти
-              </Button>
+              </Nav.Link>
             </Nav>
           ) : (
             <Nav className="ml-auto" style={{ color: "white" }}>

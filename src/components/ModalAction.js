@@ -1,15 +1,18 @@
 // src/components/ModalThrowAway.js
 import React, { useState, useContext, useEffect} from "react";
 import { Modal, Form, Button } from "react-bootstrap";
+import { Context } from "../index";
 
 const ModalAction = ({show, onClose, device, devicekey, action, title, actionButtonText, handleRequest}) => {
   const [rangeValue, setRangeValue] = useState(1);
+  const { user } = useContext(Context);
 
   if (!show) {
    return null;
   }
 
   return (
+    console.log(user),
     <Modal show={show} onHide={onClose} backdrop="static" keyboard={false} centered>
       <Modal.Header closeButton>
         <Modal.Title>{title}</Modal.Title>

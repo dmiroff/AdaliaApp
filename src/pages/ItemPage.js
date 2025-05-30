@@ -7,15 +7,20 @@ import exampleImage from "../assets/Images/WIP.png";
 import { Spinner } from "react-bootstrap";
 import { Context } from "../index";
 import {WearDataById, ThrowItemById, SellItemById} from "../http/SupportFunctions";
+import ModalAction from "../components/ModalAction"
 
 
 const Item = () => {
   const { user } = useContext(Context);
+  const inventory_new = user.inventory_new || {}; 
   const [itemData, setItemData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [imageSrc, setImageSrc] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [showModalSell, setShowModalSell] = useState(false);
+  const [showModalDrop, setShowModalDrop] = useState(false);
+  const [handleRequest, setHandleRequest] = useState(false);
   const [modalMessage, setModalMessage] = useState("");
   const [toNavigate, setToNavigate] = useState(false);
   const navigate = useNavigate();
@@ -40,9 +45,24 @@ const Item = () => {
     };
     fetchData();
   }, [num]);
+  
+  const handleModalSell = (event) => {
+    event.stopPropagation();
+    setShowModalSell(!showModalSell);
+  };
 
+  const handleModalDrop = (event) => {
+    event.stopPropagation();
+    setShowModalDrop(!showModalDrop);
+  };
+
+  const toggleHandleRequest = () => {
+    setHandleRequest(!handleRequest);
+  };
   // Function to close the modal
   const handleModalClose = () => setShowModal(false);
+  const handleModalSellClose = () => setShowModalSell(false);
+  const handleModalDropClose = () => setShowModalDrop(false);
 
   // Automatically close the modal after 3 seconds
   useEffect(() => {
@@ -58,6 +78,7 @@ const Item = () => {
 
 
   const handleSell = async () => {
+    toggleHandleRequest();
     const user_id = user.user.id;
     const response = await SellItemById(user_id, num, 1);
     const player_data = response.data;
@@ -67,11 +88,13 @@ const Item = () => {
     if (response.status) {
       setToNavigate(true);
     }
+    toggleHandleRequest();
     setModalMessage(message);
     setShowModal(true);
   };
 
   const handleThrowAway = async () => {
+    toggleHandleRequest();
     const user_id = user.user.id;
     const response = await ThrowItemById(user_id, num, 1);
     const player_data = response.data;
@@ -79,7 +102,7 @@ const Item = () => {
     user.setPlayerInventory(player_data.inventory_new); // Update the state with fetched data
     user.setPlayer(player_data); // Set player data
     if (response.status){setToNavigate(true);};
-
+    toggleHandleRequest();
     setModalMessage(message);
     setShowModal(true);
   };
@@ -144,55 +167,82 @@ const Item = () => {
           {itemData.is_equippable && (
             <Button variant="primary" className="mb-2" onClick={handleWear}>Надеть</Button>
           )}
-          <Button variant="success" className="mb-2" onClick={handleSell}>Продать</Button>
-          <Button variant="danger" onClick={handleThrowAway}>Выбросить</Button>
+          <Button variant="success" className="mb-2" onClick={handleModalSell}>Продать</Button>
+          <Button variant="danger" onClick={handleModalDrop}>Выбросить</Button>
         </Col>
       </Row>
       <Row className="mt-4">
         <Col>
-        <Modal show={showModal} onHide={handleModalClose} backdrop="static" keyboard={false}>
-          <Modal.Header closeButton>
-            <Modal.Title>Оповещение</Modal.Title>
-          </Modal.Header>
-          <Modal.Body style={{ whiteSpace: 'pre-wrap' }}>{modalMessage}</Modal.Body>
-          <Modal.Footer>
-            <Button variant="secondary" onClick={handleModalClose}>
-              Закрыть
-            </Button>
-          </Modal.Footer>
-        </Modal>
-        {Object.entries(itemData).map(([key, value]) => {
-          if (dict_translator[key] &&
-              !["", 0, "No", {}, "{}", false, null].includes(value) &&
-              !["Image", "gender", "number", "suffix"].includes(key)) {
-            if (key === "ability") {
-              const keysArr = Object.keys(value)
-              for (key in keysArr) {
-                if (abilities_descriptions[keysArr[key]]) {
-                  return (
-                    <div key={key}>
-                      {`${keysArr[key]}: ${abilities_descriptions[keysArr[key]]}`}
-                    </div>
-                  );}
-                  else {
-                    return null;
-                  };
+          {Object.entries(itemData).map(([key, value]) => {
+            if (dict_translator[key] &&
+                !["", 0, "No", {}, "{}", false, null].includes(value) &&
+                !["Image", "gender", "number", "suffix"].includes(key)) {
+              if (key === "ability") {
+                const keysArr = Object.keys(value)
+                for (key in keysArr) {
+                  if (abilities_descriptions[keysArr[key]]) {
+                    return (
+                      <div key={key}>
+                        {`${keysArr[key]}: ${abilities_descriptions[keysArr[key]]}`}
+                      </div>
+                    );}
+                    else {
+                      return null;
+                    };
+                }
+              } else {
+                const translatedValue = dict_translator[value] ? dict_translator[value] : value;
+                return (
+                  <div key={key}>
+                    {`${dict_translator[key]}: ${translatedValue}`}
+                  </div>
+                );
               }
             } else {
-              const translatedValue = dict_translator[value] ? dict_translator[value] : value;
-              return (
-                <div key={key}>
-                  {`${dict_translator[key]}: ${translatedValue}`}
-                </div>
-              );
+              return null;
             }
-          } else {
-            return null;
-          }
-        })}
+          })}
 
         </Col>
       </Row>
+          <Modal show={showModal} onHide={handleModalClose} backdrop="static" keyboard={false} centered>
+            <Modal.Header closeButton>
+              <Modal.Title>Оповещение</Modal.Title>
+            </Modal.Header>
+            <Modal.Body style={{ whiteSpace: 'pre-wrap' }}>{modalMessage}</Modal.Body>
+            <Modal.Footer>
+              <Button variant="secondary" onClick={handleModalClose}>
+                Закрыть
+              </Button>
+            </Modal.Footer>
+          </Modal>
+
+          <ModalAction
+            show={showModalSell} 
+            onClose={handleModalSellClose} 
+            device={inventory_new[num]}
+            devicekey={num}
+            action={handleSell}
+            handleRequest={handleRequest}
+            title="Продать предмет"
+            actionButtonText="Продать"
+            backdrop="static" 
+            keyboard={false} centered
+          />
+
+          <ModalAction
+            show={showModalDrop} 
+            onClose={handleModalDropClose} 
+            device={inventory_new[num]}
+            devicekey={num}
+            action={handleThrowAway}
+            handleRequest={handleRequest}
+            title="Выбросить предмет"
+            actionButtonText="Выбросить"
+            backdrop="static" 
+            keyboard={false} centered
+          />
+
     </Container>
   );
 };

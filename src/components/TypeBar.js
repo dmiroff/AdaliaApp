@@ -24,6 +24,7 @@ const translations = {
   "potions": "Зелье",
   "scroll": "Свиток",
   "reagent": "Реагент",
+  "goods": "Товары",
 };
 
 const TypeBar = observer(() => {
