@@ -6,7 +6,7 @@ import { observer } from 'mobx-react-lite';
 import { useContext, useEffect, useState } from 'react';
 import { Checker } from './http/UserAPI';
 import { Context } from './index';
-import { Spinner } from 'react-bootstrap';
+import { Container, Spinner } from 'react-bootstrap';
 
 const App = observer(() => {
   const [loading, setLoading] = useState(true);
@@ -44,11 +44,13 @@ const App = observer(() => {
     return <Spinner animation='grow'></Spinner>
   } else {
     return (
-      <BrowserRouter>
-        <NavBar />
-        <AppRouter />
-        {shouldNavigate && <NavigateToPrepare setShouldNavigate={setShouldNavigate} />}
-      </BrowserRouter>
+      <Container className="main-container">
+        <BrowserRouter>
+          <NavBar />
+          <AppRouter />
+          {shouldNavigate && <NavigateToPrepare setShouldNavigate={setShouldNavigate} />}
+        </BrowserRouter>
+      </Container>
     );
   }
 });
