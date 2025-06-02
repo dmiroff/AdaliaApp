@@ -304,7 +304,7 @@ const Character = observer(() => {
               "Временные эффекты",
             ].map((category) => (
 
-                <Tab eventKey={category} title={category}>
+                <Tab key={category} eventKey={category} title={category}>
                      {getSectionData(category) && (
                       <Container>
                         <ul>

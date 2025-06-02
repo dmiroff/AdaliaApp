@@ -14,13 +14,13 @@ const NavBar = observer(() => {
         <Navbar.Toggle aria-controls="responsive-navbar-nav" />
         <Navbar.Collapse id="responsive-navbar-nav">
           <Nav className="me-auto">
-            <Nav.Link onClick={() => navigate("/inventory")}> {/* Absolute navigation */}
+            <Nav.Link eventKey="inventory" onClick={() => navigate("/inventory")}> {/* Absolute navigation */}
               Инвентарь
             </Nav.Link>
-            <Nav.Link onClick={() => navigate("/character")}> {/* Absolute navigation */}
+            <Nav.Link eventKey="character" onClick={() => navigate("/character")}> {/* Absolute navigation */}
               Персонаж
             </Nav.Link>
-            <Nav.Link onClick={() => navigate("/rating")}> {/* Absolute navigation */}
+            <Nav.Link eventKey="rating" onClick={() => navigate("/rating")}> {/* Absolute navigation */}
               Рейтинг
             </Nav.Link>
           </Nav>

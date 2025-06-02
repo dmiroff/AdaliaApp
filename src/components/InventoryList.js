@@ -84,7 +84,7 @@ const InventoryList = observer(() => {
   return (
     <Row className="d-flex">
       {/* <div className="max-w-md mx-auto p-2"> */}
-        <Row md="auto" xs="auto" lg="auto" className="p-2">
+        <Row md="auto" xs={2} lg="auto" className="p-2">
           <Col>
             <TypeBar></TypeBar>
           </Col>
