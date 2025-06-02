@@ -118,6 +118,7 @@ const Character = observer(() => {
     };
 
     return dataDict
+
   }
 
   const getModByAtt = (att, agi = false) => {
@@ -148,6 +149,7 @@ const Character = observer(() => {
     return mod < 0 ? `${mod}` : `+${mod}`
 
   }
+
 
   const prepareAttString = (att, att_inc, agi = false) => {
     return (
@@ -242,6 +244,7 @@ const Character = observer(() => {
   }
 
   return (
+
           <Tabs
             defaultActiveKey="Параметры"
             transition={false}
