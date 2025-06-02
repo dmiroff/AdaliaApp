@@ -1,7 +1,8 @@
 import { observer } from "mobx-react-lite";
 import { useContext, useEffect, useState } from "react";
 import InventoryItem from "./InventoryItem";
-import Row from "react-bootstrap/Row";
+import {Row, Col, Form} from "react-bootstrap";
+import TypeBar from "../components/TypeBar";
 import { Context } from "../index";
 import GetDataById from "../http/GetData";
 import { Spinner } from "react-bootstrap";
@@ -82,15 +83,22 @@ const InventoryList = observer(() => {
 
   return (
     <Row className="d-flex">
-      <div className="max-w-md mx-auto p-4">
-        <input
-          type="text"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Item name..."
-          className="w-full p-2 border rounded-lg mb-4"
-        />
-      </div>
+      {/* <div className="max-w-md mx-auto p-2"> */}
+        <Row md="auto" xs={2} lg="auto" className="p-2">
+          <Col>
+            <TypeBar></TypeBar>
+          </Col>
+          <Col>
+            <Form.Control
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Название предмета..."
+              className="w-full p-2 border rounded-lg mb-4"
+            />
+          </Col>
+        </Row>
+      {/* </div> */}
       {results.map((item, index) => (
         <InventoryItem key={item.id} devicekey={item.id} device={item} />
       ))}
