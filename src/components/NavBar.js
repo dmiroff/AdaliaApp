@@ -11,40 +11,31 @@ const NavBar = observer(() => {
   return (
     <Navbar collapseOnSelect expand="lg" className="bg-body-tertiary">
       <Container>
-        <Navbar.Brand onClick={() => navigate("/inventory")}> {/* Use onClick to navigate */}
-          Инвентарь
-        </Navbar.Brand>
         <Navbar.Toggle aria-controls="responsive-navbar-nav" />
         <Navbar.Collapse id="responsive-navbar-nav">
           <Nav className="me-auto">
-            <Nav.Link onClick={() => navigate("/character")}> {/* Absolute navigation */}
+            <Nav.Link eventKey="inventory" onClick={() => navigate("/inventory")}> {/* Absolute navigation */}
+              Инвентарь
+            </Nav.Link>
+            <Nav.Link eventKey="character" onClick={() => navigate("/character")}> {/* Absolute navigation */}
               Персонаж
             </Nav.Link>
-            <Nav.Link onClick={() => navigate("/rating")}> {/* Absolute navigation */}
+            <Nav.Link eventKey="rating" onClick={() => navigate("/rating")}> {/* Absolute navigation */}
               Рейтинг
             </Nav.Link>
-            <NavDropdown title="Dropdown" id="collapsible-nav-dropdown">
-              <NavDropdown.Item onClick={() => navigate("/action/3.1")}>Action</NavDropdown.Item>
-              <NavDropdown.Item onClick={() => navigate("/action/3.2")}>Another action</NavDropdown.Item>
-              <NavDropdown.Item onClick={() => navigate("/action/3.3")}>Something</NavDropdown.Item>
-              <NavDropdown.Divider />
-              <NavDropdown.Item onClick={() => navigate("/action/3.4")}>
-                Separated link
-              </NavDropdown.Item>
-            </NavDropdown>
           </Nav>
 
           {user.IsAuth ? (
             <Nav className="ml-auto" style={{ color: "dark" }}>
-              <Button
-                variant={"outline-dark"}
-                className="ml-2"
-                onClick={() => navigate("/admin-panel")} // Navigate to a specific path
-              >
-                АдминПанель
-              </Button>
-              <Button
-                variant={"outline-dark"}
+              {/* <Button */}
+              {/*   variant={"outline-dark"} */}
+              {/*   className="ml-2" */}
+              {/*   onClick={() => navigate("/admin-panel")} // Navigate to a specific path */}
+              {/* > */}
+              {/*   АдминПанель */}
+              {/* </Button> */}
+              <Nav.Link
+                // variant={"outline-dark"}
                 className="ml-2"
                 onClick={() => {
                   user.setIsAuth(false);
@@ -52,7 +43,7 @@ const NavBar = observer(() => {
                 }}
               >
                 Выйти
-              </Button>
+              </Nav.Link>
             </Nav>
           ) : (
             <Nav className="ml-auto" style={{ color: "white" }}>

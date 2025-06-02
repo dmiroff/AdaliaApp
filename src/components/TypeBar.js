@@ -17,13 +17,14 @@ const translations = {
   "necklace": "Амулет",
   "ring": "Кольцо",
   "right_hand": "Оружие",
-  "left_hand": "Снаряжение в левой руке",
+  "left_hand": "Левая рука",
   "secondary_weapon": "Запасное оружие",
   "supplies": "Расходник",
   "food": "Еда",
   "potions": "Зелье",
   "scroll": "Свиток",
   "reagent": "Реагент",
+  "goods": "Товары",
 };
 
 const TypeBar = observer(() => {

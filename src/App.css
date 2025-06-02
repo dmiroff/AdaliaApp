@@ -54,3 +54,13 @@
 .display-linebreak {
   white-space: pre-line;
 }
+
+.main-container {
+  width: 100%;
+  min-height: 100vh;
+  border: 2px solid #555;
+  box-shadow: 0 0 20px #000;
+  margin: 10px;
+  padding: 10px
+}
+
