@@ -55,32 +55,35 @@ const InventoryItem = ({ devicekey, device }) => {
   const handleInspect = () => {
     navigate(INVENTORY_ROUTE + "/" + devicekey);
   };
-
-  const handleSell = async () => {
-    toggleHandleRequest();
+  
+  const handleSell = async (value) => {
+    setHandleRequest(true);
     const user_id = user.user.id;
-    const response = await SellItemById(user_id, devicekey, rangeValue);
+    const response = await SellItemById(devicekey, value);
     const player_data = response.data;
     const message = response.message;
     user.setPlayerInventory(player_data.inventory_new); // Update the state with fetched data
     user.setPlayer(player_data); // Set player data
     if (response.status){setToNavigate(true);};
-    toggleHandleRequest();
+    setShowModalSell(!showModalSell);
+    setHandleRequest(false);
 
     setModalMessage(message);
     setShowModal(true);
   };
   
-  const handleThrowAway = async () => {
-    toggleHandleRequest();
+  const handleThrowAway = async (value) => {
+    setHandleRequest(true);
+    setRangeValue(value)
     const user_id = user.user.id;
-    const response = await ThrowItemById(user_id, devicekey, rangeValue);
+    const response = await ThrowItemById(devicekey, value);
     const player_data = response.data;
     const message = response.message;
     user.setPlayerInventory(player_data.inventory_new); // Update the state with fetched data
     user.setPlayer(player_data); // Set player data
     if (response.status){setToNavigate(true);};
-    toggleHandleRequest();
+    setShowModalDrop(!showModalDrop);
+    setHandleRequest(false);
 
     setModalMessage(message);
     setShowModal(true);
@@ -88,7 +91,7 @@ const InventoryItem = ({ devicekey, device }) => {
 
   const handleWear = async () => {
     const user_id = user.user.id;
-    const response = await WearDataById(user_id, devicekey);
+    const response = await WearDataById(devicekey);
     const player_data = response.data;
     const message = response.message;
     user.setPlayerInventory(player_data.inventory_new); // Update the state with fetched data
@@ -114,12 +117,6 @@ const InventoryItem = ({ devicekey, device }) => {
       return () => clearTimeout(timer);
     }
   }, [showModal]);
-
-  if (toNavigate) {
-    const timer = setTimeout(() => {
-      navigate("/prepare"); // Navigate to prepare to update item lists
-  }, 1000);
-  }
 
   return (
       <Row xs={3} className="mb-2">

@@ -80,7 +80,7 @@ const Item = () => {
   const handleSell = async () => {
     toggleHandleRequest();
     const user_id = user.user.id;
-    const response = await SellItemById(user_id, num, 1);
+    const response = await SellItemById(num, 1);
     const player_data = response.data;
     const message = response.message;
     user.setPlayerInventory(player_data.inventory_new);
@@ -96,7 +96,7 @@ const Item = () => {
   const handleThrowAway = async () => {
     toggleHandleRequest();
     const user_id = user.user.id;
-    const response = await ThrowItemById(user_id, num, 1);
+    const response = await ThrowItemById(num, 1);
     const player_data = response.data;
     const message = response.message;
     user.setPlayerInventory(player_data.inventory_new); // Update the state with fetched data
@@ -109,7 +109,7 @@ const Item = () => {
 
   const handleWear = async () => {
     const user_id = user.user.id;
-    const response = await WearDataById(user_id, num);
+    const response = await WearDataById(num);
     const player_data = response.data;
     const message = response.message;
     user.setPlayerInventory(player_data.inventory_new); // Update the state with fetched data
@@ -134,7 +134,7 @@ const Item = () => {
   useEffect(() => {
     if (toNavigate) {
       const timer = setTimeout(() => {
-        navigate("/prepare");
+        navigate("/inventory");
       }, 1000);
       return () => clearTimeout(timer);
     }

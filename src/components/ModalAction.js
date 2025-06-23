@@ -11,8 +11,11 @@ const ModalAction = ({show, onClose, device, devicekey, action, title, actionBut
    return null;
   }
 
+  const makeAction = () => {
+    action(rangeValue)
+  }
+
   return (
-    console.log(user),
     <Modal show={show} onHide={onClose} backdrop="static" keyboard={false} centered>
       <Modal.Header closeButton>
         <Modal.Title>{title}</Modal.Title>
@@ -39,7 +42,7 @@ const ModalAction = ({show, onClose, device, devicekey, action, title, actionBut
         </label>
       </Modal.Body>
       <Modal.Footer>
-        <Button disabled={handleRequest} variant="primary" onClick={action}>
+        <Button disabled={handleRequest} variant="primary" onClick={makeAction}>
           {actionButtonText} 
         </Button>
 
