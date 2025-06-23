@@ -18,9 +18,9 @@ const Rating = () => {
   useEffect(() => {
     const fetchRatingData = async () => {
             try {
-                const rating = await GetRating(playerId);
+                const rating = await GetRating();
                 const grandGame = await GetGrandGame();
-                const tournament = await GetTournament(playerId);
+                const tournament = await GetTournament();
                 setRating(rating.data);
                 setGrandGame(grandGame.data);
                 setTournament(tournament.data);

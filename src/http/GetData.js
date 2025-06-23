@@ -5,14 +5,18 @@ import { SERVER_APP_API_URL } from "../utils/constants";
 const apiClient = axios.create({
   baseURL: SERVER_APP_API_URL,
   headers: {
-    'skip_zrok_interstitial': 'true'
+    'skip_zrok_interstitial': 'true',
+    'Authorization': `Bearer ${localStorage.getItem("access_token")}`
   }
 });
 
 // Define and export the function
-const GetDataById = async (playerId) => {
+const GetDataById = async () => {
   try {
-    const response = await apiClient.get(`/player/${playerId}`);
+    const response = await apiClient.get(`/player`, {
+      headers: {
+        "Authorization": `Bearer ${localStorage.getItem("access_token")}`}
+    });
     return response.status === 200 ? response.data : false;
   } catch (error) {
     console.error("Error fetching player data:", error);
@@ -20,9 +24,9 @@ const GetDataById = async (playerId) => {
   }
 };
 
-export const GetRating = async (playerId) => {
+export const GetRating = async () => {
   try {
-    const response = await apiClient.get(`/rating/${playerId}`);
+    const response = await apiClient.get(`/rating`);
     return response.status === 200 ? response.data : false;
   } catch (error) {
     console.error("Error fetching rating data:", error);
@@ -40,9 +44,9 @@ export const GetGrandGame = async () => {
   }
 };
 
-export const GetTournament = async (playerId) => {
+export const GetTournament = async () => {
   try {
-    const response = await apiClient.get(`/tournament/${playerId}`);
+    const response = await apiClient.get(`/tournament`);
     return response.status === 200 ? response.data : false;
   } catch (error) {
     console.error("Error fetching tournament data:", error);

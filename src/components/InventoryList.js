@@ -27,7 +27,7 @@ const InventoryList = observer(() => {
     };
 
     fetchPlayer(user_id);
-  }, [user_id, user]);
+  }, [user_id, user, playerData]);
  
   useEffect(() => {
     if (playerData) {

@@ -25,39 +25,6 @@ const NavBar = observer(() => {
             </Nav.Link>
           </Nav>
 
-          {user.IsAuth ? (
-            <Nav className="ml-auto" style={{ color: "dark" }}>
-              {/* <Button */}
-              {/*   variant={"outline-dark"} */}
-              {/*   className="ml-2" */}
-              {/*   onClick={() => navigate("/admin-panel")} // Navigate to a specific path */}
-              {/* > */}
-              {/*   АдминПанель */}
-              {/* </Button> */}
-              <Nav.Link
-                // variant={"outline-dark"}
-                className="ml-2"
-                onClick={() => {
-                  user.setIsAuth(false);
-                  navigate("/"); // Redirect to home or another path on logout
-                }}
-              >
-                Выйти
-              </Nav.Link>
-            </Nav>
-          ) : (
-            <Nav className="ml-auto" style={{ color: "white" }}>
-              <Button
-                variant={"outline-dark"}
-                onClick={() => {
-                  //user.setIsAuth(true);
-                  navigate("/auth"); // Navigate to an authentication page
-                }}
-              >
-                Авторизация
-              </Button>
-            </Nav>
-          )}
         </Navbar.Collapse>
       </Container>
     </Navbar>
