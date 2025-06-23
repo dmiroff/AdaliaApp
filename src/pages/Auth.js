@@ -17,21 +17,17 @@ const Auth = () => {
 
     const authenticateUser = async () => {
       try {
-        const isAuthorized = await PlayerAuthCheck(id, token); // Use PlayerAuthCheck to authenticate
-        localStorage.setItem("id", id);
-        localStorage.setItem("token", token);
-        setTimeout(() => {
-          if (isAuthorized) {
-            user.setIsAuth(true);
-            user.setUser({ id: id });
-            navigate("/prepare"); // Navigate to inventory if authorized
-          } else {
-            navigate("/rating"); // Redirect to rating if not authorized
-          }
-        }, 2000);
+        const auth = await PlayerAuthCheck(id, token); // Use PlayerAuthCheck to authenticate
+        if (auth) {
+          user.setIsAuth(true);
+          user.setUser({ id: id });
+          navigate("/inventory"); // Navigate to inventory if authorized
+        } else {
+          navigate("/notauth"); // Redirect to rating if not authorized
+        }
       } catch (error) {
         console.error("Error during authentication:", error);
-        navigate("/rating"); // Redirect to rating if there's an error
+        navigate("/notauth"); // Redirect to rating if there's an error
       }
     };
 

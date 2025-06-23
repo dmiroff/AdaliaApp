@@ -5,14 +5,15 @@ import { SERVER_APP_API_URL } from "../utils/constants";
 const apiClient = axios.create({
   baseURL: SERVER_APP_API_URL,
   headers: {
-    'skip_zrok_interstitial': 'true'
+    'skip_zrok_interstitial': 'true',
+    'Authorization': `Bearer ${localStorage.getItem("access_token")}`
   }
 });
 
 // Define and export the function
-export const WearDataById = async (playerId, itemId) => {
+export const WearDataById = async (itemId) => {
     try {
-      const response = await apiClient.get(`${SERVER_APP_API_URL}/wear/${playerId}/${itemId}`);
+      const response = await apiClient.get(`${SERVER_APP_API_URL}/wear/${itemId}`);
       return response.status === 200 ? response.data : false;
     } catch (error) {
       console.error("Error wearing item:", error);
@@ -21,9 +22,9 @@ export const WearDataById = async (playerId, itemId) => {
   };
 
 // Define and export the function
-export const ThrowItemById = async (playerId, itemId, amount) => {
+export const ThrowItemById = async (itemId, amount) => {
   try {
-    const response = await apiClient.get(`${SERVER_APP_API_URL}/throw/${playerId}/${itemId}/${amount}`);
+    const response = await apiClient.get(`${SERVER_APP_API_URL}/throw/${itemId}/${amount}`);
     return response.status === 200 ? response.data : false;
   } catch (error) {
     console.error("Error throwing item:", error);
@@ -32,9 +33,9 @@ export const ThrowItemById = async (playerId, itemId, amount) => {
 };
 
 // Define and export the function
-export const SellItemById = async (playerId, itemId, amount) => {
+export const SellItemById = async (itemId, amount) => {
   try {
-    const response = await apiClient.get(`${SERVER_APP_API_URL}/sell/${playerId}/${itemId}/${amount}`);
+    const response = await apiClient.get(`${SERVER_APP_API_URL}/sell/${itemId}/${amount}`);
     return response.status === 200 ? response.data : false;
   } catch (error) {
     console.error("Error selling item:", error);
@@ -44,9 +45,9 @@ export const SellItemById = async (playerId, itemId, amount) => {
 
 
 // Define and export the function
-export const UnwearDataById = async (playerId, itemId) => {
+export const UnwearDataById = async (itemId) => {
   try {
-    const response = await apiClient.get(`${SERVER_APP_API_URL}/unwear/${playerId}/${itemId}`);
+    const response = await apiClient.get(`${SERVER_APP_API_URL}/unwear/${itemId}`);
     return response.status === 200 ? response.data : false;
   } catch (error) {
     console.error("Error wearing item:", error);
