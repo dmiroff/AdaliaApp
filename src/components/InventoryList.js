@@ -15,19 +15,20 @@ const InventoryList = observer(() => {
   const [loading, setLoading] = useState(true);
   const [delay, setDelay] = useState(false);
   const [query, setQuery] = useState("")
-  const user_id = user.user.id;
+  const [user_inventory, setUserInventory] = useState(user.inventory_new);
 
   useEffect(() => {
-    const fetchPlayer = async (user_id) => {
-      const playerData = await GetDataById(user_id);
+    const fetchPlayer = async () => {
+      const playerData = await GetDataById();
       setPlayerData(playerData.data);
       user.setPlayerInventory(playerData.data.inventory_new);
+      setUserInventory(playerData.data.inventory_new);
       user.setPlayer(playerData.data);
       setLoading(false);
     };
 
-    fetchPlayer(user_id);
-  }, [user_id, user, playerData]);
+    fetchPlayer();
+  }, [user]);
  
   useEffect(() => {
     if (playerData) {
@@ -51,9 +52,7 @@ const InventoryList = observer(() => {
     return <div>Error: Player data not found</div>;
   }
 
-  const { inventory_new } = playerData;
-
-  const filteredItemsWithKeys = Object.entries(inventory_new).filter(
+  const filteredItemsWithKeys = Object.entries(user.inventory_new).filter(
     ([key, item]) => item.type === selected_type
   );
 
@@ -67,7 +66,7 @@ const InventoryList = observer(() => {
   
   const results = query ? fuse.search(query).map(result => result.item) : itemObjects;
 
-  if (!Object.keys(inventory_new).length) {
+  if (!Object.keys(user.inventory_new).length) {
     return <div>Вот инвентарь пустой, он предмет простой</div>;
   }
 

@@ -14,8 +14,8 @@ const Character = observer(() => {
   const user_id = user.user.id;
 
   useEffect(() => {
-    const fetchPlayer = async (user_id) => {
-      const playerData = await GetDataById(user_id);
+    const fetchPlayer = async () => {
+      const playerData = await GetDataById();
       setPlayerData(playerData.data);
       user.setPlayer(playerData.data);
       setLoading(false);
