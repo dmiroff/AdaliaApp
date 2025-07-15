@@ -77,10 +77,10 @@ const Item = () => {
   }, [showModal]);
 
 
-  const handleSell = async () => {
+  const handleSell = async (value) => {
     toggleHandleRequest();
     const user_id = user.user.id;
-    const response = await SellItemById(num, 1);
+    const response = await SellItemById(num, value);
     const player_data = response.data;
     const message = response.message;
     user.setPlayerInventory(player_data.inventory_new);
@@ -93,10 +93,10 @@ const Item = () => {
     setShowModal(true);
   };
 
-  const handleThrowAway = async () => {
+  const handleThrowAway = async (value) => {
     toggleHandleRequest();
     const user_id = user.user.id;
-    const response = await ThrowItemById(num, 1);
+    const response = await ThrowItemById(num, value);
     const player_data = response.data;
     const message = response.message;
     user.setPlayerInventory(player_data.inventory_new); // Update the state with fetched data

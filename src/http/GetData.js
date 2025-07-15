@@ -25,8 +25,14 @@ const GetDataById = async () => {
 };
 
 export const GetRating = async () => {
+  console.log(`Rating token: ${localStorage.getItem('access_token')}`)
   try {
-    const response = await apiClient.get(`/rating`);
+    const response = await apiClient.get(`/rating`, {
+      headers: {
+        "Authorization": `Bearer ${localStorage.getItem("access_token")}`}
+    });
+
+    console.log(response.data)
     return response.status === 200 ? response.data : false;
   } catch (error) {
     console.error("Error fetching rating data:", error);
@@ -35,8 +41,13 @@ export const GetRating = async () => {
 };
 
 export const GetGrandGame = async () => {
+  console.log(`Grandgame token: ${localStorage.getItem('access_token')}`)
   try {
-    const response = await apiClient.get(`/grandgame`);
+    const response = await apiClient.get(`/grandgame`, {
+      headers: {
+        "Authorization": `Bearer ${localStorage.getItem("access_token")}`}
+    });
+
     return response.status === 200 ? response.data : false;
   } catch (error) {
     console.error("Error fetching grand game data:", error);
@@ -46,7 +57,11 @@ export const GetGrandGame = async () => {
 
 export const GetTournament = async () => {
   try {
-    const response = await apiClient.get(`/tournament`);
+    const response = await apiClient.get(`/tournament`, {
+      headers: {
+        "Authorization": `Bearer ${localStorage.getItem("access_token")}`}
+    });
+
     return response.status === 200 ? response.data : false;
   } catch (error) {
     console.error("Error fetching tournament data:", error);
