@@ -65,7 +65,7 @@ const Rating = () => {
                         <ListGroup>
                             {ratings[key].map((item) => (
                                 <ListGroup.Item key={item.id} style={{marginTop: 5, paddingTop: 5}} >
-                                    {item?.player_position && (`${item.player_position}.`)} {item.name}: {item.score}
+                                    {item?.player_position && (`${item.player_position}.`)} {item.name}: {item.score}{item?.stage && (`/${item.stage}`)}
                                 </ListGroup.Item>
                             )
                             )}
