@@ -13,7 +13,10 @@ const apiClient = axios.create({
 // Define and export the function
 export const WearDataById = async (itemId) => {
     try {
-      const response = await apiClient.get(`${SERVER_APP_API_URL}/wear/${itemId}`);
+      const response = await apiClient.get(`${SERVER_APP_API_URL}/wear/${itemId}`, {
+      headers: {
+        "Authorization": `Bearer ${localStorage.getItem("access_token")}`}
+    });
       return response.status === 200 ? response.data : false;
     } catch (error) {
       console.error("Error wearing item:", error);
@@ -24,7 +27,10 @@ export const WearDataById = async (itemId) => {
 // Define and export the function
 export const ThrowItemById = async (itemId, amount) => {
   try {
-    const response = await apiClient.get(`${SERVER_APP_API_URL}/throw/${itemId}/${amount}`);
+    const response = await apiClient.get(`${SERVER_APP_API_URL}/throw/${itemId}/${amount}`, {
+      headers: {
+        "Authorization": `Bearer ${localStorage.getItem("access_token")}`}
+    });
     return response.status === 200 ? response.data : false;
   } catch (error) {
     console.error("Error throwing item:", error);
@@ -35,7 +41,10 @@ export const ThrowItemById = async (itemId, amount) => {
 // Define and export the function
 export const SellItemById = async (itemId, amount) => {
   try {
-    const response = await apiClient.get(`${SERVER_APP_API_URL}/sell/${itemId}/${amount}`);
+    const response = await apiClient.get(`${SERVER_APP_API_URL}/sell/${itemId}/${amount}`, {
+      headers: {
+        "Authorization": `Bearer ${localStorage.getItem("access_token")}`}
+    });
     return response.status === 200 ? response.data : false;
   } catch (error) {
     console.error("Error selling item:", error);
@@ -47,7 +56,10 @@ export const SellItemById = async (itemId, amount) => {
 // Define and export the function
 export const UnwearDataById = async (itemId) => {
   try {
-    const response = await apiClient.get(`${SERVER_APP_API_URL}/unwear/${itemId}`);
+    const response = await apiClient.get(`${SERVER_APP_API_URL}/unwear/${itemId}`, {
+      headers: {
+        "Authorization": `Bearer ${localStorage.getItem("access_token")}`}
+    });
     return response.status === 200 ? response.data : false;
   } catch (error) {
     console.error("Error wearing item:", error);
