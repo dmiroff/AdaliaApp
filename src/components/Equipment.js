@@ -76,7 +76,7 @@ const Equipment = () => {
   const handleUnwear = async () => {
     try {
       if (user.player_data[hoveredSlot]) {
-        const response = await UnwearDataById(user.user.id, user.player_data[hoveredSlot].id);
+        const response = await UnwearDataById(user.player_data[hoveredSlot].id);
         if (response.status) {
           setToNavigate(true);
           const message = response.message;
