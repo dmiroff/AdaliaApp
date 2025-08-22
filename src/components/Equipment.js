@@ -76,7 +76,7 @@ const Equipment = () => {
   const handleUnwear = async () => {
     try {
       if (user.player_data[hoveredSlot]) {
-        const response = await UnwearDataById(user.user.id, user.player_data[hoveredSlot].id);
+        const response = await UnwearDataById(user.player_data[hoveredSlot].id);
         if (response.status) {
           setToNavigate(true);
           const message = response.message;
@@ -108,8 +108,10 @@ const Equipment = () => {
   return (
     <Container className="mt-4">
       <Row className="character-body-container" style={{ position: 'relative' }}>
-        <img src={bodyImage} alt="Character Body" className="character-body" />
-        {equipmentSlots.map((slot) => (
+        <div className="inventory-container">
+          <div className="character-silhouette">
+            <img src={bodyImage} alt="Character" className="silhouette-img" />
+            {equipmentSlots.map((slot) => (
           <div
             key={slot}
             className={`equipment-slot ${slot}`}
@@ -117,14 +119,19 @@ const Equipment = () => {
             onMouseEnter={() => setHoveredSlot(slot)}
             onMouseLeave={() => setHoveredSlot(null)}
           >
-            {equippedItems[slot] ? (
+            {equippedItems[slot].id ? (
               <>
+                {equippedItems[slot].Image ? (
                 <img
-                  src={equippedItems[slot].Image ? `/assets/Images/${equippedItems[slot].Image.split("Images/")[1]}` : exampleImage}
+                  src={`/assets/Images/${equippedItems[slot].Image.split("Images/")[1]}`}
                   alt={equippedItems[slot].name}
                   className="equipment-item"
                   style={{ position: 'absolute', width: '10vw', height: '10vh' }}
                 />
+
+                ) :
+                  <div className="empty-slot" />
+                }
                 {hoveredSlot === slot && (
                   <DropdownButton
                     title="Действия"
@@ -143,15 +150,12 @@ const Equipment = () => {
                 )}
               </>
             ) : (
-              <img
-                src={exampleImage}
-                alt="Empty slot"
-                className="equipment-item"
-                style={{ position: 'absolute', width: '1vw', height: '1vh' }}
-              />
+              <div className="empty-slot" />
             )}
           </div>
         ))}
+          </div>
+        </div>
       </Row>
       <Modal show={showModal} onHide={handleModalClose} backdrop="static" keyboard={false}>
         <Modal.Header closeButton>

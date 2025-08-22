@@ -1,7 +1,7 @@
 import { observer } from "mobx-react-lite";
 import { useContext, useEffect, useState } from "react";
 import InventoryItem from "./InventoryItem";
-import {Row, Col, Form} from "react-bootstrap";
+import {Row, Col, Form, Modal, Button} from "react-bootstrap";
 import TypeBar from "../components/TypeBar";
 import { Context } from "../index";
 import GetDataById from "../http/GetData";
@@ -14,8 +14,12 @@ const InventoryList = observer(() => {
   const [playerData, setPlayerData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [delay, setDelay] = useState(false);
-  const [query, setQuery] = useState("")
+  const [query, setQuery] = useState("");
   const [user_inventory, setUserInventory] = useState(user.inventory_new);
+  
+  // Добавляем состояния для модального окна
+  const [showModal, setShowModal] = useState(false);
+  const [modalMessage, setModalMessage] = useState("");
 
   useEffect(() => {
     const fetchPlayer = async () => {
@@ -37,6 +41,20 @@ const InventoryList = observer(() => {
       }, 1000); // Delay time of 2 seconds
     }
   }, [playerData]);
+
+  // Функция для показа модального окна
+  const handleShowModal = (message) => {
+    setModalMessage(message);
+    setShowModal(true);
+    
+    // Автоматическое закрытие через 3 секунды
+    setTimeout(() => {
+      setShowModal(false);
+    }, 3000);
+  };
+
+  // Функция для закрытия модального окна
+  const handleCloseModal = () => setShowModal(false);
 
   if (loading) {
     return (
@@ -81,8 +99,8 @@ const InventoryList = observer(() => {
   }
 
   return (
-    <Row className="d-flex">
-      {/* <div className="max-w-md mx-auto p-2"> */}
+    <>
+      <Row className="d-flex">
         <Row md="auto" xs={2} lg="auto" className="p-2">
           <Col>
             <TypeBar></TypeBar>
@@ -97,11 +115,29 @@ const InventoryList = observer(() => {
             />
           </Col>
         </Row>
-      {/* </div> */}
-      {results.map((item, index) => (
-        <InventoryItem key={item.id} devicekey={item.id} device={item} />
-      ))}
-    </Row>
+        {results.map((item, index) => (
+          <InventoryItem 
+            key={item.id} 
+            devicekey={item.id} 
+            device={item} 
+            onShowModal={handleShowModal} // Передаем функцию для показа модалки
+          />
+        ))}
+      </Row>
+      
+      {/* Модальное окно в родительском компоненте */}
+      <Modal show={showModal} onHide={handleCloseModal} backdrop="static" keyboard={false} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Оповещение</Modal.Title>
+        </Modal.Header>
+        <Modal.Body style={{ whiteSpace: 'pre-wrap' }}>{modalMessage}</Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={handleCloseModal}>
+            Закрыть
+          </Button>
+        </Modal.Footer>
+      </Modal>
+    </>
   );
 });
 
