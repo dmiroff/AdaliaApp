@@ -30,28 +30,28 @@
 
 /* Left Armor Column (4 items) */
 .head {
-  top: 5%;
+  top: 6%;
   left: 5%;
   width: 25%;
   height: 25%;
 }
 
 .breast_armor {
-  top: 25%;
+  top: 30%;
   left: 5%;
   width: 25%;
   height: 25%;
 }
 
 .arm_armor {
-  top: 50%;
+  top: 54%;
   left: 5%;
   width: 25%;
   height: 25%;
 }
 
 .leg_armor {
-  top: 70%;
+  top: 78%;
   left: 5%;
   width: 25%;
   height: 25%;
@@ -59,73 +59,73 @@
 
 /* Right Armor Column (4 items) */
 .cloak {
-  top: 5%;
-  left: 75%;
+  top: 6%;
+  left: 83%;
   width: 25%;
   height: 25%;
 }
 
 .gloves {
-  top: 25%;
-  left: 75%;
+  top: 30%;
+  left: 83%;
   width: 25%;
   height: 25%;
 }
 
 .belt {
-  top: 50%;
-  left: 75%;
+  top: 54%;
+  left: 83%;
   width: 25%;
   height: 25%;
 }
 
 .boots {
-  top: 70%;
-  left: 75%;
+  top: 78%;
+  left: 83%;
   width: 25%;
   height: 25%;
 }
 
 /* Jewelry Group - Necklace centered above 5 rings */
 .necklace {
-  top: 10%;
-  left: 50%;
+  top: 25%;
+  left: 45%;
   width: 15%;
   height: 15%;
 }
 
 /* Rings arranged in two columns below necklace */
 .ring_1 {
-  top: 30%;
-  left: 40%;
+  top: 38%;
+  left: 27%;
   width: 15%;
   height: 15%;
 }
 
 .ring_2 {
-  top: 45%;
-  left: 40%;
+  top: 57%;
+  left: 33%;
   width: 15%;
   height: 15%;
 }
 
 .ring_3 {
-  top: 60%;
-  left: 40%;
+  top: 61%;
+  left: 45%;
   width: 15%;
   height: 15%;
 }
 
 .ring_4 {
-  top: 30%;
-  left: 60%;
+  top: 38%;
+  left: 63%;
   width: 15%;
   height: 15%;
 }
 
 .ring_5 {
-  top: 45%;
-  left: 60%;
+  top: 57%;
+  left: 57%;
   width: 15%;
   height: 15%;
 }
@@ -133,21 +133,21 @@
 /* Weapons Group (Bottom Center - 3 items) */
 .right_hand {
   top: 80%;
-  left: 30%;
+  left: 33%;
   width: 25%;
   height: 25%;
 }
 
 .left_hand {
   top: 80%;
-  left: 40%;
+  left: 45%;
   width: 25%;
   height: 25%;
 }
 
 .secondary_weapon {
   top: 80%;
-  left: 50%;
+  left: 57%;
   width: 25%;
   height: 25%;
 }
@@ -157,13 +157,50 @@
   font-size: 0.8rem;
 }
 
-/* Empty slot indicator */
-.empty-slot {
-  width: 15%;
-  height: 15%;
-  background-color: rgba(255, 0, 0, 0.1);
+
+.inventory-container {
+  position: relative;
+  width: 90%;
+  margin: auto;
+  background-color: #1c1c1c;
+  border: 2px solid #555;
+  box-shadow: 0 0 20px #000;
+}
+
+.character-silhouette {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.silhouette-img {
+  width: 100%;
+  height: 100%;
+  opacity: 0.5;
+}
+
+.equipment-slot {
+  position: absolute;
+  width: 11%;
+  height: auto;
+  min-height: 17%;
+  background-color: rgba(0, 0, 0, 0.5);
+  border: 1px solid #999;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: rgba(255, 255, 255, 0.5);
 }
+
+.equipment-slot img {
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.empty-slot {
+  width: 100%;
+  height: 100%;
+  background-color: rgba(50, 50, 50, 0.3);
+}
+
