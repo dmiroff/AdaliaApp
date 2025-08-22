@@ -10,20 +10,18 @@ import { Context } from "../index";
 import {WearDataById, ThrowItemById, SellItemById} from "../http/SupportFunctions";
 import ModalAction from "./ModalAction"
 
-const InventoryItem = ({ devicekey, device }) => {
+const InventoryItem = ({ devicekey, device, onShowModal }) => {
   const { user } = useContext(Context);
   const imageSrc = device.image
-  ? `../assets/Images/${device.image.replace(/^.*?Images\//i, '')}`
-  : exampleImage;
-  const [showModal, setShowModal] = useState(false);
-  const [modalMessage, setModalMessage] = useState("");
-  const navigate = useNavigate();
+    ? `../assets/Images/${device.image.replace(/^.*?Images\//i, '')}`
+    : exampleImage;
   const [showMenu, setShowMenu] = useState(false);
   const [showModalSell, setShowModalSell] = useState(false);
   const [showModalDrop, setShowModalDrop] = useState(false);
   const [toNavigate, setToNavigate] = useState(false);
   const [handleRequest, setHandleRequest] = useState(false);
   const [rangeValue, setRangeValue] = useState(1);
+  const navigate = useNavigate();
 
   const handleMouseEnter = () => {
     setShowMenu(!showMenu);
@@ -58,65 +56,46 @@ const InventoryItem = ({ devicekey, device }) => {
   
   const handleSell = async (value) => {
     setHandleRequest(true);
-    const user_id = user.user.id;
     const response = await SellItemById(devicekey, value);
     const player_data = response.data;
-    const message = response.message;
-    user.setPlayerInventory(player_data.inventory_new); // Update the state with fetched data
-    user.setPlayer(player_data); // Set player data
-    if (response.status){setToNavigate(true);};
-    setShowModalSell(!showModalSell);
+    user.setPlayerInventory(player_data.inventory_new);
+    user.setPlayer(player_data);
+    if (response.status) { setToNavigate(true); }
+    setShowModalSell(false);
     setHandleRequest(false);
 
-    setModalMessage(message);
-    setShowModal(true);
+    // Используем переданную функцию вместо локального состояния
+    onShowModal(response.message);
   };
   
   const handleThrowAway = async (value) => {
     setHandleRequest(true);
-    setRangeValue(value)
-    const user_id = user.user.id;
+    setRangeValue(value);
     const response = await ThrowItemById(devicekey, value);
     const player_data = response.data;
-    const message = response.message;
-    user.setPlayerInventory(player_data.inventory_new); // Update the state with fetched data
-    user.setPlayer(player_data); // Set player data
-    if (response.status){setToNavigate(true);};
-    setShowModalDrop(!showModalDrop);
+    user.setPlayerInventory(player_data.inventory_new);
+    user.setPlayer(player_data);
+    if (response.status) { setToNavigate(true); }
+    setShowModalDrop(false);
     setHandleRequest(false);
 
-    setModalMessage(message);
-    setShowModal(true);
+    // Используем переданную функцию вместо локального состояния
+    onShowModal(response.message);
   };
 
   const handleWear = async () => {
-    const user_id = user.user.id;
     const response = await WearDataById(devicekey);
     const player_data = response.data;
-    const message = response.message;
-    user.setPlayerInventory(player_data.inventory_new); // Update the state with fetched data
-    user.setPlayer(player_data); // Set player data
+    user.setPlayerInventory(player_data.inventory_new);
+    user.setPlayer(player_data);
 
-    setModalMessage(message);
-    setShowModal(true);
+    // Используем переданную функцию вместо локального состояния
+    onShowModal(response.message);
   };
 
   // Function to close the modal
-  const handleModalClose = () => setShowModal(false);
   const handleModalSellClose = () => setShowModalSell(false);
   const handleModalDropClose = () => setShowModalDrop(false);
-
-  // Automatically close the modal after 3 seconds
-  useEffect(() => {
-    if (showModal) {
-      const timer = setTimeout(() => {
-        handleModalClose();
-      }, 3000);
-
-      // Clear the timer if the component is unmounted
-      return () => clearTimeout(timer);
-    }
-  }, [showModal]);
 
   return (
       <Row xs={3} className="mb-2">
@@ -172,17 +151,6 @@ const InventoryItem = ({ devicekey, device }) => {
               </DropdownButton>
             )}
           </Card>
-          <Modal show={showModal} onHide={handleModalClose} backdrop="static" keyboard={false} centered>
-            <Modal.Header closeButton>
-              <Modal.Title>Оповещение</Modal.Title>
-            </Modal.Header>
-            <Modal.Body style={{ whiteSpace: 'pre-wrap' }}>{modalMessage}</Modal.Body>
-            <Modal.Footer>
-              <Button variant="secondary" onClick={handleModalClose}>
-                Закрыть
-              </Button>
-            </Modal.Footer>
-          </Modal>
 
           <ModalAction
             show={showModalSell} 
