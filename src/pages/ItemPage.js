@@ -168,7 +168,8 @@ const Item = () => {
             <Button variant="primary" className="mb-2" onClick={handleWear}>Надеть</Button>
           )}
           <Button variant="success" className="mb-2" onClick={handleModalSell}>Продать</Button>
-          <Button variant="danger" onClick={handleModalDrop}>Выбросить</Button>
+          <Button variant="danger" className="mb-2" onClick={handleModalDrop}>Выбросить</Button>
+          <Button variant="secondary" className="mb-2" onClick={() => navigate(-1)}>Назад</Button>
         </Col>
       </Row>
       <Row className="mt-4">
