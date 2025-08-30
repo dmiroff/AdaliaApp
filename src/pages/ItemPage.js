@@ -158,7 +158,7 @@ const Item = () => {
   console.log(imageSrc);
 
   return (
-    <Container className="mt-4">
+    <Container className="mt-4" className="content-overlay">
       <Row>
         <Col md={6}>
           <Image src={imageSrc} fluid />
