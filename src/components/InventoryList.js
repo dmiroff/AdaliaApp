@@ -14,7 +14,6 @@ const InventoryList = observer(() => {
   const { selected_type } = user;
   const [playerData, setPlayerData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [delay, setDelay] = useState(false);
   const [query, setQuery] = useState("");
   const [user_inventory, setUserInventory] = useState(user.inventory_new);
   
@@ -35,14 +34,6 @@ const InventoryList = observer(() => {
     fetchPlayer();
   }, [user]);
  
-  useEffect(() => {
-    if (playerData) {
-      setTimeout(() => {
-        setDelay(true);
-      }, 1000); // Delay time of 2 seconds
-    }
-  }, [playerData]);
-
   // Функция для показа модального окна
   const handleShowModal = (message) => {
     setModalMessage(message);
@@ -87,16 +78,6 @@ const InventoryList = observer(() => {
 
   if (!Object.keys(user.inventory_new).length) {
     return <div>Вот инвентарь пустой, он предмет простой</div>;
-  }
-
-  if (!delay) {
-    return (
-      <div className="d-flex justify-content-center align-items-center">
-        <Spinner animation="border" role="status">
-          <span className="visually-hidden">Loading...</span>
-        </Spinner>
-      </div>
-    );
   }
 
   return (

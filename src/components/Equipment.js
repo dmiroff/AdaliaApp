@@ -17,7 +17,6 @@ const Equipment = () => {
   const [modalMessage, setModalMessage] = useState("");
   const [toNavigate, setToNavigate] = useState(false);
   const [showModal, setShowModal] = useState(false);
-  const [delay, setDelay] = useState(false);
   const [hoveredSlot, setHoveredSlot] = useState(null); // State to track hovered slot
 
   const equipmentSlots = [
@@ -52,7 +51,7 @@ const Equipment = () => {
       }
     };
     fetchData();
-  }, [user.user.id]);
+  }, [user.user.id, user.player_data]);
 
   const handleModalClose = () => setShowModal(false);
 
@@ -64,14 +63,6 @@ const Equipment = () => {
       return () => clearTimeout(timer);
     }
   }, [showModal]);
-
-  useEffect(() => {
-    if (equippedItems) {
-      setTimeout(() => {
-        setDelay(true);
-      }, 1000);
-    }
-  }, [equippedItems]);
 
   const handleUnwear = async () => {
     try {
@@ -95,7 +86,7 @@ const Equipment = () => {
     }
   };
 
-  if (!delay) {
+  if (loading) {
     return (
       <div className="d-flex justify-content-center align-items-center">
         <Spinner animation="border" role="status">

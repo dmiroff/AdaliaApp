@@ -101,23 +101,16 @@ const InventoryItem = ({ devicekey, device, onShowModal }) => {
       <Row xs={3} className="mb-2">
         <Col 
           xs={3} 
-          md={1} 
-          // className="mb-4" 
-          className="h-100"
-
+          md={2}
         >
-          <Card 
-            style={{ cursor: "pointer", position: "relative", justifyContent: 'center', alignItems: 'center' }}
-            border="white"
-            align="center"
-            className="h-100"
-            onMouseEnter={handleMouseEnter}
-            onMouseLeave={handleMouseLeave}
-          >
-            <div style={{ position: "relative" }}>
+        <div 
+          style={{ cursor: "pointer", position: "relative", justifyContent: 'center', alignItems: 'center' }}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+        >
               <Image src={imageSrc}
+                className="list-images"
                 fluid
-                className="mb-1"
                 loading="lazy"
                 onError={(e) => {
                   e.target.src = exampleImage; // Fallback
@@ -128,7 +121,6 @@ const InventoryItem = ({ devicekey, device, onShowModal }) => {
                   objectFit: 'cover'
                 }}
               />
-            </div>
             {showMenu && (
               <DropdownButton
                 show={showMenu}
@@ -139,7 +131,7 @@ const InventoryItem = ({ devicekey, device, onShowModal }) => {
                 style={{
                   position: "absolute",
                   top: "50%",
-                  left: "50%",
+                  left: "100%",
                   transform: "translate(-50%, -50%)",
                   zIndex: 1,
                 }}
@@ -150,8 +142,7 @@ const InventoryItem = ({ devicekey, device, onShowModal }) => {
                 <Dropdown.Item onClick={handleModalDrop}>выкинуть</Dropdown.Item>
               </DropdownButton>
             )}
-          </Card>
-
+          </div>
           <ModalAction
             show={showModalSell} 
             onClose={handleModalSellClose} 

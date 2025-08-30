@@ -96,6 +96,10 @@ body {
   color: #000000;
 }
 
+.list-images {
+  border-radius: 8px;
+}
+
 /* Для модального окна */
 .modal-content {
   background-color: rgba(33, 37, 41, 0.95); /* Полупрозрачный темный фон */
