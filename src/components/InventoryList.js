@@ -6,6 +6,7 @@ import TypeBar from "../components/TypeBar";
 import { Context } from "../index";
 import GetDataById from "../http/GetData";
 import { Spinner } from "react-bootstrap";
+import '../App.css';
 import Fuse from "fuse.js"
 
 const InventoryList = observer(() => {
@@ -99,7 +100,7 @@ const InventoryList = observer(() => {
   }
 
   return (
-    <>
+    <div className="content-overlay">
       <Row className="d-flex">
         <Row md="auto" xs={2} lg="auto" className="p-2">
           <Col>
@@ -137,7 +138,7 @@ const InventoryList = observer(() => {
           </Button>
         </Modal.Footer>
       </Modal>
-    </>
+    </div>
   );
 });
 
