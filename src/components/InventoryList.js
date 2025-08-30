@@ -6,6 +6,7 @@ import TypeBar from "../components/TypeBar";
 import { Context } from "../index";
 import GetDataById from "../http/GetData";
 import { Spinner } from "react-bootstrap";
+import '../App.css';
 import Fuse from "fuse.js"
 
 const InventoryList = observer(() => {
@@ -13,7 +14,6 @@ const InventoryList = observer(() => {
   const { selected_type } = user;
   const [playerData, setPlayerData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [delay, setDelay] = useState(false);
   const [query, setQuery] = useState("");
   const [user_inventory, setUserInventory] = useState(user.inventory_new);
   
@@ -34,14 +34,6 @@ const InventoryList = observer(() => {
     fetchPlayer();
   }, [user]);
  
-  useEffect(() => {
-    if (playerData) {
-      setTimeout(() => {
-        setDelay(true);
-      }, 1000); // Delay time of 2 seconds
-    }
-  }, [playerData]);
-
   // Функция для показа модального окна
   const handleShowModal = (message) => {
     setModalMessage(message);
@@ -88,18 +80,8 @@ const InventoryList = observer(() => {
     return <div>Вот инвентарь пустой, он предмет простой</div>;
   }
 
-  if (!delay) {
-    return (
-      <div className="d-flex justify-content-center align-items-center">
-        <Spinner animation="border" role="status">
-          <span className="visually-hidden">Loading...</span>
-        </Spinner>
-      </div>
-    );
-  }
-
   return (
-    <>
+    <div className="content-overlay">
       <Row className="d-flex">
         <Row md="auto" xs={2} lg="auto" className="p-2">
           <Col>
@@ -137,7 +119,7 @@ const InventoryList = observer(() => {
           </Button>
         </Modal.Footer>
       </Modal>
-    </>
+    </div>
   );
 });
 

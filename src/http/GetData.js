@@ -25,7 +25,6 @@ const GetDataById = async () => {
 };
 
 export const GetRating = async () => {
-  console.log(`Rating token: ${localStorage.getItem('access_token')}`)
   try {
     const response = await apiClient.get(`/rating`, {
       headers: {
@@ -41,7 +40,6 @@ export const GetRating = async () => {
 };
 
 export const GetGrandGame = async () => {
-  console.log(`Grandgame token: ${localStorage.getItem('access_token')}`)
   try {
     const response = await apiClient.get(`/grandgame`, {
       headers: {

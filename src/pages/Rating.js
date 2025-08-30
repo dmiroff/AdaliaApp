@@ -57,29 +57,31 @@ const Rating = () => {
     }
 
     return (
-        <Tabs>
-            {Object.values(ratings) && Object.keys(ratings).map((key, value) => (
-                <Tab key={key} eventKey={key} title={key}>
-                    <Container>
-                        {Object.values(ratings[key]).length !== 0 && (
-                        <ListGroup>
-                            {ratings[key].map((item) => (
-                                <ListGroup.Item key={item.id} style={{marginTop: 5, paddingTop: 5}} >
-                                    {item?.player_position && (`${item.player_position}.`)} {item.name}: {item.score}{item?.stage && (`/${item.stage}`)}
-                                </ListGroup.Item>
-                            )
-                            )}
-                        </ListGroup>
+        <div className="content-overlay"> {/* Добавлен класс content-overlay */}
+            <Tabs>
+                {Object.values(ratings) && Object.keys(ratings).map((key, value) => (
+                    <Tab key={key} eventKey={key} title={key}>
+                        <Container>
+                            {Object.values(ratings[key]).length !== 0 && (
+                            <ListGroup>
+                                {ratings[key].map((item) => (
+                                    <ListGroup.Item key={item.id} style={{marginTop: 5, paddingTop: 5}} >
+                                        {item?.player_position && (`${item.player_position}.`)} {item.name}: {item.score}{item?.stage && (`/${item.stage}`)}
+                                    </ListGroup.Item>
+                                )
+                                )}
+                            </ListGroup>
 
-                        ) || (
-                                <div style={{margin: 10}}>Нет активных событий</div>
-                            )
+                            ) || (
+                                    <div style={{margin: 10}}>Нет активных событий</div>
+                                )
 
-                        }
-                    </Container>
-                </Tab>
-            ))}
-        </Tabs>
+                            }
+                        </Container>
+                    </Tab>
+                ))}
+            </Tabs>
+        </div>
     );
 };
 
