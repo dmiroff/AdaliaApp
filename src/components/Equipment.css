@@ -1,3 +1,38 @@
+.equipment-slot {
+  border: none !important;
+  background: transparent !important;
+  padding: 0;
+  margin: 0;
+}
+
+.equipment-item {
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  transition: transform 0.2s ease;
+}
+
+.equipment-item:hover {
+  transform: scale(1.05);
+  cursor: pointer;
+}
+
+.empty-slot {
+  display: none;
+}
+
+.character-silhouette {
+  position: relative;
+  width: 400px;
+  height: 600px;
+}
+
+.silhouette-img {
+  width: 100%;
+  height: 100%;
+  opacity: 0.8;
+}
+
 /* Equipment.css */
 
 .character-body-container {
