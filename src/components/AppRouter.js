@@ -1,5 +1,5 @@
-import React, { useContext } from "react";
-import {Routes, Route, Navigate} from "react-router-dom";
+import { useContext } from "react";
+import {Routes, Route} from "react-router-dom";
 import { Context } from "../index";
 import { authRoutes, publicRoutes } from "../routes";
 import AuthChecker from "../pages/AuthChecker"

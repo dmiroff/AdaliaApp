@@ -1,6 +1,5 @@
 import { SERVER_APP_API_URL } from "../utils/constants";
 import {$authHost} from '../http/index';
-import axios from 'axios';
 
 const PlayerAuthCheck = async (playerId, token) => {
   // Returns a boolean to indicate if a player is authorized

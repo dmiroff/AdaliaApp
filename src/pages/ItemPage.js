@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useContext } from "react";
+import { useState, useEffect, useContext } from "react";
 import { Col, Container, Image, Row, Button, Modal } from "react-bootstrap";
 import { useLocation, useNavigate } from "react-router-dom";
 import { GetItemById } from "../http/GetData";
 import { dict_translator, abilities_descriptions } from "../utils/Helpers";
-import exampleImage from "../assets/Images/WIP.png";
+import exampleImage from "../assets/Images/WIP.webp";
 import { Spinner } from "react-bootstrap";
 import { Context } from "../index";
 import {WearDataById, ThrowItemById, SellItemById} from "../http/SupportFunctions";
@@ -35,8 +35,9 @@ const Item = () => {
     const fetchData = async () => {
       try {
         const data = await GetItemById(num);
+        console.log(data.data)
         setItemData(data.data);
-        setImageSrc(data.data.Image ? `/assets/Images/${data.data.Image.split("Images/")[1]}` : exampleImage);
+        setImageSrc(data.data.Image ? `/assets/Images/${data.data.Image.split("Images/")[1].replace(/\.(png|jpg|jpeg)$/, '.webp')}` : exampleImage);
       } catch (err) {
         setError(err);
       } finally {
@@ -79,7 +80,6 @@ const Item = () => {
 
   const handleSell = async (value) => {
     toggleHandleRequest();
-    const user_id = user.user.id;
     const response = await SellItemById(num, value);
     const player_data = response.data;
     const message = response.message;
@@ -95,7 +95,6 @@ const Item = () => {
 
   const handleThrowAway = async (value) => {
     toggleHandleRequest();
-    const user_id = user.user.id;
     const response = await ThrowItemById(num, value);
     const player_data = response.data;
     const message = response.message;
@@ -108,7 +107,6 @@ const Item = () => {
   };
 
   const handleWear = async () => {
-    const user_id = user.user.id;
     const response = await WearDataById(num);
     const player_data = response.data;
     const message = response.message;
@@ -158,7 +156,7 @@ const Item = () => {
   console.log(imageSrc);
 
   return (
-    <Container className="mt-4" className="content-overlay">
+    <Container className="content-overlay">
       <Row>
         <Col md={6}>
           <Image src={imageSrc} fluid />

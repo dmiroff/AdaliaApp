@@ -1,11 +1,9 @@
 // src/components/InventoryItem.js
-import React, { useState, useContext, useEffect} from "react";
-import { Row, Card, Col, Image, Dropdown, DropdownButton, Modal, Button } from "react-bootstrap";
-import exampleImage from "../assets/Images/WIP.png";
-import coinIcon from "../assets/Images/coin.jpeg";
+import { useState, useContext} from "react";
+import { Row, Col, Image, Dropdown, DropdownButton} from "react-bootstrap";
+import exampleImage from "../assets/Images/WIP.webp";
 import { useNavigate } from 'react-router-dom';
 import { INVENTORY_ROUTE } from "../utils/constants";
-import { Form } from "react-bootstrap";
 import { Context } from "../index";
 import {WearDataById, ThrowItemById, SellItemById} from "../http/SupportFunctions";
 import ModalAction from "./ModalAction"

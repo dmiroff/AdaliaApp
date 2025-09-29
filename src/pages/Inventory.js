@@ -1,4 +1,4 @@
-import React, { Suspense, useEffect, useState } from 'react';
+import { Suspense, useState } from 'react';
 import Container from "react-bootstrap/esm/Container";
 import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/Col";

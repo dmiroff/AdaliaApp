@@ -1,11 +1,8 @@
-import React, { useContext } from "react";
 import { observer } from "mobx-react-lite";
 import { useNavigate } from "react-router-dom"; // Import useNavigate for absolute navigation
-import { Context } from "../index";
-import { Button, Container, Nav, Navbar, NavDropdown } from "react-bootstrap";
+import { Container, Nav, Navbar} from "react-bootstrap";
 
 const NavBar = observer(() => {
-  const { user } = useContext(Context);
   const navigate = useNavigate(); // Initialize useNavigate for navigation
 
   return (

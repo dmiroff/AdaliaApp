@@ -4,7 +4,6 @@ import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 import UserStore from './store/UserStore';
-import RatingStore from './store/RatingStore';
 
 export const Context = createContext(null)
 

@@ -1,12 +1,10 @@
-import React, { useState, useEffect, useContext } from "react";
-import { Col, Container, Dropdown, DropdownButton, Row, Button, Card, CardDeck, Modal } from "react-bootstrap";
-import { useLocation } from "react-router-dom";
+import { useState, useEffect, useContext } from "react";
+import { Container, Dropdown, DropdownButton, Row, Button, Card, CardDeck, Modal } from "react-bootstrap";
 import GetDataById from "../http/GetData";
 import { UnwearDataById } from "../http/SupportFunctions";
-import exampleImage from "../assets/Images/empty_slot.jpeg";
 import { Spinner } from "react-bootstrap";
 import { Context } from "../index";
-import bodyImage from "../assets/Images/kukla.png";
+import bodyImage from "../assets/Images/kukla.webp";
 import "./Equipment.css";
 
 const Equipment = () => {

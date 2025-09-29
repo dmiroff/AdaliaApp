@@ -1,5 +1,5 @@
 import GetDataById from "../http/GetData";
-import React, { useState, useContext, useEffect } from "react";
+import { useState, useContext, useEffect } from "react";
 import { Container, Spinner, Tabs, Tab } from "react-bootstrap";
 import { Context } from "../index";
 import { observer } from "mobx-react-lite";
@@ -10,7 +10,6 @@ const Character = observer(() => {
   const [playerData, setPlayerData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [delay, setDelay] = useState(false);
-  const [visibleSection, setVisibleSection] = useState(null);
   const user_id = user.user.id;
 
   useEffect(() => {
@@ -31,14 +30,6 @@ const Character = observer(() => {
       }, 2000); // Delay time of 2 seconds
     }
   }, [playerData]);
-
-  const handleHeaderClick = (category) => {
-    if (visibleSection === category) {
-      setVisibleSection(null);
-    } else {
-      setVisibleSection(category);
-    }
-  };
  
   const arrToCountedDict = (arr) => {
     const countedDict = {}
