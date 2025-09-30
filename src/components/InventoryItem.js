@@ -90,6 +90,14 @@ const InventoryItem = ({ devicekey, device, onShowModal }) => {
   const handleModalSellClose = () => setShowModalSell(false);
   const handleModalDropClose = () => setShowModalDrop(false);
 
+  // Форматирование отображения количества и названия
+  const formatItemName = () => {
+    if (device.count > 1) {
+      return `${device.count} ${device.name}`;
+    }
+    return device.name;
+  };
+
   return (
       <Row xs={3} className="mb-2">
         <Col 
@@ -165,11 +173,18 @@ const InventoryItem = ({ devicekey, device, onShowModal }) => {
         </Col>
         <Col xs={9} lg={true} style={{ fontSize: "0.9rem"}}>
           <div style={{ display: "flex", alignItems: "center" }}>
-            {device.name}
-            <br />
-            Кол-во: {device.count}
-            <br />
-            Цена: {device.value}
+            {/* Применяем форматирование названия и количества */}
+            <div style={{ width: '100%' }}>
+              <div style={{ 
+                display: 'flex', 
+                justifyContent: 'space-between', 
+                width: '100%',
+                flexWrap: 'wrap'
+              }}>
+                <span>{formatItemName()}</span>
+                <span>цена {device.value}</span>
+              </div>
+            </div>
           </div>
         </Col>
       </Row>

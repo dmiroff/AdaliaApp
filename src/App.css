@@ -690,6 +690,12 @@ body {
   position: relative;
 }
 
+.fantasy-tabs .nav {
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+}
+
 .fantasy-tabs .nav-tabs::before {
   content: "";
   position: absolute;

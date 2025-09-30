@@ -8,9 +8,9 @@ import ListGroup from "react-bootstrap/ListGroup"
 
 const Rating = () => {
   const [loading, setLoading] = useState(true);
-  const [rating, setRating] = useState(null);
-  const [grandGame, setGrandGame] = useState(null);
-  const [tournament, setTournament] = useState(null);
+  const [rating, setRating] = useState([]);
+  const [grandGame, setGrandGame] = useState([]);
+  const [tournament, setTournament] = useState([]);
 
   useEffect(() => {
     const fetchRatingData = async () => {
@@ -18,9 +18,9 @@ const Rating = () => {
         const rating = await GetRating();
         const grandGame = await GetGrandGame();
         const tournament = await GetTournament();
-        setRating(rating.data);
-        setGrandGame(grandGame.data);
-        setTournament(tournament.data);
+        setRating(rating.data || []);
+        setGrandGame(grandGame.data || []);
+        setTournament(tournament.data || []);
       } finally {
         setLoading(false)
       }
@@ -34,6 +34,16 @@ const Rating = () => {
     "Турнир": tournament,
   }
 
+  // Функция для получения заголовка вкладки с иконкой
+  const getTabTitle = (category) => {
+    const icons = {
+      "Рейтинг": "⭐",
+      "Большая игра": "🏆",
+      "Турнир": "⚔️"
+    };
+    return `${icons[category]} ${category}`;
+  };
+
   if (loading) {
     return (
       <div className="d-flex justify-content-center align-items-center fantasy-paper p-4">
@@ -46,11 +56,15 @@ const Rating = () => {
 
   return (
     <div className="fantasy-paper content-overlay">
-      <Tabs className="fantasy-tabs">
-        {Object.values(ratings) && Object.keys(ratings).map((key, value) => (
-          <Tab key={key} eventKey={key} title={key} className="fantasy-tab-content">
+      <Tabs 
+        defaultActiveKey="Рейтинг"
+        className="fantasy-tabs mb-3"
+        justify
+      >
+        {Object.keys(ratings).map((key) => (
+          <Tab key={key} eventKey={key} title={getTabTitle(key)} className="fantasy-tab-content">
             <Container className="fantasy-paper p-3 mt-3">
-              {Object.values(ratings[key]).length !== 0 ? (
+              {ratings[key] && ratings[key].length !== 0 ? (
                 <ListGroup className="fantasy-list-group">
                   {ratings[key].map((item, index) => (
                     <ListGroup.Item 
