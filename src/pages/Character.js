@@ -1,9 +1,33 @@
 import GetDataById from "../http/GetData";
-import { useState, useContext, useEffect } from "react";
-import { Container, Spinner, Tabs, Tab } from "react-bootstrap";
+import { useState, useContext, useEffect, forwardRef } from "react";
+import { Container, Spinner, Tabs, Tab, Card, Row, Col, Badge, ProgressBar, OverlayTrigger, Tooltip } from "react-bootstrap";
 import { Context } from "../index";
 import { observer } from "mobx-react-lite";
 import { dict_translator } from "../utils/Helpers";
+import "./Character.css";
+
+// Импортируем словари с описаниями
+import { attributesDescDict, skillsDescDict, talentsDescDict, abilitiesDescDict, keyMappingDict } from "../utils/descriptions";
+
+// Кастомный тултип с отложенным появлением
+const CustomTooltip = forwardRef(({ children, ...props }, ref) => {
+  const [show, setShow] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setShow(true), 10);
+    return () => clearTimeout(timer);
+  }, []);
+
+  return (
+    <Tooltip 
+      ref={ref} 
+      {...props} 
+      className={`fantasy-tooltip ${show ? 'fantasy-tooltip-visible' : ''}`}
+    >
+      {children}
+    </Tooltip>
+  );
+});
 
 const Character = observer(() => {
   const { user } = useContext(Context);
@@ -27,7 +51,7 @@ const Character = observer(() => {
     if (playerData) {
       setTimeout(() => {
         setDelay(true);
-      }, 2000); // Delay time of 2 seconds
+      }, 2000);
     }
   }, [playerData]);
  
@@ -66,12 +90,12 @@ const Character = observer(() => {
     }
 
     if (value.constructor === Object) {
-      let valueString = "\n"
+      let valueString = ""
       for (const [k, v] of Object.entries(value)) {
-        if (valueString !== "\n") {
-          valueString = valueString + "\n"
+        if (valueString !== "") {
+          valueString = valueString + ", "
         }
-        valueString = valueString + getTranslation(k) + ": " + v 
+        valueString = valueString + getTranslation(k) + " " + v 
       }
       return valueString
     }
@@ -89,27 +113,26 @@ const Character = observer(() => {
       return value ? "Да" : "Нет"
     }
     return value
-
   }
 
   const characterDataToShow = (data) => {
     const dataDict = {}
     for (const [data_key, data_values] of Object.entries(data)) {
-      let data_value = "\n"
+      let data_value = ""
       for (const [key, value] of Object.entries(data_values)) {
         if (key === "name") {
           continue
         }
         if (key in dict_translator) {
-          data_value = data_value + dict_translator[key] + ": " + prepareDataValues(value) + '\n'
+          if (data_value !== "") {
+            data_value = data_value + ", "
+          }
+          data_value = data_value + dict_translator[key] + " " + prepareDataValues(value)
         }
       }
-      data_value = data_value + "\n"
       dataDict[data_key] = data_value
     };
-
     return dataDict
-
   }
 
   const getModByAtt = (att, agi = false) => {
@@ -138,16 +161,13 @@ const Character = observer(() => {
     }
 
     return mod < 0 ? `${mod}` : `+${mod}`
-
   }
-
 
   const prepareAttString = (att, att_inc, agi = false) => {
     return (
       `${att + att_inc} (${getModByAtt(att + att_inc, agi)}), ${att} + ${att_inc}`
     )
   }
-
 
   const getSectionData = (category) => {
     switch (category) {
@@ -199,7 +219,6 @@ const Character = observer(() => {
           type: "Магия",
           data: characterDataToShow(playerData.prepared_magic),
         }
-
       case "Таланты":
         return {
           type: "Таланты",
@@ -220,99 +239,410 @@ const Character = observer(() => {
     }
   };
 
+  // Функция для получения описания по категории и ключу
+  const getDescription = (category, key) => {
+    // Сначала пробуем найти в mapping словаре
+    const mappedKey = keyMappingDict[key];
+    const searchKey = mappedKey || key;
+    
+    // Получаем соответствующий словарь
+    let dict;
+    switch (category) {
+      case "Атрибуты":
+        dict = attributesDescDict;
+        break;
+      case "Навыки":
+        dict = skillsDescDict;
+        break;
+      case "Таланты":
+        dict = talentsDescDict;
+        break;
+      case "Умения":
+        dict = abilitiesDescDict;
+        break;
+      default:
+        dict = {};
+    }
+    
+    // Создаем обратный mapping для поиска
+    const reverseMapping = {};
+    Object.keys(keyMappingDict).forEach(keyWithEmoji => {
+      const cleanKey = keyMappingDict[keyWithEmoji];
+      reverseMapping[cleanKey] = keyWithEmoji;
+    });
+    
+    // Пробуем разные варианты ключей по порядку:
+    const possibleKeys = [
+      searchKey, // оригинальный ключ
+      keyMappingDict[searchKey], // если searchKey уже был с эмодзи
+      reverseMapping[searchKey], // обратный поиск
+      searchKey.replace(/[^\w\s]/g, '').trim() // чистый ключ
+    ];
+    
+    // Убираем undefined и дубликаты
+    const uniqueKeys = [...new Set(possibleKeys.filter(Boolean))];
+    
+    // Ищем первое совпадение
+    for (const testKey of uniqueKeys) {
+      if (dict[testKey]) {
+        return dict[testKey];
+      }
+    }
+    
+    // Если ничего не нашли
+    return "Описание для этого элемента пока не добавлено";
+  };
+
+  const calculateLevelProgress = () => {
+    if (!playerData) return 0;
+    const current = playerData.experience;
+    const next = playerData.experience_next_level;
+    return (current / next) * 100;
+  };
+
+  const renderTooltip = (props, category, key) => (
+    <CustomTooltip {...props}>
+      {getDescription(category, key)}
+    </CustomTooltip>
+  );
+
   if (!delay) {
     return (
-      <div className="d-flex justify-content-center align-items-center">
-        <Spinner animation="border" role="status">
-          <span className="visually-hidden">Loading...</span>
-        </Spinner>
+      <div className="d-flex justify-content-center align-items-center min-vh-50">
+        <div className="text-center">
+          <Spinner animation="border" variant="secondary" role="status" style={{ width: '3rem', height: '3rem' }}>
+            <span className="visually-hidden">Loading...</span>
+          </Spinner>
+          <p className="mt-3 text-muted">Загрузка данных персонажа...</p>
+        </div>
       </div>
     );
   }
 
   if (loading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="d-flex justify-content-center align-items-center min-vh-50">
+        <div className="text-center">
+          <Spinner animation="border" variant="secondary" />
+          <p className="mt-2 text-muted">Загрузка...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="content-overlay"> {/* Добавлен класс content-overlay */}
+    <div className="character-container">
       <Tabs
         defaultActiveKey="Параметры"
         transition={false}
         id="playerInfo"
-        className="mb-3"
+        className="fantasy-tabs mb-4"
       >
-        <Tab eventKey="Параметры" title="Параметры">
-          <Container>
-            <span>Имя: {playerData.name}<br /></span>
-            <span>Раса: {playerData.Race}<br /></span>
-            <span>Класс: {playerData.Character_class}<br /></span>
-            <span>Уровень: {playerData.experience}/{playerData.experience_next_level}<br /></span>
-            <span>Очки навыков за уровень: {playerData.points_per_level}<br /></span>
-            <span>Скидка: {playerData.discount}<br /><br /></span>
+        <Tab eventKey="Параметры" title="📊 Параметры">
+          <Container fluid>
+            <Row className="g-3 mb-4">
+              <Col md={4}>
+                <Card className="h-100 fantasy-card">
+                  <Card.Header className="fantasy-card-header fantasy-card-header-primary">
+                    <h6 className="mb-0">👤 Основная информация</h6>
+                  </Card.Header>
+                  <Card.Body>
+                    <div className="fantasy-stat-row">
+                      <span>Имя:</span>
+                      <Badge className="fantasy-badge fantasy-badge-primary">{playerData.name}</Badge>
+                    </div>
+                    <div className="fantasy-stat-row">
+                      <span>Раса:</span>
+                      <Badge className="fantasy-badge fantasy-badge-secondary">{playerData.Race}</Badge>
+                    </div>
+                    <div className="fantasy-stat-row">
+                      <span>Класс:</span>
+                      <Badge className="fantasy-badge fantasy-badge-info">{playerData.Character_class}</Badge>
+                    </div>
+                    <div className="fantasy-stat-row">
+                      <span>Очки навыков:</span>
+                      <Badge className="fantasy-badge fantasy-badge-warning">{playerData.points_per_level}</Badge>
+                    </div>
+                    <div className="fantasy-stat-row">
+                      <span>Скидка:</span>
+                      <Badge className="fantasy-badge fantasy-badge-dark">{playerData.discount}%</Badge>
+                    </div>
+                    
+                    <div className="level-progress-container">
+                      <div className="fantasy-stat-row">
+                        <div className="d-flex justify-content-between mb-1">
+                          <span>Уровень:</span>
+                          <Badge className="fantasy-badge fantasy-badge-success">
+                            {playerData.experience}/{playerData.experience_next_level}
+                          </Badge>
+                        </div>
+                      </div>
+                      <ProgressBar 
+                        now={calculateLevelProgress()} 
+                        className="experience-progress-bar"
+                        label={`${Math.round(calculateLevelProgress())}%`}
+                      />
+                    </div>
+                  </Card.Body>
+                </Card>
+              </Col>
 
-            {playerData.bloodlust !== 0 && (<span>Кровожадность: {playerData.bloodlust}<br /></span>)}
-            {playerData.rage !== 0 && (<span>Ярость: {playerData.rage}<br /></span>)}
-            {playerData.regeneration !== 0 && (<span>Регенерация: {playerData.regeneration}<br /></span>)}
-            {playerData.ressurect !== 0 && (<span>Воскрешение: {playerData.ressurect}<br /></span>)}
-            <span>Дополнительные очки передвижения: {playerData.move_OP}<br /></span>
-            <span>Зелья за бой: {playerData.consumable_items}<br /></span>
-            <span>Модификатор проверок скрытности: {playerData.sneak_check}<br /></span>
-            <span>Очки действия🏃: {playerData.action_points}<br /></span>
-            <span>Инициатива⏳: {playerData.initiative}<br /><br /></span>
+              <Col md={4}>
+                <Card className="h-100 fantasy-card">
+                  <Card.Header className="fantasy-card-header fantasy-card-header-success">
+                    <h6 className="mb-0">⚡ Особенности</h6>
+                  </Card.Header>
+                  <Card.Body>
+                    {playerData.bloodlust !== 0 && (
+                      <div className="fantasy-stat-row">
+                        <span>Кровожадность:</span>
+                        <Badge className="fantasy-badge fantasy-badge-blood">{playerData.bloodlust}</Badge>
+                      </div>
+                    )}
+                    {playerData.rage !== 0 && (
+                      <div className="fantasy-stat-row">
+                        <span>Ярость:</span>
+                        <Badge className="fantasy-badge fantasy-badge-rage">{playerData.rage}</Badge>
+                      </div>
+                    )}
+                    {playerData.regeneration !== 0 && (
+                      <div className="fantasy-stat-row">
+                        <span>Регенерация:</span>
+                        <Badge className="fantasy-badge fantasy-badge-regeneration">{playerData.regeneration}</Badge>
+                      </div>
+                    )}
+                    {playerData.ressurect !== 0 && (
+                      <div className="fantasy-stat-row">
+                        <span>Воскрешение:</span>
+                        <Badge className="fantasy-badge fantasy-badge-magic">{playerData.ressurect}</Badge>
+                      </div>
+                    )}
+                    <div className="fantasy-stat-row">
+                      <span>Доп. очки передвижения:</span>
+                      <Badge className="fantasy-badge fantasy-badge-secondary">{playerData.move_OP}</Badge>
+                    </div>
+                    <div className="fantasy-stat-row">
+                      <span>Зелья за бой:</span>
+                      <Badge className="fantasy-badge fantasy-badge-primary">{playerData.consumable_items}</Badge>
+                    </div>
+                    <div className="fantasy-stat-row">
+                      <span>Модификатор скрытности:</span>
+                      <Badge className="fantasy-badge fantasy-badge-dark">{playerData.sneak_check}</Badge>
+                    </div>
+                    <div className="fantasy-stat-row">
+                      <span>Очки действия 🏃:</span>
+                      <Badge className="fantasy-badge fantasy-badge-success">{playerData.action_points}</Badge>
+                    </div>
+                    <div className="fantasy-stat-row">
+                      <span>Инициатива ⏳:</span>
+                      <Badge className="fantasy-badge fantasy-badge-info">{playerData.initiative}</Badge>
+                    </div>
+                  </Card.Body>
+                </Card>
+              </Col>
 
-            <span><strong>Атака</strong> 🗡<br /></span>
-            <span>Атака в ближнем бою: {playerData.melee_attack}<br /></span>
-            <span>Атака в дальнем бою: {playerData.range_attack}<br /></span>
-            <span>Урон в ближнем бою: {playerData.melee_damage}<br /></span>
-            <span>Урон в дальнем бою: {playerData.range_damage}<br /></span>
-            <span>Шанс критического удара: {playerData.crit_chance}<br /><br /></span>
+              <Col md={4}>
+                <Card className="h-100 fantasy-card">
+                  <Card.Header className="fantasy-card-header fantasy-card-header-warning">
+                    <h6 className="mb-0">🗡️ Атака</h6>
+                  </Card.Header>
+                  <Card.Body>
+                    <div className="fantasy-stat-row">
+                      <span>Ближняя атака:</span>
+                      <Badge className="fantasy-badge fantasy-badge-combat">{playerData.melee_attack}</Badge>
+                    </div>
+                    <div className="fantasy-stat-row">
+                      <span>Дальняя атака:</span>
+                      <Badge className="fantasy-badge fantasy-badge-combat">{playerData.range_attack}</Badge>
+                    </div>
+                    <div className="fantasy-stat-row">
+                      <span>Ближний урон:</span>
+                      <Badge className="fantasy-badge fantasy-badge-combat">{playerData.melee_damage}</Badge>
+                    </div>
+                    <div className="fantasy-stat-row">
+                      <span>Дальний урон:</span>
+                      <Badge className="fantasy-badge fantasy-badge-combat">{playerData.range_damage}</Badge>
+                    </div>
+                    <div className="fantasy-stat-row">
+                      <span>Шанс критического удара:</span>
+                      <Badge className="fantasy-badge fantasy-badge-crit">{playerData.crit_chance}%</Badge>
+                    </div>
+                  </Card.Body>
+                </Card>
+              </Col>
+            </Row>
 
-            <span><strong>Физическая ащита</strong> 🛡<br /></span>
-            <span>Класс защиты: {playerData.current_defence}<br /></span>
-            <span>Сопротивление к колющему урону: {playerData.piercing_deduction}<br /></span>
-            <span>Сопротивление к дробящему урону: {playerData.bludge_deduction}<br /></span>
-            <span>Сопротивление к рубящему урону: {playerData.slashing_deduction}<br /><br /></span>
+            {/* Защита */}
+            <Row className="g-3">
+              <Col md={6}>
+                <Card className="fantasy-card">
+                  <Card.Header className="fantasy-card-header fantasy-card-header-info">
+                    <h6 className="mb-0">🛡️ Физическая защита</h6>
+                  </Card.Header>
+                  <Card.Body>
+                    <Row>
+                      <Col sm={6}>
+                        <div className="fantasy-stat-row">
+                          <span>Класс защиты:</span>
+                          <Badge className="fantasy-badge fantasy-badge-primary">{playerData.current_defence}</Badge>
+                        </div>
+                        <div className="fantasy-stat-row">
+                          <span>Колющий урон:</span>
+                          <Badge className="fantasy-badge fantasy-badge-physical">{playerData.piercing_deduction}</Badge>
+                        </div>
+                        <div className="fantasy-stat-row">
+                          <span>Дробящий урон:</span>
+                          <Badge className="fantasy-badge fantasy-badge-physical">{playerData.bludge_deduction}</Badge>
+                        </div>
+                      </Col>
+                      <Col sm={6}>
+                        <div className="fantasy-stat-row">
+                          <span>Рубящий урон:</span>
+                          <Badge className="fantasy-badge fantasy-badge-physical">{playerData.slashing_deduction}</Badge>
+                        </div>
+                      </Col>
+                    </Row>
+                  </Card.Body>
+                </Card>
+              </Col>
 
-            <span><strong>Магическая защита</strong> 🪄<br /></span>
-            <span>Магическое сопротивление: {playerData.magic_resist}<br /></span>
-            <span>Сопротивление к огненному урону: {playerData.fire_deduction}<br /></span>
-            <span>Сопротивление к ледяному урону: {playerData.ice_deduction}<br /></span>
-            <span>Сопротивление к урону молнией: {playerData.electric_deduction}<br /></span>
-            <span>Сопротивление к урону тьмой: {playerData.dark_deduction}<br /></span>
-            <span>Сопротивление к урону светом: {playerData.light_deduction}<br /></span>
-            <span>Сопротивление к урону жизнью: {playerData.life_deduction}<br /></span>
-            <span>Сопротивление к звуковому урону: {playerData.sound_deduction}<br /></span>
-            <span>Сопротивление к воздушному урону: {playerData.wind_deduction}<br /></span>
-            <span>Сопротивление к урону смертью: {playerData.death_deduction}<br /></span>
-            <span>Сопротивление к Власти: {playerData.power_deduction}<br /></span>
+              <Col md={6}>
+                <Card className="fantasy-card">
+                  <Card.Header className="fantasy-card-header fantasy-card-header-magic">
+                    <h6 className="mb-0">🪄 Магическая защита</h6>
+                  </Card.Header>
+                  <Card.Body>
+                    <Row>
+                      <Col sm={6}>
+                        <div className="fantasy-stat-row">
+                          <span>Магическое сопротивление:</span>
+                          <Badge className="fantasy-badge fantasy-badge-magic">{playerData.magic_resist}</Badge>
+                        </div>
+                        <div className="fantasy-stat-row">
+                          <span>Огонь:</span>
+                          <Badge className="fantasy-badge fantasy-badge-element-fire">{playerData.fire_deduction}</Badge>
+                        </div>
+                        <div className="fantasy-stat-row">
+                          <span>Лёд:</span>
+                          <Badge className="fantasy-badge fantasy-badge-element-ice">{playerData.ice_deduction}</Badge>
+                        </div>
+                        <div className="fantasy-stat-row">
+                          <span>Молния:</span>
+                          <Badge className="fantasy-badge fantasy-badge-element-lightning">{playerData.electric_deduction}</Badge>
+                        </div>
+                        <div className="fantasy-stat-row">
+                          <span>Тьма:</span>
+                          <Badge className="fantasy-badge fantasy-badge-element-dark">{playerData.dark_deduction}</Badge>
+                        </div>
+                      </Col>
+                      <Col sm={6}>
+                        <div className="fantasy-stat-row">
+                          <span>Свет:</span>
+                          <Badge className="fantasy-badge fantasy-badge-element-light">{playerData.light_deduction}</Badge>
+                        </div>
+                        <div className="fantasy-stat-row">
+                          <span>Жизнь:</span>
+                          <Badge className="fantasy-badge fantasy-badge-element-life">{playerData.life_deduction}</Badge>
+                        </div>
+                        <div className="fantasy-stat-row">
+                          <span>Звук:</span>
+                          <Badge className="fantasy-badge fantasy-badge-element-sound">{playerData.sound_deduction}</Badge>
+                        </div>
+                        <div className="fantasy-stat-row">
+                          <span>Воздух:</span>
+                          <Badge className="fantasy-badge fantasy-badge-element-air">{playerData.wind_deduction}</Badge>
+                        </div>
+                        <div className="fantasy-stat-row">
+                          <span>Смерть:</span>
+                          <Badge className="fantasy-badge fantasy-badge-element-death">{playerData.death_deduction}</Badge>
+                        </div>
+                      </Col>
+                    </Row>
+                  </Card.Body>
+                </Card>
+              </Col>
+            </Row>
           </Container>
         </Tab>
+
+        {/* Вкладки с компактным отображением */}
         {[
           "Атрибуты",
-          "Навыки",
+          "Навыки", 
           "Магия",
           "Таланты",
           "Умения",
           "Временные эффекты",
         ].map((category) => (
-          <Tab key={category} eventKey={category} title={category}>
-            {getSectionData(category) && (
-              <Container>
-                <ul>
-                  {Object.entries(getSectionData(category).data).map(([key, value]) => (
-                    <li key={key} className="display-linebreak">
-                      <strong>{key}:</strong> {value}
-                    </li>
-                  ))}
-                </ul>
-              </Container>
-            )}
+          <Tab key={category} eventKey={category} title={getTabTitle(category)}>
+            <Container fluid>
+              <Card className="fantasy-card">
+                <Card.Header className={`fantasy-card-header fantasy-card-header-${getCategoryColor(category)}`}>
+                  <h5 className="mb-0">{category}</h5>
+                </Card.Header>
+                <Card.Body>
+                  {getSectionData(category) && (
+                    <div className="fantasy-attributes-grid">
+                      {Object.entries(getSectionData(category).data).map(([key, value]) => (
+                        <OverlayTrigger
+                          key={key}
+                          placement="top"
+                          delay={{ show: 250, hide: 400 }}
+                          overlay={(props) => renderTooltip(props, category, key)}
+                          popperConfig={{
+                            modifiers: [
+                              {
+                                name: 'preventOverflow',
+                                options: {
+                                  boundary: 'viewport'
+                                }
+                              }
+                            ]
+                          }}
+                        >
+                          <div className="fantasy-attribute-item">
+                            <div className="attribute-content">
+                              <span className="fantasy-attribute-key">{key}</span>
+                              <span className="fantasy-attribute-value">{value}</span>
+                            </div>
+                          </div>
+                        </OverlayTrigger>
+                      ))}
+                    </div>
+                  )}
+                </Card.Body>
+              </Card>
+            </Container>
           </Tab>
         ))}
       </Tabs>
     </div>
   );
 });
+
+// Вспомогательные функции остаются без изменений
+const getTabTitle = (category) => {
+  const icons = {
+    "Атрибуты": "⭐",
+    "Навыки": "🎯", 
+    "Магия": "🔮",
+    "Таланты": "💫",
+    "Умения": "⚡",
+    "Временные эффекты": "🕒"
+  };
+  return `${icons[category]} ${category}`;
+};
+
+const getCategoryColor = (category) => {
+  const colors = {
+    "Атрибуты": "primary",
+    "Навыки": "success",
+    "Магия": "magic", 
+    "Таланты": "warning",
+    "Умения": "info",
+    "Временные эффекты": "secondary"
+  };
+  return colors[category] || "primary";
+};
 
 export default Character;

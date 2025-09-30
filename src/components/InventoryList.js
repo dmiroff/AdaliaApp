@@ -1,7 +1,7 @@
 import { observer } from "mobx-react-lite";
 import { useContext, useEffect, useState } from "react";
 import InventoryItem from "./InventoryItem";
-import {Row, Col, Form, Modal, Button} from "react-bootstrap";
+import { Row, Col, Form, Modal, Button } from "react-bootstrap";
 import TypeBar from "../components/TypeBar";
 import { Context } from "../index";
 import GetDataById from "../http/GetData";
@@ -17,7 +17,6 @@ const InventoryList = observer(() => {
   const [query, setQuery] = useState("");
   const [user_inventory, setUserInventory] = useState(user.inventory_new);
   
-  // Добавляем состояния для модального окна
   const [showModal, setShowModal] = useState(false);
   const [modalMessage, setModalMessage] = useState("");
 
@@ -34,24 +33,20 @@ const InventoryList = observer(() => {
     fetchPlayer();
   }, [user]);
  
-  // Функция для показа модального окна
   const handleShowModal = (message) => {
     setModalMessage(message);
     setShowModal(true);
-    
-    // Автоматическое закрытие через 3 секунды
     setTimeout(() => {
       setShowModal(false);
     }, 3000);
   };
 
-  // Функция для закрытия модального окна
   const handleCloseModal = () => setShowModal(false);
 
   if (loading) {
     return (
-      <div className="d-flex justify-content-center align-items-center">
-        <Spinner animation="border" role="status">
+      <div className="d-flex justify-content-center align-items-center fantasy-paper p-4">
+        <Spinner animation="border" role="status" className="fantasy-text-primary">
           <span className="visually-hidden">Loading...</span>
         </Spinner>
       </div>
@@ -59,7 +54,11 @@ const InventoryList = observer(() => {
   }
 
   if (!playerData) {
-    return <div>Error: Player data not found</div>;
+    return (
+      <div className="fantasy-paper p-4 text-center">
+        <div className="fantasy-text-danger">Error: Player data not found</div>
+      </div>
+    );
   }
 
   const filteredItemsWithKeys = Object.entries(user.inventory_new).filter(
@@ -77,24 +76,30 @@ const InventoryList = observer(() => {
   const results = query ? fuse.search(query).map(result => result.item) : itemObjects;
 
   if (!Object.keys(user.inventory_new).length) {
-    return <div>Вот инвентарь пустой, он предмет простой</div>;
+    return (
+      <div className="fantasy-paper p-4 text-center">
+        <div className="fantasy-text-muted">Вот инвентарь пустой, он предмет простой</div>
+      </div>
+    );
   }
 
   return (
-    <div className="content-overlay">
+    <div className="fantasy-paper content-overlay">
       <Row className="d-flex">
         <Row md="auto" xs={2} lg="auto" className="p-2">
           <Col>
-            <TypeBar></TypeBar>
+            <TypeBar />
           </Col>
           <Col>
-            <Form.Control
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Название предмета..."
-              className="w-full p-2 border rounded-lg mb-4"
-            />
+            <Form className="fantasy-form">
+              <Form.Control
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Название предмета..."
+                className="w-100"
+              />
+            </Form>
           </Col>
         </Row>
         {results.map((item, index) => (
@@ -102,19 +107,23 @@ const InventoryList = observer(() => {
             key={item.id} 
             devicekey={item.id} 
             device={item} 
-            onShowModal={handleShowModal} // Передаем функцию для показа модалки
+            onShowModal={handleShowModal}
           />
         ))}
       </Row>
       
-      {/* Модальное окно в родительском компоненте */}
-      <Modal show={showModal} onHide={handleCloseModal} backdrop="static" keyboard={false} centered>
-        <Modal.Header closeButton>
-          <Modal.Title>Оповещение</Modal.Title>
+      <Modal show={showModal} onHide={handleCloseModal} backdrop="static" keyboard={false} centered className="fantasy-modal">
+        <Modal.Header closeButton className="fantasy-card-header fantasy-card-header-primary">
+          <Modal.Title className="fantasy-text-gold">Оповещение</Modal.Title>
         </Modal.Header>
-        <Modal.Body style={{ whiteSpace: 'pre-wrap' }}>{modalMessage}</Modal.Body>
+        <Modal.Body style={{ whiteSpace: 'pre-wrap' }} className="fantasy-text-dark">
+          {modalMessage}
+        </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={handleCloseModal}>
+          <Button 
+            onClick={handleCloseModal}
+            className="fantasy-btn fantasy-btn-secondary"
+          >
             Закрыть
           </Button>
         </Modal.Footer>

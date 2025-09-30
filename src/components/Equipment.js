@@ -1,5 +1,5 @@
 import { useState, useEffect, useContext } from "react";
-import { Container, Dropdown, DropdownButton, Row, Button, Card, CardDeck, Modal } from "react-bootstrap";
+import { Container, Dropdown, Row, Button, Card, Modal } from "react-bootstrap";
 import GetDataById from "../http/GetData";
 import { UnwearDataById } from "../http/SupportFunctions";
 import { Spinner } from "react-bootstrap";
@@ -15,7 +15,7 @@ const Equipment = () => {
   const [modalMessage, setModalMessage] = useState("");
   const [toNavigate, setToNavigate] = useState(false);
   const [showModal, setShowModal] = useState(false);
-  const [hoveredSlot, setHoveredSlot] = useState(null); // State to track hovered slot
+  const [hoveredSlot, setHoveredSlot] = useState(null);
 
   const equipmentSlots = [
     "head",
@@ -86,8 +86,8 @@ const Equipment = () => {
 
   if (loading) {
     return (
-      <div className="d-flex justify-content-center align-items-center">
-        <Spinner animation="border" role="status">
+      <div className="d-flex justify-content-center align-items-center fantasy-paper p-4">
+        <Spinner animation="border" role="status" className="fantasy-text-primary">
           <span className="visually-hidden">Loading...</span>
         </Spinner>
       </div>
@@ -96,63 +96,86 @@ const Equipment = () => {
 
   return (
     <Container className="mt-4">
-      <Row className="character-body-container" style={{ position: 'relative' }}>
-        <div className="inventory-container">
-          <div className="character-silhouette">
-            <img src={bodyImage} alt="Character" className="silhouette-img" />
-            {equipmentSlots.map((slot) => (
-          <div
-            key={slot}
-            className={`equipment-slot ${slot}`}
-            style={{ position: 'absolute' }}
-            onMouseEnter={() => setHoveredSlot(slot)}
-            onMouseLeave={() => setHoveredSlot(null)}
-          >
-            {equippedItems[slot].id ? (
-              <>
-                {equippedItems[slot].Image ? (
-                <img
-                  src={`/assets/Images/${equippedItems[slot].Image.split("Images/")[1]}`}
-                  alt={equippedItems[slot].name}
-                  className="equipment-item"
-                  style={{ position: 'absolute', width: '10vw', height: '10vh' }}
-                />
-
-                ) :
-                  <div className="empty-slot" />
-                }
-                {hoveredSlot === slot && (
-                  <DropdownButton
-                    title="Действия"
-                    show={true}
-                    onClick={(e) => e.stopPropagation()}
-                    variant="dark"
-                    id="inventory-item-dropdown"
-                    style={{
-                      position: "absolute",
-                      zIndex: 1,
-                      top: "0",
-                    }}
+      <Card className="fantasy-paper">
+        <Card.Header className="fantasy-card-header fantasy-card-header-primary">
+          <h3 className="fantasy-text-gold mb-0">Экипировка персонажа</h3>
+        </Card.Header>
+        <Card.Body>
+          <Row className="character-body-container" style={{ position: 'relative' }}>
+            <div className="inventory-container">
+              <div className="character-silhouette">
+                <img src={bodyImage} alt="Character" className="silhouette-img" />
+                {equipmentSlots.map((slot) => (
+                  <div
+                    key={slot}
+                    className={`equipment-slot ${slot}`}
+                    style={{ position: 'absolute' }}
+                    onMouseEnter={() => setHoveredSlot(slot)}
+                    onMouseLeave={() => setHoveredSlot(null)}
                   >
-                    <Dropdown.Item variant="danger" onClick={handleUnwear}>Снять</Dropdown.Item>
-                  </DropdownButton>
-                )}
-              </>
-            ) : (
-              <div className="empty-slot" />
-            )}
-          </div>
-        ))}
-          </div>
-        </div>
-      </Row>
-      <Modal show={showModal} onHide={handleModalClose} backdrop="static" keyboard={false}>
-        <Modal.Header closeButton>
-          <Modal.Title>Оповещение</Modal.Title>
+                    {equippedItems[slot]?.id ? (
+                      <>
+                        {equippedItems[slot].Image ? (
+                          <img
+                            src={`/assets/Images/${equippedItems[slot].Image.split("Images/")[1]}`}
+                            alt={equippedItems[slot].name}
+                            className="equipment-item"
+                            style={{ position: 'absolute', width: '10vw', height: '10vh' }}
+                          />
+                        ) : (
+                          <div className="empty-slot" />
+                        )}
+                        {hoveredSlot === slot && (
+                          <Dropdown>
+                            <Dropdown.Toggle 
+                              className="fantasy-btn fantasy-btn-danger fantasy-btn-sm"
+                              style={{
+                                position: "absolute",
+                                zIndex: 1,
+                                top: "0",
+                                left: "0",
+                                minWidth: "120px"
+                              }}
+                            >
+                              Действия
+                            </Dropdown.Toggle>
+                            <Dropdown.Menu className="fantasy-dropdown-menu">
+                              <Dropdown.Item 
+                                onClick={handleUnwear}
+                                className="fantasy-text-dark"
+                              >
+                                Снять
+                              </Dropdown.Item>
+                            </Dropdown.Menu>
+                          </Dropdown>
+                        )}
+                      </>
+                    ) : (
+                      <div className="empty-slot fantasy-text-muted">
+                        {hoveredSlot === slot && "Пусто"}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </Row>
+        </Card.Body>
+      </Card>
+
+      <Modal show={showModal} onHide={handleModalClose} backdrop="static" keyboard={false} className="fantasy-modal">
+        <Modal.Header closeButton className="fantasy-card-header fantasy-card-header-primary">
+          <Modal.Title className="fantasy-text-gold">Оповещение</Modal.Title>
         </Modal.Header>
-        <Modal.Body style={{ whiteSpace: 'pre-wrap' }}>{modalMessage}</Modal.Body>
+        <Modal.Body style={{ whiteSpace: 'pre-wrap' }} className="fantasy-text-dark">
+          {modalMessage}
+        </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={handleModalClose}>
+          <Button 
+            variant="secondary" 
+            onClick={handleModalClose}
+            className="fantasy-btn fantasy-btn-secondary"
+          >
             Закрыть
           </Button>
         </Modal.Footer>

@@ -29,11 +29,6 @@ const InventoryItem = ({ devicekey, device, onShowModal }) => {
     setShowMenu(!showMenu);
   };
 
-  const handleMenuClick = (event) => {
-    event.stopPropagation();
-    setShowMenu(!showMenu);
-  };
-
   const handleModalSell = (event) => {
     event.stopPropagation();
     setShowModalSell(!showModalSell);
