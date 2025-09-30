@@ -238,24 +238,117 @@ body {
   font-weight: 600;
 }
 
-/* Стили для навбара */
-.fantasy-navbar {
-  background: linear-gradient(135deg, #2f1b0c 0%, #4a2c14 100%) !important;
-  border-bottom: 3px double #8b4513 !important;
-  margin-bottom: 20px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+/* ===== ИСПРАВЛЕНИЯ ДЛЯ МОБИЛЬНОЙ НАВИГАЦИИ ===== */
+
+/* Убираем ограничения контейнера на мобильных устройствах */
+@media (max-width: 992px) {
+  .fantasy-navbar .container {
+    width: 100%;
+    max-width: 100%;
+    padding: 0;
+    margin: 0;
+  }
 }
 
-.fantasy-navbar .navbar-brand,
-.fantasy-navbar .nav-link {
-  color: #d4af37 !important;
+/* Кнопка переключения меню на всю ширину */
+.fantasy-navbar .navbar-toggler {
+  width: 100%;
+  margin: 0;
+  border-radius: 0;
+  border: none;
+  border-bottom: 2px solid #8b4513;
+  padding: 12px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(135deg, #2f1b0c 0%, #4a2c14 100%) !important;
+}
+
+/* Иконка гамбургера */
+.fantasy-navbar .navbar-toggler-icon {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='%23d4af37' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+  width: 1.5em;
+  height: 1.5em;
+}
+
+/* Текст для кнопки (если нужно добавить) */
+.fantasy-navbar .navbar-toggler::after {
+  content: "Меню";
+  color: #d4af37;
   font-weight: 600;
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+  margin-right: 10px;
 }
 
-.fantasy-navbar .nav-link:hover {
-  color: #fffacd !important;
-  transform: translateY(-1px);
+/* Раскрывающееся меню на всю ширину */
+.fantasy-navbar .navbar-collapse {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 1050;
+  background: linear-gradient(135deg, #2f1b0c 0%, #4a2c14 100%);
+  border-top: 2px solid #8b4513;
+  border-bottom: 3px double #8b4513;
+}
+
+/* Контейнер внутри раскрывающегося меню */
+.fantasy-navbar .navbar-collapse .container {
+  padding: 0;
+}
+
+/* Навигационные ссылки в мобильном меню */
+.fantasy-navbar .navbar-collapse .nav {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 10px 0;
+}
+
+.fantasy-navbar .navbar-collapse .nav-link {
+  width: 100%;
+  text-align: center;
+  padding: 12px 20px;
+  margin: 2px 0;
+  border-radius: 0;
+  border: none;
+  border-bottom: 1px solid rgba(139, 69, 19, 0.3);
+}
+
+.fantasy-navbar .navbar-collapse .nav-link:last-child {
+  border-bottom: none;
+}
+
+/* Убираем отступы у навбара на мобильных */
+@media (max-width: 992px) {
+  .fantasy-navbar {
+    margin-bottom: 0;
+  }
+}
+
+/* Улучшаем внешний вид кнопки при наведении */
+.fantasy-navbar .navbar-toggler:hover {
+  background: linear-gradient(135deg, #4a2c14 0%, #5d3c1c 100%) !important;
+  border-bottom: 2px solid #d4af37;
+}
+
+.fantasy-navbar .navbar-toggler:hover::after {
+  color: #fffacd;
+}
+
+/* Анимация для плавного раскрытия меню */
+.navbar-collapse {
+  transition: all 0.3s ease-in-out;
+}
+
+/* Убираем стандартные отступы Bootstrap */
+@media (max-width: 992px) {
+  .navbar > .container {
+    padding-right: 0;
+    padding-left: 0;
+    margin-right: 0;
+    margin-left: 0;
+  }
 }
 
 /* Глобальные стили для форм */
@@ -764,4 +857,133 @@ body {
     font-size: 1em !important;
     width: 100%;
   }
+}
+/* Стили для инвентаря */
+.inventory-search-row {
+  border-bottom: 2px solid #8b7355;
+  padding-bottom: 15px;
+  margin-bottom: 15px;
+}
+
+.inventory-search-input {
+  background: linear-gradient(135deg, #faf3e0 0%, #f5e8c8 100%) !important;
+  border: 2px solid #8b7355 !important;
+  border-radius: 25px !important;
+  color: #3e2723 !important;
+  font-weight: 500;
+  padding: 12px 20px !important;
+  font-size: 1.1em;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+  transition: all 0.3s ease;
+}
+
+.inventory-search-input:focus {
+  background: linear-gradient(135deg, #fff9e6 0%, #faf3e0 100%) !important;
+  border-color: #a0522d !important;
+  box-shadow: 0 0 0 3px rgba(139, 69, 19, 0.3), 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+  color: #3e2723 !important;
+}
+
+.inventory-search-input::placeholder {
+  color: #8b7355 !important;
+  font-style: italic;
+}
+
+.inventory-filter-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 15px;
+  padding: 10px 0;
+}
+
+.inventory-results-count {
+  text-align: right;
+  font-size: 0.9em;
+  font-weight: 600;
+}
+
+.inventory-items-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 15px;
+  margin-top: 10px;
+}
+
+/* Анимация для поиска */
+@keyframes searchGlow {
+  0% { box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); }
+  50% { box-shadow: 0 2px 12px rgba(139, 69, 19, 0.3); }
+  100% { box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); }
+}
+
+.inventory-search-input:focus {
+  animation: searchGlow 2s ease-in-out infinite;
+}
+
+/* Стили для счетчика результатов */
+.inventory-results-count .fantasy-text-muted {
+  background: linear-gradient(135deg, rgba(139, 115, 85, 0.1), rgba(139, 115, 85, 0.2));
+  padding: 5px 12px;
+  border-radius: 15px;
+  border: 1px solid #8b7355;
+  font-weight: 600;
+}
+
+/* Адаптивность для инвентаря */
+@media (max-width: 768px) {
+  .inventory-filter-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .inventory-results-count {
+    text-align: center;
+    order: -1;
+  }
+  
+  .inventory-items-container {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  
+  .inventory-search-input {
+    padding: 10px 15px !important;
+    font-size: 1em;
+  }
+}
+
+@media (max-width: 576px) {
+  .inventory-items-container {
+    grid-template-columns: 1fr;
+  }
+  
+  .inventory-search-input {
+    border-radius: 15px !important;
+    padding: 8px 12px !important;
+  }
+}
+
+/* Стили для пустого состояния поиска */
+.inventory-empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: #8b7355;
+  font-style: italic;
+}
+
+.inventory-empty-state .fantasy-text-muted {
+  font-size: 1.1em;
+  line-height: 1.6;
+}
+
+/* Эффекты при наведении на элементы инвентаря */
+.inventory-items-container > * {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.inventory-items-container > *:hover {
+  transform: translateY(-2px);
+  z-index: 2;
 }

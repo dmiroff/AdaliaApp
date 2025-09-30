@@ -61,8 +61,16 @@ const InventoryList = observer(() => {
     );
   }
 
+  // ИСПРАВЛЕННАЯ ФИЛЬТРАЦИЯ: если selected_type = null, показываем все предметы
   const filteredItemsWithKeys = Object.entries(user.inventory_new).filter(
-    ([key, item]) => item.type === selected_type
+    ([key, item]) => {
+      // Если тип не выбран (null), показываем все предметы
+      if (selected_type === null || selected_type === undefined) {
+        return true;
+      }
+      // Иначе фильтруем по выбранному типу
+      return item.type === selected_type;
+    }
   );
 
   const itemObjects = filteredItemsWithKeys.map(([id, data]) => ({ id, ...data }));
