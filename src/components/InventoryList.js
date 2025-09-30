@@ -85,23 +85,30 @@ const InventoryList = observer(() => {
 
   return (
     <div className="fantasy-paper content-overlay">
-      <Row className="d-flex">
-        <Row md="auto" xs={2} lg="auto" className="p-2">
-          <Col>
-            <TypeBar />
-          </Col>
-          <Col>
-            <Form className="fantasy-form">
-              <Form.Control
-                type="text"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Название предмета..."
-                className="w-100"
-              />
-            </Form>
-          </Col>
-        </Row>
+      {/* Поиск сверху */}
+      <Row className="inventory-search-row mb-3">
+        <Col>
+          <Form className="fantasy-form">
+            <Form.Control
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="🔍 Название предмета..."
+              className="inventory-search-input"
+            />
+          </Form>
+        </Col>
+      </Row>
+
+      {/* Фильтр по типам */}
+      <Row className="inventory-filter-row mb-3">
+        <Col xs="auto">
+          <TypeBar />
+        </Col>
+      </Row>
+
+      {/* Список предметов */}
+      <Row className="inventory-items-container">
         {results.map((item, index) => (
           <InventoryItem 
             key={item.id} 

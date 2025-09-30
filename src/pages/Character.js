@@ -313,7 +313,7 @@ const Character = observer(() => {
           <Spinner animation="border" variant="secondary" role="status" style={{ width: '3rem', height: '3rem' }}>
             <span className="visually-hidden">Loading...</span>
           </Spinner>
-          <p className="mt-3 text-muted">Загрузка данных персонажа...</p>
+          <p className="fantasy-text-gold">Загрузка данных персонажа...</p>
         </div>
       </div>
     );

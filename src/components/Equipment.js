@@ -97,9 +97,6 @@ const Equipment = () => {
   return (
     <Container className="mt-4">
       <Card className="fantasy-paper">
-        <Card.Header className="fantasy-card-header fantasy-card-header-primary">
-          <h3 className="fantasy-text-gold mb-0">Экипировка персонажа</h3>
-        </Card.Header>
         <Card.Body>
           <Row className="character-body-container" style={{ position: 'relative' }}>
             <div className="inventory-container">
