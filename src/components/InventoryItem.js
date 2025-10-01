@@ -22,11 +22,11 @@ const InventoryItem = ({ devicekey, device, onShowModal }) => {
   const navigate = useNavigate();
 
   const handleMouseEnter = () => {
-    setShowMenu(!showMenu);
+    setShowMenu(true);
   };
 
   const handleMouseLeave = () => {
-    setShowMenu(!showMenu);
+    setShowMenu(false);
   };
 
   const handleModalSell = (event) => {
@@ -171,19 +171,28 @@ const InventoryItem = ({ devicekey, device, onShowModal }) => {
           />
 
         </Col>
-        <Col xs={9} lg={true} style={{ fontSize: "0.9rem"}}>
-          <div style={{ display: "flex", alignItems: "center" }}>
+        <Col 
+          xs={9} 
+          lg={true} 
+          style={{ fontSize: "0.9rem" }}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+        >
+          <div 
+            style={{ 
+              display: "flex", 
+              flexDirection: "column",
+              cursor: "pointer",
+              height: "100%",
+              justifyContent: "center"
+            }}
+          >
             {/* Применяем форматирование названия и количества */}
-            <div style={{ width: '100%' }}>
-              <div style={{ 
-                display: 'flex', 
-                justifyContent: 'space-between', 
-                width: '100%',
-                flexWrap: 'wrap'
-              }}>
-                <span>{formatItemName()}</span>
-                <span>цена {device.value}</span>
-              </div>
+            <div>
+              <span>{formatItemName()}</span>
+            </div>
+            <div style={{ marginTop: "4px" }}>
+              <span>{device.value} 🌕</span>
             </div>
           </div>
         </Col>

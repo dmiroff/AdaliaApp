@@ -10,13 +10,13 @@ const Inventory = () => {
     const [showEquipment, setShowEquipment] = useState(false);
     
     return (
-      <Container>
-        <Row className="d-flex justify-content-between align-items-center"> {/* Use the justify-content-between class to evenly distribute the space between the two components */}
-          <Col className="text-center p-2"> {/* Add the text-right class to align the button text to the right */}
-
+      <Container className="mt-5 pt-4"> {/* Увеличиваем отступ сверху */}
+        <Row className="d-flex justify-content-center align-items-center mb-4">
+          <Col xs={12} md={8} lg={6} className="text-center p-3">
             <Button 
               onClick={() => setShowEquipment(!showEquipment)}
-              className={`fantasy-btn ${showEquipment ? 'fantasy-btn-warning' : 'fantasy-btn-success'} fantasy-btn-lg`}
+              className={`fantasy-btn ${showEquipment ? 'fantasy-btn-warning' : 'fantasy-btn-success'} fantasy-btn-lg w-100`}
+              style={{ minHeight: '60px' }}
             >
               {showEquipment ? "✖ Спрятать снаряжение" : "Показать снаряжение"}
             </Button>
@@ -34,8 +34,8 @@ const Inventory = () => {
         <Row>
           <Col>
             <Suspense fallback={
-              <div className="fantasy-paper p-4 text-center">
-                <div className="fantasy-text-muted">Загрузка инвентаря...</div>
+              <div className="fantasy-paper p-4 text-center mt-3">
+                <div className="fantasy-text-muted fs-5">Загрузка инвентаря...</div>
               </div>
             }>
               <InventoryList />

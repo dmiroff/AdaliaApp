@@ -11,23 +11,37 @@ import Fuse from "fuse.js"
 
 const InventoryList = observer(() => {
   const { user } = useContext(Context);
-  const { selected_type } = user;
   const [playerData, setPlayerData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
-  const [user_inventory, setUserInventory] = useState(user.inventory_new);
+  const [user_inventory, setUserInventory] = useState({});
   
   const [showModal, setShowModal] = useState(false);
   const [modalMessage, setModalMessage] = useState("");
 
+  // Безопасное получение selected_type
+  const selected_type = user.selected_type !== undefined ? user.selected_type : null;
+
   useEffect(() => {
     const fetchPlayer = async () => {
-      const playerData = await GetDataById();
-      setPlayerData(playerData.data);
-      user.setPlayerInventory(playerData.data.inventory_new);
-      setUserInventory(playerData.data.inventory_new);
-      user.setPlayer(playerData.data);
-      setLoading(false);
+      try {
+        setLoading(true);
+        const playerData = await GetDataById();
+        
+        if (playerData && playerData.data) {
+          setPlayerData(playerData.data);
+          
+          // Защищенная установка инвентаря
+          const safeInventory = playerData.data.inventory_new || {};
+          user.setPlayerInventory(safeInventory);
+          setUserInventory(safeInventory);
+          user.setPlayer(playerData.data);
+        }
+      } catch (error) {
+        console.error("Error fetching player data:", error);
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchPlayer();
@@ -61,10 +75,15 @@ const InventoryList = observer(() => {
     );
   }
 
-  // ИСПРАВЛЕННАЯ ФИЛЬТРАЦИЯ: если selected_type = null, показываем все предметы
-  const filteredItemsWithKeys = Object.entries(user.inventory_new).filter(
+  // ЗАЩИЩЕННАЯ ФИЛЬТРАЦИЯ
+  const inventory = user_inventory || {};
+  
+  const filteredItemsWithKeys = Object.entries(inventory).filter(
     ([key, item]) => {
-      // Если тип не выбран (null), показываем все предметы
+      // Проверяем что item существует и имеет тип
+      if (!item || typeof item !== 'object') return false;
+      
+      // Если тип не выбран, показываем все предметы
       if (selected_type === null || selected_type === undefined) {
         return true;
       }
@@ -73,17 +92,32 @@ const InventoryList = observer(() => {
     }
   );
 
-  const itemObjects = filteredItemsWithKeys.map(([id, data]) => ({ id, ...data }));
+  const itemObjects = filteredItemsWithKeys.map(([id, data]) => ({ 
+    id, 
+    ...(data || {}) // Защита от undefined data
+  }));
 
-  const fuse = new Fuse(itemObjects, {
-    keys: ["name"],
-    includeScore: true,
-    threshold: 0.3 
-  });
-  
-  const results = query ? fuse.search(query).map(result => result.item) : itemObjects;
+  // Защищенный Fuse.js
+  let results = itemObjects;
+  try {
+    const fuse = new Fuse(itemObjects, {
+      keys: ["name"],
+      includeScore: true,
+      threshold: 0.3 
+    });
+    
+    results = query ? fuse.search(query).map(result => result.item) : itemObjects;
+  } catch (error) {
+    console.error("Fuse.js error:", error);
+    // В случае ошибки Fuse.js используем простую фильтрацию
+    if (query) {
+      results = itemObjects.filter(item => 
+        item.name && item.name.toLowerCase().includes(query.toLowerCase())
+      );
+    }
+  }
 
-  if (!Object.keys(user.inventory_new).length) {
+  if (!Object.keys(inventory).length) {
     return (
       <div className="fantasy-paper p-4 text-center">
         <div className="fantasy-text-muted">Вот инвентарь пустой, он предмет простой</div>
@@ -117,7 +151,7 @@ const InventoryList = observer(() => {
 
       {/* Список предметов */}
       <Row className="inventory-items-container">
-        {results.map((item, index) => (
+        {results.map((item) => (
           <InventoryItem 
             key={item.id} 
             devicekey={item.id} 

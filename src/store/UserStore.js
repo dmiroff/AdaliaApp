@@ -6,7 +6,7 @@ export default class UserStore {
         this._user_id = 0
         this._player_data = {}
         this._inventory_new = {}
-        this._selected_type = NaN
+        this._selected_type = null // Заменяем NaN на null
         makeAutoObservable(this)
     }
 
@@ -20,7 +20,7 @@ export default class UserStore {
         this._player_data = player_data
     }
     setPlayerInventory(inventory_new) {
-        this._inventory_new = inventory_new
+        this._inventory_new = inventory_new || {} // Защита от undefined/null
     }
 
     setSelectedType(selected_type) {
@@ -38,7 +38,7 @@ export default class UserStore {
         return this._player_data
     }
     get inventory_new() {
-        return this._inventory_new
+        return this._inventory_new || {} // Защита от undefined
     }
     get selected_type() {
         return this._selected_type

@@ -1,5 +1,5 @@
 import { useState, useEffect, useContext } from "react";
-import { Container, Dropdown, Row, Button, Card, Modal } from "react-bootstrap";
+import { Container, Dropdown, DropdownButton, Row, Button, Modal } from "react-bootstrap";
 import GetDataById from "../http/GetData";
 import { UnwearDataById } from "../http/SupportFunctions";
 import { Spinner } from "react-bootstrap";
@@ -9,40 +9,27 @@ import "./Equipment.css";
 
 const Equipment = () => {
   const { user } = useContext(Context);
-  const [equippedItems, setEquippedItems] = useState([]);
+  const [equippedItems, setEquippedItems] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [modalMessage, setModalMessage] = useState("");
-  const [toNavigate, setToNavigate] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [hoveredSlot, setHoveredSlot] = useState(null);
 
   const equipmentSlots = [
-    "head",
-    "right_hand",
-    "left_hand",
-    "breast_armor",
-    "cloak",
-    "ring_1",
-    "ring_2",
-    "ring_3",
-    "ring_4",
-    "ring_5",
-    "gloves",
-    "necklace",
-    "leg_armor",
-    "boots",
-    "secondary_weapon",
-    "belt",
-    "arm_armor",
+    "head", "right_hand", "left_hand", "breast_armor", "cloak", 
+    "ring_1", "ring_2", "ring_3", "ring_4", "ring_5", 
+    "gloves", "necklace", "leg_armor", "boots", "secondary_weapon", 
+    "belt", "arm_armor"
   ];
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const data = await GetDataById(user.user.id);
-        setEquippedItems(data.data);
+        setEquippedItems(data.data || {});
       } catch (err) {
+        console.error("Ошибка загрузки экипировки:", err);
         setError(err);
       } finally {
         setLoading(false);
@@ -62,12 +49,11 @@ const Equipment = () => {
     }
   }, [showModal]);
 
-  const handleUnwear = async () => {
+  const handleUnwear = async (slot) => {
     try {
-      if (user.player_data[hoveredSlot]) {
-        const response = await UnwearDataById(user.player_data[hoveredSlot].id);
+      if (user.player_data[slot]) {
+        const response = await UnwearDataById(user.player_data[slot].id);
         if (response.status) {
-          setToNavigate(true);
           const message = response.message;
           const player_data = response.data;
           user.setPlayerInventory(player_data.inventory_new);
@@ -84,95 +70,123 @@ const Equipment = () => {
     }
   };
 
+  // Улучшенная функция для получения пути к изображению
+  const getImagePath = (imagePath) => {
+    if (!imagePath || imagePath === "" || imagePath === "null") {
+      return null;
+    }
+    
+    // Если путь содержит только имя файла
+    if (imagePath.includes('.') && !imagePath.includes('/')) {
+      const path = `/assets/Images/${imagePath}`;
+      return path;
+    }
+    
+    // Если путь содержит папку Images/
+    if (imagePath.includes('Images/')) {
+      const fileName = imagePath.split('Images/')[1];
+      const path = `/assets/Images/${fileName}`.replace(/\.(png|jpg|jpeg)$/, '.webp');
+      return path;
+    }
+    return null;
+  };
+
+  // Функция для проверки, есть ли изображение у предмета
+  const hasValidImage = (item) => {
+    if (!item || !item.Image) return false;
+    return item.Image !== "" && item.Image !== "null";
+  };
+
+  // Улучшенная проверка на валидный предмет (включая id = 0)
+  const isValidItem = (item) => {
+    return item && item.id !== undefined && item.id !== null;
+  };
+
   if (loading) {
     return (
-      <div className="d-flex justify-content-center align-items-center fantasy-paper p-4">
-        <Spinner animation="border" role="status" className="fantasy-text-primary">
+      <div className="d-flex justify-content-center align-items-center">
+        <Spinner animation="border" role="status">
           <span className="visually-hidden">Loading...</span>
         </Spinner>
       </div>
     );
   }
-
+  
   return (
     <Container className="mt-4">
-      <Card className="fantasy-paper">
-        <Card.Body>
-          <Row className="character-body-container" style={{ position: 'relative' }}>
-            <div className="inventory-container">
-              <div className="character-silhouette">
-                <img src={bodyImage} alt="Character" className="silhouette-img" />
-                {equipmentSlots.map((slot) => (
-                  <div
-                    key={slot}
-                    className={`equipment-slot ${slot}`}
-                    style={{ position: 'absolute' }}
-                    onMouseEnter={() => setHoveredSlot(slot)}
-                    onMouseLeave={() => setHoveredSlot(null)}
-                  >
-                    {equippedItems[slot]?.id ? (
-                      <>
-                        {equippedItems[slot].Image ? (
-                          <img
-                            src={`/assets/Images/${equippedItems[slot].Image.split("Images/")[1]}`}
-                            alt={equippedItems[slot].name}
-                            className="equipment-item"
-                            style={{ position: 'absolute', width: '10vw', height: '10vh' }}
-                          />
-                        ) : (
-                          <div className="empty-slot" />
-                        )}
-                        {hoveredSlot === slot && (
-                          <Dropdown>
-                            <Dropdown.Toggle 
-                              className="fantasy-btn fantasy-btn-danger fantasy-btn-sm"
-                              style={{
-                                position: "absolute",
-                                zIndex: 1,
-                                top: "0",
-                                left: "0",
-                                minWidth: "120px"
-                              }}
-                            >
-                              Действия
-                            </Dropdown.Toggle>
-                            <Dropdown.Menu className="fantasy-dropdown-menu">
-                              <Dropdown.Item 
-                                onClick={handleUnwear}
-                                className="fantasy-text-dark"
-                              >
-                                Снять
-                              </Dropdown.Item>
-                            </Dropdown.Menu>
-                          </Dropdown>
-                        )}
-                      </>
-                    ) : (
-                      <div className="empty-slot fantasy-text-muted">
-                        {hoveredSlot === slot && "Пусто"}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </Row>
-        </Card.Body>
-      </Card>
+      <Row className="character-body-container">
+        <div className="inventory-container">
+          <div className="character-silhouette">
+            <img src={bodyImage} alt="Character" className="silhouette-img" />
+            {equipmentSlots.map((slot) => {
+              const item = equippedItems[slot];
+              const itemIsValid = isValidItem(item);
+              const hasImage = hasValidImage(item);
+              const imagePath = hasImage ? getImagePath(item.Image) : null;
 
-      <Modal show={showModal} onHide={handleModalClose} backdrop="static" keyboard={false} className="fantasy-modal">
-        <Modal.Header closeButton className="fantasy-card-header fantasy-card-header-primary">
-          <Modal.Title className="fantasy-text-gold">Оповещение</Modal.Title>
+              return (
+                <div
+                  key={slot}
+                  className={`equipment-slot ${slot}`}
+                  onMouseEnter={() => setHoveredSlot(slot)}
+                  onMouseLeave={() => setHoveredSlot(null)}
+                >
+                  {itemIsValid ? (
+                    <>
+                      {hasImage && imagePath ? (
+                        <img
+                          src={imagePath}
+                          alt={item.name || 'Item'}
+                          className="equipment-item"
+                          onError={(e) => {
+                            console.error(`Ошибка загрузки изображения: ${imagePath}`);
+                            e.target.style.display = 'none';
+                          }}
+                        />
+                      ) : (
+                        <div 
+                          className="empty-slot-with-text" 
+                          title={item.name || `Предмет #${item.id}`}
+                        >
+                          <span className="item-text">
+                            {item.name?.charAt(0) || '?'}
+                          </span>
+                        </div>
+                      )}
+                      {hoveredSlot === slot && (
+                        <DropdownButton
+                          title="Действия"
+                          show={true}
+                          onClick={(e) => e.stopPropagation()}
+                          variant="dark"
+                          id="inventory-item-dropdown"
+                          className="equipment-dropdown"
+                        >
+                          <Dropdown.Item 
+                            variant="danger" 
+                            onClick={() => handleUnwear(slot)}
+                          >
+                            Снять
+                          </Dropdown.Item>
+                        </DropdownButton>
+                      )}
+                    </>
+                  ) : (
+                    <div className="empty-slot" />
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </Row>
+      <Modal show={showModal} onHide={handleModalClose} backdrop="static" keyboard={false}>
+        <Modal.Header closeButton>
+          <Modal.Title>Оповещение</Modal.Title>
         </Modal.Header>
-        <Modal.Body style={{ whiteSpace: 'pre-wrap' }} className="fantasy-text-dark">
-          {modalMessage}
-        </Modal.Body>
+        <Modal.Body style={{ whiteSpace: 'pre-wrap' }}>{modalMessage}</Modal.Body>
         <Modal.Footer>
-          <Button 
-            variant="secondary" 
-            onClick={handleModalClose}
-            className="fantasy-btn fantasy-btn-secondary"
-          >
+          <Button variant="secondary" onClick={handleModalClose}>
             Закрыть
           </Button>
         </Modal.Footer>
