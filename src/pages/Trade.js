@@ -6,6 +6,7 @@ import Tab from 'react-bootstrap/Tab';
 import Tabs from 'react-bootstrap/Tabs';
 import AuctionTab from "../components/AuctionTab";
 import BirzhaTab from "../components/BirzhaTab";
+import BulkPurchaseTab from "../components/BulkPurchaseTab"
 
 const Trade = () => {
     const [activeTab, setActiveTab] = useState('auction');
@@ -31,9 +32,13 @@ const Trade = () => {
               </Tab>
               
               <Tab eventKey="buyout" title="💰 Скупка" className="fantasy-tab-content">
-                <div className="fantasy-paper p-4 text-center mt-3">
-                  <div className="fantasy-text-muted">Раздел в разработке...</div>
-                </div>
+                <Suspense fallback={
+                  <div className="fantasy-paper p-4 text-center mt-3">
+                    <div className="fantasy-text-muted fs-5">Загрузка скупки...</div>
+                  </div>
+                }>
+                  <BulkPurchaseTab />
+                </Suspense>
               </Tab>
               
               <Tab eventKey="exchange" title="📊 Биржа" className="fantasy-tab-content">
