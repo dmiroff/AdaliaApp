@@ -17,23 +17,30 @@ const NavBar = observer(() => {
           <Nav.Link 
             eventKey="inventory" 
             onClick={() => navigate("/inventory")}
-            className="fantasy-btn fantasy-btn-primary fantasy-btn-lg mx-0 my-1 w-100" // Полная ширина для кнопок
+            className="fantasy-btn fantasy-btn-warning fantasy-btn-lg mx-0 my-1 w-100" // Полная ширина для кнопок
           >
             Инвентарь
           </Nav.Link>
           <Nav.Link 
             eventKey="character" 
             onClick={() => navigate("/character")}
-            className="fantasy-btn fantasy-btn-success fantasy-btn-lg mx-0 my-1 w-100"
+            className="fantasy-btn fantasy-btn-warning fantasy-btn-lg mx-0 my-1 w-100"
           >
             Персонаж
           </Nav.Link>
           <Nav.Link 
             eventKey="rating" 
             onClick={() => navigate("/rating")}
-            className="fantasy-btn fantasy-btn-info fantasy-btn-lg mx-0 my-1 w-100"
+            className="fantasy-btn fantasy-btn-warning fantasy-btn-lg mx-0 my-1 w-100"
           >
             Рейтинг
+          </Nav.Link>
+          <Nav.Link 
+            eventKey="trade" 
+            onClick={() => navigate("/trade")}
+            className="fantasy-btn fantasy-btn-warning fantasy-btn-lg mx-0 my-1 w-100"
+          >
+            Торговля
           </Nav.Link>
         </Nav>
       </Navbar.Collapse>

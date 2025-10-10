@@ -113,7 +113,7 @@
 }
 
 .fantasy-badge-primary {
-  background: linear-gradient(135deg, #8b4513, #a0522d);
+  background: linear-gradient(135deg, #707070, #d48c6a);
   color: #ffd700;
   border-color: #654321;
 }
@@ -125,7 +125,7 @@
 }
 
 .fantasy-badge-success {
-  background: linear-gradient(135deg, #2e7d32, #388e3c);
+  background: linear-gradient(135deg, #27a82e, #388e3c);
   color: #a5d6a7;
   border-color: #1b5e20;
 }
@@ -137,7 +137,7 @@
 }
 
 .fantasy-badge-warning {
-  background: linear-gradient(135deg, #ef6c00, #f57c00);
+  background: linear-gradient(135deg, #ef6c00, #c9cc06);
   color: #ffe0b2;
   border-color: #e65100;
 }
@@ -156,7 +156,7 @@
 }
 
 .fantasy-badge-rage {
-  background: linear-gradient(135deg, #ff6f00, #ff8f00);
+  background: linear-gradient(135deg, #ff2b06, #ff8f00);
   color: #ffe0b2;
   border-color: #e65100;
 }

@@ -11,6 +11,8 @@ export default classDataToDict;
 export const dict_translator = {
   "type": "Тип",
   "weapon_damage": "Урон",
+  "buff_ally": "Поддержка",
+  "text": "Описание",
   "weapon_damage_type": "Тип урона",
   "attack_cost": "Стоимость атаки",
   "attack_range": "Дальность атаки",

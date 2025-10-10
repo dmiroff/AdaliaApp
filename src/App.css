@@ -87,11 +87,11 @@ body {
 /* Глобальные кнопки в стиле фэнтези */
 .fantasy-btn {
   background: linear-gradient(135deg, #8b4513 0%, #a0522d 100%);
-  border: 2px solid #654321;
+  border: 1px solid #000000 !important;
   border-radius: 6px;
   color: #ffd700 !important;
   font-weight: 600;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+  /*text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);*/
   padding: 8px 16px;
   transition: all 0.3s ease;
   position: relative;
@@ -101,7 +101,6 @@ body {
   text-decoration: none;
   display: inline-block;
   text-align: center;
-  border: none;
 }
 
 .fantasy-btn::before {
@@ -118,7 +117,7 @@ body {
 .fantasy-btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-  border-color: #d4af37;
+  border-color: #000000 !important;
   color: #fffacd !important;
   text-decoration: none;
 }
@@ -136,32 +135,32 @@ body {
 /* Варианты кнопок */
 .fantasy-btn-primary {
   background: linear-gradient(135deg, #2f1b0c 0%, #4a2c14 100%);
-  border-color: #8b4513;
+  border-color: #000000 !important;
 }
 
 .fantasy-btn-success {
   background: linear-gradient(135deg, #0f2f1a 0%, #1c4a2c 100%);
-  border-color: #2e7d32;
+  border-color: #000000 !important;
 }
 
 .fantasy-btn-warning {
   background: linear-gradient(135deg, #332100 0%, #664400 100%);
-  border-color: #ff8f00;
+  border-color: #000000 !important;
 }
 
 .fantasy-btn-info {
   background: linear-gradient(135deg, #0c1f2f 0%, #1c3a4a 100%);
-  border-color: #0277bd;
+  border-color: #000000 !important;
 }
 
 .fantasy-btn-danger {
   background: linear-gradient(135deg, #3f0f0f 0%, #5c1a1a 100%);
-  border-color: #b71c1c;
+  border-color: #000000 !important;
 }
 
 .fantasy-btn-magic {
   background: linear-gradient(135deg, #1a0f2f 0%, #2d1c4a 100%);
-  border-color: #6a1b9a;
+  border-color: #000000 !important;
 }
 
 /* Размеры кнопок */
@@ -183,7 +182,7 @@ body {
 
 .dropdown-toggle.fantasy-btn {
   background: linear-gradient(135deg, #8b4513 0%, #a0522d 100%) !important;
-  border: 2px solid #654321 !important;
+  border: 2px solid #000000 !important;
   color: #ffd700 !important;
   font-weight: 600;
   text-align: left;
@@ -808,7 +807,7 @@ body {
 .fantasy-tabs .nav-link.active {
   background: linear-gradient(135deg, #8b4513, #a0522d) !important;
   color: #ffd700 !important;
-  border-color: #654321;
+  border-color: #000000;
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
   box-shadow: 0 -3px 10px rgba(139, 69, 19, 0.3);
 }
@@ -891,13 +890,13 @@ body {
 /* Стили для кнопки переключения оборудования */
 .fantasy-btn-success:hover {
   background: linear-gradient(135deg, #1c4a2c 0%, #2e7d32 100%);
-  border-color: #4caf50;
+  border-color: #000000 !important;
   color: #a5d6a7 !important;
 }
 
 .fantasy-btn-warning:hover {
   background: linear-gradient(135deg, #664400 0%, #ff8f00 100%);
-  border-color: #ffb74d;
+  border-color: #000000 !important;
   color: #ffe0b2 !important;
 }
 
@@ -1308,4 +1307,11 @@ body {
 
 .min-vh-50 {
   min-height: 50vh;
+}
+
+.fantasy-btn:disabled {
+background: linear-gradient(135deg, #7a7572 0%, #8d8987 100%);
+background-color: #6c757d !important;
+border-color: #000000 !important;
+opacity: 0.65;
 }
