@@ -1,0 +1,242 @@
+/* Birzha.css - Улучшенные стили для биржи с большим графиком */
+
+.birzha-container {
+  padding: 20px;
+}
+
+/* Специальная карточка для графика */
+.birzha-chart-card {
+  min-height: 500px;
+}
+
+.birzha-chart-body {
+  padding: 0 !important;
+  height: 450px;
+  position: relative;
+}
+
+.birzha-chart-wrapper {
+  height: 100%;
+  padding: 20px;
+  position: relative;
+}
+
+/* Улучшенные шапки карточек для биржи */
+.birzha-card-header {
+  border-bottom: 3px double #8b4513 !important;
+  border-radius: 6px 6px 0 0 !important;
+  font-weight: 700;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+  letter-spacing: 0.5px;
+  position: relative;
+  padding: 20px !important;
+}
+
+.birzha-card-header-primary {
+  background: linear-gradient(135deg, #2f1b0c 0%, #4a2c14 100%) !important;
+  border-color: #8b4513 !important;
+}
+
+.birzha-card-header-info {
+  background: linear-gradient(135deg, #0c1f2f 0%, #1c3a4a 100%) !important;
+  border-color: #0277bd !important;
+}
+
+.birzha-card-header-secondary {
+  background: linear-gradient(135deg, #1c1c1c 0%, #2d2d2d 100%) !important;
+  border-color: #616161 !important;
+}
+
+/* ОБЯЗАТЕЛЬНО: Переопределяем цвет текста для заголовков с классом fantasy-text-gold */
+.birzha-card-header .fantasy-text-gold {
+  color: #ffd700 !important;
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.9) !important;
+  font-size: 1.3rem !important;
+}
+
+/* Специальный класс для карточки "О бирже" */
+.birzha-card {
+  background: linear-gradient(135deg, #f4e4bc 0%, #e6d2a9 100%) !important;
+  border: 2px solid #8b7355 !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+}
+
+.birzha-card .birzha-card-header {
+  background: linear-gradient(135deg, #2f1b0c 0%, #4a2c14 100%) !important;
+  border-color: #8b4513 !important;
+}
+
+/* ОБЯЗАТЕЛЬНО для карточки "О бирже" */
+.birzha-card .birzha-card-header .fantasy-text-gold {
+  color: #ffd700 !important;
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.9) !important;
+}
+
+/* Информационные блоки */
+.birzha-info {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.birzha-info-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px dashed #c19a6b;
+}
+
+.birzha-info-item:last-child {
+  border-bottom: none;
+}
+
+.birzha-info-icon {
+  color: #8b4513;
+  font-weight: bold;
+  min-width: 16px;
+  margin-top: 2px;
+  font-size: 1.1em;
+}
+
+.birzha-info-text {
+  color: #3e2723;
+  line-height: 1.5;
+  flex: 1;
+  font-weight: 500;
+  font-size: 0.95em;
+}
+
+/* Индикаторы баланса */
+.birzha-balance-info {
+  background: linear-gradient(135deg, rgba(244, 228, 188, 0.5) 0%, rgba(230, 210, 169, 0.3) 100%);
+  border-radius: 8px;
+  border: 1px solid #d7ccc8;
+}
+
+.birzha-balance-indicator {
+  font-weight: 600;
+  font-size: 1.1em;
+}
+
+.birzha-balance-positive {
+  color: #2e7d32;
+}
+
+.birzha-balance-negative {
+  color: #c62828;
+}
+
+.birzha-balance-neutral {
+  color: #5d4037;
+}
+
+/* Адаптивность для биржи */
+@media (max-width: 768px) {
+  .birzha-container {
+    padding: 10px;
+  }
+  
+  .birzha-chart-card {
+    min-height: 400px;
+  }
+  
+  .birzha-chart-body {
+    height: 350px;
+  }
+  
+  .birzha-chart-wrapper {
+    padding: 15px;
+  }
+  
+  .birzha-info-item {
+    padding: 8px 0;
+  }
+  
+  .birzha-info-text {
+    font-size: 0.9em;
+  }
+  
+  .birzha-card-header {
+    padding: 15px !important;
+  }
+  
+  .birzha-card-header .fantasy-text-gold {
+    font-size: 1.1rem !important;
+  }
+}
+
+@media (max-width: 576px) {
+  .birzha-chart-card {
+    min-height: 350px;
+  }
+  
+  .birzha-chart-body {
+    height: 300px;
+  }
+  
+  .birzha-chart-wrapper {
+    padding: 10px;
+  }
+  
+  .birzha-info {
+    gap: 10px;
+  }
+  
+  .birzha-info-item {
+    padding: 6px 0;
+  }
+}
+
+/* Улучшенные кнопки для биржи */
+.birzha-btn-loading {
+  position: relative;
+}
+
+.birzha-btn-loading::after {
+  content: "";
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border: 2px solid transparent;
+  border-top: 2px solid currentColor;
+  border-radius: 50%;
+  animation: birzha-spin 1s linear infinite;
+}
+
+@keyframes birzha-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Состояния кнопок биржи */
+.birzha-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Четкие границы для разделения */
+.birzha-info-item {
+  border-bottom-color: #d7ccc8;
+}
+
+/* Улучшаем отступы для карточек */
+.birzha-card .card-body {
+  padding: 25px;
+}
+
+.fantasy-card .card-body {
+  padding: 25px;
+}
+
+/* Убираем лишние тени для лучшей читаемости */
+.birzha-card-header {
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8);
+}
+
+/* Улучшаем внешний вид заголовков */
+.birzha-card-header .card-title {
+  margin-bottom: 0;
+  font-weight: 700;
+}

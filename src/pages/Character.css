@@ -1,17 +1,19 @@
-/* Character.css - Тёмное фэнтези */
+/* ===== Character.css - Оптимизированная версия ===== */
+
+/* Основные стили контейнера */
 .character-container {
-  margin-top: 80px; /* Добавьте этот отступ */
+  margin-top: 60px;
   padding: 0 15px;
 }
 
-/* Для мобильных устройств можно уменьшить отступ */
 @media (max-width: 768px) {
   .character-container {
     margin-top: 20px;
+    padding: 0 10px;
   }
 }
 
-/* Основные карточки в стиле старинного пергамента */
+/* Карточки в стиле пергамента */
 .fantasy-card {
   background: linear-gradient(135deg, #f4e4bc 0%, #e6d2a9 100%);
   border: 2px solid #8b7355;
@@ -20,6 +22,7 @@
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
+  animation: fadeIn 0.4s ease-out;
 }
 
 .fantasy-card::before {
@@ -50,40 +53,25 @@
   position: relative;
 }
 
+.fantasy-card-header::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 10%;
+  right: 10%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, currentColor, transparent);
+  opacity: 0.5;
+}
+
 .fantasy-card-header-primary {
   background: linear-gradient(135deg, #2f1b0c 0%, #4a2c14 100%) !important;
   color: #d4af37 !important;
-  border-color: #8b4513 !important;
-}
-
-.fantasy-card-header-success {
-  background: linear-gradient(135deg, #0f2f1a 0%, #1c4a2c 100%) !important;
-  color: #7cb342 !important;
-  border-color: #2e7d32 !important;
 }
 
 .fantasy-card-header-warning {
   background: linear-gradient(135deg, #332100 0%, #664400 100%) !important;
   color: #ffb74d !important;
-  border-color: #ff8f00 !important;
-}
-
-.fantasy-card-header-info {
-  background: linear-gradient(135deg, #0c1f2f 0%, #1c3a4a 100%) !important;
-  color: #4fc3f7 !important;
-  border-color: #0277bd !important;
-}
-
-.fantasy-card-header-magic {
-  background: linear-gradient(135deg, #1a0f2f 0%, #2d1c4a 100%) !important;
-  color: #ba68c8 !important;
-  border-color: #6a1b9a !important;
-}
-
-.fantasy-card-header-secondary {
-  background: linear-gradient(135deg, #1c1c1c 0%, #2d2d2d 100%) !important;
-  color: #bdbdbd !important;
-  border-color: #616161 !important;
 }
 
 /* Строки статистики */
@@ -101,7 +89,14 @@
   border-bottom: none;
 }
 
-/* Бейджи в стиле металлических пластин */
+@media (max-width: 768px) {
+  .fantasy-stat-row {
+    padding: 8px 0;
+    font-size: 0.9em;
+  }
+}
+
+/* Бейджи */
 .fantasy-badge {
   font-weight: 600;
   border: 1px solid;
@@ -113,15 +108,15 @@
 }
 
 .fantasy-badge-primary {
-  background: linear-gradient(135deg, #707070, #d48c6a);
+  background: linear-gradient(135deg, #8b4513, #a0522d);
   color: #ffd700;
   border-color: #654321;
 }
 
-.fantasy-badge-secondary {
-  background: linear-gradient(135deg, #696969, #808080);
-  color: #f5f5f5;
-  border-color: #505050;
+.fantasy-badge-warning {
+  background: linear-gradient(135deg, #ef6c00, #ff8f00);
+  color: #ffe0b2;
+  border-color: #e65100;
 }
 
 .fantasy-badge-success {
@@ -130,142 +125,22 @@
   border-color: #1b5e20;
 }
 
-.fantasy-badge-info {
-  background: linear-gradient(135deg, #1565c0, #1976d2);
-  color: #bbdefb;
-  border-color: #0d47a1;
-}
-
-.fantasy-badge-warning {
-  background: linear-gradient(135deg, #ef6c00, #c9cc06);
-  color: #ffe0b2;
-  border-color: #e65100;
-}
-
-.fantasy-badge-dark {
-  background: linear-gradient(135deg, #263238, #37474f);
-  color: #cfd8dc;
-  border-color: #1c2529;
-}
-
-/* Специальные бейджи для механик */
-.fantasy-badge-blood {
-  background: linear-gradient(135deg, #b71c1c, #c62828);
-  color: #ffcdd2;
-  border-color: #7f0000;
-}
-
-.fantasy-badge-rage {
-  background: linear-gradient(135deg, #ff2b06, #ff8f00);
-  color: #ffe0b2;
-  border-color: #e65100;
-}
-
-.fantasy-badge-regeneration {
-  background: linear-gradient(135deg, #1b5e20, #2e7d32);
-  color: #c8e6c9;
-  border-color: #003300;
-}
-
-.fantasy-badge-magic {
-  background: linear-gradient(135deg, #4a148c, #6a1b9a);
-  color: #e1bee7;
-  border-color: #38006b;
-}
-
-.fantasy-badge-combat {
-  background: linear-gradient(135deg, #bf360c, #d84315);
-  color: #ffccbc;
-  border-color: #870000;
-}
-
-.fantasy-badge-crit {
-  background: linear-gradient(135deg, #b71c1c, #d32f2f);
-  color: #ffcdd2;
-  border-color: #7f0000;
-}
-
-.fantasy-badge-physical {
-  background: linear-gradient(135deg, #5d4037, #6d4c41);
-  color: #d7ccc8;
-  border-color: #3e2723;
-}
-
-/* Бейджи элементов магии */
-.fantasy-badge-element-fire { 
-  background: linear-gradient(135deg, #b71c1c, #d32f2f);
-  color: #ffcdd2;
-  border-color: #7f0000;
-}
-
-.fantasy-badge-element-ice { 
-  background: linear-gradient(135deg, #01579b, #0277bd);
-  color: #b3e5fc;
-  border-color: #002f6c;
-}
-
-.fantasy-badge-element-lightning { 
-  background: linear-gradient(135deg, #f57f17, #f9a825);
-  color: #fff9c4;
-  border-color: #b26a00;
-}
-
-.fantasy-badge-element-dark { 
-  background: linear-gradient(135deg, #1a237e, #283593);
-  color: #c5cae9;
-  border-color: #000051;
-}
-
-.fantasy-badge-element-light { 
-  background: linear-gradient(135deg, #fbc02d, #fdd835);
-  color: #3e2723;
-  border-color: #c49000;
-}
-
-.fantasy-badge-element-life { 
-  background: linear-gradient(135deg, #1b5e20, #2e7d32);
-  color: #c8e6c9;
-  border-color: #003300;
-}
-
-.fantasy-badge-element-sound { 
-  background: linear-gradient(135deg, #6a1b9a, #8e24aa);
-  color: #e1bee7;
-  border-color: #38006b;
-}
-
-.fantasy-badge-element-air { 
-  background: linear-gradient(135deg, #00838f, #0097a7);
-  color: #b2ebf2;
-  border-color: #005662;
-}
-
-.fantasy-badge-element-death { 
-  background: linear-gradient(135deg, #212121, #424242);
-  color: #f5f5f5;
-  border-color: #000000;
-}
-
-@keyframes shimmer {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
-}
-
-/* Вкладки в стиле древнего свитка */
+/* Вкладки */
 .fantasy-tabs .nav-tabs {
   border-bottom: 3px double #8b4513;
   background: transparent;
-  position: relative;
 }
 
-.fantasy-tabs .nav-tabs::before {
-  content: "";
-  position: absolute;
-  bottom: -3px;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, #8b4513, transparent);
+.fantasy-tabs .nav {
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+}
+
+.fantasy-tabs .nav-item {
+  flex: 1;
+  min-width: 120px;
+  text-align: center;
 }
 
 .fantasy-tabs .nav-link {
@@ -276,20 +151,9 @@
   font-weight: 600;
   transition: all 0.3s ease;
   background: linear-gradient(135deg, #d7ccc8, #bcaaa4);
-  position: relative;
-  overflow: hidden;
   border-bottom: none !important;
-}
-
-.fantasy-tabs .nav-link::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><filter id="noise"><feTurbulence type="fractalNoise" baseFrequency="0.6" numOctaves="1" stitchTiles="stitch"/></filter><rect width="100" height="100" filter="url(%23noise)" opacity="0.1"/></svg>');
-  pointer-events: none;
+  white-space: nowrap;
+  padding: 0.5rem 0.75rem;
 }
 
 .fantasy-tabs .nav-link:hover {
@@ -307,7 +171,7 @@
   box-shadow: 0 -3px 10px rgba(139, 69, 19, 0.3);
 }
 
-/* Сетка атрибутов - более компактная */
+/* Сетка атрибутов */
 .fantasy-attributes-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -326,17 +190,6 @@
   cursor: help;
 }
 
-.fantasy-attribute-item::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><filter id="noise"><feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="1" stitchTiles="stitch"/></filter><rect width="100" height="100" filter="url(%23noise)" opacity="0.05"/></svg>');
-  pointer-events: none;
-}
-
 .fantasy-attribute-item:hover {
   background: linear-gradient(135deg, #f4e4bc, #e6d2a9);
   transform: translateX(3px);
@@ -344,7 +197,6 @@
   box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
 }
 
-/* Компактное расположение ключа и значения */
 .attribute-content {
   display: flex;
   flex-direction: column;
@@ -367,30 +219,6 @@
   font-size: 0.9em;
 }
 
-/* Индикатор тултипа */
-.fantasy-attribute-item::after {
-  content: "?";
-  position: absolute;
-  top: 5px;
-  right: 5px;
-  width: 16px;
-  height: 16px;
-  background: #8b4513;
-  color: #d4af37;
-  border-radius: 50%;
-  font-size: 0.7em;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.fantasy-attribute-item:hover::after {
-  opacity: 1;
-}
-
-/* Адаптивность для компактного отображения */
 @media (max-width: 768px) {
   .fantasy-attributes-grid {
     grid-template-columns: 1fr;
@@ -399,18 +227,34 @@
   .fantasy-attribute-item {
     padding: 8px 10px;
   }
-  
-  .fantasy-attribute-key {
-    font-size: 0.9em;
-  }
-  
-  .fantasy-attribute-value {
-    font-size: 0.85em;
-  }
-  
-  .fantasy-attribute-item::after {
-    opacity: 0.7;
-  }
+}
+
+/* Прогресс-бары */
+.level-progress-container {
+  margin-top: auto;
+  padding-top: 15px;
+  border-top: 2px solid #8b4513;
+}
+
+.experience-progress-bar,
+.health-progress-bar {
+  height: 12px;
+  border-radius: 6px;
+  background-color: #3d1a0f;
+  border: 1px solid #5d2916;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+.experience-progress-bar .progress-bar {
+  background: linear-gradient(90deg, #8b0000, #dc143c, #ff0000);
+  border-radius: 5px;
+  box-shadow: 0 0 8px rgba(255, 0, 0, 0.6);
+}
+
+.health-progress-bar .progress-bar {
+  background: linear-gradient(90deg, #1d9b12, #06ca20, #062b03);
+  border-radius: 5px;
+  box-shadow: 0 0 8px rgba(6, 66, 24, 0.6);
 }
 
 /* Анимации */
@@ -425,327 +269,7 @@
   }
 }
 
-.fantasy-card {
-  animation: fadeIn 0.4s ease-out;
-}
-
-/* Дополнительные эффекты для атмосферы */
-.fantasy-card-header::after {
-  content: "";
-  position: absolute;
-  bottom: 0;
-  left: 10%;
-  right: 10%;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, currentColor, transparent);
-  opacity: 0.5;
-}
-
-/* Character.css - Дополнения */
-
-/* Character.css - Дополнения для тултипов */
-
-/* Контейнер для прогресса уровня */
-.level-progress-container {
-  margin-top: auto;
-  padding-top: 15px;
-  border-top: 2px solid #8b4513;
-}
-
-/* Прогресс-бар опыта в кроваво-красных тонах */
-.experience-progress-bar {
-  height: 12px;
-  border-radius: 6px;
-  background-color: #3d1a0f;
-  border: 1px solid #5d2916;
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4);
-}
-
-.experience-progress-bar .progress-bar {
-  background: linear-gradient(90deg, #8b0000, #dc143c, #ff0000);
-  border-radius: 5px;
-  box-shadow: 0 0 8px rgba(255, 0, 0, 0.6);
-  position: relative;
-  overflow: hidden;
-  font-weight: bold;
-  font-size: 0.7em;
-  text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.8);
-}
-
-.experience-progress-bar .progress-bar::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-  animation: bloodShimmer 2s infinite;
-}
-
-/* Прогресс-бар опыта в кроваво-красных тонах */
-.health-progress-bar {
-  height: 12px;
-  border-radius: 6px;
-  background-color: #3d1a0f;
-  border: 1px solid #5d2916;
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4);
-}
-
-.health-progress-bar .progress-bar {
-  background: linear-gradient(90deg, #1d9b12, #06ca20, #062b03);
-  border-radius: 5px;
-  box-shadow: 0 0 8px rgba(6, 66, 24, 0.6);
-  position: relative;
-  overflow: hidden;
-  font-weight: bold;
-  font-size: 0.7em;
-  text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.8);
-}
-
-.health-progress-bar .progress-bar::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-  animation: bloodShimmer 2s infinite;
-}
-
-@keyframes bloodShimmer {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
-}
-
-/* Стили для тултипов в стиле фэнтези */
-.fantasy-tooltip {
-  opacity: 0;
-  transition: opacity 0.1s ease;
-}
-
-.fantasy-tooltip.fantasy-tooltip-visible {
-  opacity: 1;
-}
-
-.fantasy-tooltip .tooltip-inner {
-  background: linear-gradient(135deg, #2f1b0c 0%, #4a2c14 100%) !important;
-  border: 2px solid #8b4513 !important;
-  border-radius: 8px !important;
-  color: #d4af37 !important;
-  padding: 12px 15px !important;
-  font-size: 0.9em !important;
-  line-height: 1.4 !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5) !important;
-  text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.8) !important;
-  position: relative !important;
-  max-width: 300px !important;
-  text-align: left !important;
-}
-
-.fantasy-tooltip .tooltip-inner::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><filter id="noise"><feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="1" stitchTiles="stitch"/></filter><rect width="100" height="100" filter="url(%23noise)" opacity="0.1"/></svg>');
-  pointer-events: none;
-  border-radius: 6px;
-}
-
-/* Стрелка тултипа */
-.fantasy-tooltip.bs-tooltip-top .tooltip-arrow::before {
-  border-top-color: #8b4513 !important;
-}
-
-.fantasy-tooltip.bs-tooltip-bottom .tooltip-arrow::before {
-  border-bottom-color: #8b4513 !important;
-}
-
-.fantasy-tooltip.bs-tooltip-start .tooltip-arrow::before {
-  border-left-color: #8b4513 !important;
-}
-
-.fantasy-tooltip.bs-tooltip-end .tooltip-arrow::before {
-  border-right-color: #8b4513 !important;
-}
-
-/* Анимация появления тултипа */
-.fantasy-attribute-item {
-  cursor: help;
-  transition: all 0.3s ease;
-  position: relative;
-}
-
-.fantasy-attribute-item:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(139, 69, 19, 0.3);
-  z-index: 10;
-}
-
-/* Индикатор что есть тултип */
-.fantasy-attribute-item::after {
-  content: "?";
-  position: absolute;
-  top: 5px;
-  right: 5px;
-  width: 16px;
-  height: 16px;
-  background: #8b4513;
-  color: #d4af37;
-  border-radius: 50%;
-  font-size: 0.7em;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.fantasy-attribute-item:hover::after {
-  opacity: 1;
-}
-
-/* Адаптивность для тултипов */
-@media (max-width: 768px) {
-  .fantasy-tooltip .tooltip-inner {
-    max-width: 250px !important;
-    font-size: 0.8em !important;
-    padding: 10px 12px !important;
-  }
-  
-  .fantasy-attribute-item::after {
-    opacity: 0.7; /* Всегда показывать на мобильных */
-  }
-}
-
-/* Анимация появления без мерцания */
-@keyframes tooltipFadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(5px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.fantasy-tooltip.fantasy-tooltip-visible {
-  animation: tooltipFadeIn 0.2s ease-out;
-}
-
-/* Дополнения для Character.css */
-
-/* Стили для выпадающего меню персонажа */
-.fantasy-dropdown-item {
-  color: #3e2723 !important;
-  font-weight: 500;
-  transition: all 0.2s ease;
-  border-bottom: 1px solid #d7ccc8;
-  background: transparent !important;
-  padding: 10px 15px !important;
-}
-
-.fantasy-dropdown-item:last-child {
-  border-bottom: none;
-}
-
-.fantasy-dropdown-item:hover {
-  background: linear-gradient(135deg, #8b4513 0%, #a0522d 100%) !important;
-  color: #ffd700 !important;
-  transform: translateX(5px);
-}
-
-.fantasy-dropdown-item.active {
-  background: linear-gradient(135deg, #2f1b0c 0%, #4a2c14 100%) !important;
-  color: #d4af37 !important;
-  font-weight: 600;
-}
-
-/* Улучшенные стили для Navbar dropdown */
-.navbar-nav .dropdown-menu {
-  background: linear-gradient(135deg, #f4e4bc 0%, #e6d2a9 100%) !important;
-  border: 2px solid #8b7355 !important;
-  border-radius: 6px !important;
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4) !important;
-  margin-top: 5px !important;
-}
-
-/* Адаптивность для выпадающего меню */
-@media (max-width: 992px) {
-  .navbar-nav .dropdown-menu {
-    position: static !important;
-    float: none !important;
-    width: 100% !important;
-    margin-top: 0 !important;
-    border: none !important;
-    border-top: 2px solid #8b4513 !important;
-    border-radius: 0 !important;
-    box-shadow: none !important;
-  }
-}
-
-/* Улучшенные стили для карточек персонажа */
-.fantasy-stat-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 0;
-  border-bottom: 1px solid #c19a6b;
-  color: #3e2723;
-  font-weight: 500;
-  font-size: 0.9em;
-}
-
-.fantasy-stat-row:last-child {
-  border-bottom: none;
-}
-
-/* Компактное отображение для мобильных */
-@media (max-width: 768px) {
-  .fantasy-stat-row {
-    padding: 6px 0;
-    font-size: 0.85em;
-  }
-  
-  .fantasy-badge {
-    font-size: 0.8em;
-    padding: 3px 8px;
-  }
-}
-
-/* Плавная прокрутка к якорям */
+/* Плавная прокрутка */
 .character-container {
   scroll-behavior: smooth;
-}
-
-/* Стили для активных вкладок */
-.fantasy-tabs .nav-link.active {
-  background: linear-gradient(135deg, #8b4513, #a0522d) !important;
-  color: #ffd700 !important;
-  border-color: #654321;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
-  box-shadow: 0 -3px 10px rgba(139, 69, 19, 0.3);
-}
-
-/* Стили для выравнивания вкладок */
-.fantasy-tabs .nav {
-  display: flex;
-  flex-wrap: nowrap;
-  overflow-x: auto;
-}
-
-.fantasy-tabs .nav-item {
-  flex: 1;
-  min-width: 120px;
-  text-align: center;
-}
-
-.fantasy-tabs .nav-link {
-  white-space: nowrap;
-  padding: 0.5rem 0.75rem;
 }

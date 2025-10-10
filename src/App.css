@@ -1,53 +1,6 @@
-.App {
-  text-align: center;
-}
-
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
-}
-
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
-}
-
-.App-link {
-  color: #61dafb;
-}
-
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.display-linebreak {
-  white-space: pre-line;
-}
-
-.main-container {
-  width: 100%;
-  min-height: 100vh;
-  border: 2px solid #555;
-  box-shadow: 0 0 20px #000;
-  margin: 10px;
-  padding: 10px
+/* ===== БАЗОВЫЕ СТИЛИ ===== */
+html, body, #root {
+  height: 100%;
 }
 
 body {
@@ -58,18 +11,30 @@ body {
   background-attachment: fixed;
   margin: 0;
   padding: 0;
+  padding-top: 56px; /* Высота navbar */
 }
 
-/* ===== GLOBAL FANTASY STYLES ===== */
+/* ===== ТИПОГРАФИЯ И ТЕКСТ ===== */
+.fantasy-text-primary { color: #d4af37 !important; }
+.fantasy-text-success { color: #7cb342 !important; }
+.fantasy-text-warning { color: #ffb74d !important; }
+.fantasy-text-info { color: #4fc3f7 !important; }
+.fantasy-text-danger { color: #ef9a9a !important; }
+.fantasy-text-muted { color: #8b7355 !important; }
+.fantasy-text-dark { color: #3e2723 !important; }
+.fantasy-text-gold { color: #ffd700 !important; }
+.fantasy-text-bold { font-weight: 600 !important; }
 
-/* Базовый стиль пергаментной подложки */
+/* ===== ОСНОВНЫЕ КОМПОНЕНТЫ ===== */
+
+/* Пергаментный фон */
 .fantasy-paper {
   background: linear-gradient(135deg, #f4e4bc 0%, #e6d2a9 100%);
   border: 2px solid #8b7355;
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   position: relative;
-  /* overflow: hidden; */
+  overflow: visible !important;
 }
 
 .fantasy-paper::before {
@@ -84,14 +49,26 @@ body {
   opacity: 0.3;
 }
 
-/* Глобальные кнопки в стиле фэнтези */
+/* Контент поверх фона */
+.content-overlay {
+  background: linear-gradient(135deg, rgba(244, 228, 188, 0.9) 0%, rgba(230, 210, 169, 0.9) 100%);
+  backdrop-filter: blur(5px);
+  border: 2px solid #8b7355;
+  border-radius: 8px;
+  padding: 20px;
+  margin: 10px 0;
+  position: relative;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  overflow: visible !important;
+}
+
+/* ===== КНОПКИ ===== */
 .fantasy-btn {
   background: linear-gradient(135deg, #8b4513 0%, #a0522d 100%);
   border: 1px solid #000000 !important;
   border-radius: 6px;
   color: #ffd700 !important;
   font-weight: 600;
-  /*text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);*/
   padding: 8px 16px;
   transition: all 0.3s ease;
   position: relative;
@@ -101,17 +78,7 @@ body {
   text-decoration: none;
   display: inline-block;
   text-align: center;
-}
-
-.fantasy-btn::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><filter id="noise"><feTurbulence type="fractalNoise" baseFrequency="0.6" numOctaves="1" stitchTiles="stitch"/></filter><rect width="100" height="100" filter="url(%23noise)" opacity="0.1"/></svg>');
-  pointer-events: none;
+  z-index: 2;
 }
 
 .fantasy-btn:hover {
@@ -127,298 +94,25 @@ body {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
-.fantasy-btn:focus {
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(139, 69, 19, 0.5);
+.fantasy-btn:disabled {
+  background: linear-gradient(135deg, #7a7572 0%, #8d8987 100%);
+  border-color: #000000 !important;
+  opacity: 0.65;
 }
 
 /* Варианты кнопок */
-.fantasy-btn-primary {
-  background: linear-gradient(135deg, #2f1b0c 0%, #4a2c14 100%);
-  border-color: #000000 !important;
-}
-
-.fantasy-btn-success {
-  background: linear-gradient(135deg, #0f2f1a 0%, #1c4a2c 100%);
-  border-color: #000000 !important;
-}
-
-.fantasy-btn-warning {
-  background: linear-gradient(135deg, #332100 0%, #664400 100%);
-  border-color: #000000 !important;
-}
-
-.fantasy-btn-info {
-  background: linear-gradient(135deg, #0c1f2f 0%, #1c3a4a 100%);
-  border-color: #000000 !important;
-}
-
-.fantasy-btn-danger {
-  background: linear-gradient(135deg, #3f0f0f 0%, #5c1a1a 100%);
-  border-color: #000000 !important;
-}
-
-.fantasy-btn-magic {
-  background: linear-gradient(135deg, #1a0f2f 0%, #2d1c4a 100%);
-  border-color: #000000 !important;
-}
+.fantasy-btn-primary { background: linear-gradient(135deg, #2f1b0c 0%, #4a2c14 100%); }
+.fantasy-btn-success { background: linear-gradient(135deg, #0f2f1a 0%, #1c4a2c 100%); }
+.fantasy-btn-warning { background: linear-gradient(135deg, #332100 0%, #664400 100%); }
+.fantasy-btn-info { background: linear-gradient(135deg, #0c1f2f 0%, #1c3a4a 100%); }
+.fantasy-btn-danger { background: linear-gradient(135deg, #3f0f0f 0%, #5c1a1a 100%); }
+.fantasy-btn-magic { background: linear-gradient(135deg, #1a0f2f 0%, #2d1c4a 100%); }
 
 /* Размеры кнопок */
-.fantasy-btn-sm {
-  padding: 4px 12px;
-  font-size: 0.875em;
-}
+.fantasy-btn-sm { padding: 4px 12px; font-size: 0.875em; }
+.fantasy-btn-lg { padding: 12px 24px; font-size: 1.125em; font-weight: 700;}
 
-.fantasy-btn-lg {
-  padding: 12px 24px;
-  font-size: 1.125em;
-  font-weight: 700;
-}
-
-/* УЛУЧШЕННЫЕ СТИЛИ DROPDOWN */
-.dropdown {
-  position: relative;
-}
-
-.dropdown-toggle.fantasy-btn {
-  background: linear-gradient(135deg, #8b4513 0%, #a0522d 100%) !important;
-  border: 2px solid #000000 !important;
-  color: #ffd700 !important;
-  font-weight: 600;
-  text-align: left;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-}
-
-.dropdown-toggle.fantasy-btn::after {
-  margin-left: auto;
-  border-top-color: #ffd700;
-}
-
-.dropdown-menu {
-  background: linear-gradient(135deg, #f4e4bc 0%, #e6d2a9 100%) !important;
-  border: 2px solid #8b7355 !important;
-  border-radius: 6px !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
-  z-index: 1060 !important;
-  position: absolute !important;
-  width: 100% !important;
-  min-width: 200px !important;
-  max-height: 300px !important;
-  overflow-y: auto !important;
-}
-
-.dropdown-item {
-  color: #3e2723 !important;
-  font-weight: 500;
-  transition: all 0.2s ease;
-  border-bottom: 1px solid #d7ccc8;
-  background: transparent !important;
-  padding: 8px 12px !important;
-}
-
-.dropdown-item:last-child {
-  border-bottom: none;
-}
-
-.dropdown-item:hover,
-.dropdown-item:focus {
-  background: linear-gradient(135deg, #8b4513 0%, #a0522d 100%) !important;
-  color: #ffd700 !important;
-  transform: translateX(3px);
-}
-
-.dropdown-item.active,
-.dropdown-item:active {
-  background: linear-gradient(135deg, #2f1b0c 0%, #4a2c14 100%) !important;
-  color: #d4af37 !important;
-  font-weight: 600;
-}
-
-/* ===== ИСПРАВЛЕНИЯ ДЛЯ МОБИЛЬНОЙ НАВИГАЦИИ ===== */
-
-/* Убираем ограничения контейнера на мобильных устройствах */
-@media (max-width: 992px) {
-  .fantasy-navbar .container {
-    width: 100%;
-    max-width: 100%;
-    padding: 0;
-    margin: 0;
-  }
-}
-
-/* Исправления для navbar и контента */
-.fantasy-navbar {
-  z-index: 1030;
-  position: relative;
-}
-
-/* Основной контейнер с учетом navbar */
-.main-content {
-  min-height: calc(100vh - 76px); /* Высота минус navbar */
-  padding-top: 20px;
-}
-
-/* Убедимся, что контент не перекрывается navbar */
-.container {
-  position: relative;
-  z-index: 1;
-}
-
-/* Дополнительные отступы для безопасности */
-.mt-5 {
-  margin-top: 3rem !important;
-}
-
-.pt-4 {
-  padding-top: 1.5rem !important;
-}
-
-/* Улучшенная видимость кнопок */
-.fantasy-btn {
-  z-index: 2;
-  position: relative;
-}
-
-/* Гарантируем, что кнопка видна */
-.fantasy-btn-lg {
-  font-size: 1.25rem !important;
-  padding: 15px 30px !important;
-  border-width: 3px !important;
-}
-
-/* Мобильная адаптация */
-@media (max-width: 768px) {
-  .container {
-    margin-top: 1rem !important;
-    padding-top: 1rem !important;
-  }
-  
-  .fantasy-btn-lg {
-    font-size: 1.1rem !important;
-    padding: 12px 20px !important;
-  }
-}
-
-/* Исправление для высоты страницы */
-html, body, #root {
-  height: 100%;
-}
-
-body {
-  padding-top: 56px; /* Высота navbar */
-}
-
-/* Дополнительная защита от перекрытия */
-@media (max-width: 992px) {
-  body {
-    padding-top: 60px; /* Увеличиваем для мобильного navbar */
-  }
-}
-/* Кнопка переключения меню на всю ширину */
-.fantasy-navbar .navbar-toggler {
-  width: 100%;
-  margin: 0;
-  border-radius: 0;
-  border: none;
-  border-bottom: 2px solid #8b4513;
-  padding: 12px 20px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: linear-gradient(135deg, #2f1b0c 0%, #4a2c14 100%) !important;
-}
-
-/* Иконка гамбургера */
-.fantasy-navbar .navbar-toggler-icon {
-  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='%23d4af37' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
-  width: 1.5em;
-  height: 1.5em;
-}
-
-/* Текст для кнопки (если нужно добавить) */
-.fantasy-navbar .navbar-toggler::after {
-  content: "Меню";
-  color: #d4af37;
-  font-weight: 600;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
-  margin-right: 10px;
-}
-
-/* Раскрывающееся меню на всю ширину */
-.fantasy-navbar .navbar-collapse {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
-  z-index: 1050;
-  background: linear-gradient(135deg, #2f1b0c 0%, #4a2c14 100%);
-  border-top: 2px solid #8b4513;
-  border-bottom: 3px double #8b4513;
-}
-
-/* Контейнер внутри раскрывающегося меню */
-.fantasy-navbar .navbar-collapse .container {
-  padding: 0;
-}
-
-/* Навигационные ссылки в мобильном меню */
-.fantasy-navbar .navbar-collapse .nav {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  padding: 10px 0;
-}
-
-.fantasy-navbar .navbar-collapse .nav-link {
-  width: 100%;
-  text-align: center;
-  padding: 12px 20px;
-  margin: 2px 0;
-  border-radius: 0;
-  border: none;
-  border-bottom: 1px solid rgba(139, 69, 19, 0.3);
-}
-
-.fantasy-navbar .navbar-collapse .nav-link:last-child {
-  border-bottom: none;
-}
-
-/* Убираем отступы у навбара на мобильных */
-@media (max-width: 992px) {
-  .fantasy-navbar {
-    margin-bottom: 0;
-  }
-}
-
-/* Улучшаем внешний вид кнопки при наведении */
-.fantasy-navbar .navbar-toggler:hover {
-  background: linear-gradient(135deg, #4a2c14 0%, #5d3c1c 100%) !important;
-  border-bottom: 2px solid #d4af37;
-}
-
-.fantasy-navbar .navbar-toggler:hover::after {
-  color: #fffacd;
-}
-
-/* Анимация для плавного раскрытия меню */
-.navbar-collapse {
-  transition: all 0.3s ease-in-out;
-}
-
-/* Убираем стандартные отступы Bootstrap */
-@media (max-width: 992px) {
-  .navbar > .container {
-    padding-right: 0;
-    padding-left: 0;
-    margin-right: 0;
-    margin-left: 0;
-  }
-}
-
-/* Глобальные стили для форм */
+/* ===== ФОРМЫ ===== */
 .form-control {
   background: linear-gradient(135deg, #faf3e0 0%, #f5e8c8 100%) !important;
   border: 2px solid #8b7355 !important;
@@ -440,123 +134,79 @@ body {
   text-shadow: 1px 1px 1px rgba(255, 255, 255, 0.5);
 }
 
-/* Обновленный content-overlay в стиле фэнтези */
-.content-overlay {
-  background: linear-gradient(135deg, rgba(244, 228, 188, 0.9) 0%, rgba(230, 210, 169, 0.9) 100%);
-  backdrop-filter: blur(5px);
-  border: 2px solid #8b7355;
-  border-radius: 8px;
-  padding: 20px;
-  margin: 10px 0;
-  position: relative;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+/* ===== DROPDOWN ===== */
+.dropdown { position: relative; }
+
+.dropdown-toggle.fantasy-btn {
+  background: linear-gradient(135deg, #8b4513 0%, #a0522d 100%) !important;
+  border: 2px solid #000000 !important;
+  color: #ffd700 !important;
+  text-align: left;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
 }
 
-.content-overlay::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><filter id="noise"><feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="1" stitchTiles="stitch"/></filter><rect width="100" height="100" filter="url(%23noise)" opacity="0.1"/></svg>');
-  pointer-events: none;
-  border-radius: 6px;
-}
-
-/* Модальное окно в стиле фэнтези */
-.modal-content {
+.fantasy-dropdown-menu {
   background: linear-gradient(135deg, #f4e4bc 0%, #e6d2a9 100%) !important;
-  border: 3px solid #8b4513 !important;
-  border-radius: 10px !important;
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5) !important;
+  border: 2px solid #8b7355 !important;
+  border-radius: 6px !important;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4) !important;
+  padding: 5px 0 !important;
+  z-index: 1070 !important;
+  position: absolute !important;
 }
 
-.modal-header {
-  background: linear-gradient(135deg, #2f1b0c 0%, #4a2c14 100%) !important;
-  border-bottom: 3px double #8b4513 !important;
-  color: #d4af37 !important;
-  font-weight: 700;
-}
-
-.modal-footer {
-  border-top: 2px solid #8b7355 !important;
-  background: rgba(244, 228, 188, 0.5) !important;
-}
-
-/* Глобальные текстовые стили */
-.fantasy-text-primary { color: #d4af37 !important; }
-.fantasy-text-success { color: #7cb342 !important; }
-.fantasy-text-warning { color: #ffb74d !important; }
-.fantasy-text-info { color: #4fc3f7 !important; }
-.fantasy-text-danger { color: #ef9a9a !important; }
-.fantasy-text-muted { color: #8b7355 !important; }
-.fantasy-text-dark { color: #3e2723 !important; }
-.fantasy-text-gold { color: #ffd700 !important; }
-
-/* Стили для спиннера */
-.fantasy-paper .spinner-border {
-  border-color: #d4af37;
-  border-right-color: transparent;
-}
-
-/* ListGroup в стиле фэнтези */
-.list-group-item {
-  background: rgba(244, 228, 188, 0.7) !important;
-  border: 1px solid #bcaaa4 !important;
+.fantasy-dropdown-menu .dropdown-item {
   color: #3e2723 !important;
-  transition: all 0.3s ease;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  border-bottom: 1px solid #d7ccc8;
+  background: transparent !important;
+  padding: 10px 15px !important;
 }
 
-.list-group-item:hover {
-  background: rgba(230, 210, 169, 0.9) !important;
-  border-color: #8b7355 !important;
+.fantasy-dropdown-menu .dropdown-item:hover {
+  background: linear-gradient(135deg, #8b4513 0%, #a0522d 100%) !important;
+  color: #ffd700 !important;
+  transform: translateX(5px);
+  padding-left: 20px !important;
 }
 
-/* Анимации для интерактивных элементов */
-@keyframes pulse-gold {
-  0% { box-shadow: 0 0 0 0 rgba(212, 175, 55, 0.4); }
-  70% { box-shadow: 0 0 0 10px rgba(212, 175, 55, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(212, 175, 55, 0); }
-}
+/* ===== НАВИГАЦИЯ ===== */
+.fantasy-navbar { z-index: 1030; position: relative; }
 
-.fantasy-btn-pulse {
-  animation: pulse-gold 2s infinite;
-}
-
-/* Адаптивность */
-@media (max-width: 768px) {
-  .fantasy-btn {
-    padding: 10px 14px;
-    font-size: 0.9em;
+/* Мобильное меню */
+@media (max-width: 992px) {
+  .fantasy-navbar .container {
+    width: 100%;
+    max-width: 100%;
+    padding: 0;
+    margin: 0;
   }
   
-  .content-overlay {
-    padding: 15px;
-    margin: 5px 0;
+  .fantasy-navbar .navbar-toggler {
+    width: 100%;
+    border-radius: 0;
+    border: none;
+    border-bottom: 2px solid #8b4513;
+    padding: 12px 20px;
+    background: linear-gradient(135deg, #2f1b0c 0%, #4a2c14 100%) !important;
   }
   
-  .dropdown-menu {
-    position: fixed !important;
-    top: 50% !important;
-    left: 50% !important;
-    transform: translate(-50%, -50%) !important;
-    width: 90% !important;
-    max-width: 300px !important;
-    max-height: 60vh !important;
+  .fantasy-navbar .navbar-collapse {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 1050;
+    background: linear-gradient(135deg, #2f1b0c 0%, #4a2c14 100%);
+    border-top: 2px solid #8b4513;
   }
 }
 
-/* Для лучшей читаемости текста на пергаменте */
-.content-overlay span,
-.content-overlay li,
-.content-overlay div,
-.content-overlay p {
-  color: #3e2723 !important;
-  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.5);
-}
-
-/* Стили для карточек */
+/* ===== КАРТОЧКИ И СПИСКИ ===== */
 .card {
   background: linear-gradient(135deg, #f4e4bc 0%, #e6d2a9 100%) !important;
   border: 2px solid #8b7355 !important;
@@ -571,747 +221,50 @@ body {
   font-weight: 700;
 }
 
-/* Убираем старые стили dropdown которые конфликтуют */
-.dropdown-item.active,
-.dropdown-item:active {
-  background: linear-gradient(135deg, #2f1b0c 0%, #4a2c14 100%) !important;
-  color: #d4af37 !important;
-  font-weight: 600;
+.list-group-item {
+  background: rgba(244, 228, 188, 0.7) !important;
+  border: 1px solid #bcaaa4 !important;
+  color: #3e2723 !important;
+  transition: all 0.3s ease;
 }
 
-.dropdown-item:hover {
-  background: linear-gradient(135deg, #8b4513 0%, #a0522d 100%) !important;
-  color: #ffd700 !important;
+.list-group-item:hover {
+  background: rgba(230, 210, 169, 0.9) !important;
+  border-color: #8b7355 !important;
 }
 
-/* Важно: dropdown должен выходить за пределы контейнера */
-.typebar-dropdown {
-  position: absolute !important;
-  top: 100% !important;
-  left: 0 !important;
-  right: auto !important;
-  transform: none !important;
-  margin-top: 5px !important;
-  min-width: 200px !important;
-  max-height: 400px !important;
-  overflow-y: auto !important;
-  z-index: 1070 !important;
-  
-  /* Гарантируем, что dropdown будет поверх всех элементов */
-  position: fixed !important;
+/* ===== АНИМАЦИИ ===== */
+@keyframes pulse-gold {
+  0% { box-shadow: 0 0 0 0 rgba(212, 175, 55, 0.4); }
+  70% { box-shadow: 0 0 0 10px rgba(212, 175, 55, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(212, 175, 55, 0); }
 }
 
-/* Альтернативный вариант - используем абсолютное позиционирование с высоким z-index */
-.typebar-container .dropdown-menu {
-  position: absolute !important;
-  top: 100% !important;
-  left: 0 !important;
-  transform: none !important;
-  margin: 0 !important;
-  z-index: 9999 !important; /* Очень высокий z-index */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-/* Убедимся, что родительские контейнеры не обрезают dropdown */
-.content-overlay,
-.fantasy-paper {
-  overflow: visible !important; /* Разрешаем выход за границы */
-  position: relative; /* Создаем контекст позиционирования */
-}
+.fantasy-btn-pulse { animation: pulse-gold 2s infinite; }
 
-/* Специальные стили для выпадающих списков в fantasy-paper */
-.fantasy-paper .dropdown-menu {
-  position: fixed !important; /* Фиксированное позиционирование относительно окна */
-  z-index: 9999 !important; /* Выше всех элементов */
-  top: auto !important;
-  bottom: auto !important;
-  left: auto !important;
-  right: auto !important;
-}
-
-/* Для мобильных устройств - центрируем dropdown */
+/* ===== АДАПТИВНОСТЬ ===== */
 @media (max-width: 768px) {
-  .typebar-dropdown {
+  body { padding-top: 60px; }
+  
+  .fantasy-btn { padding: 10px 14px; font-size: 0.9em; }
+  
+  .content-overlay { padding: 15px; margin: 5px 0; }
+  
+  .fantasy-dropdown-menu {
     position: fixed !important;
     top: 50% !important;
     left: 50% !important;
     transform: translate(-50%, -50%) !important;
     width: 90vw !important;
     max-width: 300px !important;
-    max-height: 60vh !important;
-    border-radius: 8px !important;
   }
 }
 
-/* Улучшенные стили для TypeBar dropdown */
-.fantasy-dropdown-menu {
-  background: linear-gradient(135deg, #f4e4bc 0%, #e6d2a9 100%) !important;
-  border: 2px solid #8b7355 !important;
-  border-radius: 6px !important;
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4) !important;
-  padding: 5px 0 !important;
-  z-index: 10000 !important; /* Максимальный приоритет */
-}
-
-.fantasy-dropdown-menu .dropdown-item {
-  padding: 10px 15px !important;
-  border-bottom: 1px solid #d7ccc8;
-  transition: all 0.2s ease;
-  position: relative;
-  background: transparent !important;
-}
-
-.fantasy-dropdown-menu .dropdown-item:last-child {
-  border-bottom: none;
-}
-
-.fantasy-dropdown-menu .dropdown-item:hover {
-  background: linear-gradient(135deg, #8b4513 0%, #a0522d 100%) !important;
-  color: #ffd700 !important;
-  transform: translateX(5px);
-  padding-left: 20px !important;
-}
-
-.fantasy-dropdown-menu .dropdown-item.active {
-  background: linear-gradient(135deg, #2f1b0c 0%, #4a2c14 100%) !important;
-  color: #d4af37 !important;
-  font-weight: 600;
-  border-left: 3px solid #d4af37;
-}
-
-.fantasy-dropdown-menu .dropdown-item.active::before {
-  content: "✔";
-  position: absolute;
-  right: 15px;
-  color: #d4af37;
-}
-
-/* Анимация для плавного появления */
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.typebar-dropdown.show {
-  animation: slideDown 0.2s ease-out;
-}
-
-/* Убедимся, что кнопка TypeBar выглядит хорошо */
-.typebar-container .fantasy-btn {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  min-height: 38px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-/* Стиль для пустого состояния */
-.fantasy-dropdown-menu .dropdown-item.fantasy-text-muted {
-  pointer-events: none;
-  font-style: italic;
-  opacity: 0.7;
-  border-bottom: none;
-}
-
-/* Исправление для Bootstrap dropdown */
-.dropdown-menu[style] {
-  position: absolute !important;
-  inset: auto !important;
-  transform: none !important;
-}
-
-/* Убедимся, что все dropdown работают правильно */
-.dropdown {
-  position: relative;
-}
-
-.dropdown-menu {
-  z-index: 1070 !important;
-}
-
-/* Отключаем автоматическое позиционирование Bootstrap которое может конфликтовать */
-.dropdown-menu[data-popper-placement] {
-  position: absolute !important;
-  inset: auto !important;
-  transform: none !important;
-}
-
-/* Улучшенные стили для маленьких кнопок */
-.fantasy-btn-sm {
-  padding: 6px 12px !important;
-  font-size: 0.85em !important;
-  min-width: 160px;
-}
-
-/* Стили для компонента Rating */
-.fantasy-tabs .nav-tabs {
-  border-bottom: 3px double #8b4513;
-  background: transparent;
-  position: relative;
-}
-
-.fantasy-tabs .nav {
-  display: flex;
-  flex-wrap: nowrap;
-  overflow-x: auto;
-}
-
-.fantasy-tabs .nav-tabs::before {
-  content: "";
-  position: absolute;
-  bottom: -3px;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, #8b4513, transparent);
-}
-
-.fantasy-tabs .nav-link {
-  color: #5d4037 !important;
-  border: 2px solid transparent;
-  border-radius: 8px 8px 0 0;
-  margin: 0 3px;
-  font-weight: 600;
-  transition: all 0.3s ease;
-  background: linear-gradient(135deg, #d7ccc8, #bcaaa4);
-  position: relative;
-  overflow: hidden;
-  border-bottom: none !important;
-}
-
-.fantasy-tabs .nav-link::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><filter id="noise"><feTurbulence type="fractalNoise" baseFrequency="0.6" numOctaves="1" stitchTiles="stitch"/></filter><rect width="100" height="100" filter="url(%23noise)" opacity="0.1"/></svg>');
-  pointer-events: none;
-}
-
-.fantasy-tabs .nav-link:hover {
-  background: linear-gradient(135deg, #efdcd3, #d7ccc8);
-  border-color: #8b4513;
-  color: #3e2723 !important;
-  transform: translateY(-2px);
-}
-
-.fantasy-tabs .nav-link.active {
-  background: linear-gradient(135deg, #8b4513, #a0522d) !important;
-  color: #ffd700 !important;
-  border-color: #000000;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
-  box-shadow: 0 -3px 10px rgba(139, 69, 19, 0.3);
-}
-
-.fantasy-tab-content {
-  background: transparent;
-  padding: 0;
-}
-
-/* Стили для списка рейтинга */
-.fantasy-list-item {
-  background: linear-gradient(135deg, #efebe9, #d7ccc8) !important;
-  border: 1px solid #bcaaa4 !important;
-  border-radius: 6px !important;
-  margin-bottom: 8px !important;
-  transition: all 0.3s ease;
-  padding: 12px 15px !important;
-}
-
-.fantasy-list-item:hover {
-  background: linear-gradient(135deg, #f4e4bc, #e6d2a9) !important;
-  border-color: #8b7355 !important;
-  transform: translateX(5px);
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
-}
-
-.fantasy-item-even {
-  background: linear-gradient(135deg, #efebe9, #d7ccc8) !important;
-}
-
-.fantasy-item-odd {
-  background: linear-gradient(135deg, #e6d2a9, #d7ccc8) !important;
-}
-
-/* Стили для Equipment */
-.equipment-slot {
-  transition: all 0.3s ease;
-}
-
-.equipment-slot:hover {
-  transform: scale(1.05);
-  z-index: 10;
-}
-
-.empty-slot {
-  width: 50px;
-  height: 50px;
-  border: 2px dashed #8b7355;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(244, 228, 188, 0.5);
-  font-size: 0.8em;
-  color: #8b7355;
-}
-
-/* Адаптивность для Equipment */
-@media (max-width: 768px) {
-  .equipment-item {
-    width: 8vw !important;
-    height: 8vh !important;
-  }
-  
-  .empty-slot {
-    width: 40px;
-    height: 40px;
-  }
-  
-  .fantasy-list-item {
-    padding: 10px 12px !important;
-  }
-}
-
-/* Дополнительные текстовые стили */
-.fantasy-text-bold {
-  font-weight: 600 !important;
-}
-
-/* Стили для кнопки переключения оборудования */
-.fantasy-btn-success:hover {
-  background: linear-gradient(135deg, #1c4a2c 0%, #2e7d32 100%);
-  border-color: #000000 !important;
-  color: #a5d6a7 !important;
-}
-
-.fantasy-btn-warning:hover {
-  background: linear-gradient(135deg, #664400 0%, #ff8f00 100%);
-  border-color: #000000 !important;
-  color: #ffe0b2 !important;
-}
-
-/* Анимация для плавного появления/скрытия оборудования */
-.equipment-transition-enter {
-  opacity: 0;
-  transform: translateY(-20px);
-}
-
-.equipment-transition-enter-active {
-  opacity: 1;
-  transform: translateY(0);
-  transition: opacity 0.3s ease, transform 0.3s ease;
-}
-
-.equipment-transition-exit {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.equipment-transition-exit-active {
-  opacity: 0;
-  transform: translateY(-20px);
-  transition: opacity 0.3s ease, transform 0.3s ease;
-}
-
-/* Адаптивность для кнопки */
-@media (max-width: 768px) {
-  .fantasy-btn-lg {
-    padding: 10px 20px !important;
-    font-size: 1em !important;
-    width: 100%;
-  }
-}
-/* Стили для инвентаря */
-.inventory-search-row {
-  border-bottom: 2px solid #8b7355;
-  padding-bottom: 15px;
-  margin-bottom: 15px;
-}
-
-.inventory-search-input {
-  background: linear-gradient(135deg, #faf3e0 0%, #f5e8c8 100%) !important;
-  border: 2px solid #8b7355 !important;
-  border-radius: 25px !important;
-  color: #3e2723 !important;
-  font-weight: 500;
-  padding: 12px 20px !important;
-  font-size: 1.1em;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
-  transition: all 0.3s ease;
-}
-
-.inventory-search-input:focus {
-  background: linear-gradient(135deg, #fff9e6 0%, #faf3e0 100%) !important;
-  border-color: #a0522d !important;
-  box-shadow: 0 0 0 3px rgba(139, 69, 19, 0.3), 0 4px 12px rgba(0, 0, 0, 0.2) !important;
-  color: #3e2723 !important;
-}
-
-.inventory-search-input::placeholder {
-  color: #8b7355 !important;
-  font-style: italic;
-}
-
-.inventory-filter-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 15px;
-  padding: 10px 0;
-}
-
-.inventory-results-count {
-  text-align: right;
-  font-size: 0.9em;
-  font-weight: 600;
-}
-
-.inventory-items-container {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 15px;
-  margin-top: 10px;
-}
-
-/* Анимация для поиска */
-@keyframes searchGlow {
-  0% { box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); }
-  50% { box-shadow: 0 2px 12px rgba(139, 69, 19, 0.3); }
-  100% { box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); }
-}
-
-.inventory-search-input:focus {
-  animation: searchGlow 2s ease-in-out infinite;
-}
-
-/* Стили для счетчика результатов */
-.inventory-results-count .fantasy-text-muted {
-  background: linear-gradient(135deg, rgba(139, 115, 85, 0.1), rgba(139, 115, 85, 0.2));
-  padding: 5px 12px;
-  border-radius: 15px;
-  border: 1px solid #8b7355;
-  font-weight: 600;
-}
-
-/* Адаптивность для инвентаря */
-@media (max-width: 768px) {
-  .inventory-filter-row {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  
-  .inventory-results-count {
-    text-align: center;
-    order: -1;
-  }
-  
-  .inventory-items-container {
-    grid-template-columns: 1fr;
-    gap: 10px;
-  }
-  
-  .inventory-search-input {
-    padding: 10px 15px !important;
-    font-size: 1em;
-  }
-}
-
-@media (max-width: 576px) {
-  .inventory-items-container {
-    grid-template-columns: 1fr;
-  }
-  
-  .inventory-search-input {
-    border-radius: 15px !important;
-    padding: 8px 12px !important;
-  }
-}
-
-/* Стили для пустого состояния поиска */
-.inventory-empty-state {
-  text-align: center;
-  padding: 40px 20px;
-  color: #8b7355;
-  font-style: italic;
-}
-
-.inventory-empty-state .fantasy-text-muted {
-  font-size: 1.1em;
-  line-height: 1.6;
-}
-
-/* Эффекты при наведении на элементы инвентаря */
-.inventory-items-container > * {
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.inventory-items-container > *:hover {
-  transform: translateY(-2px);
-  z-index: 2;
-}
-
-/* Стили для страницы предмета */
-.item-detail-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 20px;
-}
-
-.item-detail-card {
-  padding: 30px;
-  border: 3px solid #8b7355;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
-  position: relative;
-  overflow: hidden;
-}
-
-.item-detail-card::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><filter id="noise"><feTurbulence type="fractalNoise" baseFrequency="0.6" numOctaves="2" stitchTiles="stitch"/></filter><rect width="100" height="100" filter="url(%23noise)" opacity="0.2"/></svg>');
-  pointer-events: none;
-}
-
-/* Стили для редкостей предметов */
-.item-legendary {
-  border-color: #ffd700 !important;
-  background: linear-gradient(135deg, #f4e4bc 0%, #e6d2a9 100%), 
-              linear-gradient(135deg, rgba(255, 215, 0, 0.3) 0%, transparent 50%) !important;
-  animation: pulse-gold 3s infinite;
-}
-
-.item-epic {
-  border-color: #9c27b0 !important;
-  background: linear-gradient(135deg, #f4e4bc 0%, #e6d2a9 100%),
-              linear-gradient(135deg, rgba(156, 39, 176, 0.2) 0%, transparent 50%) !important;
-}
-
-.item-rare {
-  border-color: #2196f3 !important;
-  background: linear-gradient(135deg, #f4e4bc 0%, #e6d2a9 100%),
-              linear-gradient(135deg, rgba(33, 150, 243, 0.2) 0%, transparent 50%) !important;
-}
-
-.item-valuable {
-  border-color: #4caf50 !important;
-}
-
-/* Изображение предмета */
-.item-image-section {
-  position: relative;
-}
-
-.item-image-container {
-  position: relative;
-  display: inline-block;
-}
-
-.item-detail-image {
-  border: 3px solid #8b7355 !important;
-  border-radius: 12px !important;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
-  max-width: 300px;
-  width: 100%;
-  aspect-ratio: 1/1;
-  object-fit: cover;
-  transition: all 0.3s ease;
-}
-
-.item-detail-image:hover {
-  transform: scale(1.02);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
-}
-
-.item-equipped-badge {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  font-size: 0.8em;
-  padding: 5px 10px;
-  border-radius: 15px;
-  animation: pulse-gold 2s infinite;
-}
-
-/* Панель действий */
-.item-actions-panel {
-  border: 2px solid #8b7355;
-  border-radius: 10px;
-  background: linear-gradient(135deg, rgba(244, 228, 188, 0.9) 0%, rgba(230, 210, 169, 0.9) 100%);
-}
-
-/* Заголовок предмета */
-.item-header {
-  text-align: center;
-  padding-bottom: 20px;
-  border-bottom: 2px solid #8b7355;
-}
-
-.item-name {
-  font-size: 2.2rem;
-  margin-bottom: 10px;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-.item-type-badge {
-  font-size: 1.1rem;
-  font-style: italic;
-  margin-bottom: 15px;
-}
-
-.item-value {
-  font-size: 1.8rem !important;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
-}
-
-/* Статистика предмета */
-.item-stats {
-  border: 2px solid #8b7355;
-  border-radius: 10px;
-  background: linear-gradient(135deg, rgba(244, 228, 188, 0.8) 0%, rgba(230, 210, 169, 0.8) 100%);
-}
-
-.stats-grid {
-  display: grid;
-  gap: 12px;
-}
-
-.stat-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 12px;
-  background: rgba(255, 255, 255, 0.3);
-  border-radius: 6px;
-  border: 1px solid rgba(139, 115, 85, 0.3);
-  transition: all 0.2s ease;
-}
-
-.stat-item:hover {
-  background: rgba(255, 255, 255, 0.5);
-  transform: translateX(5px);
-}
-
-.ability-item {
-  background: linear-gradient(135deg, rgba(212, 175, 55, 0.2) 0%, transparent 100%);
-  border-color: rgba(212, 175, 55, 0.5);
-}
-
-.stat-label {
-  font-weight: 600;
-  font-size: 0.95em;
-}
-
-.stat-value {
-  font-size: 1em;
-  text-align: right;
-}
-
-/* Описание предмета */
-.item-description {
-  border: 2px solid #8b7355;
-  border-radius: 10px;
-  background: linear-gradient(135deg, rgba(244, 228, 188, 0.8) 0%, rgba(230, 210, 169, 0.8) 100%);
-  font-style: italic;
-  line-height: 1.6;
-}
-
-/* Адаптивность */
-@media (max-width: 768px) {
-  .item-detail-container {
-    padding: 10px;
-  }
-  
-  .item-detail-card {
-    padding: 20px;
-  }
-  
-  .item-name {
-    font-size: 1.8rem;
-  }
-  
-  .item-value {
-    font-size: 1.5rem !important;
-  }
-  
-  .stat-item {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 5px;
-  }
-  
-  .stat-value {
-    text-align: left;
-    width: 100%;
-  }
-  
-  .item-detail-image {
-    max-width: 250px;
-  }
-}
-
-@media (max-width: 576px) {
-  .item-detail-card {
-    padding: 15px;
-  }
-  
-  .item-name {
-    font-size: 1.5rem;
-  }
-  
-  .stats-grid {
-    gap: 8px;
-  }
-  
-  .stat-item {
-    padding: 6px 10px;
-  }
-}
-
-/* Анимации */
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.item-detail-card {
-  animation: fadeInUp 0.5s ease-out;
-}
-
-/* Специальные стили для спиннера */
-.fantasy-spinner {
-  border-width: 3px;
-  width: 3rem;
-  height: 3rem;
-}
-
-.min-vh-50 {
-  min-height: 50vh;
-}
-
-.fantasy-btn:disabled {
-background: linear-gradient(135deg, #7a7572 0%, #8d8987 100%);
-background-color: #6c757d !important;
-border-color: #000000 !important;
-opacity: 0.65;
-}
+/* Утилиты */
+.min-vh-50 { min-height: 50vh; }
+.main-content { min-height: calc(100vh - 76px); }
