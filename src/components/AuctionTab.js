@@ -18,6 +18,8 @@ const AuctionTab = observer(() => {
   const [selectedLot, setSelectedLot] = useState(null);
   const [showBidModal, setShowBidModal] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false); // Новое состояние для модального окна ошибок
+  const [modalError, setModalError] = useState(""); // Текст ошибки для модалки
   const [bidAmount, setBidAmount] = useState("");
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [error, setError] = useState("");
@@ -27,6 +29,18 @@ const AuctionTab = observer(() => {
   const [playerData, setPlayerData] = useState(null);
   const [userInventory, setUserInventory] = useState({});
   const [dataLoaded, setDataLoaded] = useState(false);
+
+  // Функция для показа ошибки в модальном окне
+  const showErrorInModal = (errorMessage) => {
+    setModalError(errorMessage);
+    setShowErrorModal(true);
+  };
+
+  // Функция закрытия модального окна ошибок
+  const handleCloseErrorModal = () => {
+    setShowErrorModal(false);
+    setModalError("");
+  };
 
   useEffect(() => {
     const fetchPlayer = async () => {
@@ -48,7 +62,9 @@ const AuctionTab = observer(() => {
         }
       } catch (error) {
         console.error("Error fetching player data:", error);
-        setError("Ошибка загрузки данных игрока");
+        const errorMessage = error.response?.data?.detail || "Ошибка загрузки данных игрока";
+        showErrorInModal(errorMessage);
+        setError(errorMessage);
       } finally {
         setLoading(false);
       }
@@ -69,7 +85,9 @@ const AuctionTab = observer(() => {
         setAuctionLots(lots);
       } catch (error) {
         console.error("Error fetching auction lots:", error);
-        setError("Ошибка загрузки лотов аукциона");
+        const errorMessage = error.response?.data?.detail || "Ошибка загрузки лотов аукциона";
+        showErrorInModal(errorMessage);
+        setError(errorMessage);
       }
     };
 
@@ -96,7 +114,9 @@ const AuctionTab = observer(() => {
       setError("");
       const bidValue = Number(bidAmount);
       if (isNaN(bidValue) || bidValue <= 0) {
-        setError("Введите корректную сумму ставки");
+        const errorMessage = "Введите корректную сумму ставки";
+        showErrorInModal(errorMessage);
+        setError(errorMessage);
         return;
       }
 
@@ -113,7 +133,9 @@ const AuctionTab = observer(() => {
       }
     } catch (error) {
       console.error("Error placing bid:", error);
-      setError(error.response?.data?.detail || "Ошибка при размещении ставки");
+      const errorMessage = error.response?.data?.detail || "Ошибка при размещении ставки";
+      showErrorInModal(errorMessage);
+      setError(errorMessage);
     }
   };
 
@@ -131,7 +153,9 @@ const AuctionTab = observer(() => {
       }
     } catch (error) {
       console.error("Error buying out:", error);
-      setError(error.response?.data?.detail || "Ошибка при выкупе лота");
+      const errorMessage = error.response?.data?.detail || "Ошибка при выкупе лота";
+      showErrorInModal(errorMessage);
+      setError(errorMessage);
     }
   };
 
@@ -150,18 +174,37 @@ const AuctionTab = observer(() => {
       }
     } catch (error) {
       console.error("Error creating lot:", error);
-      setError(error.response?.data?.detail || "Ошибка при создании лота");
+      const errorMessage = error.response?.data?.detail || "Ошибка при создании лота";
+      showErrorInModal(errorMessage);
+      setError(errorMessage);
     }
+  };
+
+  // Обработчик клика по кнопке "Выставить предмет"
+  const handleCreateButtonClick = () => {
+    if (inventoryArray.length === 0) {
+      const errorMessage = "У вас нет предметов для выставления на аукцион";
+      showErrorInModal(errorMessage);
+      return;
+    }
+    setShowCreateModal(true);
   };
 
   // Поиск по лотам
   let filteredLots = auctionLots;
-  if (query) {
-    const fuse = new Fuse(auctionLots, {
-      keys: ["name"],
-      threshold: 0.3
-    });
-    filteredLots = fuse.search(query).map(result => result.item);
+  if (query && auctionLots.length > 0) {
+    try {
+      const fuse = new Fuse(auctionLots, {
+        keys: ["name"],
+        threshold: 0.3
+      });
+      const searchResults = fuse.search(query);
+      filteredLots = searchResults.map(result => result.item);
+    } catch (error) {
+      console.error("Search error:", error);
+      // В случае ошибки поиска оставляем исходный список
+      filteredLots = auctionLots;
+    }
   }
 
   // ПРЕОБРАЗОВАНИЕ ИНВЕНТАРЯ В МАССИВ С ПОДРОБНОЙ ОТЛАДКОЙ
@@ -223,6 +266,33 @@ const AuctionTab = observer(() => {
         </Alert>
       )}
 
+      {/* Модальное окно для ошибок */}
+      <Modal 
+        show={showErrorModal} 
+        onHide={handleCloseErrorModal}
+        centered
+        className="fantasy-modal"
+      >
+        <Modal.Header closeButton className="fantasy-card-header fantasy-card-header-danger">
+          <Modal.Title className="fantasy-text-gold">❌ Ошибка операции</Modal.Title>
+        </Modal.Header>
+        <Modal.Body className="fantasy-modal-body">
+          <div className="text-center">
+            <div className="fs-1 mb-3">⚠️</div>
+            <h5 className="fantasy-text-dark mb-3">Не удалось выполнить операцию</h5>
+            <p className="fantasy-text-muted">{modalError}</p>
+          </div>
+        </Modal.Body>
+        <Modal.Footer className="fantasy-modal-footer">
+          <Button 
+            className="fantasy-btn fantasy-btn-primary"
+            onClick={handleCloseErrorModal}
+          >
+            Понятно
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
       {/* Панель управления */}
       <Row className="mb-4">
         <Col md={8}>
@@ -237,7 +307,7 @@ const AuctionTab = observer(() => {
         <Col md={4}>
           <Button 
             className="fantasy-btn fantasy-btn-success w-100"
-            onClick={() => setShowCreateModal(true)}
+            onClick={handleCreateButtonClick}
             disabled={inventoryArray.length === 0}
           >
             {inventoryArray.length === 0 ? "📦 Нет предметов" : "📦 Выставить предмет"}

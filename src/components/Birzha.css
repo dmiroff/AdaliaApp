@@ -240,3 +240,36 @@
   margin-bottom: 0;
   font-weight: 700;
 }
+/* Стили для модального окна ошибок */
+.fantasy-modal .modal-content {
+  background: linear-gradient(135deg, #f5e8c8 0%, #e8d5b5 100%);
+  border: 2px solid #8b4513;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(139, 69, 19, 0.3);
+}
+
+.fantasy-modal .modal-header {
+  background: linear-gradient(135deg, #d4a574 0%, #b08c5a 100%);
+  border-bottom: 2px solid #8b4513;
+  border-radius: 10px 10px 0 0;
+}
+
+.fantasy-modal .modal-header .btn-close {
+  filter: invert(1);
+}
+
+.fantasy-modal .modal-body {
+  padding: 2rem;
+  background: rgba(255, 248, 225, 0.8);
+}
+
+.fantasy-modal .modal-footer {
+  background: linear-gradient(135deg, #e8d5b5 0%, #d4a574 100%);
+  border-top: 2px solid #8b4513;
+  border-radius: 0 0 10px 10px;
+}
+
+.fantasy-card-header-danger {
+  background: linear-gradient(135deg, #dc3545 0%, #c82333 100%) !important;
+  color: white !important;
+}

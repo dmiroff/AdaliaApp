@@ -1,7 +1,7 @@
 import React from 'react';
 import { observer } from "mobx-react-lite";
 import { useContext, useEffect, useState } from "react";
-import { Row, Col, Form, Button, Card, Badge, Alert } from "react-bootstrap";
+import { Row, Col, Form, Button, Card, Badge, Alert, Modal } from "react-bootstrap";
 import { Context } from "../index";
 import { Spinner } from "react-bootstrap";
 import Fuse from "fuse.js";
@@ -26,6 +26,8 @@ const BulkPurchaseTab = observer(() => {
   const [showSellModal, setShowSellModal] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [showCollectModal, setShowCollectModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false); // Новое состояние для модального окна ошибок
+  const [modalError, setModalError] = useState(""); // Текст ошибки для модалки
   
   const [sellAmount, setSellAmount] = useState("");
   const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -36,6 +38,18 @@ const BulkPurchaseTab = observer(() => {
   const [playerData, setPlayerData] = useState(null);
   const [userInventory, setUserInventory] = useState({});
   const [dataLoaded, setDataLoaded] = useState(false);
+
+  // Функция для показа ошибки в модальном окне
+  const showErrorInModal = (errorMessage) => {
+    setModalError(errorMessage);
+    setShowErrorModal(true);
+  };
+
+  // Функция закрытия модального окна ошибок
+  const handleCloseErrorModal = () => {
+    setShowErrorModal(false);
+    setModalError("");
+  };
 
   // Функция переключения режима
   const toggleMode = () => {
@@ -59,7 +73,9 @@ const BulkPurchaseTab = observer(() => {
         }
       } catch (error) {
         console.error("Error fetching player data:", error);
-        setError("Ошибка загрузки данных игрока");
+        const errorMessage = error.response?.data?.detail || "Ошибка загрузки данных игрока";
+        showErrorInModal(errorMessage);
+        setError(errorMessage);
       } finally {
         setLoading(false);
       }
@@ -82,7 +98,9 @@ const BulkPurchaseTab = observer(() => {
         setBuyRequests(safeRequests);
       } catch (error) {
         console.error("Error fetching buy requests:", error);
-        setError("Ошибка загрузки заявок на скупку");
+        const errorMessage = error.response?.data?.detail || "Ошибка загрузки заявок на скупку";
+        showErrorInModal(errorMessage);
+        setError(errorMessage);
         setBuyRequests([]);
       }
     };
@@ -106,7 +124,9 @@ const BulkPurchaseTab = observer(() => {
         setStorageData(safeStorage);
       } catch (error) {
         console.error("Error fetching storage:", error);
-        setError("Ошибка загрузки данных склада");
+        const errorMessage = error.response?.data?.detail || "Ошибка загрузки данных склада";
+        showErrorInModal(errorMessage);
+        setError(errorMessage);
         setStorageData([]);
       }
     };
@@ -136,7 +156,9 @@ const BulkPurchaseTab = observer(() => {
       setError("");
       const amount = Number(sellAmount);
       if (isNaN(amount) || amount <= 0) {
-        setError("Введите корректное количество");
+        const errorMessage = "Введите корректное количество";
+        showErrorInModal(errorMessage);
+        setError(errorMessage);
         return;
       }
 
@@ -151,11 +173,15 @@ const BulkPurchaseTab = observer(() => {
         
         setTimeout(() => setSuccess(""), 3000);
       } else {
-        setError(response.message || "Ошибка при продаже");
+        const errorMessage = response.message || "Ошибка при продаже";
+        showErrorInModal(errorMessage);
+        setError(errorMessage);
       }
     } catch (error) {
       console.error("Error selling items:", error);
-      setError(error.message || "Ошибка при продаже предметов");
+      const errorMessage = error.response?.data?.detail || error.message || "Ошибка при продаже предметов";
+      showErrorInModal(errorMessage);
+      setError(errorMessage);
     }
   };
 
@@ -172,11 +198,15 @@ const BulkPurchaseTab = observer(() => {
         
         setTimeout(() => setSuccess(""), 3000);
       } else {
-        setError(response.message || "Ошибка при получении предметов");
+        const errorMessage = response.message || "Ошибка при получении предметов";
+        showErrorInModal(errorMessage);
+        setError(errorMessage);
       }
     } catch (error) {
       console.error("Error collecting items:", error);
-      setError(error.message || "Ошибка при получении предметов");
+      const errorMessage = error.response?.data?.detail || error.message || "Ошибка при получении предметов";
+      showErrorInModal(errorMessage);
+      setError(errorMessage);
     }
   };
 
@@ -193,11 +223,15 @@ const BulkPurchaseTab = observer(() => {
         
         setTimeout(() => setSuccess(""), 3000);
       } else {
-        setError(response.message || "Ошибка при отмене заявки");
+        const errorMessage = response.message || "Ошибка при отмене заявки";
+        showErrorInModal(errorMessage);
+        setError(errorMessage);
       }
     } catch (error) {
       console.error("Error cancelling buy request:", error);
-      setError(error.message || "Ошибка при отмене заявки");
+      const errorMessage = error.response?.data?.detail || error.message || "Ошибка при отмене заявки";
+      showErrorInModal(errorMessage);
+      setError(errorMessage);
     }
   };
 
@@ -214,11 +248,15 @@ const BulkPurchaseTab = observer(() => {
         
         setTimeout(() => setSuccess(""), 3000);
       } else {
-        setError(response.message || "Ошибка при создании заявки");
+        const errorMessage = response.message || "Ошибка при создании заявки";
+        showErrorInModal(errorMessage);
+        setError(errorMessage);
       }
     } catch (error) {
       console.error("Error creating buy request:", error);
-      setError(error.message || "Ошибка при создании заявки");
+      const errorMessage = error.response?.data?.detail || error.message || "Ошибка при создании заявки";
+      showErrorInModal(errorMessage);
+      setError(errorMessage);
     }
   };
 
@@ -301,6 +339,33 @@ const BulkPurchaseTab = observer(() => {
           {success}
         </Alert>
       )}
+
+      {/* Модальное окно для ошибок */}
+      <Modal 
+        show={showErrorModal} 
+        onHide={handleCloseErrorModal}
+        centered
+        className="fantasy-modal"
+      >
+        <Modal.Header closeButton className="fantasy-card-header fantasy-card-header-danger">
+          <Modal.Title className="fantasy-text-gold">❌ Ошибка операции</Modal.Title>
+        </Modal.Header>
+        <Modal.Body className="fantasy-modal-body">
+          <div className="text-center">
+            <div className="fs-1 mb-3">⚠️</div>
+            <h5 className="fantasy-text-dark mb-3">Не удалось выполнить операцию</h5>
+            <p className="fantasy-text-muted">{modalError}</p>
+          </div>
+        </Modal.Body>
+        <Modal.Footer className="fantasy-modal-footer">
+          <Button 
+            className="fantasy-btn fantasy-btn-primary"
+            onClick={handleCloseErrorModal}
+          >
+            Понятно
+          </Button>
+        </Modal.Footer>
+      </Modal>
 
       {/* Упрощенная панель управления с одной кнопкой-переключателем */}
       <Row className="mb-4">
@@ -472,7 +537,6 @@ const BuyRequestCard = ({ request, onSellClick, onCancelClick, currentUserId, us
           <small className="fantasy-text-muted">
             Цена за шт.: <strong>{request.buy_price} 🌕</strong><br/>
             Общая сумма: <strong>{request.buy_price * request.buy_amount} 🌕</strong><br/>
-            Создатель: {isMyRequest ? 'Вы' : `Игрок #${request.user_id}`}
           </small>
         </Card.Text>
 

@@ -1,5 +1,5 @@
 import { useState, useEffect, useContext } from 'react';
-import { Row, Col, Card, Button, Alert, Spinner } from 'react-bootstrap';
+import { Row, Col, Card, Button, Alert, Spinner, Modal } from 'react-bootstrap';
 import { Context } from "../index";
 import { fetchBirzhaRate, buyDaleons, sellDaleons, fetchBirzhaHistory } from "../http/birzha";
 import GetDataById from "../http/GetData";
@@ -36,7 +36,9 @@ const BirzhaTab = () => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [playerData, setPlayerData] = useState(null);
-  const [chartUpdateKey, setChartUpdateKey] = useState(0); // Ключ для принудительного обновления графика
+  const [chartUpdateKey, setChartUpdateKey] = useState(0);
+  const [showErrorModal, setShowErrorModal] = useState(false); // Новое состояние для модального окна
+  const [modalError, setModalError] = useState(""); // Текст ошибки для модалки
 
   const loadAllData = async () => {
     try {
@@ -71,6 +73,12 @@ const BirzhaTab = () => {
     loadData();
   }, [user]);
 
+  // Функция для показа ошибки в модальном окне
+  const showErrorInModal = (errorMessage) => {
+    setModalError(errorMessage);
+    setShowErrorModal(true);
+  };
+
   const handleBuy = async () => {
     try {
       setTrading(true);
@@ -87,7 +95,13 @@ const BirzhaTab = () => {
       setTimeout(() => setSuccess(""), 3000);
     } catch (error) {
       console.error("Error buying daleons:", error);
-      setError(error.response?.data?.detail || "Ошибка при покупке далеонов");
+      const errorMessage = error.response?.data?.detail || "Ошибка при покупке далеонов";
+      
+      // Показываем ошибку в модальном окне вместо обычного Alert
+      showErrorInModal(errorMessage);
+      
+      // Также можно оставить обычный Alert для не критичных ошибок
+      setError(errorMessage);
     } finally {
       setTrading(false);
     }
@@ -109,10 +123,21 @@ const BirzhaTab = () => {
       setTimeout(() => setSuccess(""), 3000);
     } catch (error) {
       console.error("Error selling daleons:", error);
-      setError(error.response?.data?.detail || "Ошибка при продаже далеонов");
+      const errorMessage = error.response?.data?.detail || "Ошибка при продаже далеонов";
+      
+      // Показываем ошибку в модальном окне
+      showErrorInModal(errorMessage);
+      
+      setError(errorMessage);
     } finally {
       setTrading(false);
     }
+  };
+
+  // Функция закрытия модального окна
+  const handleCloseErrorModal = () => {
+    setShowErrorModal(false);
+    setModalError("");
   };
 
   // Подготовка данных для графика
@@ -243,6 +268,33 @@ const BirzhaTab = () => {
         </Alert>
       )}
 
+      {/* Модальное окно для ошибок */}
+      <Modal 
+        show={showErrorModal} 
+        onHide={handleCloseErrorModal}
+        centered
+        className="fantasy-modal"
+      >
+        <Modal.Header closeButton className="fantasy-card-header fantasy-card-header-danger">
+          <Modal.Title className="fantasy-text-gold">❌ Ошибка операции</Modal.Title>
+        </Modal.Header>
+        <Modal.Body className="fantasy-modal-body">
+          <div className="text-center">
+            <div className="fs-1 mb-3">⚠️</div>
+            <h5 className="fantasy-text-dark mb-3">Не удалось выполнить операцию</h5>
+            <p className="fantasy-text-muted">{modalError}</p>
+          </div>
+        </Modal.Body>
+        <Modal.Footer className="fantasy-modal-footer">
+          <Button 
+            className="fantasy-btn fantasy-btn-primary"
+            onClick={handleCloseErrorModal}
+          >
+            Понятно
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
       {/* График на всю ширину */}
       <Row className="mb-4">
         <Col xs={12}>
@@ -256,7 +308,7 @@ const BirzhaTab = () => {
               {historyData.length > 0 ? (
                 <div className="birzha-chart-wrapper">
                   <Line 
-                    key={chartUpdateKey} // Принудительное обновление графика при изменении ключа
+                    key={chartUpdateKey}
                     data={chartData} 
                     options={chartOptions} 
                   />
