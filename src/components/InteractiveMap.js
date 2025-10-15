@@ -1,112 +1,185 @@
 // src/components/InteractiveMap.js
-import React, { useState, useEffect, useContext, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useContext, useRef, useCallback, useMemo } from 'react';
 import { observer } from "mobx-react-lite";
-import { Card, Button, ProgressBar, Badge, Modal, OverlayTrigger, Tooltip } from "react-bootstrap";
+import { Card, Button, ProgressBar, Badge, Modal, OverlayTrigger, Tooltip, Spinner, Alert } from "react-bootstrap";
 import { Context } from "../index";
+import GetDataById from "../http/GetData";
 
 const InteractiveMap = observer(() => {
   const { user } = useContext(Context);
   const [selectedLocation, setSelectedLocation] = useState(null);
   const [showLocationModal, setShowLocationModal] = useState(false);
   const [svgContent, setSvgContent] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [delay, setDelay] = useState(false);
+  const [svgError, setSvgError] = useState(null);
   
   const svgContainerRef = useRef();
   const svgElementRef = useRef();
   const scaleIndicatorRef = useRef();
-  const coordinatesDisplayRef = useRef();
   const isDragging = useRef(false);
   const isTouchDragging = useRef(false);
   const dragStart = useRef({ x: 0, y: 0 });
   const transform = useRef({ x: 0, y: 0, scale: 1 });
-  const coordinatesRef = useRef({ x: 0, y: 0 });
+  const [playerData, setPlayerData] = useState(null);
 
-  const playerData = user.player || {};
+  // Ref для отслеживания статуса загрузки
+  const hasLoadedData = useRef(false);
+  const hasInitializedSvg = useRef(false);
 
-  // Загрузка SVG файла
+  // Упрощенный fallback SVG
+  const createFallbackSvg = useCallback(() => {
+    return `
+      <svg width="1200" height="800" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800">
+        <rect width="100%" height="100%" fill="#2c5e2a"/>
+        <text x="600" y="400" text-anchor="middle" fill="#ffd700" font-family="Arial" font-size="24" font-weight="bold">
+          Карта мира Аэриндар
+        </text>
+        <text x="600" y="430" text-anchor="middle" fill="#ffd700" font-family="Arial" font-size="14">
+          (Упрощенная версия)
+        </text>
+      </svg>
+    `;
+  }, []);
+
+  // ОДНОРАЗОВАЯ загрузка данных
   useEffect(() => {
-    const loadSvgMap = async () => {
+    // Если уже загружали данные - выходим
+    if (hasLoadedData.current) {
+      setLoading(false);
+      return;
+    }
+
+    const fetchAllData = async () => {
       try {
-        const response = await fetch('/maps/fantasy-map.svg');
-        if (!response.ok) throw new Error('Failed to load SVG map');
-        const svgText = await response.text();
-        setSvgContent(svgText);
+        setLoading(true);
+        setSvgError(null);
+        hasLoadedData.current = true;
+        
+        const baseUrl = process.env.PUBLIC_URL || '';
+        const svgUrl = `${baseUrl}/maps/fantasy-map.svg`;
+        
+        // Параллельная загрузка
+        const [playerResponse, svgResponse] = await Promise.all([
+          GetDataById(),
+          fetch(svgUrl)
+        ]);
+
+        // Обработка данных игрока
+        if (playerResponse && playerResponse.data) {
+          user.setPlayer(playerResponse.data);
+          setPlayerData(playerResponse.data);
+        } else {
+          console.warn('❌ No player data received');
+          // Устанавливаем пустые данные, чтобы избежать null
+          setPlayerData({ dungeons: {} });
+        }
+
+        // Обработка SVG
+        if (svgResponse.ok) {
+          const svgText = await svgResponse.text();
+          setSvgContent(svgText);
+        } else {
+          throw new Error(`SVG not found: ${svgResponse.status}`);
+        }
+
       } catch (error) {
-        console.error('Error loading SVG map:', error);
+        console.error('❌ Error loading data:', error);
+        setSvgError(error.message);
         setSvgContent(createFallbackSvg());
+        // Устанавливаем пустые данные при ошибке
+        setPlayerData({ dungeons: {} });
+      } finally {
+        setLoading(false);
       }
     };
 
-    loadSvgMap();
-  }, []);
+    fetchAllData();
+  }, [createFallbackSvg, user]);
 
-  // Инициализация SVG после загрузки
+  // Задержка для плавной загрузки
   useEffect(() => {
-    if (svgContent && svgContainerRef.current) {
-      const enhancedSvg = enhanceSvgWithInteractivity(svgContent);
-      svgContainerRef.current.innerHTML = enhancedSvg;
-      svgElementRef.current = svgContainerRef.current.querySelector('svg');
-      
-      if (svgElementRef.current) {
-        svgElementRef.current.style.transformOrigin = '0 0';
-        applyTransform();
-        updateScaleIndicator();
+    if (!loading && !delay) {
+      const timer = setTimeout(() => {
+        setDelay(true);
+      }, 800);
+      return () => clearTimeout(timer);
+    }
+  }, [loading, delay]);
+
+  // ОДНОРАЗОВАЯ инициализация SVG
+  useEffect(() => {
+    if (svgContent && svgContainerRef.current && delay && !hasInitializedSvg.current) {
+      try {
+        hasInitializedSvg.current = true;
+        
+        const enhancedSvg = enhanceSvgWithInteractivity(svgContent);
+        svgContainerRef.current.innerHTML = enhancedSvg;
+        svgElementRef.current = svgContainerRef.current.querySelector('svg');
+        
+        if (svgElementRef.current) {
+          svgElementRef.current.style.transformOrigin = '0 0';
+          applyTransform();
+          updateScaleIndicator();
+        }
+      } catch (error) {
+        console.error('Error initializing SVG:', error);
+        svgContainerRef.current.innerHTML = svgContent;
       }
     }
-  }, [svgContent]);
+  }, [svgContent, delay]);
 
-  // Создание fallback SVG
-  const createFallbackSvg = () => {
-    return `
-      <svg width="1200" height="800" xmlns="http://www.w3.org/2000/svg">
-        <rect width="100%" height="100%" fill="#466eab"/>
-        <polygon points="100,100 400,50 450,200 350,400 150,350" fill="#d2d082" stroke="#8B4513" stroke-width="2"/>
-        <text x="200" y="250" fill="#8B4513" font-weight="bold" font-size="16">Западные дикие земли</text>
-      </svg>
-    `;
-  };
-
-  // Получение реальных координат SVG из экранных координат
-  const getSvgCoordinates = (screenX, screenY) => {
-    if (!svgElementRef.current) return { x: 0, y: 0 };
-    
-    const svgRect = svgElementRef.current.getBoundingClientRect();
-    const point = svgElementRef.current.createSVGPoint();
-    
-    point.x = screenX - svgRect.left;
-    point.y = screenY - svgRect.top;
-    
-    const screenCTM = svgElementRef.current.getScreenCTM();
-    if (screenCTM) {
-      const invertedCTM = screenCTM.inverse();
-      const svgPoint = point.matrixTransform(invertedCTM);
-      return { x: Math.round(svgPoint.x), y: Math.round(svgPoint.y) };
+  // Получение данных подземелья с проверкой на null
+  const getDungeonData = useCallback((dungeonName) => {
+    // Проверяем, что playerData и dungeons существуют
+    if (!playerData || !playerData.dungeons) {
+      console.warn('Player data or dungeons not available');
+      return {
+        current: 0,
+        max: 0,
+        progress: 0
+      };
     }
     
-    return { x: Math.round(point.x), y: Math.round(point.y) };
-  };
+    const currentKey = `${dungeonName}-current`;
+    const maxKey = dungeonName;
+    
+    const current = playerData.dungeons[currentKey] + 1 || 0;
+    const max = playerData.dungeons[maxKey] + 1 || 0;
+    
+    return {
+      current,
+      max,
+      progress: max > 0 ? Math.round((current / max) * 100) : 0
+    };
+  }, [playerData]); // Добавляем playerData в зависимости
 
-  // Получение координат касания
-  const getTouchCoordinates = (touchEvent) => {
-    const touch = touchEvent.touches[0];
-    return { clientX: touch.clientX, clientY: touch.clientY };
-  };
+  // Получение подземелий для локации с проверкой на null
+  const getLocationDungeons = useCallback((location) => {
+    if (!location || !location.dungeons) return [];
+    
+    const dungeons = location.dungeons.map(dungeonName => ({
+      name: dungeonName,
+      ...getDungeonData(dungeonName)
+    })).filter(dungeon => dungeon.max > 0 || dungeon.current > 0);
+    
+    return dungeons;
+  }, [getDungeonData]);
 
-  // Обновление индикатора масштаба
+  // Функции для управления картой (без изменений)
+  const applyTransform = useCallback(() => {
+    if (svgElementRef.current) {
+      svgElementRef.current.style.transform = `translate(${transform.current.x}px, ${transform.current.y}px) scale(${transform.current.scale})`;
+      updateScaleIndicator();
+    }
+  }, []);
+
   const updateScaleIndicator = () => {
     if (scaleIndicatorRef.current) {
       scaleIndicatorRef.current.textContent = `Масштаб: ${Math.round(transform.current.scale * 100)}%`;
     }
   };
 
-  // Применение трансформаций
-  const applyTransform = () => {
-    if (svgElementRef.current) {
-      svgElementRef.current.style.transform = `translate(${transform.current.x}px, ${transform.current.y}px) scale(${transform.current.scale})`;
-      updateScaleIndicator();
-    }
-  };
-
-  // Обработчики для мыши
   const handleMouseDown = useCallback((e) => {
     if (e.target.closest('.location-point')) return;
     
@@ -116,100 +189,53 @@ const InteractiveMap = observer(() => {
       y: e.clientY - transform.current.y
     };
     
-    // Обновляем координаты при клике
-    const svgCoords = getSvgCoordinates(e.clientX, e.clientY);
-    coordinatesRef.current = svgCoords;
-    
     e.preventDefault();
   }, []);
 
   const handleMouseMove = useCallback((e) => {
     if (!svgContainerRef.current) return;
-
-    // Всегда обновляем координаты
-    const svgCoords = getSvgCoordinates(e.clientX, e.clientY);
-    coordinatesRef.current = svgCoords;
-
-    // Обработка перетаскивания
     if (!isDragging.current) return;
 
     transform.current.x = e.clientX - dragStart.current.x;
     transform.current.y = e.clientY - dragStart.current.y;
 
     applyTransform();
-  }, []);
+  }, [applyTransform]);
 
   const handleMouseUp = useCallback(() => {
     isDragging.current = false;
   }, []);
 
-  // Обработчики для сенсорных устройств
   const handleTouchStart = useCallback((e) => {
     if (e.target.closest('.location-point')) return;
     
     isTouchDragging.current = true;
-    const { clientX, clientY } = getTouchCoordinates(e);
+    const touch = e.touches[0];
     
     dragStart.current = {
-      x: clientX - transform.current.x,
-      y: clientY - transform.current.y
+      x: touch.clientX - transform.current.x,
+      y: touch.clientY - transform.current.y
     };
     
-    // Обновляем координаты при касании
-    const svgCoords = getSvgCoordinates(clientX, clientY);
-    coordinatesRef.current = svgCoords;
-    
-    e.preventDefault();
+    if (e.cancelable) e.preventDefault();
   }, []);
 
   const handleTouchMove = useCallback((e) => {
     if (!svgContainerRef.current) return;
+    const touch = e.touches[0];
 
-    const { clientX, clientY } = getTouchCoordinates(e);
-    
-    // Всегда обновляем координаты
-    const svgCoords = getSvgCoordinates(clientX, clientY);
-    coordinatesRef.current = svgCoords;
-
-    // Обработка перетаскивания
     if (!isTouchDragging.current) return;
 
-    transform.current.x = clientX - dragStart.current.x;
-    transform.current.y = clientY - dragStart.current.y;
+    transform.current.x = touch.clientX - dragStart.current.x;
+    transform.current.y = touch.clientY - dragStart.current.y;
 
     applyTransform();
     
-    e.preventDefault();
-  }, []);
+    if (e.cancelable) e.preventDefault();
+  }, [applyTransform]);
 
   const handleTouchEnd = useCallback(() => {
     isTouchDragging.current = false;
-  }, []);
-
-  // Обработчик жестов масштабирования
-  const handleTouchGesture = useCallback((e) => {
-    if (e.touches.length !== 2) return;
-    
-    e.preventDefault();
-    
-    const touch1 = e.touches[0];
-    const touch2 = e.touches[1];
-    
-    // Вычисляем расстояние между двумя касаниями
-    const currentDistance = Math.hypot(
-      touch1.clientX - touch2.clientX,
-      touch1.clientY - touch2.clientY
-    );
-    
-    // Сохраняем начальное расстояние для расчета изменения масштаба
-    if (!e.scale) {
-      e.scale = currentDistance / 100; // Базовое расстояние
-    }
-    
-    const newScale = Math.max(0.1, Math.min(5, transform.current.scale * (currentDistance / (e.scale * 100))));
-    transform.current.scale = newScale;
-    
-    applyTransform();
   }, []);
 
   const handleWheel = useCallback((e) => {
@@ -225,35 +251,28 @@ const InteractiveMap = observer(() => {
 
     const newScale = Math.max(0.1, Math.min(5, transform.current.scale * zoom));
     
-    // Корректируем позицию чтобы зум был к курсору
     transform.current.x = mouseX - (mouseX - transform.current.x) * (newScale / transform.current.scale);
     transform.current.y = mouseY - (mouseY - transform.current.y) * (newScale / transform.current.scale);
     transform.current.scale = newScale;
 
     applyTransform();
-    
-    // Обновляем координаты после зума
-    const svgCoords = getSvgCoordinates(e.clientX, e.clientY);
-    coordinatesRef.current = svgCoords;
-  }, []);
+  }, [applyTransform]);
 
-  // Управление зумом
   const zoomIn = useCallback(() => {
     transform.current.scale = Math.min(5, transform.current.scale * 1.2);
     applyTransform();
-  }, []);
+  }, [applyTransform]);
 
   const zoomOut = useCallback(() => {
     transform.current.scale = Math.max(0.1, transform.current.scale * 0.8);
     applyTransform();
-  }, []);
+  }, [applyTransform]);
 
   const resetView = useCallback(() => {
     transform.current = { x: 0, y: 0, scale: 1 };
     applyTransform();
-  }, []);
+  }, [applyTransform]);
 
-  // Обработчик клика по локациям
   const handleSvgClick = useCallback((e) => {
     const target = e.target;
     
@@ -266,7 +285,6 @@ const InteractiveMap = observer(() => {
     }
   }, []);
 
-  // Данные локаций с постоянными координатами
   const getLocationsData = useCallback(() => {
     return [
       {
@@ -280,7 +298,7 @@ const InteractiveMap = observer(() => {
       {
         id: 'coast',
         name: "🌊 Побережье", 
-        description: "Береговая линия с рыбацкими деревнями и портами",
+        description: "Береговая линия с заброшенными рыбацкими деревнями и портами",
         type: 'coast',
         position: [250, 483],
         dungeons: ["Dungeon_Wind", "Dungeon_Sound", "Dungeon_Power"]
@@ -312,74 +330,80 @@ const InteractiveMap = observer(() => {
     ];
   }, []);
 
-  // Добавляем интерактивные точки к SVG
   const enhanceSvgWithInteractivity = useCallback((svgText) => {
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(svgText, 'image/svg+xml');
-    const svg = doc.documentElement;
-
-    // Добавляем CSS для интерактивности
-    const style = doc.createElement('style');
-    style.textContent = `
-      .location-point {
-        cursor: pointer;
-        transition: all 0.2s ease;
-        touch-action: manipulation;
-      }
-      .location-point:hover {
-        stroke: #ff8c00;
-        stroke-width: 3px;
-        filter: drop-shadow(0 0 4px rgba(255, 140, 0, 0.7));
-      }
-      .location-label {
-        pointer-events: none;
-        user-select: none;
-      }
-      .interactive-locations * {
-        pointer-events: none;
-      }
-      .interactive-locations .location-point {
-        pointer-events: all;
-      }
-    `;
-    svg.insertBefore(style, svg.firstChild);
-
-    // Добавляем интерактивные точки локаций
-    const locations = getLocationsData();
-    const group = doc.createElementNS('http://www.w3.org/2000/svg', 'g');
-    group.setAttribute('class', 'interactive-locations');
-
-    locations.forEach(location => {
-      const [x, y] = location.position;
+    try {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(svgText, 'image/svg+xml');
       
-      // Точка локации
-      const circle = doc.createElementNS('http://www.w3.org/2000/svg', 'circle');
-      circle.setAttribute('cx', x);
-      circle.setAttribute('cy', y);
-      circle.setAttribute('r', '8');
-      circle.setAttribute('fill', getLocationColor(location.type));
-      circle.setAttribute('stroke', '#fff');
-      circle.setAttribute('stroke-width', '2');
-      circle.setAttribute('class', 'location-point');
-      circle.setAttribute('data-location-id', location.id);
+      const parseError = doc.querySelector('parsererror');
+      if (parseError) {
+        throw new Error('SVG parsing error');
+      }
       
-      // Название локации
-      const text = doc.createElementNS('http://www.w3.org/2000/svg', 'text');
-      text.setAttribute('x', x);
-      text.setAttribute('y', y - 12);
-      text.setAttribute('text-anchor', 'middle');
-      text.setAttribute('fill', '#8B4513');
-      text.setAttribute('font-size', '10px');
-      text.setAttribute('font-weight', 'bold');
-      text.setAttribute('class', 'location-label');
-      text.textContent = location.name;
-      
-      group.appendChild(circle);
-      group.appendChild(text);
-    });
+      const svg = doc.documentElement;
 
-    svg.appendChild(group);
-    return new XMLSerializer().serializeToString(svg);
+      const style = doc.createElement('style');
+      style.textContent = `
+        .location-point {
+          cursor: pointer;
+          transition: all 0.2s ease;
+          touch-action: manipulation;
+        }
+        .location-point:hover {
+          stroke: #ff8c00;
+          stroke-width: 3px;
+          filter: drop-shadow(0 0 4px rgba(255, 140, 0, 0.7));
+        }
+        .location-label {
+          pointer-events: none;
+          user-select: none;
+        }
+        .interactive-locations * {
+          pointer-events: none;
+        }
+        .interactive-locations .location-point {
+          pointer-events: all;
+        }
+      `;
+      svg.insertBefore(style, svg.firstChild);
+
+      const locations = getLocationsData();
+      const group = doc.createElementNS('http://www.w3.org/2000/svg', 'g');
+      group.setAttribute('class', 'interactive-locations');
+
+      locations.forEach(location => {
+        const [x, y] = location.position;
+        
+        const circle = doc.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        circle.setAttribute('cx', x);
+        circle.setAttribute('cy', y);
+        circle.setAttribute('r', '8');
+        circle.setAttribute('fill', getLocationColor(location.type));
+        circle.setAttribute('stroke', '#fff');
+        circle.setAttribute('stroke-width', '2');
+        circle.setAttribute('class', 'location-point');
+        circle.setAttribute('data-location-id', location.id);
+        
+        const text = doc.createElementNS('http://www.w3.org/2000/svg', 'text');
+        text.setAttribute('x', x);
+        text.setAttribute('y', y - 12);
+        text.setAttribute('text-anchor', 'middle');
+        text.setAttribute('fill', '#8B4513');
+        text.setAttribute('font-size', '10px');
+        text.setAttribute('font-weight', 'bold');
+        text.setAttribute('class', 'location-label');
+        text.textContent = location.name;
+        
+        group.appendChild(circle);
+        group.appendChild(text);
+      });
+
+      svg.appendChild(group);
+      return new XMLSerializer().serializeToString(svg);
+    } catch (error) {
+      console.error('Error enhancing SVG:', error);
+      return svgText;
+    }
   }, [getLocationsData]);
 
   const handleLocationClick = (location) => {
@@ -396,30 +420,6 @@ const InteractiveMap = observer(() => {
       forest: '#228B22'
     };
     return colors[type] || '#8B4513';
-  };
-
-  // Получение данных подземелья
-  const getDungeonData = (dungeonName) => {
-    const dungeons = playerData.dungeons || {};
-    const currentKey = `${dungeonName}-current`;
-    const maxKey = dungeonName;
-    
-    const current = dungeons[currentKey] || 0;
-    const max = dungeons[maxKey] || 0;
-    
-    return {
-      current,
-      max,
-      progress: max > 0 ? Math.round((current / max) * 100) : 0
-    };
-  };
-
-  // Получение подземелий для локации
-  const getLocationDungeons = (location) => {
-    return location.dungeons.map(dungeonName => ({
-      name: dungeonName,
-      ...getDungeonData(dungeonName)
-    })).filter(dungeon => dungeon.max > 0 || dungeon.current > 0);
   };
 
   // Компонент подземелья с тултипом
@@ -501,13 +501,6 @@ const InteractiveMap = observer(() => {
             🏠 Сбросить вид
           </Button>
         </div>
-        <div className="mt-2 small fantasy-text-muted">
-          • Колесо мыши / Двойное касание - зум
-          <br />
-          • Перетаскивание - перемещение
-          <br />
-          • Два пальца - масштабирование
-        </div>
       </Card.Body>
     </Card>
   ));
@@ -547,7 +540,7 @@ const InteractiveMap = observer(() => {
     const dungeons = getLocationDungeons(selectedLocation);
 
     return (
-      <Modal show={showLocationModal} onHide={onClose} centered>
+      <Modal show={showLocationModal} onHide={onClose} centered size="lg">
         <Modal.Header closeButton className="fantasy-card">
           <Modal.Title className="fantasy-text-dark">
             {selectedLocation.name}
@@ -556,16 +549,14 @@ const InteractiveMap = observer(() => {
         <Modal.Body className="fantasy-card">
           <p className="fantasy-text-dark">{selectedLocation.description}</p>
           
-          {dungeons.length > 0 && (
+          {dungeons.length > 0 ? (
             <div className="mt-3">
               <h6 className="fantasy-text-primary mb-3">🏰 Подземелья:</h6>
               {dungeons.map((dungeon, index) => (
                 <DungeonWithTooltip key={index} dungeon={dungeon} />
               ))}
             </div>
-          )}
-          
-          {dungeons.length === 0 && (
+          ) : (
             <div className="text-center fantasy-text-muted mt-3">
               <small>В этой локации нет активных подземелий</small>
             </div>
@@ -584,12 +575,33 @@ const InteractiveMap = observer(() => {
     );
   });
 
+  if (loading || !delay) {
+    return (
+      <div className="d-flex justify-content-center align-items-center min-vh-50">
+        <div className="text-center">
+          <Spinner animation="border" variant="secondary" role="status" style={{ width: '3rem', height: '3rem' }}>
+            <span className="visually-hidden">Loading...</span>
+          </Spinner>
+          <p className="fantasy-text-gold mt-2">
+            {loading ? 'Загрузка карты...' : 'Подготовка интерфейса...'}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="fantasy-paper content-overlay">
+      {svgError && (
+        <Alert variant="warning" className="mb-3">
+          <strong>Внимание:</strong> Основная карта не загружена. Используется упрощённая версия. ({svgError})
+        </Alert>
+      )}
+      
       <div className="row">
         <div className="col-md-9">
           <Card className="fantasy-card">
-            <Card.Body className="p-0">
+            <Card.Body className="p-0 position-relative">
               <div 
                 ref={svgContainerRef}
                 className="fantasy-map-container"
@@ -600,7 +612,7 @@ const InteractiveMap = observer(() => {
                   background: '#2c5e2a',
                   cursor: isDragging.current ? 'grabbing' : 'grab',
                   height: '500px',
-                  touchAction: 'none' // Важно для мобильных устройств
+                  touchAction: 'none'
                 }}
                 onMouseDown={handleMouseDown}
                 onMouseMove={handleMouseMove}
@@ -608,14 +620,12 @@ const InteractiveMap = observer(() => {
                 onMouseLeave={handleMouseUp}
                 onWheel={handleWheel}
                 onClick={handleSvgClick}
-                // Сенсорные события для мобильных устройств
                 onTouchStart={handleTouchStart}
                 onTouchMove={handleTouchMove}
                 onTouchEnd={handleTouchEnd}
                 onTouchCancel={handleTouchEnd}
               />
 
-              {/* Индикатор масштаба */}
               <div 
                 ref={scaleIndicatorRef}
                 style={{
@@ -628,7 +638,7 @@ const InteractiveMap = observer(() => {
                   border: '1px solid #8B4513',
                   fontSize: '12px',
                   color: '#8B4513',
-                  margin: '10px'
+                  zIndex: 10
                 }}
               >
                 Масштаб: 100%
@@ -640,21 +650,6 @@ const InteractiveMap = observer(() => {
         <div className="col-md-3">
           <NavigationControls />
           <LocationLegend />
-          
-          <Card className="fantasy-card mt-3">
-            <Card.Body>
-              <h6 className="fantasy-text-primary">🗺️ Управление:</h6>
-              <p className="fantasy-text-dark small">
-                • Клик/Касание точек - информация
-                <br/>
-                • Колесо мыши/Двойное касание - зум
-                <br/>
-                • ЛКМ/Касание + перемещение - панорамирование
-                <br/>
-                • Два пальца - масштабирование
-              </p>
-            </Card.Body>
-          </Card>
         </div>
       </div>
 
