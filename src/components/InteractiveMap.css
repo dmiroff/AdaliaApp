@@ -1,0 +1,39 @@
+/* src/components/InteractiveMap.css */
+.location-point {
+  transition: all 0.3s ease;
+  filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.5));
+}
+
+.location-point:hover {
+  transform: scale(1.2);
+  filter: drop-shadow(3px 3px 6px rgba(255,140,0,0.7));
+}
+
+.dungeon-item {
+  background: rgba(139, 69, 19, 0.1);
+  border-radius: 5px;
+  border-left: 3px solid #8B4513;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.dungeon-item:hover {
+  background: rgba(139, 69, 19, 0.2);
+  transform: translateX(5px);
+}
+
+.connection-item {
+  background: rgba(255, 215, 0, 0.1);
+  border-radius: 5px;
+  border-left: 3px solid #ffd700;
+}
+
+.fantasy-tooltip-content {
+  text-align: left;
+  max-width: 250px;
+}
+
+.fantasy-map-container {
+  border: 3px solid #8B4513;
+  box-shadow: 0 0 20px rgba(139, 69, 19, 0.3);
+}

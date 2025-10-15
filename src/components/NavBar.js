@@ -35,6 +35,14 @@ const NavBar = observer(() => {
             Персонаж
           </Nav.Link>
           <Nav.Link 
+            eventKey="map" 
+            onClick={() => navigate("/map")}
+            className="fantasy-btn fantasy-btn-warning fantasy-btn-lg mx-0 my-1 w-100"
+            style={navLinkStyle}
+          >
+            Карта
+          </Nav.Link>
+          <Nav.Link 
             eventKey="rating" 
             onClick={() => navigate("/rating")}
             className="fantasy-btn fantasy-btn-warning fantasy-btn-lg mx-0 my-1 w-100"
@@ -49,6 +57,17 @@ const NavBar = observer(() => {
             style={navLinkStyle}
           >
             Торговля
+          </Nav.Link>
+          <Nav.Link 
+            eventKey="donation" 
+            onClick={() => navigate("/donation")}
+            className="fantasy-btn fantasy-btn-warning fantasy-btn-lg mx-0 my-1 w-100"
+            style={{
+              ...navLinkStyle,
+              fontWeight: 'bold'
+            }}
+          >
+            💎 Премиум
           </Nav.Link>
         </Nav>
       </Navbar.Collapse>

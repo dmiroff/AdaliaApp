@@ -268,3 +268,4 @@ body {
 /* Утилиты */
 .min-vh-50 { min-height: 50vh; }
 .main-content { min-height: calc(100vh - 76px); }
+
