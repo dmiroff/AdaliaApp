@@ -1,18 +1,11 @@
 /* ===== БАЗОВЫЕ СТИЛИ ===== */
 html, body, #root {
   height: 100%;
-}
-
-body {
-  background-image: url('assets/Images/background.webp');
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  background-attachment: fixed;
   margin: 0;
   padding: 0;
-  padding-top: 56px; /* Высота navbar */
 }
+
+/* Убрали background-image из body - теперь он в React компоненте */
 
 /* ===== ТИПОГРАФИЯ И ТЕКСТ ===== */
 .fantasy-text-primary { color: #d4af37 !important; }
@@ -249,8 +242,6 @@ body {
 
 /* ===== АДАПТИВНОСТЬ ===== */
 @media (max-width: 768px) {
-  body { padding-top: 60px; }
-  
   .fantasy-btn { padding: 10px 14px; font-size: 0.9em; }
   
   .content-overlay { padding: 15px; margin: 5px 0; }
@@ -267,5 +258,8 @@ body {
 
 /* Утилиты */
 .min-vh-50 { min-height: 50vh; }
-.main-content { min-height: calc(100vh - 76px); }
-
+.main-container { 
+  min-height: calc(100vh - 76px);
+  position: relative;
+  z-index: 1;
+}
