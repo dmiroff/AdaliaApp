@@ -4,6 +4,7 @@ import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 import UserStore from './store/UserStore';
+import './utils/forceSplit';
 
 export const Context = createContext(null)
 
