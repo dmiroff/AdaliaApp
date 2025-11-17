@@ -6,7 +6,8 @@ import { useNavigate } from 'react-router-dom';
 import { INVENTORY_ROUTE } from "../utils/constants";
 import { Context } from "../index";
 import {WearDataById, ThrowItemById, SellItemById} from "../http/SupportFunctions";
-import ModalAction from "./ModalAction"
+import ModalAction from "./ModalAction";
+import "./InventoryItem.css";
 
 const InventoryItem = ({ devicekey, device, onShowModal }) => {
   const { user } = useContext(Context);
@@ -16,9 +17,7 @@ const InventoryItem = ({ devicekey, device, onShowModal }) => {
   const [showMenu, setShowMenu] = useState(false);
   const [showModalSell, setShowModalSell] = useState(false);
   const [showModalDrop, setShowModalDrop] = useState(false);
-  const [toNavigate, setToNavigate] = useState(false);
   const [handleRequest, setHandleRequest] = useState(false);
-  const [rangeValue, setRangeValue] = useState(1);
   const navigate = useNavigate();
 
   const handleMouseEnter = () => {
@@ -39,10 +38,6 @@ const InventoryItem = ({ devicekey, device, onShowModal }) => {
     setShowModalDrop(!showModalDrop);
   };
 
-  const toggleHandleRequest = () => {
-    setHandleRequest(!handleRequest);
-  };
-
   const handleInspect = () => {
     navigate(INVENTORY_ROUTE + "/" + devicekey);
   };
@@ -53,26 +48,19 @@ const InventoryItem = ({ devicekey, device, onShowModal }) => {
     const player_data = response.data;
     user.setPlayerInventory(player_data.inventory_new);
     user.setPlayer(player_data);
-    if (response.status) { setToNavigate(true); }
     setShowModalSell(false);
     setHandleRequest(false);
-
-    // Используем переданную функцию вместо локального состояния
     onShowModal(response.message);
   };
   
   const handleThrowAway = async (value) => {
     setHandleRequest(true);
-    setRangeValue(value);
     const response = await ThrowItemById(devicekey, value);
     const player_data = response.data;
     user.setPlayerInventory(player_data.inventory_new);
     user.setPlayer(player_data);
-    if (response.status) { setToNavigate(true); }
     setShowModalDrop(false);
     setHandleRequest(false);
-
-    // Используем переданную функцию вместо локального состояния
     onShowModal(response.message);
   };
 
@@ -81,16 +69,12 @@ const InventoryItem = ({ devicekey, device, onShowModal }) => {
     const player_data = response.data;
     user.setPlayerInventory(player_data.inventory_new);
     user.setPlayer(player_data);
-
-    // Используем переданную функцию вместо локального состояния
     onShowModal(response.message);
   };
 
-  // Function to close the modal
   const handleModalSellClose = () => setShowModalSell(false);
   const handleModalDropClose = () => setShowModalDrop(false);
 
-  // Форматирование отображения количества и названия
   const formatItemName = () => {
     if (device.count > 1) {
       return `${device.count} ${device.name}`;
@@ -98,50 +82,43 @@ const InventoryItem = ({ devicekey, device, onShowModal }) => {
     return device.name;
   };
 
-  return (
-      <Row xs={3} className="mb-2">
-        <Col 
-          xs={3} 
-          md={2}
-        >
-        <div 
-          style={{ cursor: "pointer", position: "relative", justifyContent: 'center', alignItems: 'center' }}
-          onMouseEnter={handleMouseEnter}
-          onMouseLeave={handleMouseLeave}
-        >
-              <Image src={imageSrc}
-                className="list-images"
-                fluid
-                loading="lazy"
-                onError={(e) => {
-                  e.target.src = exampleImage; // Fallback
-                  console.error('Image load failed:', imageSrc); // Debugging
-                }}
-                style={{
-                  aspectRatio: '1/1',
-                  objectFit: 'cover'
-                }}
-              />
-            {showMenu && (
-              <DropdownButton
-                show={showMenu}
-                onClick={(e) => e.stopPropagation()}
-                variant="dark"
-                title=""
-                id="inventory-item-dropdown"
-                style={{
-                  position: "absolute",
-                  top: "50%",
-                  left: "100%",
-                  transform: "translate(-50%, -50%)",
-                  zIndex: 1,
-                }}
-              >
-                <Dropdown.Item onClick={handleInspect}>осмотреть</Dropdown.Item>
-                {device.is_equippable && (<Dropdown.Item onClick={handleWear}>надеть</Dropdown.Item>)}
-                <Dropdown.Item onClick={handleModalSell}>продать</Dropdown.Item>
-                <Dropdown.Item onClick={handleModalDrop}>выкинуть</Dropdown.Item>
-              </DropdownButton>
+return (
+  <Row xs={3} className="mb-2">
+    <Col xs={3} md={2}>
+      <div 
+        className="inventory-item-container"
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+      >
+        <Image 
+          src={imageSrc}
+          className="list-images"
+          fluid
+          loading="lazy"
+          onError={(e) => {
+            e.target.src = exampleImage;
+          }}
+          style={{
+            aspectRatio: '1/1',
+            objectFit: 'cover'
+          }}
+        />
+        {showMenu && (
+          <div className="inventory-item-menu-wrapper">
+            <DropdownButton
+              show={showMenu}
+              onClick={(e) => e.stopPropagation()}
+              variant="dark"
+              title=""
+              id="inventory-item-fantasy-dropdown"
+              className="inventory-item-dropdown-right"
+            >
+              <Dropdown.Item onClick={handleInspect}>осмотреть</Dropdown.Item>
+              {device.is_equippable && (<Dropdown.Item onClick={handleWear}>надеть</Dropdown.Item>)}
+              <Dropdown.Item onClick={handleModalSell}>продать</Dropdown.Item>
+              <Dropdown.Item onClick={handleModalDrop}>выкинуть</Dropdown.Item>
+            </DropdownButton>
+              </div>
             )}
           </div>
           <ModalAction
@@ -178,15 +155,7 @@ const InventoryItem = ({ devicekey, device, onShowModal }) => {
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
         >
-          <div 
-            style={{ 
-              display: "flex", 
-              flexDirection: "column",
-              cursor: "pointer",
-              height: "100%",
-              justifyContent: "center"
-            }}
-          >
+          <div>
             {/* Применяем форматирование названия и количества */}
             <div>
               <span>{formatItemName()}</span>

@@ -1,3 +1,4 @@
+
 .equipment-slot {
   border: none !important;
   background: transparent !important;
@@ -260,7 +261,7 @@
   width: 100%;
   height: 100%;
   opacity: 0.5;
-  object-fit: contain; /* Сохраняем пропорции */
+  object-fit: contain;  
 }
 
 .equipment-slot {

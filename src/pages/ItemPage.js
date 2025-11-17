@@ -218,7 +218,7 @@ const Item = () => {
           return (
             <div key={key} className="stat-item">
               <span className="stat-label fantasy-text-primary">
-              {translatedKey}:
+              {translatedKey}: {' '} 
               </span>
               <span className="stat-value fantasy-text-dark fantasy-text-bold">
                 {translatedValue}
@@ -267,8 +267,10 @@ const Item = () => {
         <Row className="g-4">
           {/* Левая колонка - изображение и действия */}
           <Col md={6} lg={5}>
-            <div className="item-image-section text-center">
-              <div className="item-image-container mb-3">
+          
+   <div className="item-visual-section ms-2">
+         </div>   <div className="item-image-section text-center">
+              {/* <div className="item-image-container mb-3"> */}
                 <Image 
                   src={imageSrc} 
                   fluid 
@@ -318,92 +320,91 @@ const Item = () => {
                   </Button>
                 </div>
               </div>
-            </div>
           </Col>
 
-          {/* Правая колонка - характеристики */}
-          <Col md={6} lg={7}>
-            <div className="item-stats-section">
-              {/* Заголовок и основная информация */}
-              <div className="item-header mb-4">
-                <h2 className="fantasy-text-dark fantasy-text-bold item-name">
-                  {itemData.name || "Неизвестный предмет"}
-                </h2>
-                {itemData.type && (
-                  <div className="item-type-badge fantasy-text-muted">
-                    {dict_translator[itemData.type] || itemData.type}
-                  </div>
-                )}
-                {itemData.value && (
-                  <div className="item-value fantasy-text-dark fantasy-text-bold fs-4">
-                    🌕{itemData.value}
-                  </div>
-                )}
-              </div>
+{/* Правая колонка - характеристики */}
+<Col md={6} lg={7}>
+  <div className="item-stats-section ms-2"> {/* Добавлен отступ слева */}
+    {/* Заголовок и основная информация */}
+    <div className="item-header mb-3 text-left"> {/* Уменьшен mb-4 до mb-3 */}
+      <h4 className="fantasy-text-dark fantasy-text-bold item-name text-left"> {/* h2 -> h4 */}
+        {itemData.name || "Неизвестный предмет"}
+      </h4>
+      {itemData.type && (
+        <div className="item-type-badge fantasy-text-muted small text-left"> {/* Добавлен small */}
+          {dict_translator[itemData.type] || itemData.type}
+        </div>
+      )}
+      {itemData.value && (
+        <div className="item-value fantasy-text-dark fantasy-text-bold fs-5 text-left"> {/* fs-4 -> fs-5 */}
+          🌕{itemData.value}
+        </div>
+      )}
+    </div>
 
-              {/* Основные характеристики */}
-              <div className="item-stats fantasy-paper p-3 mb-3">
-                <h5 className="fantasy-text-dark fantasy-text-bold mb-3">Характеристики</h5>
-                <div className="stats-grid">
-                  {renderItemStats()}
-                </div>
-              </div>
-
-              {/* Дополнительная информация */}
-              {itemData.description && (
-                <div className="item-description fantasy-paper p-3">
-                  <h5 className="fantasy-text-dark fantasy-text-bold mb-2">Описание</h5>
-                  <p className="fantasy-text-dark mb-0">{itemData.description}</p>
-                </div>
-              )}
-            </div>
-          </Col>
-        </Row>
+    {/* Основные характеристики */}
+<div className="item-stats fantasy-paper p-2 p-md-3 mb-2 col-12 col-md-8 mx-left">
+          <h6 className="fantasy-text-dark fantasy-text-bold mb-2">Характеристики</h6> {/* h5 -> h6 */}
+      <div className="stats-grid small"> {/* Добавлен small */}
+        {renderItemStats()}
       </div>
+    </div>
 
-      {/* Модальные окна */}
-      <Modal show={showModal} onHide={handleModalClose} backdrop="static" keyboard={false} centered>
-        <Modal.Header closeButton className="fantasy-modal-header">
-          <Modal.Title className="fantasy-text-gold">Оповещение</Modal.Title>
-        </Modal.Header>
-        <Modal.Body className="fantasy-text-dark fantasy-text-bold text-center" style={{ whiteSpace: 'pre-wrap', fontSize: '1.1em' }}>
-          {modalMessage}
-        </Modal.Body>
-        <Modal.Footer className="fantasy-modal-footer">
-          <Button className="fantasy-btn fantasy-btn-primary" onClick={handleModalClose}>
-            Понятно
-          </Button>
-        </Modal.Footer>
-      </Modal>
+    {/* Дополнительная информация */}
+    {itemData.description && (
+      <div className="item-description fantasy-paper p-2 small"> {/* Уменьшены отступы + small */}
+        <h6 className="fantasy-text-dark fantasy-text-bold mb-1">Описание</h6> {/* h5 -> h6 */}
+        <p className="fantasy-text-dark mb-0">{itemData.description}</p>
+      </div>
+    )}
+  </div>
+</Col>
+</Row>
+</div>
 
-      <ModalAction
-        show={showModalSell && !!inventory_new[num]}
-        onClose={handleModalSellClose} 
-        device={inventory_new[num]}
-        devicekey={num}
-        action={handleSell}
-        handleRequest={handleRequest}
-        title="Продать предмет"
-        actionButtonText="Продать"
-        backdrop="static" 
-        keyboard={false} 
-        centered
-      />
+{/* Модальные окна */}
+<Modal show={showModal} onHide={handleModalClose} backdrop="static" keyboard={false} centered>
+  <Modal.Header closeButton className="fantasy-modal-header">
+    <Modal.Title className="fantasy-text-gold">Оповещение</Modal.Title>
+  </Modal.Header>
+  <Modal.Body className="fantasy-text-dark fantasy-text-bold text-center" style={{ whiteSpace: 'pre-wrap', fontSize: '1em' }}> {/* Уменьшен шрифт */}
+    {modalMessage}
+  </Modal.Body>
+  <Modal.Footer className="fantasy-modal-footer">
+    <Button className="fantasy-btn fantasy-btn-primary btn-sm" onClick={handleModalClose}> {/* Добавлен btn-sm */}
+      Понятно
+    </Button>
+  </Modal.Footer>
+</Modal>
 
-      <ModalAction
-        show={showModalDrop && !!inventory_new[num]}
-        onClose={handleModalDropClose} 
-        device={inventory_new[num]}
-        devicekey={num}
-        action={handleThrowAway}
-        handleRequest={handleRequest}
-        title="Выбросить предмет"
-        actionButtonText="Выбросить"
-        backdrop="static" 
-        keyboard={false} 
-        centered
-      />
-    </Container>
+<ModalAction
+  show={showModalSell && !!inventory_new[num]}
+  onClose={handleModalSellClose} 
+  device={inventory_new[num]}
+  devicekey={num}
+  action={handleSell}
+  handleRequest={handleRequest}
+  title="Продать предмет"
+  actionButtonText="Продать"
+  backdrop="static" 
+  keyboard={false} 
+  centered
+/>
+
+<ModalAction
+  show={showModalDrop && !!inventory_new[num]}
+  onClose={handleModalDropClose} 
+  device={inventory_new[num]}
+  devicekey={num}
+  action={handleThrowAway}
+  handleRequest={handleRequest}
+  title="Выбросить предмет"
+  actionButtonText="Выбросить"
+  backdrop="static" 
+  keyboard={false} 
+  centered
+/>
+</Container>
   );
 };
 

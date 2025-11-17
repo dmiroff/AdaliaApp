@@ -1,3 +1,10 @@
+/* app.css - Объединенные стили приложения */
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=MedievalSharp&display=swap');
+
+.fantasy-font {
+  font-family: 'Cinzel', serif;
+  font-weight: 700;
+}
 /* ===== БАЗОВЫЕ СТИЛИ ===== */
 html, body, #root {
   height: 100%;
@@ -11,30 +18,28 @@ body {
   background-attachment: fixed;
   margin: 0;
   padding: 0;
-  padding-top: 56px; /* Высота navbar */
+  padding-top: 56px;
 }
 
 /* ===== ТИПОГРАФИЯ И ТЕКСТ ===== */
-.fantasy-text-primary { color: #d4af37 !important; }
-.fantasy-text-success { color: #7cb342 !important; }
-.fantasy-text-warning { color: #ffb74d !important; }
-.fantasy-text-info { color: #4fc3f7 !important; }
-.fantasy-text-danger { color: #ef9a9a !important; }
-.fantasy-text-muted { color: #8b7355 !important; }
-.fantasy-text-dark { color: #3e2723 !important; }
-.fantasy-text-gold { color: #ffd700 !important; }
-.fantasy-text-bold { font-weight: 600 !important; }
+.fantasy-text-primary { color: #4f3729 ; }
+.fantasy-text-success { color: #7cb342 ; }
+.fantasy-text-warning { color: #ffb74d ; }
+.fantasy-text-info { color: #4fc3f7 ; }
+.fantasy-text-danger { color: #ef9a9a ; }
+.fantasy-text-muted { color: #8b7355 ; }
+.fantasy-text-dark { color: #3e2723 ; }
+.fantasy-text-gold { color: #ffd700 ; }
+.fantasy-text-bold { font-weight: 600 ; }
 
 /* ===== ОСНОВНЫЕ КОМПОНЕНТЫ ===== */
-
-/* Пергаментный фон */
 .fantasy-paper {
   background: linear-gradient(135deg, #f4e4bc 0%, #e6d2a9 100%);
   border: 2px solid #8b7355;
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   position: relative;
-  overflow: visible !important;
+  overflow: visible ;
 }
 
 .fantasy-paper::before {
@@ -49,25 +54,137 @@ body {
   opacity: 0.3;
 }
 
-/* Контент поверх фона */
 .content-overlay {
-  background: linear-gradient(135deg, rgba(244, 228, 188, 0.9) 0%, rgba(230, 210, 169, 0.9) 100%);
-  backdrop-filter: blur(5px);
-  border: 2px solid #8b7355;
+  background: linear-gradient(135deg, rgba(244, 228, 188, 0.588) 0%, rgba(230, 210, 169, 0.9) 100%);
+  backdrop-filter: blur(2px);
+  border: 0px solid #8b7355;
   border-radius: 8px;
   padding: 20px;
   margin: 10px 0;
   position: relative;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  overflow: visible !important;
+  overflow: visible ;
+}
+
+/* ===== КАРТОЧКИ ===== */
+.fantasy-card {
+  background: linear-gradient(135deg, #f4e4bc 0%, #e6d2a9 100%);
+  border: 2px solid #8b7355;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  animation: fadeIn 0.4s ease-out;
+}
+
+.fantasy-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><filter id="noise"><feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="1" stitchTiles="stitch"/></filter><rect width="100" height="100" filter="url(%23noise)" opacity="0.1"/></svg>');
+  pointer-events: none;
+  opacity: 0.3;
+}
+
+.fantasy-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+  border-color: #a0512d00;
+}
+
+.card {
+  background: linear-gradient(135deg, #f4e4bc 0%, #e6d2a9 100%) ;
+  border: 2px solid #8b7355 ;
+  border-radius: 8px ;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) ;
+}
+
+/* ===== ЗАГОЛОВКИ КАРТОЧЕК ===== */
+.fantasy-card-header {
+  border-bottom: 3px double #3f2a1a ;
+  border-radius: 6px 6px 0 0 ;
+  font-weight: 700;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+  letter-spacing: 0.5px;
+  position: relative;
+  padding: 20px ;
+}
+
+.fantasy-card-header::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 10%;
+  right: 10%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, currentColor, transparent);
+  opacity: 0.5;
+}
+
+.fantasy-card-header-primary {
+  background: linear-gradient(135deg, #7d5739 0%, #4c3e33 100%) ;
+  color: #d4af37 ;
+}
+
+.fantasy-card-header-warning {
+  background: linear-gradient(135deg, #443414 0%, #664400 100%) ;
+  color: #ffb74d ;
+}
+
+.fantasy-card-header-info {
+  background: linear-gradient(135deg, #0c1f2f 0%, #1c3a4a 100%) ;
+  border-color: #0277bd ;
+}
+
+.fantasy-card-header-secondary {
+  background: linear-gradient(135deg, #1c1c1c 0%, #2d2d2d 100%) ;
+  border-color: #616161 ;
+}
+
+.fantasy-card-header-danger {
+  background: linear-gradient(135deg, #dc3545 0%, #c82333 100%) ;
+  color: white ;
+}
+
+.card-header {
+  background: linear-gradient(135deg, #6e4f37 0%, #4a2c14 100%) ;
+  border-bottom: 3px double #684832 ;
+  color: #d4af37 ;
+  font-weight: 700;
+}
+
+/* Специальные стили для биржи */
+.birzha-card {
+  background: linear-gradient(135deg, #f4e4bc 0%, #e6d2a9 100%) ;
+  border: 2px solid #8b7355 ;
+  border-radius: 8px ;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) ;
+}
+
+.birzha-card .birzha-card-header {
+  background: linear-gradient(135deg, #2f1b0c 0%, #4a2c14 100%) ;
+  border-color: #8f6649 ;
+}
+
+/* ОБЯЗАТЕЛЬНО: Переопределяем цвет текста для заголовков с классом fantasy-text-gold */
+.fantasy-card-header .fantasy-text-gold,
+.birzha-card-header .fantasy-text-gold,
+.birzha-card .birzha-card-header .fantasy-text-gold {
+  color: #ffd700 ;
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.9) ;
+  font-size: 1.3rem ;
 }
 
 /* ===== КНОПКИ ===== */
 .fantasy-btn {
-  background: linear-gradient(135deg, #8b4513 0%, #a0522d 100%);
-  border: 1px solid #000000 !important;
+  background: linear-gradient(135deg, #8b451389 0%, #a0512d7c 100%);
+  border: 1px solid #000000 ;
   border-radius: 6px;
-  color: #ffd700 !important;
+  color: #ffd700 ;
   font-weight: 600;
   padding: 8px 16px;
   transition: all 0.3s ease;
@@ -84,8 +201,8 @@ body {
 .fantasy-btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-  border-color: #000000 !important;
-  color: #fffacd !important;
+  border-color: #000000 ;
+  color: #fffacd ;
   text-decoration: none;
 }
 
@@ -96,7 +213,7 @@ body {
 
 .fantasy-btn:disabled {
   background: linear-gradient(135deg, #7a7572 0%, #8d8987 100%);
-  border-color: #000000 !important;
+  border-color: #000000 ;
   opacity: 0.65;
 }
 
@@ -112,24 +229,51 @@ body {
 .fantasy-btn-sm { padding: 4px 12px; font-size: 0.875em; }
 .fantasy-btn-lg { padding: 12px 24px; font-size: 1.125em; font-weight: 700;}
 
+/* Улучшенные кнопки для биржи */
+.birzha-btn-loading {
+  position: relative;
+}
+
+.birzha-btn-loading::after {
+  content: "";
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border: 2px solid transparent;
+  border-top: 2px solid currentColor;
+  border-radius: 50%;
+  animation: birzha-spin 1s linear infinite;
+}
+
+@keyframes birzha-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Состояния кнопок биржи */
+.birzha-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 /* ===== ФОРМЫ ===== */
 .form-control {
-  background: linear-gradient(135deg, #faf3e0 0%, #f5e8c8 100%) !important;
-  border: 2px solid #8b7355 !important;
-  border-radius: 4px !important;
-  color: #3e2723 !important;
+  background: linear-gradient(135deg, #faf3e0 0%, #f5e8c8 100%) ;
+  border: 2px solid #8b7355 ;
+  border-radius: 4px ;
+  color: #3e2723 ;
   font-weight: 500;
 }
 
 .form-control:focus {
-  background: linear-gradient(135deg, #fff9e6 0%, #faf3e0 100%) !important;
-  border-color: #a0522d !important;
-  box-shadow: 0 0 0 3px rgba(139, 69, 19, 0.3) !important;
-  color: #3e2723 !important;
+  background: linear-gradient(135deg, #fff9e6 0%, #faf3e0 100%) ;
+  border-color: #a0522d ;
+  box-shadow: 0 0 0 3px rgba(139, 69, 19, 0.3) ;
+  color: #3e2723 ;
 }
 
 .form-label {
-  color: #3e2723 !important;
+  color: #3e2723 ;
   font-weight: 600;
   text-shadow: 1px 1px 1px rgba(255, 255, 255, 0.5);
 }
@@ -138,9 +282,9 @@ body {
 .dropdown { position: relative; }
 
 .dropdown-toggle.fantasy-btn {
-  background: linear-gradient(135deg, #8b4513 0%, #a0522d 100%) !important;
-  border: 2px solid #000000 !important;
-  color: #ffd700 !important;
+  background: linear-gradient(135deg, #8b4513 0%, #a0522d 100%) ;
+  border: 2px solid #000000 ;
+  color: #ffd700 ;
   text-align: left;
   display: flex;
   justify-content: space-between;
@@ -149,33 +293,144 @@ body {
 }
 
 .fantasy-dropdown-menu {
-  background: linear-gradient(135deg, #f4e4bc 0%, #e6d2a9 100%) !important;
-  border: 2px solid #8b7355 !important;
-  border-radius: 6px !important;
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4) !important;
-  padding: 5px 0 !important;
-  z-index: 1070 !important;
-  position: absolute !important;
+  background: linear-gradient(135deg, #f4e4bc 0%, #e6d2a9 100%) ;
+  border: 2px solid #8b7355 ;
+  border-radius: 6px ;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4) ;
+  padding: 5px 0 ;
+  z-index: 1070 ;
+  position: absolute ;
 }
 
 .fantasy-dropdown-menu .dropdown-item {
-  color: #3e2723 !important;
+  color: #3e2723 ;
   font-weight: 500;
   transition: all 0.2s ease;
   border-bottom: 1px solid #d7ccc8;
-  background: transparent !important;
-  padding: 10px 15px !important;
+  background: transparent ;
+  padding: 10px 15px ;
 }
 
 .fantasy-dropdown-menu .dropdown-item:hover {
-  background: linear-gradient(135deg, #8b4513 0%, #a0522d 100%) !important;
-  color: #ffd700 !important;
+  background: linear-gradient(135deg, #8b4513 0%, #a0522d 100%) ;
+  color: #ffd700 ;
   transform: translateX(5px);
-  padding-left: 20px !important;
+  padding-left: 20px ;
 }
 
-/* ===== НАВИГАЦИЯ ===== */
-.fantasy-navbar { z-index: 1030; position: relative; }
+.dropdown-item {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.8rem;
+}
+
+/* ===== СПИСКИ ===== */
+.list-group-item {
+  background: rgba(244, 228, 188, 0.7) ;
+  border: 1px solid #bcaaa4 ;
+  color: #3e2723 ;
+  transition: all 0.3s ease;
+}
+
+.list-group-item:hover {
+  background: rgba(230, 210, 169, 0.9) ;
+  border-color: #8b7355 ;
+}
+
+/* ===== СТИЛИ ДЛЯ ПЕРСОНАЖА ===== */
+.character-container {
+  margin-top: 60px;
+  padding: 0 15px;
+}
+
+/* Строки статистики */
+.fantasy-stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid #c19a6b;
+  color: #3e2723;
+  font-weight: 500;
+}
+
+.fantasy-stat-row:last-child {
+  border-bottom: none;
+}
+
+/* Бейджи */
+.fantasy-badge {
+  font-weight: 600;
+  border: 1px solid;
+  border-radius: 12px;
+  padding: 4px 10px;
+  font-size: 0.85em;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 2px 3px rgba(0, 0, 0, 0.2);
+}
+
+.fantasy-badge-primary {
+  background: linear-gradient(135deg, #8b4513, #a0522d);
+  color: #ffd700;
+  border-color: #654321;
+}
+
+.fantasy-badge-warning {
+  background: linear-gradient(135deg, #ef6c00, #ff8f00);
+  color: #ffe0b2;
+  border-color: #e65100;
+}
+
+.fantasy-badge-success {
+  background: linear-gradient(135deg, #27a82e, #388e3c);
+  color: #a5d6a7;
+  border-color: #1b5e20;
+}
+
+/* Вкладки */
+.fantasy-tabs .nav-tabs {
+  border-bottom: 3px double #8b4513;
+  background: transparent;
+}
+
+.fantasy-tabs .nav {
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+}
+
+.fantasy-tabs .nav-item {
+  flex: 1;
+  min-width: 120px;
+  text-align: center;
+}
+
+.fantasy-tabs .nav-link {
+  color: #5d4037 ;
+  border: 2px solid transparent;
+  border-radius: 8px 8px 0 0;
+  margin: 0 3px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  background: linear-gradient(135deg, #d7ccc8, #bcaaa4);
+  border-bottom: none ;
+  white-space: nowrap;
+  padding: 0.5rem 0.75rem;
+}
+
+.fantasy-tabs .nav-link:hover {
+  background: linear-gradient(135deg, #efdcd3, #d7ccc8);
+  border-color: #8b4513;
+  color: #3e2723 ;
+  transform: translateY(-2px);
+}
+
+.fantasy-tabs .nav-link.active {
+  background: linear-gradient(135deg, #8b4513, #a0522d) ;
+  color: #ffd700 ;
+  border-color: #654321;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 -3px 10px rgba(139, 69, 19, 0.3);
+}
 
 /* Мобильное меню */
 @media (max-width: 992px) {
@@ -190,9 +445,12 @@ body {
     width: 100%;
     border-radius: 0;
     border: none;
-    border-bottom: 2px solid #8b4513;
+    border-bottom: 1px solid #8b4513;
     padding: 12px 20px;
-    background: linear-gradient(135deg, #2f1b0c 0%, #4a2c14 100%) !important;
+    background: linear-gradient(135deg, #2f1b0c 0%, #4a2c14 100%);
+ outline: none !important;
+    box-shadow: none !important;
+
   }
   
   .fantasy-navbar .navbar-collapse {
@@ -202,38 +460,102 @@ body {
     right: 0;
     z-index: 1050;
     background: linear-gradient(135deg, #2f1b0c 0%, #4a2c14 100%);
-    border-top: 2px solid #8b4513;
+    border-top: 1px solid #8b4513;
   }
 }
 
-/* ===== КАРТОЧКИ И СПИСКИ ===== */
-.card {
-  background: linear-gradient(135deg, #f4e4bc 0%, #e6d2a9 100%) !important;
-  border: 2px solid #8b7355 !important;
-  border-radius: 8px !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+/* ===== СТИЛИ ДЛЯ КАРТЫ ===== */
+.location-point {
+  transition: all 0.3s ease;
+  filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.5));
 }
 
-.card-header {
-  background: linear-gradient(135deg, #2f1b0c 0%, #4a2c14 100%) !important;
-  border-bottom: 3px double #8b4513 !important;
-  color: #d4af37 !important;
-  font-weight: 700;
+.location-point:hover {
+  transform: scale(1.2);
+  filter: drop-shadow(3px 3px 6px rgba(255,140,0,0.7));
 }
 
-.list-group-item {
-  background: rgba(244, 228, 188, 0.7) !important;
-  border: 1px solid #bcaaa4 !important;
-  color: #3e2723 !important;
+.dungeon-item {
+  background: rgba(139, 69, 19, 0.1);
+  border-radius: 5px;
+  border-left: 3px solid #8B4513;
+  cursor: pointer;
   transition: all 0.3s ease;
 }
 
-.list-group-item:hover {
-  background: rgba(230, 210, 169, 0.9) !important;
-  border-color: #8b7355 !important;
+.dungeon-item:hover {
+  background: rgba(139, 69, 19, 0.2);
+  transform: translateX(5px);
+}
+
+.connection-item {
+  background: rgba(255, 215, 0, 0.1);
+  border-radius: 5px;
+  border-left: 3px solid #ffd700;
+}
+
+.fantasy-tooltip-content {
+  text-align: left;
+  max-width: 250px;
+}
+
+.fantasy-map-container {
+  border: 3px solid #8B4513;
+  box-shadow: 0 0 20px rgba(139, 69, 19, 0.3);
+}
+
+/* ===== МОДАЛЬНЫЕ ОКНА ===== */
+.fantasy-modal .modal-content {
+  background: linear-gradient(135deg, #f5e8c8 0%, #e8d5b5 100%);
+  border: 2px solid #8b4513;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(139, 69, 19, 0.3);
+}
+
+.fantasy-modal .modal-header {
+  background: linear-gradient(135deg, #d4a574 0%, #b08c5a 100%);
+  border-bottom: 2px solid #8b4513;
+  border-radius: 10px 10px 0 0;
+}
+
+.fantasy-modal .modal-header .btn-close {
+  filter: invert(1);
+}
+
+.fantasy-modal .modal-body {
+  padding: 2rem;
+  background: rgba(255, 248, 225, 0.8);
+}
+
+.fantasy-modal .modal-footer {
+  background: linear-gradient(135deg, #e8d5b5 0%, #d4a574 100%);
+  border-top: 2px solid #8b4513;
+  border-radius: 0 0 10px 10px;
+}
+
+/* ===== МОБИЛЬНОЕ МЕНЮ ===== */
+.fantasy-navbar .fantasy-mobile-menu,
+.fantasy-navbar .navbar-collapse.collapse,
+.fantasy-navbar .navbar-collapse.collapsing,
+.fantasy-navbar .navbar-collapse.show,
+.fantasy-navbar .navbar-collapse:not(.show),
+.fantasy-navbar div[class*="navbar-collapse"],
+.navbar.fantasy-navbar .collapse.navbar-collapse {
+  
 }
 
 /* ===== АНИМАЦИИ ===== */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @keyframes pulse-gold {
   0% { box-shadow: 0 0 0 0 rgba(212, 175, 55, 0.4); }
   70% { box-shadow: 0 0 0 10px rgba(212, 175, 55, 0); }
@@ -248,20 +570,259 @@ body {
 .fantasy-btn-pulse { animation: pulse-gold 2s infinite; }
 
 /* ===== АДАПТИВНОСТЬ ===== */
+@media (max-width: 991.98px) {
+  .fantasy-navbar .navbar-collapse {
+    position: absolute ;
+    top: 100%;
+    left: 0 ;
+    right: 0 !;
+    z-index: 9999 ;
+  }
+  
+  .fantasy-navbar .navbar-collapse,
+  .fantasy-navbar .collapse:not(.show),
+  .fantasy-navbar .collapsing,
+  .fantasy-navbar .collapse.show,
+  .fantasy-navbar .fantasy-mobile-menu,
+  #responsive-navbar-nav {
+    background: linear-gradient(135deg, #5d3d1c81 0%, #8b592b5f 100%) ;
+    border-top: 2px solid #8b451300 ;
+    border-bottom: 3px double #8b451300 ;
+  }
+}
+
 @media (max-width: 768px) {
   body { padding-top: 60px; }
+  
+  .character-container {
+    margin-top: 20px;
+    padding: 0 10px;
+  }
+  
+  .birzha-container {
+    padding: 10px;
+  }
+  
+  .birzha-chart-card {
+    min-height: 400px;
+  }
+  
+  .birzha-chart-body {
+    height: 350px;
+  }
+  
+  .birzha-chart-wrapper {
+    padding: 15px;
+  }
+  
+  .birzha-info-item {
+    padding: 8px 0;
+  }
+  
+  .birzha-info-text {
+    font-size: 0.9em;
+  }
+  
+  .birzha-card-header {
+    padding: 15px ;
+  }
+  
+  .birzha-card-header .fantasy-text-gold {
+    font-size: 1.1rem;
+  }
+  
+  .fantasy-stat-row {
+    padding: 8px 0;
+    font-size: 0.9em;
+  }
+  
+  .fantasy-attributes-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .fantasy-attribute-item {
+    padding: 8px 10px;
+  }
   
   .fantasy-btn { padding: 10px 14px; font-size: 0.9em; }
   
   .content-overlay { padding: 15px; margin: 5px 0; }
   
   .fantasy-dropdown-menu {
-    position: fixed !important;
-    top: 50% !important;
-    left: 50% !important;
-    transform: translate(-50%, -50%) !important;
-    width: 90vw !important;
-    max-width: 300px !important;
+    position: fixed ;
+    top: 50% ;
+    left: 50% ;
+    transform: translate(-50%, -50%) ;
+    width: 90vw ;
+    max-width: 300px ;
+  }
+  
+  .inventory-container {
+    max-width: 100%;
+  }
+
+  /* Стили для контейнера предмета инвентаря */
+.inventory-item-row {
+  position: relative;
+}
+
+.inventory-item-container {
+  cursor: pointer;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+}
+
+.inventory-item-image {
+  aspect-ratio: 1/1;
+  object-fit: cover;
+  width: 100%;
+  max-width: 80px;
+}
+
+/* ===== СТИЛИ ДРОПДАУНА ИНВЕНТАРЯ ===== */
+.inventory-item-fantasy-dropdown {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 1000;
+}
+
+.inventory-item-fantasy-dropdown .dropdown-toggle {
+  background: rgba(0, 0, 0, 0.7);
+  border: 1px solid #d4af37;
+  border-radius: 4px;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #d4af37;
+}
+
+.inventory-item-fantasy-dropdown .dropdown-toggle::after {
+  display: none;
+}
+
+.inventory-item-fantasy-dropdown .dropdown-toggle:hover {
+  background: rgba(212, 175, 55, 0.2);
+  border-color: #ffd700;
+  color: #ffd700;
+}
+
+.inventory-item-fantasy-dropdown .dropdown-menu {
+  background: linear-gradient(135deg, #2d1f0f 0%, #4a3519 100%);
+  border: 2px solid #d4af37;
+  border-radius: 8px;
+  box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
+  min-width: 140px;
+  padding: 4px 0;
+  margin-top: 5px;
+}
+
+.inventory-item-fantasy-dropdown .dropdown-item {
+  color: #e0e0e0;
+  padding: 8px 16px;
+  /* font-size: 0.9rem;
+  transition: all 0.2s ease; */
+  border-bottom: 1px solid rgba(212, 175, 55, 0.1);
+}
+
+.inventory-item-fantasy-dropdown .dropdown-item:last-child {
+  border-bottom: none;
+}
+
+.inventory-item-fantasy-dropdown .dropdown-item:hover {
+  background: rgba(212, 175, 55, 0.15);
+  color: #ffd700;
+  transform: translateX(3px);
+}
+
+/* Анимация появления дропдауна */
+.inventory-item-fantasy-dropdown .dropdown-menu.show {
+  animation: fadeInUp 0.3s ease-out;
+}
+
+/* Стили для иконки меню (три точки) */
+.inventory-menu-icon {
+  font-size: 1.2rem;
+  font-weight: bold;
+  line-height: 1;
+}
+
+/* Адаптивность для мобильных устройств */
+@media (max-width: 768px) {
+  .inventory-item-fantasy-dropdown {
+    position: static;
+    margin-top: 8px;
+  }
+  
+  .inventory-item-fantasy-dropdown .dropdown-toggle {
+    width: 100%;
+    height: 35px;
+  }
+  
+  .inventory-item-fantasy-dropdown .dropdown-menu {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 80vw;
+    max-width: 250px;
+    z-index: 9999;
+  }
+}
+.row .col .inventory-item-fantasy-dropdown .dropdown-menu {
+  background: linear-gradient(135deg, #2d1f0f 0%, #4a3519 100%);
+}
+
+body .inventory-item-fantasy-dropdown .dropdown-item {
+  color: #e0e0e0;
+}
+/*.inventory-item-fantasy-dropdown {
+                  position: absolute;
+                  top: 50%;
+                  left: 100%;
+                  transform: translate(-50%, -50%);
+                  z-index: 1;*/
+
+  .character-silhouette {
+    height: 600px;
+  }
+  
+  .empty-slot-with-text .item-text {
+    font-size: 0.7em;
+  }
+}
+
+@media (max-width: 576px) {
+  .birzha-chart-card {
+    min-height: 350px;
+  }
+  
+  .birzha-chart-body {
+    height: 300px;
+  }
+  
+  .birzha-chart-wrapper {
+    padding: 10px;
+  }
+  
+  .birzha-info {
+    gap: 10px;
+  }
+  
+  .birzha-info-item {
+    padding: 6px 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .character-silhouette {
+    height: 500px;
   }
 }
 
@@ -269,3 +830,24 @@ body {
 .min-vh-50 { min-height: 50vh; }
 .main-content { min-height: calc(100vh - 76px); }
 
+/* Улучшаем отступы для карточек */
+.birzha-card .card-body,
+.fantasy-card .card-body {
+  padding: 25px;
+}
+
+/* Четкие границы для разделения */
+.birzha-info-item {
+  border-bottom-color: #d7ccc8;
+}
+
+/* Улучшаем внешний вид заголовков */
+.birzha-card-header .card-title {
+  margin-bottom: 0;
+  font-weight: 700;
+}
+
+/* Плавная прокрутка */
+.character-container {
+  scroll-behavior: smooth;
+}
