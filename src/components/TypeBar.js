@@ -1,7 +1,6 @@
 import { observer } from "mobx-react-lite";
 import { useContext, forwardRef, useState, useRef, useEffect, useCallback } from "react";
 import { Dropdown } from 'react-bootstrap';
-import '../index.css';
 import { Context } from "../index";
 
 // Translation dictionary
@@ -48,14 +47,7 @@ const CustomToggle = forwardRef(({ children, onClick }, ref) => {
         e.preventDefault();
         onClick(e);
       }}
-      style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        width: '200px',
-        position: 'relative',
-        zIndex: 1001
-      }}
+      
     >
       {children}
       <span style={{ marginLeft: '10px' }}>▼</span>

@@ -4,7 +4,7 @@ import { Container, Spinner, Tabs, Tab, Card, Row, Col, Badge, ProgressBar, Over
 import { Context } from "../index";
 import { observer } from "mobx-react-lite";
 import { dict_translator } from "../utils/Helpers";
-import "./Character.css";
+//import "./щ";
 
 // Импортируем словари с описаниями
 import { attributesDescDict, skillsDescDict, talentsDescDict, abilitiesDescDict, keyMappingDict } from "../utils/descriptions";

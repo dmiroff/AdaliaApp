@@ -1,7 +1,7 @@
 /* ===== Character.css - Оптимизированная версия ===== */
 
 /* Основные стили контейнера */
-.character-container {
+/*.character-container {
   margin-top: 60px;
   padding: 0 15px;
 }
@@ -14,7 +14,7 @@
 }
 
 /* Карточки в стиле пергамента */
-.fantasy-card {
+/*.fantasy-card {
   background: linear-gradient(135deg, #f4e4bc 0%, #e6d2a9 100%);
   border: 2px solid #8b7355;
   border-radius: 8px;
@@ -44,7 +44,7 @@
 }
 
 /* Заголовки карточек */
-.fantasy-card-header {
+/*.fantasy-card-header {
   border-bottom: 3px double #8b4513 !important;
   border-radius: 6px 6px 0 0 !important;
   font-weight: 700;
@@ -75,7 +75,7 @@
 }
 
 /* Строки статистики */
-.fantasy-stat-row {
+/*.fantasy-stat-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -97,7 +97,7 @@
 }
 
 /* Бейджи */
-.fantasy-badge {
+/*.fantasy-badge {
   font-weight: 600;
   border: 1px solid;
   border-radius: 12px;
@@ -107,13 +107,13 @@
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 2px 3px rgba(0, 0, 0, 0.2);
 }
 
-.fantasy-badge-primary {
+/*.fantasy-badge-primary {
   background: linear-gradient(135deg, #8b4513, #a0522d);
   color: #ffd700;
   border-color: #654321;
 }
 
-.fantasy-badge-warning {
+/*.fantasy-badge-warning {
   background: linear-gradient(135deg, #ef6c00, #ff8f00);
   color: #ffe0b2;
   border-color: #e65100;
@@ -126,7 +126,7 @@
 }
 
 /* Вкладки */
-.fantasy-tabs .nav-tabs {
+/*.fantasy-tabs .nav-tabs {
   border-bottom: 3px double #8b4513;
   background: transparent;
 }
@@ -172,7 +172,7 @@
 }
 
 /* Сетка атрибутов */
-.fantasy-attributes-grid {
+/*.fantasy-attributes-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 10px;
@@ -230,13 +230,13 @@
 }
 
 /* Прогресс-бары */
-.level-progress-container {
+/*.level-progress-container {
   margin-top: auto;
   padding-top: 15px;
   border-top: 2px solid #8b4513;
 }
 
-.experience-progress-bar,
+/*.experience-progress-bar,
 .health-progress-bar {
   height: 12px;
   border-radius: 6px;
@@ -245,7 +245,7 @@
   box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4);
 }
 
-.experience-progress-bar .progress-bar {
+/*.experience-progress-bar .progress-bar {
   background: linear-gradient(90deg, #8b0000, #dc143c, #ff0000);
   border-radius: 5px;
   box-shadow: 0 0 8px rgba(255, 0, 0, 0.6);
@@ -258,7 +258,7 @@
 }
 
 /* Анимации */
-@keyframes fadeIn {
+/*@keyframes fadeIn {
   from {
     opacity: 0;
     transform: translateY(10px);
@@ -270,6 +270,6 @@
 }
 
 /* Плавная прокрутка */
-.character-container {
+/*.character-container {
   scroll-behavior: smooth;
-}
+}*/

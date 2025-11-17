@@ -6,7 +6,6 @@ import TypeBar from "../components/TypeBar";
 import { Context } from "../index";
 import GetDataById from "../http/GetData";
 import { Spinner } from "react-bootstrap";
-import '../App.css';
 import Fuse from "fuse.js"
 
 const InventoryList = observer(() => {

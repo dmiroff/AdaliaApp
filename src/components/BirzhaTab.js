@@ -14,8 +14,8 @@ import {
   Tooltip,
   Legend,
 } from 'chart.js';
-import './Birzha.css';
-import "../pages/Character.css";
+/*import './Birzha.css';*/
+/*import "../pages/Character.css";*/
 
 ChartJS.register(
   CategoryScale,
