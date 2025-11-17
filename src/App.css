@@ -8,18 +8,11 @@
 /* ===== БАЗОВЫЕ СТИЛИ ===== */
 html, body, #root {
   height: 100%;
-}
-
-body {
-  background-image: url('assets/Images/background.webp');
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  background-attachment: fixed;
   margin: 0;
   padding: 0;
-  padding-top: 56px;
 }
+
+/* Убрали background-image из body - теперь он в React компоненте */
 
 /* ===== ТИПОГРАФИЯ И ТЕКСТ ===== */
 .fantasy-text-primary { color: #4f3729 ; }
@@ -592,58 +585,6 @@ body {
 }
 
 @media (max-width: 768px) {
-  body { padding-top: 60px; }
-  
-  .character-container {
-    margin-top: 20px;
-    padding: 0 10px;
-  }
-  
-  .birzha-container {
-    padding: 10px;
-  }
-  
-  .birzha-chart-card {
-    min-height: 400px;
-  }
-  
-  .birzha-chart-body {
-    height: 350px;
-  }
-  
-  .birzha-chart-wrapper {
-    padding: 15px;
-  }
-  
-  .birzha-info-item {
-    padding: 8px 0;
-  }
-  
-  .birzha-info-text {
-    font-size: 0.9em;
-  }
-  
-  .birzha-card-header {
-    padding: 15px ;
-  }
-  
-  .birzha-card-header .fantasy-text-gold {
-    font-size: 1.1rem;
-  }
-  
-  .fantasy-stat-row {
-    padding: 8px 0;
-    font-size: 0.9em;
-  }
-  
-  .fantasy-attributes-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .fantasy-attribute-item {
-    padding: 8px 10px;
-  }
-  
   .fantasy-btn { padding: 10px 14px; font-size: 0.9em; }
   
   .content-overlay { padding: 15px; margin: 5px 0; }
@@ -828,26 +769,8 @@ body .inventory-item-fantasy-dropdown .dropdown-item {
 
 /* Утилиты */
 .min-vh-50 { min-height: 50vh; }
-.main-content { min-height: calc(100vh - 76px); }
-
-/* Улучшаем отступы для карточек */
-.birzha-card .card-body,
-.fantasy-card .card-body {
-  padding: 25px;
-}
-
-/* Четкие границы для разделения */
-.birzha-info-item {
-  border-bottom-color: #d7ccc8;
-}
-
-/* Улучшаем внешний вид заголовков */
-.birzha-card-header .card-title {
-  margin-bottom: 0;
-  font-weight: 700;
-}
-
-/* Плавная прокрутка */
-.character-container {
-  scroll-behavior: smooth;
+.main-container { 
+  min-height: calc(100vh - 76px);
+  position: relative;
+  z-index: 1;
 }
