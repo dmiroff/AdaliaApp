@@ -1,6 +1,6 @@
 import React from 'react';
 import { observer } from "mobx-react-lite";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useState, useCallback, useRef } from "react";
 import { Row, Col, Form, Button, Card, Badge, Alert, Modal } from "react-bootstrap";
 import { Context } from "../index";
 import { Spinner } from "react-bootstrap";
@@ -26,117 +26,144 @@ const BulkPurchaseTab = observer(() => {
   const [showSellModal, setShowSellModal] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [showCollectModal, setShowCollectModal] = useState(false);
-  const [showErrorModal, setShowErrorModal] = useState(false); // Новое состояние для модального окна ошибок
-  const [modalError, setModalError] = useState(""); // Текст ошибки для модалки
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [modalError, setModalError] = useState("");
   
   const [sellAmount, setSellAmount] = useState("");
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const [currentMode, setCurrentMode] = useState('requests'); // 'requests' или 'storage'
+  const [currentMode, setCurrentMode] = useState('requests');
 
   const [playerData, setPlayerData] = useState(null);
   const [userInventory, setUserInventory] = useState({});
   const [dataLoaded, setDataLoaded] = useState(false);
+  
+  // Флаги для предотвращения повторных загрузок
+  const hasLoadedPlayerData = useRef(false);
+  const hasLoadedRequests = useRef(false);
+  const hasLoadedStorage = useRef(false);
 
   // Функция для показа ошибки в модальном окне
-  const showErrorInModal = (errorMessage) => {
+  const showErrorInModal = useCallback((errorMessage) => {
     setModalError(errorMessage);
     setShowErrorModal(true);
-  };
+  }, []);
 
   // Функция закрытия модального окна ошибок
-  const handleCloseErrorModal = () => {
+  const handleCloseErrorModal = useCallback(() => {
     setShowErrorModal(false);
     setModalError("");
-  };
+  }, []);
 
   // Функция переключения режима
-  const toggleMode = () => {
-    setCurrentMode(currentMode === 'requests' ? 'storage' : 'requests');
-    setQuery(""); // Сбрасываем поиск при переключении
-  };
+  const toggleMode = useCallback(() => {
+    setCurrentMode(prev => {
+      const newMode = prev === 'requests' ? 'storage' : 'requests';
+      // Сбрасываем флаги загрузки при переключении режима
+      if (newMode === 'requests') hasLoadedRequests.current = false;
+      if (newMode === 'storage') hasLoadedStorage.current = false;
+      return newMode;
+    });
+    setQuery("");
+  }, []);
 
-  useEffect(() => {
-    const fetchPlayer = async () => {
-      try {
-        setLoading(true);
-        const playerDataResponse = await GetDataById();
-        
-        if (playerDataResponse && playerDataResponse.data) {
-          setPlayerData(playerDataResponse.data);
-          const safeInventory = playerDataResponse.data.inventory_new || {};
-          user.setPlayerInventory(safeInventory);
-          setUserInventory(safeInventory);
-          user.setPlayer(playerDataResponse.data);
-          setDataLoaded(true);
-        }
-      } catch (error) {
-        console.error("Error fetching player data:", error);
-        const errorMessage = error.response?.data?.detail || "Ошибка загрузки данных игрока";
-        showErrorInModal(errorMessage);
-        setError(errorMessage);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchPlayer();
-  }, [user, refreshTrigger]);
-
-  // Загрузка заявок
-  useEffect(() => {
-    const loadBuyRequests = async () => {
-      if (!dataLoaded) return;
+  // Функция для загрузки данных игрока
+  const loadPlayerData = useCallback(async () => {
+    if (hasLoadedPlayerData.current) return;
+    
+    try {
+      setLoading(true);
+      console.log("Loading player data...");
+      const playerDataResponse = await GetDataById();
       
-      try {
-        console.log("Loading buy requests...");
-        const requests = await fetchBuyRequests();
-        console.log("Buy requests loaded:", requests);
-        
-        const safeRequests = Array.isArray(requests) ? requests : [];
-        setBuyRequests(safeRequests);
-      } catch (error) {
-        console.error("Error fetching buy requests:", error);
-        const errorMessage = error.response?.data?.detail || "Ошибка загрузки заявок на скупку";
-        showErrorInModal(errorMessage);
-        setError(errorMessage);
-        setBuyRequests([]);
+      if (playerDataResponse && playerDataResponse.data) {
+        setPlayerData(playerDataResponse.data);
+        const safeInventory = playerDataResponse.data.inventory_new || {};
+        user.setPlayerInventory(safeInventory);
+        setUserInventory(safeInventory);
+        user.setPlayer(playerDataResponse.data);
+        setDataLoaded(true);
+        hasLoadedPlayerData.current = true;
+        console.log("Player data loaded successfully");
       }
-    };
+    } catch (error) {
+      console.error("Error fetching player data:", error);
+      const errorMessage = error.response?.data?.detail || "Ошибка загрузки данных игрока";
+      showErrorInModal(errorMessage);
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  }, [user, showErrorInModal]);
 
-    if (currentMode === 'requests') {
+  // Функция для загрузки заявок
+  const loadBuyRequests = useCallback(async (forceRefresh = false) => {
+    if (!dataLoaded) return;
+    
+    // Если уже загружено и не требуется принудительное обновление
+    if (hasLoadedRequests.current && !forceRefresh) return;
+    
+    try {
+      console.log("Loading buy requests...");
+      const requests = await fetchBuyRequests();
+      console.log(`Buy requests loaded: ${requests.length} items`);
+      
+      const safeRequests = Array.isArray(requests) ? requests : [];
+      setBuyRequests(safeRequests);
+      hasLoadedRequests.current = true;
+    } catch (error) {
+      console.error("Error fetching buy requests:", error);
+      const errorMessage = error.response?.data?.detail || "Ошибка загрузки заявок на скупку";
+      showErrorInModal(errorMessage);
+      setError(errorMessage);
+      setBuyRequests([]);
+    }
+  }, [dataLoaded, showErrorInModal]);
+
+  // Функция для загрузки склада
+  const loadStorage = useCallback(async (forceRefresh = false) => {
+    if (!dataLoaded) return;
+    
+    // Если уже загружено и не требуется принудительное обновление
+    if (hasLoadedStorage.current && !forceRefresh) return;
+    
+    try {
+      console.log("Loading storage data...");
+      const storage = await getPlayerStorage();
+      console.log(`Storage data loaded: ${storage?.data?.items?.length || 0} items`);
+      
+      const safeStorage = Array.isArray(storage?.data?.items) ? storage.data.items : [];
+      setStorageData(safeStorage);
+      hasLoadedStorage.current = true;
+    } catch (error) {
+      console.error("Error fetching storage:", error);
+      const errorMessage = error.response?.data?.detail || "Ошибка загрузки данных склада";
+      showErrorInModal(errorMessage);
+      setError(errorMessage);
+      setStorageData([]);
+    }
+  }, [dataLoaded, showErrorInModal]);
+
+  // Загрузка данных игрока при монтировании компонента
+  useEffect(() => {
+    loadPlayerData();
+  }, [loadPlayerData]);
+
+  // Загрузка заявок при изменении режима
+  useEffect(() => {
+    if (currentMode === 'requests' && dataLoaded) {
       loadBuyRequests();
     }
-  }, [dataLoaded, refreshTrigger, currentMode]);
+  }, [currentMode, dataLoaded, loadBuyRequests]);
 
-  // Загрузка склада
+  // Загрузка склада при изменении режима
   useEffect(() => {
-    const loadStorage = async () => {
-      if (!dataLoaded) return;
-      
-      try {
-        console.log("Loading storage data...");
-        const storage = await getPlayerStorage();
-        console.log("Storage data loaded:", storage);
-        
-        const safeStorage = Array.isArray(storage?.data?.items) ? storage.data.items : [];
-        setStorageData(safeStorage);
-      } catch (error) {
-        console.error("Error fetching storage:", error);
-        const errorMessage = error.response?.data?.detail || "Ошибка загрузки данных склада";
-        showErrorInModal(errorMessage);
-        setError(errorMessage);
-        setStorageData([]);
-      }
-    };
-
-    if (currentMode === 'storage') {
+    if (currentMode === 'storage' && dataLoaded) {
       loadStorage();
     }
-  }, [dataLoaded, refreshTrigger, currentMode]);
+  }, [currentMode, dataLoaded, loadStorage]);
 
-  const updateUserData = async () => {
+  const updateUserData = useCallback(async () => {
     try {
       const playerDataResponse = await GetDataById();
       if (playerDataResponse && playerDataResponse.data) {
@@ -145,13 +172,14 @@ const BulkPurchaseTab = observer(() => {
         user.setPlayerInventory(safeInventory);
         setUserInventory(safeInventory);
         user.setPlayer(playerDataResponse.data);
+        console.log("User data updated");
       }
     } catch (error) {
       console.error("Error updating user data:", error);
     }
-  };
+  }, [user]);
 
-  const handleSell = async () => {
+  const handleSell = useCallback(async () => {
     try {
       setError("");
       const amount = Number(sellAmount);
@@ -168,8 +196,14 @@ const BulkPurchaseTab = observer(() => {
         setSuccess(response.message);
         setShowSellModal(false);
         setSellAmount("");
+        
+        // Обновить данные игрока
         await updateUserData();
-        setRefreshTrigger(prev => prev + 1);
+        
+        // Обновить список заявок
+        if (currentMode === 'requests') {
+          await loadBuyRequests(true); // Принудительное обновление
+        }
         
         setTimeout(() => setSuccess(""), 3000);
       } else {
@@ -183,9 +217,9 @@ const BulkPurchaseTab = observer(() => {
       showErrorInModal(errorMessage);
       setError(errorMessage);
     }
-  };
+  }, [selectedRequest, sellAmount, currentMode, showErrorInModal, updateUserData, loadBuyRequests]);
 
-  const handleCollect = async (itemId, amount = 1) => {
+  const handleCollect = useCallback(async (itemId, amount = 1) => {
     try {
       setError("");
       const response = await collectPurchasedItems(itemId, amount);
@@ -193,8 +227,14 @@ const BulkPurchaseTab = observer(() => {
       if (response.status) {
         setSuccess(response.message);
         setShowCollectModal(false);
+        
+        // Обновить данные игрока
         await updateUserData();
-        setRefreshTrigger(prev => prev + 1);
+        
+        // Обновить список склада
+        if (currentMode === 'storage') {
+          await loadStorage(true); // Принудительное обновление
+        }
         
         setTimeout(() => setSuccess(""), 3000);
       } else {
@@ -208,9 +248,9 @@ const BulkPurchaseTab = observer(() => {
       showErrorInModal(errorMessage);
       setError(errorMessage);
     }
-  };
+  }, [currentMode, showErrorInModal, updateUserData, loadStorage]);
 
-  const handleCancelRequest = async () => {
+  const handleCancelRequest = useCallback(async () => {
     try {
       setError("");
       const response = await cancelBuyRequest(selectedRequest.id);
@@ -218,8 +258,14 @@ const BulkPurchaseTab = observer(() => {
       if (response.status) {
         setSuccess(response.message);
         setShowCancelModal(false);
+        
+        // Обновить данные игрока
         await updateUserData();
-        setRefreshTrigger(prev => prev + 1);
+        
+        // Обновить список заявок
+        if (currentMode === 'requests') {
+          await loadBuyRequests(true); // Принудительное обновление
+        }
         
         setTimeout(() => setSuccess(""), 3000);
       } else {
@@ -233,9 +279,9 @@ const BulkPurchaseTab = observer(() => {
       showErrorInModal(errorMessage);
       setError(errorMessage);
     }
-  };
+  }, [selectedRequest, currentMode, showErrorInModal, updateUserData, loadBuyRequests]);
 
-  const handleCreateRequest = async (buyRequestData) => {
+  const handleCreateRequest = useCallback(async (buyRequestData) => {
     try {
       setError("");
       const response = await createBuyRequest(buyRequestData);
@@ -243,8 +289,14 @@ const BulkPurchaseTab = observer(() => {
       if (response.status) {
         setSuccess(response.message);
         setShowCreateModal(false);
+        
+        // Обновить данные игрока
         await updateUserData();
-        setRefreshTrigger(prev => prev + 1);
+        
+        // Обновить список заявок
+        if (currentMode === 'requests') {
+          await loadBuyRequests(true); // Принудительное обновление
+        }
         
         setTimeout(() => setSuccess(""), 3000);
       } else {
@@ -258,7 +310,7 @@ const BulkPurchaseTab = observer(() => {
       showErrorInModal(errorMessage);
       setError(errorMessage);
     }
-  };
+  }, [currentMode, showErrorInModal, updateUserData, loadBuyRequests]);
 
   const inventoryArray = React.useMemo(() => {
     if (!userInventory || Object.keys(userInventory).length === 0) {
@@ -278,36 +330,46 @@ const BulkPurchaseTab = observer(() => {
   }, [userInventory]);
 
   // Безопасная фильтрация заявок
-  let filteredRequests = Array.isArray(buyRequests) ? buyRequests : [];
-  
-  if (query && filteredRequests.length > 0 && currentMode === 'requests') {
-    try {
-      const fuse = new Fuse(filteredRequests, {
-        keys: ["item_name"],
-        threshold: 0.3
-      });
-      const searchResults = fuse.search(query);
-      filteredRequests = searchResults.map(result => result.item);
-    } catch (error) {
-      console.error("Search error:", error);
+  const filteredRequests = React.useMemo(() => {
+    if (!Array.isArray(buyRequests)) return [];
+    
+    if (query && buyRequests.length > 0 && currentMode === 'requests') {
+      try {
+        const fuse = new Fuse(buyRequests, {
+          keys: ["item_name"],
+          threshold: 0.3
+        });
+        const searchResults = fuse.search(query);
+        return searchResults.map(result => result.item);
+      } catch (error) {
+        console.error("Search error:", error);
+        return buyRequests;
+      }
     }
-  }
+    
+    return buyRequests;
+  }, [buyRequests, query, currentMode]);
 
   // Безопасная фильтрация склада
-  let filteredStorage = Array.isArray(storageData) ? storageData : [];
-  
-  if (query && filteredStorage.length > 0 && currentMode === 'storage') {
-    try {
-      const fuse = new Fuse(filteredStorage, {
-        keys: ["name"],
-        threshold: 0.3
-      });
-      const searchResults = fuse.search(query);
-      filteredStorage = searchResults.map(result => result.item);
-    } catch (error) {
-      console.error("Search error:", error);
+  const filteredStorage = React.useMemo(() => {
+    if (!Array.isArray(storageData)) return [];
+    
+    if (query && storageData.length > 0 && currentMode === 'storage') {
+      try {
+        const fuse = new Fuse(storageData, {
+          keys: ["name"],
+          threshold: 0.3
+        });
+        const searchResults = fuse.search(query);
+        return searchResults.map(result => result.item);
+      } catch (error) {
+        console.error("Search error:", error);
+        return storageData;
+      }
     }
-  }
+    
+    return storageData;
+  }, [storageData, query, currentMode]);
 
   if (loading) {
     return (
@@ -438,7 +500,7 @@ const BulkPurchaseTab = observer(() => {
             ))}
           </Row>
 
-          {filteredRequests.length === 0 && !loading && (
+          {filteredRequests.length === 0 && (
             <div className="text-center fantasy-text-muted py-4">
               {query ? "Заявки по вашему запросу не найдены" : "Заявок на скупку нет"}
             </div>
@@ -463,7 +525,7 @@ const BulkPurchaseTab = observer(() => {
             ))}
           </Row>
 
-          {filteredStorage.length === 0 && !loading && (
+          {filteredStorage.length === 0 && (
             <div className="text-center fantasy-text-muted py-4">
               {query ? "Предметы по вашему запросу не найдены" : "Ваш склад пуст"}
             </div>
@@ -480,7 +542,7 @@ const BulkPurchaseTab = observer(() => {
         setSellAmount={setSellAmount}
         userInventory={userInventory}
         onSell={handleSell}
-        loading={loading}
+        loading={false}
       />
 
       <CancelRequestModal
@@ -488,7 +550,7 @@ const BulkPurchaseTab = observer(() => {
         onHide={() => setShowCancelModal(false)}
         selectedRequest={selectedRequest}
         onCancel={handleCancelRequest}
-        loading={loading}
+        loading={false}
       />
 
       <StorageCollectModal
@@ -496,7 +558,7 @@ const BulkPurchaseTab = observer(() => {
         onHide={() => setShowCollectModal(false)}
         selectedItem={selectedStorageItem}
         onCollect={handleCollect}
-        loading={loading}
+        loading={false}
       />
 
       <CreateBuyRequestModal 

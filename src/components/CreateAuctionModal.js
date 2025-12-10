@@ -194,9 +194,7 @@ const CreateAuctionModal = ({ show, onHide, onCreate, playerData, inventoryItems
                     <Card.Body className="p-3">
                       <div className="d-flex justify-content-between align-items-start">
                         <div>
-                          <h8 className="fantasy-text-primary mb-1">
-                            {item.name}
-                          </h8>
+                          {item.name}
                           <small className="fantasy-text-muted">
                             Тип: {getItemType(item)}<br/>
                             Ценность: {item.value || 0} 🌕<br/>
