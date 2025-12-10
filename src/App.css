@@ -784,6 +784,245 @@ html, body, #root {
   box-shadow: 0 -3px 10px rgba(139, 69, 19, 0.3);
 }
 
+/* ===== СТИЛИ ДЛЯ БИРЖИ ===== */
+.birzha-container {
+  padding: 15px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* Адаптивный график */
+.birzha-chart-card {
+  margin-bottom: 20px;
+  overflow: hidden;
+}
+
+.birzha-chart-body {
+  padding: 15px !important;
+  position: relative;
+}
+
+.birzha-chart-container {
+  width: 100%;
+  min-height: 250px;
+  position: relative;
+}
+
+.birzha-chart-wrapper {
+  width: 100%;
+  position: relative;
+  min-height: 200px;
+}
+
+/* Контейнер для canvas графика */
+.birzha-chart-wrapper canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Статистика под графиком */
+.birzha-chart-stats {
+  border-top: 1px solid #c19a6b;
+  padding-top: 15px;
+  margin-top: 15px;
+}
+
+/* Заголовки карточек биржи */
+.birzha-card-header {
+  background: linear-gradient(135deg, #2f1b0c 0%, #4a2c14 100%) !important;
+  border-bottom: 3px double #8f6649 !important;
+  padding: 12px 15px !important;
+}
+
+.birzha-card-header-info {
+  background: linear-gradient(135deg, #0c1f2f 0%, #1c3a4a 100%) !important;
+  border-color: #0277bd !important;
+}
+
+.birzha-card-header-primary {
+  background: linear-gradient(135deg, #7d5739 0%, #4c3e33 100%) !important;
+}
+
+.birzha-card-header-secondary {
+  background: linear-gradient(135deg, #1c1c1c 0%, #2d2d2d 100%) !important;
+}
+
+.birzha-card-header .fantasy-text-gold {
+  color: #ffd700 !important;
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.9) !important;
+}
+
+/* Информация о бирже */
+.birzha-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.birzha-info-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.birzha-info-icon {
+  color: #d4af37;
+  font-weight: bold;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.birzha-info-text {
+  color: #3e2723;
+  line-height: 1.4;
+}
+
+/* Индикаторы баланса */
+.birzha-balance-info {
+  background: rgba(244, 228, 188, 0.3);
+  border-radius: 8px;
+  border: 1px solid #c19a6b;
+}
+
+.birzha-balance-indicator {
+  font-size: 1.1rem;
+  min-width: 30px;
+  text-align: center;
+}
+
+.birzha-balance-positive {
+  color: #27a82e;
+}
+
+.birzha-balance-negative {
+  color: #ef9a9a;
+}
+
+/* Кнопки для мобильных */
+@media (max-width: 768px) {
+  .birzha-container {
+    padding: 10px;
+  }
+  
+  .birzha-chart-card {
+    margin-bottom: 15px;
+  }
+  
+  .birzha-chart-body {
+    padding: 10px !important;
+  }
+  
+  .birzha-chart-container {
+    min-height: 200px;
+  }
+  
+  .birzha-chart-wrapper {
+    min-height: 180px;
+  }
+  
+  .birzha-chart-stats {
+    padding-top: 10px;
+    margin-top: 10px;
+  }
+  
+  .birzha-card-header {
+    padding: 10px 12px !important;
+  }
+  
+  .birzha-info-item {
+    gap: 8px;
+  }
+}
+
+/* Очень маленькие экраны */
+@media (max-width: 576px) {
+  .birzha-container {
+    padding: 8px;
+  }
+  
+  .birzha-chart-container {
+    min-height: 180px;
+  }
+  
+  .birzha-chart-wrapper {
+    min-height: 160px;
+  }
+  
+  .birzha-chart-stats {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .birzha-card-header {
+    padding: 8px 10px !important;
+  }
+  
+  .birzha-info {
+    gap: 6px;
+  }
+}
+
+/* Планшеты в портретной ориентации */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .birzha-chart-container {
+    min-height: 280px;
+  }
+  
+  .birzha-chart-wrapper {
+    min-height: 250px;
+  }
+}
+
+/* Десктоп и большие экраны */
+@media (min-width: 1200px) {
+  .birzha-chart-container {
+    min-height: 320px;
+  }
+  
+  .birzha-chart-wrapper {
+    min-height: 300px;
+  }
+}
+
+/* Поддержка горизонтальной ориентации на мобильных */
+@media (max-width: 768px) and (orientation: landscape) {
+  .birzha-chart-container {
+    min-height: 200px;
+  }
+  
+  .birzha-chart-wrapper {
+    min-height: 180px;
+  }
+}
+
+/* Ховер эффекты для десктопа */
+@media (hover: hover) and (pointer: fine) {
+  .birzha-chart-card:hover {
+    box-shadow: 0 6px 20px rgba(139, 69, 19, 0.4);
+  }
+}
+
+/* Улучшенная прокрутка для графика на мобильных */
+.birzha-chart-wrapper {
+  -webkit-overflow-scrolling: touch;
+  overflow-x: auto;
+}
+
+/* Скрыть полосу прокрутки на некоторых устройствах */
+.birzha-chart-wrapper::-webkit-scrollbar {
+  height: 4px;
+}
+
+.birzha-chart-wrapper::-webkit-scrollbar-track {
+  background: rgba(139, 69, 19, 0.1);
+  border-radius: 2px;
+}
+
+.birzha-chart-wrapper::-webkit-scrollbar-thumb {
+  background: rgba(139, 69, 19, 0.5);
+  border-radius: 2px;
+}
+
 /* Мобильное меню */
 @media (max-width: 992px) {
   .fantasy-navbar .container {

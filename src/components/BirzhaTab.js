@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext } from 'react';
+import { useState, useEffect, useContext, useMemo, useRef } from 'react';
 import { Row, Col, Card, Button, Alert, Spinner, Modal } from 'react-bootstrap';
 import { Context } from "../index";
 import { fetchBirzhaRate, buyDaleons, sellDaleons, fetchBirzhaHistory } from "../http/birzha";
@@ -13,9 +13,8 @@ import {
   Title,
   Tooltip,
   Legend,
+  Filler
 } from 'chart.js';
-/*import './Birzha.css';*/
-/*import "../pages/Character.css";*/
 
 ChartJS.register(
   CategoryScale,
@@ -24,7 +23,8 @@ ChartJS.register(
   LineElement,
   Title,
   Tooltip,
-  Legend
+  Legend,
+  Filler
 );
 
 const BirzhaTab = () => {
@@ -37,8 +37,21 @@ const BirzhaTab = () => {
   const [success, setSuccess] = useState("");
   const [playerData, setPlayerData] = useState(null);
   const [chartUpdateKey, setChartUpdateKey] = useState(0);
-  const [showErrorModal, setShowErrorModal] = useState(false); // Новое состояние для модального окна
-  const [modalError, setModalError] = useState(""); // Текст ошибки для модалки
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [modalError, setModalError] = useState("");
+  const [isMobile, setIsMobile] = useState(false);
+  const chartContainerRef = useRef(null);
+
+  // Определяем мобильное устройство
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const loadAllData = async () => {
     try {
@@ -85,10 +98,7 @@ const BirzhaTab = () => {
       setError("");
       const response = await buyDaleons();
       
-      // Обновляем все данные после операции
       await loadAllData();
-      
-      // Принудительно обновляем график
       setChartUpdateKey(prev => prev + 1);
       
       setSuccess(response.message);
@@ -96,11 +106,7 @@ const BirzhaTab = () => {
     } catch (error) {
       console.error("Error buying daleons:", error);
       const errorMessage = error.response?.data?.detail || "Ошибка при покупке далеонов";
-      
-      // Показываем ошибку в модальном окне вместо обычного Alert
       showErrorInModal(errorMessage);
-      
-      // Также можно оставить обычный Alert для не критичных ошибок
       setError(errorMessage);
     } finally {
       setTrading(false);
@@ -113,10 +119,7 @@ const BirzhaTab = () => {
       setError("");
       const response = await sellDaleons();
       
-      // Обновляем все данные после операции
       await loadAllData();
-      
-      // Принудительно обновляем график
       setChartUpdateKey(prev => prev + 1);
       
       setSuccess(response.message);
@@ -124,27 +127,26 @@ const BirzhaTab = () => {
     } catch (error) {
       console.error("Error selling daleons:", error);
       const errorMessage = error.response?.data?.detail || "Ошибка при продаже далеонов";
-      
-      // Показываем ошибку в модальном окне
       showErrorInModal(errorMessage);
-      
       setError(errorMessage);
     } finally {
       setTrading(false);
     }
   };
 
-  // Функция закрытия модального окна
   const handleCloseErrorModal = () => {
     setShowErrorModal(false);
     setModalError("");
   };
 
-  // Подготовка данных для графика
-  const chartData = {
+  // Подготовка данных для графика с учетом мобильных устройств
+  const chartData = useMemo(() => ({
     labels: historyData.map(record => {
       const date = new Date(record.timestamp);
-      return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      // На мобильных показываем только время, на десктопе - полную дату
+      return isMobile 
+        ? date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        : date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     }),
     datasets: [
       {
@@ -152,30 +154,40 @@ const BirzhaTab = () => {
         data: historyData.map(record => record.rate),
         borderColor: '#8b4513',
         backgroundColor: 'rgba(139, 69, 19, 0.1)',
-        tension: 0.1,
-        borderWidth: 2,
+        fill: true,
+        tension: 0.4,
+        borderWidth: isMobile ? 3 : 2,
         pointBackgroundColor: '#8b4513',
         pointBorderColor: '#fff',
-        pointBorderWidth: 2,
-        pointRadius: 4,
-        pointHoverRadius: 6
+        pointBorderWidth: isMobile ? 3 : 2,
+        pointRadius: isMobile ? 5 : 4,
+        pointHoverRadius: isMobile ? 7 : 6,
+        pointHitRadius: isMobile ? 20 : 15
       }
     ]
-  };
+  }), [historyData, isMobile]);
 
-  const chartOptions = {
+  // Опции графика с учетом мобильных устройств
+  const chartOptions = useMemo(() => ({
     responsive: true,
     maintainAspectRatio: false,
+    interaction: {
+      intersect: false,
+      mode: 'index'
+    },
     plugins: {
       legend: {
         position: 'top',
         labels: {
           color: '#3e2723',
           font: {
-            size: 14,
-            weight: 'bold'
+            size: isMobile ? 14 : 16,
+            weight: 'bold',
+            family: "'Cinzel', serif"
           },
-          padding: 20
+          padding: isMobile ? 10 : 20,
+          usePointStyle: true,
+          pointStyle: 'circle'
         }
       },
       tooltip: {
@@ -186,7 +198,15 @@ const BirzhaTab = () => {
         borderWidth: 1,
         cornerRadius: 6,
         displayColors: false,
-        padding: 12,
+        padding: isMobile ? 10 : 12,
+        titleFont: {
+          family: "'Cinzel', serif",
+          size: isMobile ? 12 : 14
+        },
+        bodyFont: {
+          family: "'Cinzel', serif",
+          size: isMobile ? 12 : 14
+        },
         callbacks: {
           label: function(context) {
             return `Курс: ${context.parsed.y}🌕`;
@@ -199,23 +219,29 @@ const BirzhaTab = () => {
         beginAtZero: false,
         grid: {
           color: 'rgba(139, 115, 85, 0.3)',
-          drawBorder: false
+          drawBorder: false,
+          lineWidth: 1
         },
         ticks: {
           color: '#5d4037',
           font: {
-            size: 12,
-            weight: '500'
+            size: isMobile ? 11 : 12,
+            weight: '500',
+            family: "'Cinzel', serif"
           },
-          padding: 8
+          padding: isMobile ? 5 : 8,
+          callback: function(value) {
+            return value + '🌕';
+          }
         },
         title: {
-          display: true,
+          display: !isMobile, // На мобильных скрываем заголовок оси
           text: 'Курс (🌕)',
           color: '#3e2723',
           font: {
             size: 13,
-            weight: '600'
+            weight: '600',
+            family: "'Cinzel', serif"
           }
         }
       },
@@ -227,27 +253,31 @@ const BirzhaTab = () => {
         ticks: {
           color: '#5d4037',
           font: {
-            size: 11
+            size: isMobile ? 10 : 11,
+            family: "'Cinzel', serif"
           },
-          maxRotation: 45,
-          minRotation: 45
+          maxRotation: isMobile ? 45 : 45,
+          minRotation: isMobile ? 45 : 45,
+          // На мобильных показываем меньше меток
+          maxTicksLimit: isMobile ? 8 : 12,
+          autoSkip: true,
+          autoSkipPadding: isMobile ? 20 : 30
         }
       }
     },
-    interaction: {
-      intersect: false,
-      mode: 'index'
-    },
     elements: {
       line: {
-        fill: true
+        tension: 0.4
       }
+    },
+    animation: {
+      duration: 750
     }
-  };
+  }), [isMobile]);
 
   if (loading) {
     return (
-      <div className="d-flex justify-content-center align-items-center fantasy-paper p-4">
+      <div className="d-flex justify-content-center align-items-center fantasy-paper p-4 min-vh-50">
         <Spinner animation="border" role="status" className="fantasy-text-primary">
           <span className="visually-hidden">Loading...</span>
         </Spinner>
@@ -274,20 +304,26 @@ const BirzhaTab = () => {
         onHide={handleCloseErrorModal}
         centered
         className="fantasy-modal"
+        size={isMobile ? "sm" : "md"}
       >
         <Modal.Header closeButton className="fantasy-card-header fantasy-card-header-danger">
-          <Modal.Title className="fantasy-text-gold">❌ Ошибка операции</Modal.Title>
+          <Modal.Title className="fantasy-text-gold">
+            <span className="me-2">❌</span>
+            {isMobile ? 'Ошибка' : 'Ошибка операции'}
+          </Modal.Title>
         </Modal.Header>
-        <Modal.Body className="fantasy-modal-body">
+        <Modal.Body className="fantasy-modal-body p-4">
           <div className="text-center">
-            <div className="fs-1 mb-3">⚠️</div>
-            <h5 className="fantasy-text-dark mb-3">Не удалось выполнить операцию</h5>
+            <div className={`mb-3 ${isMobile ? 'fs-3' : 'fs-1'}`}>⚠️</div>
+            <h5 className="fantasy-text-dark mb-3">
+              {isMobile ? 'Ошибка' : 'Не удалось выполнить операцию'}
+            </h5>
             <p className="fantasy-text-muted">{modalError}</p>
           </div>
         </Modal.Body>
         <Modal.Footer className="fantasy-modal-footer">
           <Button 
-            className="fantasy-btn fantasy-btn-primary"
+            className={`fantasy-btn fantasy-btn-primary ${isMobile ? 'w-100' : ''}`}
             onClick={handleCloseErrorModal}
           >
             Понятно
@@ -300,68 +336,85 @@ const BirzhaTab = () => {
         <Col xs={12}>
           <Card className="fantasy-card birzha-chart-card">
             <Card.Header className="birzha-card-header birzha-card-header-info">
-              <Card.Title className="fantasy-text-gold mb-0">
-                📈 История курса далеона
+              <Card.Title className="fantasy-text-gold mb-0 d-flex align-items-center">
+                <span className="me-2">📈</span>
+                <span className={isMobile ? 'fs-6' : 'fs-5'}>
+                  {isMobile ? 'История курса' : 'История курса далеона'}
+                </span>
               </Card.Title>
             </Card.Header>
             <Card.Body className="birzha-chart-body">
-              {historyData.length > 0 ? (
-                <div className="birzha-chart-wrapper">
-                  <Line 
-                    key={chartUpdateKey}
-                    data={chartData} 
-                    options={chartOptions} 
-                  />
-                  <div className="birzha-chart-stats mt-3">
-                    <div className="fantasy-stat-row">
-                      <span>Всего записей:</span>
-                      <span className="fantasy-badge fantasy-badge-primary">{historyData.length}</span>
+              <div ref={chartContainerRef} className="birzha-chart-container">
+                {historyData.length > 0 ? (
+                  <>
+                    <div className="birzha-chart-wrapper" style={{ height: isMobile ? '250px' : '300px' }}>
+                      <Line 
+                        key={chartUpdateKey}
+                        data={chartData} 
+                        options={chartOptions}
+                        redraw={true}
+                      />
                     </div>
-                    <div className="fantasy-stat-row">
-                      <span>Последнее обновление:</span>
-                      <span className="fantasy-badge fantasy-badge-secondary">
-                        {new Date().toLocaleTimeString()}
-                      </span>
+                    <div className="birzha-chart-stats mt-3">
+                      <div className="fantasy-stat-row">
+                        <span className={isMobile ? 'small' : ''}>Записей:</span>
+                        <span className="fantasy-badge fantasy-badge-primary">
+                          {historyData.length}
+                        </span>
+                      </div>
+                      <div className="fantasy-stat-row">
+                        <span className={isMobile ? 'small' : ''}>Последнее обновление:</span>
+                        <span className="fantasy-badge fantasy-badge-secondary">
+                          {new Date().toLocaleTimeString()}
+                        </span>
+                      </div>
                     </div>
+                  </>
+                ) : (
+                  <div className="text-center fantasy-text-muted py-4">
+                    <div className={`mb-3 ${isMobile ? 'fs-3' : 'fs-1'}`}>📊</div>
+                    <h5 className={`fantasy-text-dark mb-2 ${isMobile ? 'fs-6' : ''}`}>
+                      История курса пока недоступна
+                    </h5>
+                    <p className={`fantasy-text-muted ${isMobile ? 'small' : ''}`}>
+                      Совершите первую сделку, чтобы начать отслеживать изменения курса
+                    </p>
                   </div>
-                </div>
-              ) : (
-                <div className="text-center fantasy-text-muted py-5">
-                  <div className="fs-1 mb-3">📊</div>
-                  <h5 className="fantasy-text-dark">История курса пока недоступна</h5>
-                  <p className="fantasy-text-muted">Совершите первую сделку, чтобы начать отслеживать изменения курса</p>
-                </div>
-              )}
+                )}
+              </div>
             </Card.Body>
           </Card>
         </Col>
       </Row>
 
-      {/* Остальные карточки в 3 колонки */}
-      <Row className="g-4">
+      {/* Остальные карточки - адаптивные колонки */}
+      <Row className="g-3">
         {/* Текущий курс и торговля */}
-        <Col lg={4} md={6}>
+        <Col xs={12} md={6} lg={4}>
           <Card className="fantasy-card h-100">
             <Card.Header className="birzha-card-header birzha-card-header-primary">
-              <Card.Title className="fantasy-text-gold">💰 Текущий курс</Card.Title>
+              <Card.Title className="fantasy-text-gold d-flex align-items-center">
+                <span className="me-2">💰</span>
+                <span className={isMobile ? 'fs-6' : ''}>Текущий курс</span>
+              </Card.Title>
             </Card.Header>
             <Card.Body className="d-flex flex-column">
               {rateData && (
-                <div className="mb-4">
+                <div className="mb-3">
                   <div className="fantasy-stat-row">
-                    <span>Базовый курс:</span>
+                    <span className={isMobile ? 'small' : ''}>Базовый курс:</span>
                     <span className="fantasy-badge fantasy-badge-primary">
                       {rateData.current_rate}🌕/100💎
                     </span>
                   </div>
                   <div className="fantasy-stat-row">
-                    <span>Покупка:</span>
+                    <span className={isMobile ? 'small' : ''}>Покупка:</span>
                     <span className="fantasy-badge fantasy-badge-success">
                       {rateData.buy_rate}🌕
                     </span>
                   </div>
                   <div className="fantasy-stat-row">
-                    <span>Продажа:</span>
+                    <span className={isMobile ? 'small' : ''}>Продажа:</span>
                     <span className="fantasy-badge fantasy-badge-warning">
                       {rateData.sell_rate}🌕
                     </span>
@@ -369,33 +422,33 @@ const BirzhaTab = () => {
                 </div>
               )}
 
-              <div className="d-grid gap-3 mt-auto">
+              <div className="d-grid gap-2 mt-auto">
                 <Button 
-                  className="fantasy-btn fantasy-btn-success w-100"
+                  className={`fantasy-btn fantasy-btn-success ${isMobile ? 'py-2' : ''}`}
                   onClick={handleBuy}
                   disabled={trading || !playerData || playerData.money < (rateData?.buy_rate || 0)}
                 >
                   {trading ? (
                     <>
                       <Spinner animation="border" size="sm" className="me-2" />
-                      Покупка...
+                      {isMobile ? '...' : 'Покупка...'}
                     </>
                   ) : (
-                    `Купить 100💎`
+                    `${isMobile ? 'Купить' : 'Купить 100💎'}`
                   )}
                 </Button>
                 <Button 
-                  className="fantasy-btn fantasy-btn-warning w-100"
+                  className={`fantasy-btn fantasy-btn-warning ${isMobile ? 'py-2' : ''}`}
                   onClick={handleSell}
                   disabled={trading || !playerData || playerData.daleons < 100}
                 >
                   {trading ? (
                     <>
                       <Spinner animation="border" size="sm" className="me-2" />
-                      Продажа...
+                      {isMobile ? '...' : 'Продажа...'}
                     </>
                   ) : (
-                    `Продать 100💎`
+                    `${isMobile ? 'Продать' : 'Продать 100💎'}`
                   )}
                 </Button>
               </div>
@@ -404,32 +457,37 @@ const BirzhaTab = () => {
         </Col>
 
         {/* Ваши ресурсы */}
-        <Col lg={4} md={6}>
+        <Col xs={12} md={6} lg={4}>
           <Card className="fantasy-card h-100">
             <Card.Header className="birzha-card-header birzha-card-header-secondary">
-              <Card.Title className="fantasy-text-gold">📊 Ваши ресурсы</Card.Title>
+              <Card.Title className="fantasy-text-gold d-flex align-items-center">
+                <span className="me-2">📊</span>
+                <span className={isMobile ? 'fs-6' : ''}>Ваши ресурсы</span>
+              </Card.Title>
             </Card.Header>
             <Card.Body>
               {playerData && (
                 <div>
                   <div className="fantasy-stat-row">
-                    <span>Монеты:</span>
+                    <span className={isMobile ? 'small' : ''}>Монеты:</span>
                     <span className="fantasy-badge fantasy-badge-primary">
                       {playerData.money}🌕
                     </span>
                   </div>
                   <div className="fantasy-stat-row">
-                    <span>Далеоны:</span>
+                    <span className={isMobile ? 'small' : ''}>Далеоны:</span>
                     <span className="fantasy-badge fantasy-badge-warning">
                       {playerData.daleons}💎
                     </span>
                   </div>
                   
                   {/* Индикаторы доступности */}
-                  <div className="mt-4 p-3 birzha-balance-info">
-                    <h6 className="fantasy-text-dark mb-3">Доступность операций:</h6>
+                  <div className="mt-3 p-2 birzha-balance-info">
+                    <h6 className={`fantasy-text-dark mb-2 ${isMobile ? 'fs-6' : ''}`}>
+                      Доступность:
+                    </h6>
                     <div className="fantasy-stat-row">
-                      <span>Можно купить:</span>
+                      <span className={isMobile ? 'small' : ''}>Можно купить:</span>
                       <span className={`birzha-balance-indicator ${
                         playerData.money >= (rateData?.buy_rate || 0) ? 'birzha-balance-positive' : 'birzha-balance-negative'
                       }`}>
@@ -437,7 +495,7 @@ const BirzhaTab = () => {
                       </span>
                     </div>
                     <div className="fantasy-stat-row">
-                      <span>Можно продать:</span>
+                      <span className={isMobile ? 'small' : ''}>Можно продать:</span>
                       <span className={`birzha-balance-indicator ${
                         playerData.daleons >= 100 ? 'birzha-balance-positive' : 'birzha-balance-negative'
                       }`}>
@@ -452,32 +510,45 @@ const BirzhaTab = () => {
         </Col>
 
         {/* Информация о бирже */}
-        <Col lg={4} md={12}>
+        <Col xs={12} lg={4}>
           <Card className="birzha-card h-100">
             <Card.Header className="birzha-card-header">
-              <Card.Title className="fantasy-text-gold">ℹ️ О бирже</Card.Title>
+              <Card.Title className="fantasy-text-gold d-flex align-items-center">
+                <span className="me-2">ℹ️</span>
+                <span className={isMobile ? 'fs-6' : ''}>О бирже</span>
+              </Card.Title>
             </Card.Header>
             <Card.Body>
               <div className="birzha-info">
                 <div className="birzha-info-item">
                   <span className="birzha-info-icon">•</span>
-                  <span className="birzha-info-text">Обмен производится только блоками по 100 далеонов</span>
+                  <span className={`birzha-info-text ${isMobile ? 'small' : ''}`}>
+                    Обмен блоками по 100 далеонов
+                  </span>
                 </div>
                 <div className="birzha-info-item">
                   <span className="birzha-info-icon">•</span>
-                  <span className="birzha-info-text">Курс изменяется после каждой операции</span>
+                  <span className={`birzha-info-text ${isMobile ? 'small' : ''}`}>
+                    Курс изменяется после каждой операции
+                  </span>
                 </div>
                 <div className="birzha-info-item">
                   <span className="birzha-info-icon">•</span>
-                  <span className="birzha-info-text">При покупке курс растет на 1%</span>
+                  <span className={`birzha-info-text ${isMobile ? 'small' : ''}`}>
+                    Покупка: курс +1%
+                  </span>
                 </div>
                 <div className="birzha-info-item">
                   <span className="birzha-info-icon">•</span>
-                  <span className="birzha-info-text">При продаже курс падает на 1%</span>
+                  <span className={`birzha-info-text ${isMobile ? 'small' : ''}`}>
+                    Продажа: курс -1%
+                  </span>
                 </div>
                 <div className="birzha-info-item">
                   <span className="birzha-info-icon">•</span>
-                  <span className="birzha-info-text">График обновляется в реальном времени</span>
+                  <span className={`birzha-info-text ${isMobile ? 'small' : ''}`}>
+                    График в реальном времени
+                  </span>
                 </div>
               </div>
             </Card.Body>
