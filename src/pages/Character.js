@@ -15,6 +15,7 @@ const Character = observer(() => {
   const [loading, setLoading] = useState(true);
   const [delay, setDelay] = useState(false);
   const user_id = user.user.id;
+  const [useBlueTheme, setUseBlueTheme] = useState(true); // true - синий, false - оранжевый
 
   useEffect(() => {
     const fetchPlayer = async () => {
@@ -274,14 +275,14 @@ const Character = observer(() => {
     if (!playerData) return 0;
     const current = playerData.experience;
     const next = playerData.experience_next_level;
-    return (current / next) * 100;
+    return next > 0 ? (current / next) * 100 : 0;
   };
 
   const calculateHealthProgress = () => {
     if (!playerData) return 0;
     const current = playerData.current_health || 0;
     const max = playerData.max_health || 1;
-    return (current / max) * 100;
+    return max > 0 ? (current / max) * 100 : 0;
   };
 
   // Упрощенный рендер тултипа
@@ -333,35 +334,52 @@ const Character = observer(() => {
           ))}
           {/* Добавляем прогресс-бар здоровья в карточку "Основная информация" */}
           {title === "Основная информация" && (
-            <div className="mt-3">
-              <div className="d-flex justify-content-between align-items-center mb-1">
-                <small className="text-muted">Здоровье ❤️</small>
-                <small className="text-muted">{Math.round(playerData.current_health / playerData.max_health * 100)}%</small>
+              <div className="progress-section">
+                <div className="progress-label">
+                  <div className="progress-label-left">
+                    <span className="health-icon">❤️</span>
+                    <span>Здоровье</span>
+                  </div>
+                  <div className="progress-label-right">
+                    {Math.round(calculateHealthProgress())}%
+                  </div>
+                </div>
+                <div className="health-progress">
+                  <div 
+                    className={`health-fill ${calculateHealthProgress() < 30 ? 'low-health' : ''}`}
+                    style={{ width: `${calculateHealthProgress()}%` }}
+                  />
+                  <div className="progress-text">
+                    {playerData.current_health} / {playerData.max_health}
+                  </div>
+                </div>
               </div>
-              <div className="health-progress-bar">
-                <ProgressBar 
-                  now={calculateHealthProgress()} 
-                  label={`${playerData.current_health}/${playerData.max_health}`}
-                  className="progress-bar"
-                />
-              </div>
-            </div>
           )}
-          {/* Добавляем прогресс-бар опыта в карточку "Основная информация" */}
+
           {title === "Основная информация" && (
-            <div className="mt-3">
-              <div className="d-flex justify-content-between align-items-center mb-1">
-                <small className="text-muted">Опыт 📈</small>
-                <small className="text-muted">{Math.round(calculateLevelProgress())}%</small>
-              </div>
-              <div className="experience-progress-bar">
-                <ProgressBar 
-                  now={calculateLevelProgress()} 
-                  className="progress-bar"
-                  label={`${playerData.experience}/${playerData.experience_next_level}`}
-                />
-              </div>
+          <div className="progress-section">
+          <div className="progress-label">
+            <div className="progress-label-left">
+              <span className={`experience-icon ${useBlueTheme ? 'blue' : ''}`}>
+                {useBlueTheme ? '🔷' : '📈'}
+              </span>
+              <span>Опыт</span>
             </div>
+            <div className="progress-label-right">
+              {Math.round(calculateLevelProgress())}%
+            </div>
+          </div>
+          <div className="experience-progress">
+            <div 
+              className={`experience-fill ${useBlueTheme ? 'blue-theme' : ''}`}
+              style={{ width: `${calculateLevelProgress()}%` }}
+            />
+            <div className="progress-text">
+              {playerData.experience} / {playerData.experience_next_level}
+            </div>
+          </div>
+        </div>
+
           )}
         </Card.Body>
       </Card>
