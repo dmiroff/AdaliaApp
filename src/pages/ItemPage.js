@@ -268,7 +268,7 @@ const Item = () => {
           {/* Левая колонка - изображение и действия */}
           <Col md={6} lg={5}>
           
-   <div className="item-visual-section ms-2">
+  <div className="item-visual-section ms-2"> {/* Добавлен ms-2 */}
          </div>   <div className="item-image-section text-center">
               {/* <div className="item-image-container mb-3"> */}
                 <Image 
