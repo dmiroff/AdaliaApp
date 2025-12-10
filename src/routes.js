@@ -1,8 +1,3 @@
-// src/routes.js
-import Character from "./pages/Character";
-import Inventory from "./pages/Inventory";
-import Admin from "./pages/Admin";
-import ItemPage from "./pages/ItemPage";
 import { 
   ADMIN_ROUTE, 
   CHARACTER_ROUTE, 
@@ -15,60 +10,55 @@ import {
   MAP_ROUTE,
   DONATION_ROUTE 
 } from "./utils/constants";
-import Rating from "./pages/Rating";
-import Auth from "./pages/Auth";
-import Trade from "./pages/Trade";
-import NotAuth from "./pages/NotAuth";
-import Prepare from "./pages/Prepare";
-import Map from "./pages/Map"; // Добавьте этот импорт
-import Donation from "./pages/Donation"; // Добавьте этот импорт
+
+// УБИРАЕМ все импорты страниц! Они теперь ленивые в AppRouter
 
 export const authRoutes = [
     {
         path: ADMIN_ROUTE,
-        Component: Admin,
+        name: 'Admin',
     },
     {
         path: PREPARE_ROUTE,
-        Component: Prepare,
+        name: 'Prepare',
     },
     {
         path: CHARACTER_ROUTE,
-        Component: Character,
+        name: 'Character',
     },
     {
         path: INVENTORY_ROUTE,
-        Component: Inventory,
+        name: 'Inventory',
     },
     {
         path: INVENTORY_ROUTE + '/:id',
-        Component: ItemPage,
+        name: 'ItemPage',
     },
     {
         path: RATING_ROUTE,
-        Component: Rating,
+        name: 'Rating',
     },
     {
         path: TRADE_ROUTE,
-        Component: Trade,
+        name: 'Trade',
     },
     {
-        path: MAP_ROUTE, // Добавьте этот маршрут
-        Component: Map,
+        path: MAP_ROUTE,
+        name: 'Map',
     },
     {
-        path: DONATION_ROUTE, // Добавьте этот маршрут
-        Component: Donation,
+        path: DONATION_ROUTE,
+        name: 'Donation',
     },
 ]
 
 export const publicRoutes = [
     {
         path: AUTH_ROUTE + '/:id/:token',
-        Component: Auth,    
+        name: 'Auth',    
     },
     {
         path: NOT_AUTH_ROUTE,
-        Component: NotAuth,    
+        name: 'NotAuth',    
     },
 ]

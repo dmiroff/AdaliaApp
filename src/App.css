@@ -8,18 +8,11 @@
 /* ===== БАЗОВЫЕ СТИЛИ ===== */
 html, body, #root {
   height: 100%;
-}
-
-body {
-  background-image: url('assets/Images/background.webp');
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  background-attachment: fixed;
   margin: 0;
   padding: 0;
-  padding-top: 56px;
 }
+
+/* Убрали background-image из body - теперь он в React компоненте */
 
 /* ===== ТИПОГРАФИЯ И ТЕКСТ ===== */
 .fantasy-text-primary { color: #4f3729 ; }
@@ -592,6 +585,7 @@ body {
 }
 
 @media (max-width: 768px) {
+<<<<<<< HEAD
   body { padding-top: 60px; }
   
   .character-container {
@@ -647,159 +641,6 @@ body {
   gap: 8px; /* Отступ между элементами */
 
   }
-  
-  .fantasy-btn { padding: 10px 14px; font-size: 0.9em; }
-  
-  .content-overlay { padding: 15px; margin: 5px 0; }
-  
-  .fantasy-dropdown-menu {
-    position: fixed ;
-    top: 50% ;
-    left: 50% ;
-    transform: translate(-50%, -50%) ;
-    width: 90vw ;
-    max-width: 300px ;
-  }
-  
-  .inventory-container {
-    max-width: 100%;
-  }
-
-  /* Стили для контейнера предмета инвентаря */
-.inventory-item-row {
-  position: relative;
-}
-
-.inventory-item-container {
-  cursor: pointer;
-  position: relative;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100%;
-}
-
-.inventory-item-image {
-  aspect-ratio: 1/1;
-  object-fit: cover;
-  width: 100%;
-  max-width: 80px;
-}
-
-/* ===== СТИЛИ ДРОПДАУНА ИНВЕНТАРЯ ===== */
-.inventory-item-fantasy-dropdown {
-  position: absolute;
-  top: 0;
-  right: 0;
-  z-index: 1000;
-}
-
-.inventory-item-fantasy-dropdown .dropdown-toggle {
-  background: rgba(0, 0, 0, 0.7);
-  border: 1px solid #d4af37;
-  border-radius: 4px;
-  width: 30px;
-  height: 30px;
-  padding: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #d4af37;
-}
-
-.inventory-item-fantasy-dropdown .dropdown-toggle::after {
-  display: none;
-}
-
-.inventory-item-fantasy-dropdown .dropdown-toggle:hover {
-  background: rgba(212, 175, 55, 0.2);
-  border-color: #ffd700;
-  color: #ffd700;
-}
-
-.inventory-item-fantasy-dropdown .dropdown-menu {
-  background: linear-gradient(135deg, #2d1f0f 0%, #4a3519 100%);
-  border: 2px solid #d4af37;
-  border-radius: 8px;
-  box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
-  min-width: 140px;
-  padding: 4px 0;
-  margin-top: 5px;
-}
-
-.inventory-item-fantasy-dropdown .dropdown-item {
-  color: #e0e0e0;
-  padding: 8px 16px;
-  /* font-size: 0.9rem;
-  transition: all 0.2s ease; */
-  border-bottom: 1px solid rgba(212, 175, 55, 0.1);
-}
-
-.inventory-item-fantasy-dropdown .dropdown-item:last-child {
-  border-bottom: none;
-}
-
-.inventory-item-fantasy-dropdown .dropdown-item:hover {
-  background: rgba(212, 175, 55, 0.15);
-  color: #ffd700;
-  transform: translateX(3px);
-}
-
-/* Анимация появления дропдауна */
-.inventory-item-fantasy-dropdown .dropdown-menu.show {
-  animation: fadeInUp 0.3s ease-out;
-}
-
-/* Стили для иконки меню (три точки) */
-.inventory-menu-icon {
-  font-size: 1.2rem;
-  font-weight: bold;
-  line-height: 1;
-}
-
-/* Адаптивность для мобильных устройств */
-@media (max-width: 768px) {
-  .inventory-item-fantasy-dropdown {
-    position: static;
-    margin-top: 8px;
-  }
-  
-  .inventory-item-fantasy-dropdown .dropdown-toggle {
-    width: 100%;
-    height: 35px;
-  }
-  
-  .inventory-item-fantasy-dropdown .dropdown-menu {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 80vw;
-    max-width: 250px;
-    z-index: 9999;
-  }
-}
-.row .col .inventory-item-fantasy-dropdown .dropdown-menu {
-  background: linear-gradient(135deg, #2d1f0f 0%, #4a3519 100%);
-}
-
-body .inventory-item-fantasy-dropdown .dropdown-item {
-  color: #e0e0e0;
-}
-/*.inventory-item-fantasy-dropdown {
-                  position: absolute;
-                  top: 50%;
-                  left: 100%;
-                  transform: translate(-50%, -50%);
-                  z-index: 1;*/
-
-  .character-silhouette {
-    height: 600px;
-  }
-  
-  .empty-slot-with-text .item-text {
-    font-size: 0.7em;
-  }
 }
 
 @media (max-width: 576px) {
@@ -832,26 +673,8 @@ body .inventory-item-fantasy-dropdown .dropdown-item {
 
 /* Утилиты */
 .min-vh-50 { min-height: 50vh; }
-.main-content { min-height: calc(100vh - 76px); }
-
-/* Улучшаем отступы для карточек */
-.birzha-card .card-body,
-.fantasy-card .card-body {
-  padding: 25px;
-}
-
-/* Четкие границы для разделения */
-.birzha-info-item {
-  border-bottom-color: #d7ccc8;
-}
-
-/* Улучшаем внешний вид заголовков */
-.birzha-card-header .card-title {
-  margin-bottom: 0;
-  font-weight: 700;
-}
-
-/* Плавная прокрутка */
-.character-container {
-  scroll-behavior: smooth;
+.main-container { 
+  min-height: calc(100vh - 76px);
+  position: relative;
+  z-index: 1;
 }
