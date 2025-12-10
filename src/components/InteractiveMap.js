@@ -484,15 +484,15 @@ const InteractiveMap = observer(() => {
             className="fantasy-btn fantasy-btn-secondary"
             onClick={zoomIn}
           >
-            ➕ Приблизить
+            ➕ 
           </Button>
           <Button 
             size="sm" 
             className="fantasy-btn fantasy-btn-secondary"
             onClick={zoomOut}
           >
-            ➖ Отдалить
-          </Button>
+            ➖ 
+                      </Button>
           <Button 
             size="sm" 
             className="fantasy-btn fantasy-btn-primary"

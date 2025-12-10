@@ -4,7 +4,7 @@ import { Container, Spinner, Tabs, Tab, Card, Row, Col, Badge, ProgressBar, Over
 import { Context } from "../index";
 import { observer } from "mobx-react-lite";
 import { dict_translator } from "../utils/Helpers";
-//import "./щ";
+import "./Character.css";
 
 // Импортируем словари с описаниями
 import { attributesDescDict, skillsDescDict, talentsDescDict, abilitiesDescDict, keyMappingDict } from "../utils/descriptions";
@@ -105,7 +105,7 @@ const Character = observer(() => {
         }
         if (key in dict_translator) {
           if (data_value !== "") {
-            data_value = data_value + ", "
+            data_value = data_value + ","
           }
           data_value = data_value + dict_translator[key] + " " + prepareDataValues(value)
         }
@@ -390,6 +390,9 @@ const Character = observer(() => {
   // Компонент для отображения элемента с тултипом
   const AttributeWithTooltip = ({ category, itemKey, value }) => {
     const description = getDescription(category, itemKey);
+    
+
+
     
     return (
       <OverlayTrigger

@@ -1,19 +1,19 @@
 import { observer } from "mobx-react-lite";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useState, useMemo } from "react";
 import InventoryItem from "./InventoryItem";
 import { Row, Col, Form, Modal, Button } from "react-bootstrap";
 import TypeBar from "../components/TypeBar";
 import { Context } from "../index";
 import GetDataById from "../http/GetData";
 import { Spinner } from "react-bootstrap";
-import Fuse from "fuse.js"
+import Fuse from "fuse.js";
 
 const InventoryList = observer(() => {
   const { user } = useContext(Context);
   const [playerData, setPlayerData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
-  const [user_inventory, setUserInventory] = useState({});
+  const [userInventory, setUserInventory] = useState({});
   
   const [showModal, setShowModal] = useState(false);
   const [modalMessage, setModalMessage] = useState("");
@@ -45,6 +45,23 @@ const InventoryList = observer(() => {
 
     fetchPlayer();
   }, [user]);
+
+  // Функция для обновления состояния предмета
+  const handleItemUpdate = (itemKey, updatedItem) => {
+    setUserInventory(prevInventory => {
+      const newInventory = { ...prevInventory };
+      
+      if (updatedItem === null) {
+        delete newInventory[itemKey];
+      } else {
+        newInventory[itemKey] = updatedItem;
+      }
+      
+      user.setPlayerInventory(newInventory);
+      
+      return newInventory;
+    });
+  };
  
   const handleShowModal = (message) => {
     setModalMessage(message);
@@ -75,25 +92,24 @@ const InventoryList = observer(() => {
   }
 
   // ЗАЩИЩЕННАЯ ФИЛЬТРАЦИЯ
-  const inventory = user_inventory || {};
+  const inventory = userInventory || {};
   
   const filteredItemsWithKeys = Object.entries(inventory).filter(
     ([key, item]) => {
-      // Проверяем что item существует и имеет тип
-      if (!item || typeof item !== 'object') return false;
+      if (!item || typeof item !== 'object' || (item.count !== undefined && item.count <= 0)) {
+        return false;
+      }
       
-      // Если тип не выбран, показываем все предметы
       if (selected_type === null || selected_type === undefined) {
         return true;
       }
-      // Иначе фильтруем по выбранному типу
       return item.type === selected_type;
     }
   );
 
   const itemObjects = filteredItemsWithKeys.map(([id, data]) => ({ 
     id, 
-    ...(data || {}) // Защита от undefined data
+    ...(data || {})
   }));
 
   // Защищенный Fuse.js
@@ -108,7 +124,6 @@ const InventoryList = observer(() => {
     results = query ? fuse.search(query).map(result => result.item) : itemObjects;
   } catch (error) {
     console.error("Fuse.js error:", error);
-    // В случае ошибки Fuse.js используем простую фильтрацию
     if (query) {
       results = itemObjects.filter(item => 
         item.name && item.name.toLowerCase().includes(query.toLowerCase())
@@ -116,7 +131,7 @@ const InventoryList = observer(() => {
     }
   }
 
-  if (!Object.keys(inventory).length) {
+  if (!Object.keys(inventory).length || results.length === 0) {
     return (
       <div className="fantasy-paper p-4 text-center">
         <div className="fantasy-text-muted">Вот инвентарь пустой, он предмет простой</div>
@@ -156,6 +171,7 @@ const InventoryList = observer(() => {
             devicekey={item.id} 
             device={item} 
             onShowModal={handleShowModal}
+            onItemUpdate={handleItemUpdate}
           />
         ))}
       </Row>

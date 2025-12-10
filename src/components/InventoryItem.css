@@ -92,3 +92,12 @@
     margin-left: 0;
   }
 }
+.equipped-badge {
+  font-size: 0.7rem;
+  padding: 0.25em 0.4em;
+}
+
+.count-badge {
+  font-size: 0.7rem;
+  padding: 0.25em 0.4em;
+}
