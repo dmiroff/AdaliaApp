@@ -1014,13 +1014,12 @@ html, body, #root {
 
 /* ===== СТИЛИ ДЛЯ КАРТЫ ===== */
 .location-point {
-  transition: all 0.3s ease;
-  filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.5));
+  cursor: pointer;
 }
 
-.location-point:hover {
-  transform: scale(1.2);
-  filter: drop-shadow(3px 3px 6px rgba(255,140,0,0.7));
+.location-point:hover {  
+  stroke: #ff8c00;
+  stroke-width: 3px;
 }
 
 .dungeon-item {

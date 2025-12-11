@@ -20,7 +20,8 @@ const InteractiveMap = observer(() => {
   const isDragging = useRef(false);
   const isTouchDragging = useRef(false);
   const dragStart = useRef({ x: 0, y: 0 });
-  const transform = useRef({ x: 0, y: 0, scale: 1 });
+  // В начале компонента, обновим начальный transform
+  const transform = useRef({ x: -150, y: -350, scale: 1.8 }); // Изменили начальные значения
   const [playerData, setPlayerData] = useState(null);
 
   // Ref для отслеживания статуса загрузки
@@ -107,7 +108,165 @@ const InteractiveMap = observer(() => {
     }
   }, [loading, delay]);
 
-  // ОДНОРАЗОВАЯ инициализация SVG
+  // Функции для управления картой
+  const applyTransform = useCallback(() => {
+    if (svgElementRef.current) {
+      svgElementRef.current.style.transform = `translate(${transform.current.x}px, ${transform.current.y}px) scale(${transform.current.scale})`;
+      updateScaleIndicator();
+    }
+  }, []);
+
+  const updateScaleIndicator = () => {
+    if (scaleIndicatorRef.current) {
+      scaleIndicatorRef.current.textContent = `Масштаб: ${Math.round(transform.current.scale * 100)}%`;
+    }
+  };
+
+  const resetView = useCallback(() => {
+    // Центрируем между Фаргосом (280,510) и Дикими землями (164,508)
+    const centerX = (280 + 164) / 2; // 222
+    const centerY = (510 + 508) / 2; // 509
+    
+    // Получаем размеры контейнера
+    if (!svgContainerRef.current) return;
+    
+    const containerRect = svgContainerRef.current.getBoundingClientRect();
+    const containerCenterX = containerRect.width / 2;
+    const containerCenterY = containerRect.height / 2;
+    
+    // Устанавливаем увеличенный масштаб для фокуса на этой области
+    const targetScale = 1.8;
+    
+    // Вычисляем смещение для центрирования
+    transform.current = {
+      x: containerCenterX - (centerX * targetScale),
+      y: containerCenterY - (centerY * targetScale),
+      scale: targetScale
+    };
+    
+    applyTransform();
+  }, [applyTransform]);
+
+  const getLocationsData = useCallback(() => {
+    return [
+      {
+        id: 'fargos',
+        name: "🏰 Фаргос",
+        description: "Мирный торговый город, центр цивилизации и ремесел",
+        type: 'city',
+        position: [280, 510],
+        dungeons: ["Canalisation"]
+      },
+      {
+        id: 'coast',
+        name: "🌊 Побережье", 
+        description: "Береговая линия с заброшенными рыбацкими деревнями и портами",
+        type: 'coast',
+        position: [250, 483],
+        dungeons: ["Dungeon_Wind", "Dungeon_Sound", "Dungeon_Power"]
+      },
+      {
+        id: 'steppe',
+        name: "🏞️ Степь",
+        description: "Бескрайние степные просторы, дом кочевников",
+        type: 'wild',
+        position: [164, 508],
+        dungeons: ["Dungeon_Light", "Dungeon_Fire", "Dungeon_Death"]
+      },
+      {
+        id: 'forest',
+        name: "🌲 Лес",
+        description: "Древний лес, полный тайн и опасностей", 
+        type: 'forest',
+        position: [197, 556],
+        dungeons: ["Dungeon_Life", "Dungeon_Dark"]
+      },
+      {
+        id: 'mountains',
+        name: "⛰️ Горы",
+        description: "Высокие горные хребты, богатые полезными ископаемыми",
+        type: 'mountains',
+        position: [237, 556],
+        dungeons: ["Dungeon_Ice", "Dungeon_Electricity", "Dungeon_Stone"]
+      }
+    ];
+  }, []);
+
+  const enhanceSvgWithInteractivity = useCallback((svgText) => {
+    try {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(svgText, 'image/svg+xml');
+      
+      const parseError = doc.querySelector('parsererror');
+      if (parseError) {
+        throw new Error('SVG parsing error');
+      }
+      
+      const svg = doc.documentElement;
+
+      const style = doc.createElementNS('http://www.w3.org/2000/svg', 'style');
+      style.textContent = `
+        .location-point {
+          cursor: pointer;
+          touch-action: manipulation;
+        }
+        .location-point:hover {
+          stroke: #ff8c00;
+          stroke-width: 3px;
+        }
+        .location-label {
+          pointer-events: none;
+          user-select: none;
+        }
+        .interactive-locations * {
+          pointer-events: none;
+        }
+        .interactive-locations .location-point {
+          pointer-events: all;
+        }
+      `;
+      svg.insertBefore(style, svg.firstChild);
+
+      const locations = getLocationsData();
+      const group = doc.createElementNS('http://www.w3.org/2000/svg', 'g');
+      group.setAttribute('class', 'interactive-locations');
+
+      locations.forEach(location => {
+        const [x, y] = location.position;
+        
+        const circle = doc.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        circle.setAttribute('cx', x);
+        circle.setAttribute('cy', y);
+        circle.setAttribute('r', '8');
+        circle.setAttribute('fill', getLocationColor(location.type));
+        circle.setAttribute('stroke', '#fff');
+        circle.setAttribute('stroke-width', '2');
+        circle.setAttribute('class', 'location-point');
+        circle.setAttribute('data-location-id', location.id);
+        
+        const text = doc.createElementNS('http://www.w3.org/2000/svg', 'text');
+        text.setAttribute('x', x);
+        text.setAttribute('y', y - 12);
+        text.setAttribute('text-anchor', 'middle');
+        text.setAttribute('fill', '#8B4513');
+        text.setAttribute('font-size', '10px');
+        text.setAttribute('font-weight', 'bold');
+        text.setAttribute('class', 'location-label');
+        text.textContent = location.name;
+        
+        group.appendChild(circle);
+        group.appendChild(text);
+      });
+
+      svg.appendChild(group);
+      return new XMLSerializer().serializeToString(svg);
+    } catch (error) {
+      console.error('Error enhancing SVG:', error);
+      return svgText;
+    }
+  }, [getLocationsData]);
+
+  // В useEffect для инициализации SVG, добавляем вызов resetView после загрузки
   useEffect(() => {
     if (svgContent && svgContainerRef.current && delay && !hasInitializedSvg.current) {
       try {
@@ -121,13 +280,18 @@ const InteractiveMap = observer(() => {
           svgElementRef.current.style.transformOrigin = '0 0';
           applyTransform();
           updateScaleIndicator();
+          
+          // После небольшой задержки центрируем карту на нужной области
+          setTimeout(() => {
+            resetView();
+          }, 100);
         }
       } catch (error) {
         console.error('Error initializing SVG:', error);
         svgContainerRef.current.innerHTML = svgContent;
       }
     }
-  }, [svgContent, delay]);
+  }, [svgContent, delay, resetView, enhanceSvgWithInteractivity]);
 
   // Получение данных подземелья с проверкой на null
   const getDungeonData = useCallback((dungeonName) => {
@@ -165,20 +329,6 @@ const InteractiveMap = observer(() => {
     
     return dungeons;
   }, [getDungeonData]);
-
-  // Функции для управления картой (без изменений)
-  const applyTransform = useCallback(() => {
-    if (svgElementRef.current) {
-      svgElementRef.current.style.transform = `translate(${transform.current.x}px, ${transform.current.y}px) scale(${transform.current.scale})`;
-      updateScaleIndicator();
-    }
-  }, []);
-
-  const updateScaleIndicator = () => {
-    if (scaleIndicatorRef.current) {
-      scaleIndicatorRef.current.textContent = `Масштаб: ${Math.round(transform.current.scale * 100)}%`;
-    }
-  };
 
   const handleMouseDown = useCallback((e) => {
     if (e.target.closest('.location-point')) return;
@@ -268,11 +418,6 @@ const InteractiveMap = observer(() => {
     applyTransform();
   }, [applyTransform]);
 
-  const resetView = useCallback(() => {
-    transform.current = { x: 0, y: 0, scale: 1 };
-    applyTransform();
-  }, [applyTransform]);
-
   const handleSvgClick = useCallback((e) => {
     const target = e.target;
     
@@ -284,127 +429,6 @@ const InteractiveMap = observer(() => {
       }
     }
   }, []);
-
-  const getLocationsData = useCallback(() => {
-    return [
-      {
-        id: 'fargos',
-        name: "🏰 Фаргос",
-        description: "Мирный торговый город, центр цивилизации и ремесел",
-        type: 'city',
-        position: [280, 510],
-        dungeons: ["Canalisation"]
-      },
-      {
-        id: 'coast',
-        name: "🌊 Побережье", 
-        description: "Береговая линия с заброшенными рыбацкими деревнями и портами",
-        type: 'coast',
-        position: [250, 483],
-        dungeons: ["Dungeon_Wind", "Dungeon_Sound", "Dungeon_Power"]
-      },
-      {
-        id: 'steppe',
-        name: "🏞️ Степь",
-        description: "Бескрайние степные просторы, дом кочевников",
-        type: 'wild',
-        position: [164, 508],
-        dungeons: ["Dungeon_Light", "Dungeon_Fire", "Dungeon_Death"]
-      },
-      {
-        id: 'forest',
-        name: "🌲 Лес",
-        description: "Древний лес, полный тайн и опасностей", 
-        type: 'forest',
-        position: [197, 556],
-        dungeons: ["Dungeon_Life", "Dungeon_Dark"]
-      },
-      {
-        id: 'mountains',
-        name: "⛰️ Горы",
-        description: "Высокие горные хребты, богатые полезными ископаемыми",
-        type: 'mountains',
-        position: [237, 556],
-        dungeons: ["Dungeon_Ice", "Dungeon_Electricity", "Dungeon_Stone"]
-      }
-    ];
-  }, []);
-
-  const enhanceSvgWithInteractivity = useCallback((svgText) => {
-    try {
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(svgText, 'image/svg+xml');
-      
-      const parseError = doc.querySelector('parsererror');
-      if (parseError) {
-        throw new Error('SVG parsing error');
-      }
-      
-      const svg = doc.documentElement;
-
-      const style = doc.createElement('style');
-      style.textContent = `
-        .location-point {
-          cursor: pointer;
-          transition: all 0.2s ease;
-          touch-action: manipulation;
-        }
-        .location-point:hover {
-          stroke: #ff8c00;
-          stroke-width: 3px;
-          filter: drop-shadow(0 0 4px rgba(255, 140, 0, 0.7));
-        }
-        .location-label {
-          pointer-events: none;
-          user-select: none;
-        }
-        .interactive-locations * {
-          pointer-events: none;
-        }
-        .interactive-locations .location-point {
-          pointer-events: all;
-        }
-      `;
-      svg.insertBefore(style, svg.firstChild);
-
-      const locations = getLocationsData();
-      const group = doc.createElementNS('http://www.w3.org/2000/svg', 'g');
-      group.setAttribute('class', 'interactive-locations');
-
-      locations.forEach(location => {
-        const [x, y] = location.position;
-        
-        const circle = doc.createElementNS('http://www.w3.org/2000/svg', 'circle');
-        circle.setAttribute('cx', x);
-        circle.setAttribute('cy', y);
-        circle.setAttribute('r', '8');
-        circle.setAttribute('fill', getLocationColor(location.type));
-        circle.setAttribute('stroke', '#fff');
-        circle.setAttribute('stroke-width', '2');
-        circle.setAttribute('class', 'location-point');
-        circle.setAttribute('data-location-id', location.id);
-        
-        const text = doc.createElementNS('http://www.w3.org/2000/svg', 'text');
-        text.setAttribute('x', x);
-        text.setAttribute('y', y - 12);
-        text.setAttribute('text-anchor', 'middle');
-        text.setAttribute('fill', '#8B4513');
-        text.setAttribute('font-size', '10px');
-        text.setAttribute('font-weight', 'bold');
-        text.setAttribute('class', 'location-label');
-        text.textContent = location.name;
-        
-        group.appendChild(circle);
-        group.appendChild(text);
-      });
-
-      svg.appendChild(group);
-      return new XMLSerializer().serializeToString(svg);
-    } catch (error) {
-      console.error('Error enhancing SVG:', error);
-      return svgText;
-    }
-  }, [getLocationsData]);
 
   const handleLocationClick = (location) => {
     setSelectedLocation(location);
