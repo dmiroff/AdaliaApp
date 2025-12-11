@@ -5,6 +5,7 @@
   font-family: 'Cinzel', serif;
   font-weight: 700;
 }
+
 /* ===== БАЗОВЫЕ СТИЛИ ===== */
 html, body, #root {
   height: 100%;
@@ -15,15 +16,15 @@ html, body, #root {
 /* Убрали background-image из body - теперь он в React компоненте */
 
 /* ===== ТИПОГРАФИЯ И ТЕКСТ ===== */
-.fantasy-text-primary { color: #4f3729 ; }
-.fantasy-text-success { color: #7cb342 ; }
-.fantasy-text-warning { color: #ffb74d ; }
-.fantasy-text-info { color: #4fc3f7 ; }
-.fantasy-text-danger { color: #ef9a9a ; }
-.fantasy-text-muted { color: #8b7355 ; }
-.fantasy-text-dark { color: #3e2723 ; }
-.fantasy-text-gold { color: #ffd700 ; }
-.fantasy-text-bold { font-weight: 600 ; }
+.fantasy-text-primary { color: #4f3729; }
+.fantasy-text-success { color: #7cb342; }
+.fantasy-text-warning { color: #ffb74d; }
+.fantasy-text-info { color: #4fc3f7; }
+.fantasy-text-danger { color: #ef9a9a; }
+.fantasy-text-muted { color: #8b7355; }
+.fantasy-text-dark { color: #3e2723; }
+.fantasy-text-gold { color: #ffd700; }
+.fantasy-text-bold { font-weight: 600; }
 
 /* ===== ОСНОВНЫЕ КОМПОНЕНТЫ ===== */
 .fantasy-paper {
@@ -32,7 +33,7 @@ html, body, #root {
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   position: relative;
-  overflow: visible ;
+  overflow: visible;
 }
 
 .fantasy-paper::before {
@@ -56,7 +57,7 @@ html, body, #root {
   margin: 10px 0;
   position: relative;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  overflow: visible ;
+  overflow: visible;
 }
 
 /* ===== КАРТОЧКИ ===== */
@@ -90,21 +91,21 @@ html, body, #root {
 }
 
 .card {
-  background: linear-gradient(135deg, #f4e4bc 0%, #e6d2a9 100%) ;
-  border: 2px solid #8b7355 ;
-  border-radius: 8px ;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) ;
+  background: linear-gradient(135deg, #f4e4bc 0%, #e6d2a9 100%);
+  border: 2px solid #8b7355;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 /* ===== ЗАГОЛОВКИ КАРТОЧЕК ===== */
 .fantasy-card-header {
-  border-bottom: 3px double #3f2a1a ;
-  border-radius: 6px 6px 0 0 ;
+  border-bottom: 3px double #3f2a1a;
+  border-radius: 6px 6px 0 0;
   font-weight: 700;
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
   letter-spacing: 0.5px;
   position: relative;
-  padding: 20px ;
+  padding: 20px;
 }
 
 .fantasy-card-header::after {
@@ -119,65 +120,65 @@ html, body, #root {
 }
 
 .fantasy-card-header-primary {
-  background: linear-gradient(135deg, #7d5739 0%, #4c3e33 100%) ;
-  color: #d4af37 ;
+  background: linear-gradient(135deg, #7d5739 0%, #4c3e33 100%);
+  color: #d4af37;
 }
 
 .fantasy-card-header-warning {
-  background: linear-gradient(135deg, #443414 0%, #664400 100%) ;
-  color: #ffb74d ;
+  background: linear-gradient(135deg, #443414 0%, #664400 100%);
+  color: #ffb74d;
 }
 
 .fantasy-card-header-info {
-  background: linear-gradient(135deg, #0c1f2f 0%, #1c3a4a 100%) ;
-  border-color: #0277bd ;
+  background: linear-gradient(135deg, #0c1f2f 0%, #1c3a4a 100%);
+  border-color: #0277bd;
 }
 
 .fantasy-card-header-secondary {
-  background: linear-gradient(135deg, #1c1c1c 0%, #2d2d2d 100%) ;
-  border-color: #616161 ;
+  background: linear-gradient(135deg, #1c1c1c 0%, #2d2d2d 100%);
+  border-color: #616161;
 }
 
 .fantasy-card-header-danger {
-  background: linear-gradient(135deg, #dc3545 0%, #c82333 100%) ;
-  color: white ;
+  background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+  color: white;
 }
 
 .card-header {
-  background: linear-gradient(135deg, #6e4f37 0%, #4a2c14 100%) ;
-  border-bottom: 3px double #684832 ;
-  color: #d4af37 ;
+  background: linear-gradient(135deg, #6e4f37 0%, #4a2c14 100%);
+  border-bottom: 3px double #684832;
+  color: #d4af37;
   font-weight: 700;
 }
 
 /* Специальные стили для биржи */
 .birzha-card {
-  background: linear-gradient(135deg, #f4e4bc 0%, #e6d2a9 100%) ;
-  border: 2px solid #8b7355 ;
-  border-radius: 8px ;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) ;
+  background: linear-gradient(135deg, #f4e4bc 0%, #e6d2a9 100%);
+  border: 2px solid #8b7355;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .birzha-card .birzha-card-header {
-  background: linear-gradient(135deg, #2f1b0c 0%, #4a2c14 100%) ;
-  border-color: #8f6649 ;
+  background: linear-gradient(135deg, #2f1b0c 0%, #4a2c14 100%);
+  border-color: #8f6649;
 }
 
 /* ОБЯЗАТЕЛЬНО: Переопределяем цвет текста для заголовков с классом fantasy-text-gold */
 .fantasy-card-header .fantasy-text-gold,
 .birzha-card-header .fantasy-text-gold,
 .birzha-card .birzha-card-header .fantasy-text-gold {
-  color: #ffd700 ;
-  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.9) ;
-  font-size: 1.3rem ;
+  color: #ffd700;
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.9);
+  font-size: 1.3rem;
 }
 
 /* ===== КНОПКИ ===== */
 .fantasy-btn {
   background: linear-gradient(135deg, #8b451389 0%, #a0512d7c 100%);
-  border: 1px solid #000000 ;
+  border: 1px solid #000000;
   border-radius: 6px;
-  color: #ffd700 ;
+  color: #ffd700;
   font-weight: 600;
   padding: 8px 16px;
   transition: all 0.3s ease;
@@ -194,8 +195,8 @@ html, body, #root {
 .fantasy-btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-  border-color: #000000 ;
-  color: #fffacd ;
+  border-color: #000000;
+  color: #fffacd;
   text-decoration: none;
 }
 
@@ -206,7 +207,7 @@ html, body, #root {
 
 .fantasy-btn:disabled {
   background: linear-gradient(135deg, #7a7572 0%, #8d8987 100%);
-  border-color: #000000 ;
+  border-color: #000000;
   opacity: 0.65;
 }
 
@@ -220,7 +221,7 @@ html, body, #root {
 
 /* Размеры кнопок */
 .fantasy-btn-sm { padding: 4px 12px; font-size: 0.875em; }
-.fantasy-btn-lg { padding: 12px 24px; font-size: 1.125em; font-weight: 700;}
+.fantasy-btn-lg { padding: 12px 24px; font-size: 1.125em; font-weight: 700; }
 
 /* Улучшенные кнопки для биржи */
 .birzha-btn-loading {
@@ -251,22 +252,22 @@ html, body, #root {
 
 /* ===== ФОРМЫ ===== */
 .form-control {
-  background: linear-gradient(135deg, #faf3e0 0%, #f5e8c8 100%) ;
-  border: 2px solid #8b7355 ;
-  border-radius: 4px ;
-  color: #3e2723 ;
+  background: linear-gradient(135deg, #faf3e0 0%, #f5e8c8 100%);
+  border: 2px solid #8b7355;
+  border-radius: 4px;
+  color: #3e2723;
   font-weight: 500;
 }
 
 .form-control:focus {
-  background: linear-gradient(135deg, #fff9e6 0%, #faf3e0 100%) ;
-  border-color: #a0522d ;
-  box-shadow: 0 0 0 3px rgba(139, 69, 19, 0.3) ;
-  color: #3e2723 ;
+  background: linear-gradient(135deg, #fff9e6 0%, #faf3e0 100%);
+  border-color: #a0522d;
+  box-shadow: 0 0 0 3px rgba(139, 69, 19, 0.3);
+  color: #3e2723;
 }
 
 .form-label {
-  color: #3e2723 ;
+  color: #3e2723;
   font-weight: 600;
   text-shadow: 1px 1px 1px rgba(255, 255, 255, 0.5);
 }
@@ -275,9 +276,9 @@ html, body, #root {
 .dropdown { position: relative; }
 
 .dropdown-toggle.fantasy-btn {
-  background: linear-gradient(135deg, #8b4513 0%, #a0522d 100%) ;
-  border: 2px solid #000000 ;
-  color: #ffd700 ;
+  background: linear-gradient(135deg, #8b4513 0%, #a0522d 100%);
+  border: 2px solid #000000;
+  color: #ffd700;
   text-align: left;
   display: flex;
   justify-content: space-between;
@@ -286,29 +287,29 @@ html, body, #root {
 }
 
 .fantasy-dropdown-menu {
-  background: linear-gradient(135deg, #f4e4bc 0%, #e6d2a9 100%) ;
-  border: 2px solid #8b7355 ;
-  border-radius: 6px ;
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4) ;
-  padding: 5px 0 ;
-  z-index: 1070 ;
-  position: absolute ;
+  background: linear-gradient(135deg, #f4e4bc 0%, #e6d2a9 100%);
+  border: 2px solid #8b7355;
+  border-radius: 6px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+  padding: 5px 0;
+  z-index: 1070;
+  position: absolute;
 }
 
 .fantasy-dropdown-menu .dropdown-item {
-  color: #3e2723 ;
+  color: #3e2723;
   font-weight: 500;
   transition: all 0.2s ease;
   border-bottom: 1px solid #d7ccc8;
-  background: transparent ;
-  padding: 10px 15px ;
+  background: transparent;
+  padding: 10px 15px;
 }
 
 .fantasy-dropdown-menu .dropdown-item:hover {
-  background: linear-gradient(135deg, #8b4513 0%, #a0522d 100%) ;
-  color: #ffd700 ;
+  background: linear-gradient(135deg, #8b4513 0%, #a0522d 100%);
+  color: #ffd700;
   transform: translateX(5px);
-  padding-left: 20px ;
+  padding-left: 20px;
 }
 
 .dropdown-item {
@@ -318,15 +319,15 @@ html, body, #root {
 
 /* ===== СПИСКИ ===== */
 .list-group-item {
-  background: rgba(244, 228, 188, 0.7) ;
-  border: 1px solid #bcaaa4 ;
-  color: #3e2723 ;
+  background: rgba(244, 228, 188, 0.7);
+  border: 1px solid #bcaaa4;
+  color: #3e2723;
   transition: all 0.3s ease;
 }
 
 .list-group-item:hover {
-  background: rgba(230, 210, 169, 0.9) ;
-  border-color: #8b7355 ;
+  background: rgba(230, 210, 169, 0.9);
+  border-color: #8b7355;
 }
 
 /* ===== СТИЛИ ДЛЯ ПЕРСОНАЖА ===== */
@@ -694,49 +695,6 @@ html, body, #root {
     2px 2px 2px #000000,
     -2px -2px 2px #000000 !important;
 }
-/* Строки статистики */
-.fantasy-stat-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 0;
-  border-bottom: 1px solid #c19a6b;
-  color: #3e2723;
-  font-weight: 500;
-}
-
-.fantasy-stat-row:last-child {
-  border-bottom: none;
-}
-
-/* Бейджи */
-.fantasy-badge {
-  font-weight: 600;
-  border: 1px solid;
-  border-radius: 12px;
-  padding: 4px 10px;
-  font-size: 0.85em;
-  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 2px 3px rgba(0, 0, 0, 0.2);
-}
-
-.fantasy-badge-primary {
-  background: linear-gradient(135deg, #8b4513, #a0522d);
-  color: #ffd700;
-  border-color: #654321;
-}
-
-.fantasy-badge-warning {
-  background: linear-gradient(135deg, #ef6c00, #ff8f00);
-  color: #ffe0b2;
-  border-color: #e65100;
-}
-
-.fantasy-badge-success {
-  background: linear-gradient(135deg, #27a82e, #388e3c);
-  color: #a5d6a7;
-  border-color: #1b5e20;
-}
 
 /* Вкладки */
 .fantasy-tabs .nav-tabs {
@@ -757,14 +715,14 @@ html, body, #root {
 }
 
 .fantasy-tabs .nav-link {
-  color: #5d4037 ;
+  color: #5d4037;
   border: 2px solid transparent;
   border-radius: 8px 8px 0 0;
   margin: 0 3px;
   font-weight: 600;
   transition: all 0.3s ease;
   background: linear-gradient(135deg, #d7ccc8, #bcaaa4);
-  border-bottom: none ;
+  border-bottom: none;
   white-space: nowrap;
   padding: 0.5rem 0.75rem;
 }
@@ -772,13 +730,13 @@ html, body, #root {
 .fantasy-tabs .nav-link:hover {
   background: linear-gradient(135deg, #efdcd3, #d7ccc8);
   border-color: #8b4513;
-  color: #3e2723 ;
+  color: #3e2723;
   transform: translateY(-2px);
 }
 
 .fantasy-tabs .nav-link.active {
-  background: linear-gradient(135deg, #8b4513, #a0522d) ;
-  color: #ffd700 ;
+  background: linear-gradient(135deg, #8b4513, #a0522d);
+  color: #ffd700;
   border-color: #654321;
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
   box-shadow: 0 -3px 10px rgba(139, 69, 19, 0.3);
@@ -1039,9 +997,8 @@ html, body, #root {
     border-bottom: 1px solid #8b4513;
     padding: 12px 20px;
     background: linear-gradient(135deg, #2f1b0c 0%, #4a2c14 100%);
- outline: none !important;
+    outline: none !important;
     box-shadow: none !important;
-
   }
   
   .fantasy-navbar .navbar-collapse {
@@ -1163,11 +1120,11 @@ html, body, #root {
 /* ===== АДАПТИВНОСТЬ ===== */
 @media (max-width: 991.98px) {
   .fantasy-navbar .navbar-collapse {
-    position: absolute ;
+    position: absolute;
     top: 100%;
-    left: 0 ;
-    right: 0 !;
-    z-index: 9999 ;
+    left: 0;
+    right: 0 !important;
+    z-index: 9999;
   }
   
   .fantasy-navbar .navbar-collapse,
@@ -1176,9 +1133,9 @@ html, body, #root {
   .fantasy-navbar .collapse.show,
   .fantasy-navbar .fantasy-mobile-menu,
   #responsive-navbar-nav {
-    background: linear-gradient(135deg, #5d3d1c81 0%, #8b592b5f 100%) ;
-    border-top: 2px solid #8b451300 ;
-    border-bottom: 3px double #8b451300 ;
+    background: linear-gradient(135deg, #5d3d1c81 0%, #8b592b5f 100%);
+    border-top: 2px solid #8b451300;
+    border-bottom: 3px double #8b451300;
   }
 }
 
@@ -1188,37 +1145,123 @@ html, body, #root {
   .content-overlay { padding: 15px; margin: 5px 0; }
   
   .fantasy-dropdown-menu {
-    position: fixed ;
-    top: 50% ;
-    left: 50% ;
-    transform: translate(-50%, -50%) ;
-    width: 90vw ;
-    max-width: 300px ;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90vw;
+    max-width: 300px;
   }
   
   .inventory-container {
     max-width: 100%;
   }
 
-  /* Стили для контейнера предмета инвентаря */
-.inventory-item-row {
-  position: relative;
+  .character-silhouette {
+    height: 600px;
+  }
+  
+  .empty-slot-with-text .item-text {
+    font-size: 0.7em;
+  }
 }
 
+@media (max-width: 576px) {
+  .birzha-chart-card {
+    min-height: 350px;
+  }
+  
+  .birzha-chart-body {
+    height: 300px;
+  }
+  
+  .birzha-chart-wrapper {
+    padding: 10px;
+  }
+  
+  .birzha-info {
+    gap: 10px;
+  }
+  
+  .birzha-info-item {
+    padding: 6px 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .character-silhouette {
+    height: 500px;
+  }
+}
+
+/* ===== СТИЛИ ДЛЯ ПРЕДМЕТОВ ИНВЕНТАРЯ ===== */
+
+/* Контейнер предмета инвентаря */
 .inventory-item-container {
-  cursor: pointer;
   position: relative;
+  cursor: pointer;
+  transition: transform 0.2s ease;
   display: flex;
   justify-content: center;
   align-items: center;
   height: 100%;
 }
 
-.inventory-item-image {
+.inventory-item-container:hover {
+  transform: scale(1.05);
+}
+
+/* Галочка для надетых предметов */
+.equipped-badge {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 24px;
+  height: 24px;
+  background-color: rgba(46, 204, 113, 0.9);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 16px;
+  font-weight: bold;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+  z-index: 10;
+  border: 2px solid white;
+  animation: equipped-pulse 2s infinite;
+}
+
+@keyframes equipped-pulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.7);
+  }
+  70% {
+    transform: scale(1.1);
+    box-shadow: 0 0 0 10px rgba(46, 204, 113, 0);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(46, 204, 113, 0);
+  }
+}
+
+/* Бейдж "надет" в названии предмета */
+.badge.bg-success {
+  background-color: #28a745 !important;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+/* Изображение предмета */
+.list-images {
   aspect-ratio: 1/1;
   object-fit: cover;
   width: 100%;
   max-width: 80px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 /* ===== СТИЛИ ДРОПДАУНА ИНВЕНТАРЯ ===== */
@@ -1265,8 +1308,8 @@ html, body, #root {
 .inventory-item-fantasy-dropdown .dropdown-item {
   color: #e0e0e0;
   padding: 8px 16px;
-  /* font-size: 0.9rem;
-  transition: all 0.2s ease; */
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
   border-bottom: 1px solid rgba(212, 175, 55, 0.1);
 }
 
@@ -1313,56 +1356,22 @@ html, body, #root {
     max-width: 250px;
     z-index: 9999;
   }
+  
+  .equipped-badge {
+    width: 20px;
+    height: 20px;
+    font-size: 14px;
+    top: 3px;
+    right: 3px;
+  }
 }
+
 .row .col .inventory-item-fantasy-dropdown .dropdown-menu {
   background: linear-gradient(135deg, #2d1f0f 0%, #4a3519 100%);
 }
 
 body .inventory-item-fantasy-dropdown .dropdown-item {
   color: #e0e0e0;
-}
-/*.inventory-item-fantasy-dropdown {
-                  position: absolute;
-                  top: 50%;
-                  left: 100%;
-                  transform: translate(-50%, -50%);
-                  z-index: 1;*/
-
-  .character-silhouette {
-    height: 600px;
-  }
-  
-  .empty-slot-with-text .item-text {
-    font-size: 0.7em;
-  }
-}
-
-@media (max-width: 576px) {
-  .birzha-chart-card {
-    min-height: 350px;
-  }
-  
-  .birzha-chart-body {
-    height: 300px;
-  }
-  
-  .birzha-chart-wrapper {
-    padding: 10px;
-  }
-  
-  .birzha-info {
-    gap: 10px;
-  }
-  
-  .birzha-info-item {
-    padding: 6px 0;
-  }
-}
-
-@media (max-width: 480px) {
-  .character-silhouette {
-    height: 500px;
-  }
 }
 
 /* Утилиты */
