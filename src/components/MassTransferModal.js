@@ -1,10 +1,12 @@
 // src/components/MassOperationModals.js
 import { useState, useEffect } from "react";
 import { Modal, Button, Form, ListGroup, Spinner } from "react-bootstrap";
+import {MassDropItems, MassSellItems, MassTransferItems} from "../http/SupportFunctions";
 
 // Массовая продажа
-export const MassSellModal = ({ show, onClose, onSubmit, selectedItems, inventory, loading }) => {
+export const MassSellModal = ({ show, onClose, selectedItems, inventory, onSuccess }) => {
   const [itemsWithQuantity, setItemsWithQuantity] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const initialItems = Array.from(selectedItems).map(itemId => {
@@ -28,12 +30,34 @@ export const MassSellModal = ({ show, onClose, onSubmit, selectedItems, inventor
     ));
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const itemsToSubmit = itemsWithQuantity.map(item => ({
       itemId: item.itemId,
       quantity: item.quantity
     }));
-    onSubmit(itemsToSubmit);
+    
+    setLoading(true);
+    try {
+      console.log('Начинаем массовую продажу...');
+      const result = await MassSellItems(itemsToSubmit);
+      console.log('Массовая продажа успешна:', result);
+      
+      // Показываем сообщение об успехе
+      alert(result.message || 'Предметы успешно проданы!');
+      
+      // Вызываем callback для обновления данных
+      if (onSuccess) {
+        onSuccess();
+      }
+      
+      // Закрываем модальное окно
+      onClose();
+    } catch (error) {
+      console.error('Ошибка массовой продажи:', error);
+      alert(error.response?.data?.detail || error.message || 'Ошибка при продаже предметов');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const totalCount = itemsWithQuantity.reduce((sum, item) => sum + item.quantity, 0);
@@ -171,12 +195,13 @@ export const MassSellModal = ({ show, onClose, onSubmit, selectedItems, inventor
 };
 
 // Массовая передача
-export const MassTransferModal = ({ show, onClose, onSubmit, selectedItems, inventory, loading }) => {
+export const MassTransferModal = ({ show, onClose, selectedItems, inventory, onSuccess }) => {
   const [recipientName, setRecipientName] = useState("");
   const [itemsWithQuantity, setItemsWithQuantity] = useState([]);
   const [suggestedPlayers, setSuggestedPlayers] = useState([]);
   const [selectedRecipient, setSelectedRecipient] = useState("");
   const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const initialItems = Array.from(selectedItems).map(itemId => {
@@ -230,7 +255,7 @@ export const MassTransferModal = ({ show, onClose, onSubmit, selectedItems, inve
     ));
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!recipientName.trim()) {
       alert("Введите имя получателя");
       return;
@@ -241,7 +266,28 @@ export const MassTransferModal = ({ show, onClose, onSubmit, selectedItems, inve
       quantity: item.quantity
     }));
     
-    onSubmit(recipientName, itemsToSubmit);
+    setLoading(true);
+    try {
+      console.log('Начинаем массовую передачу...');
+      const result = await MassTransferItems(recipientName, itemsToSubmit);
+      console.log('Массовая передача успешна:', result);
+      
+      // Показываем сообщение об успехе
+      alert(result.message || 'Предметы успешно переданы!');
+      
+      // Вызываем callback для обновления данных
+      if (onSuccess) {
+        onSuccess();
+      }
+      
+      // Закрываем модальное окно
+      onClose();
+    } catch (error) {
+      console.error('Ошибка массовой передачи:', error);
+      alert(error.response?.data?.detail || error.message || 'Ошибка при передаче предметов');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const totalCount = itemsWithQuantity.reduce((sum, item) => sum + item.quantity, 0);
@@ -426,9 +472,10 @@ export const MassTransferModal = ({ show, onClose, onSubmit, selectedItems, inve
 };
 
 // Массовое выбрасывание
-export const MassDropModal = ({ show, onClose, onSubmit, selectedItems, inventory, loading }) => {
+export const MassDropModal = ({ show, onClose, selectedItems, inventory, onSuccess }) => {
   const [itemsWithQuantity, setItemsWithQuantity] = useState([]);
   const [confirmText, setConfirmText] = useState("");
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const initialItems = Array.from(selectedItems).map(itemId => {
@@ -452,7 +499,7 @@ export const MassDropModal = ({ show, onClose, onSubmit, selectedItems, inventor
     ));
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (confirmText !== "ПОДТВЕРЖДАЮ") {
       alert('Введите "ПОДТВЕРЖДАЮ" для подтверждения удаления');
       return;
@@ -462,7 +509,27 @@ export const MassDropModal = ({ show, onClose, onSubmit, selectedItems, inventor
       itemId: item.itemId,
       quantity: item.quantity
     }));
-    onSubmit(itemsToSubmit);
+    
+    setLoading(true);
+    try {
+      const result = await MassDropItems(itemsToSubmit);
+      
+      // Показываем сообщение об успехе
+      alert(result.message || 'Предметы успешно выброшены!');
+      
+      // Вызываем callback для обновления данных
+      if (onSuccess) {
+        onSuccess();
+      }
+      
+      // Закрываем модальное окно
+      onClose();
+    } catch (error) {
+      console.error('Ошибка массового выбрасывания:', error);
+      alert(error.response?.data?.detail || error.message || 'Ошибка при выбрасывании предметов');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const totalCount = itemsWithQuantity.reduce((sum, item) => sum + item.quantity, 0);

@@ -7,7 +7,7 @@ import { Context } from "../index";
 import GetDataById from "../http/GetData";
 import { Spinner } from "react-bootstrap";
 import Fuse from "fuse.js";
-import {MassTransferModal, MassDropModal, MassSellModal} from "./MassTransferModal";
+import { MassTransferModal, MassDropModal, MassSellModal } from "../components/MassTransferModal";
 import "./InventoryList.css";
 
 const InventoryList = observer(() => {
@@ -29,28 +29,35 @@ const InventoryList = observer(() => {
 
   const selected_type = user.selected_type !== undefined ? user.selected_type : null;
 
+  // Функция для обновления данных игрока
+  const fetchPlayerData = useCallback(async () => {
+    try {
+      const playerData = await GetDataById();
+      
+      if (playerData && playerData.data) {
+        setPlayerData(playerData.data);
+        const safeInventory = playerData.data.inventory_new || {};
+        user.setPlayerInventory(safeInventory);
+        setUserInventory(safeInventory);
+        user.setPlayer(playerData.data);
+      }
+    } catch (error) {
+      console.error("Error fetching player data:", error);
+    }
+  }, [user]);
+
   useEffect(() => {
-    const fetchPlayer = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true);
-        const playerData = await GetDataById();
-        
-        if (playerData && playerData.data) {
-          setPlayerData(playerData.data);
-          const safeInventory = playerData.data.inventory_new || {};
-          user.setPlayerInventory(safeInventory);
-          setUserInventory(safeInventory);
-          user.setPlayer(playerData.data);
-        }
-      } catch (error) {
-        console.error("Error fetching player data:", error);
+        await fetchPlayerData();
       } finally {
         setLoading(false);
       }
     };
 
-    fetchPlayer();
-  }, [user]);
+    fetchData();
+  }, [fetchPlayerData]);
 
   // Очистка выбора при изменении типа предметов
   useEffect(() => {
@@ -69,10 +76,8 @@ const InventoryList = observer(() => {
 
   // Обработчики для массовых операций
   const toggleItemSelection = useCallback((itemId) => {
-    
     setSelectedItems(prev => {
       const newSet = new Set(prev);
-      
       if (newSet.has(itemId)) {
         newSet.delete(itemId);
       } else {
@@ -84,100 +89,51 @@ const InventoryList = observer(() => {
 
   const selectAllItems = useCallback(() => {
     const inventory = user_inventory || {};
-    const filteredItemsWithKeys = Object.entries(inventory).filter(([key, item]) => {
+    
+    // Сначала фильтруем по типу
+    let filteredItems = Object.entries(inventory).filter(([key, item]) => {
       if (!item || typeof item !== 'object') return false;
       if (selected_type === null || selected_type === undefined) return true;
       return item.type === selected_type;
     });
+
+    // Затем фильтруем по поисковому запросу, если он есть
+    if (query) {
+      try {
+        const fuse = new Fuse(filteredItems.map(([id, data]) => ({ 
+          id, 
+          ...(data || {})
+        })), {
+          keys: ["name"],
+          includeScore: true,
+          threshold: 0.3
+        });
+        
+        filteredItems = fuse.search(query).map(result => {
+          const { id, ...data } = result.item;
+          return [id, data];
+        });
+      } catch (error) {
+        console.error("Fuse.js error in selectAllItems:", error);
+        filteredItems = filteredItems.filter(([key, item]) => 
+          item.name && item.name.toLowerCase().includes(query.toLowerCase())
+        );
+      }
+    }
     
-    const allIds = filteredItemsWithKeys.map(([id]) => id);
+    const allIds = filteredItems.map(([id]) => id);
     setSelectedItems(new Set(allIds));
-  }, [user_inventory, selected_type]);
+  }, [user_inventory, selected_type, query]); // Добавили query в зависимости
 
   const clearSelection = useCallback(() => {
     setSelectedItems(new Set());
   }, []);
 
-  const handleMassTransfer = async (recipientName, items) => {
-    setMassOperationLoading(true);
-    try {
-      // items - массив объектов {itemId, quantity}
-      const totalCount = items.reduce((sum, item) => sum + item.quantity, 0);
-      const response = {
-        message: `${totalCount} предметов успешно переданы игроку ${recipientName}`,
-        data: playerData
-      };
-      
-      setSelectedItems(new Set());
-      setShowMassTransferModal(false);
-      handleShowModal(response.message);
-      
-      // Обновляем данные
-      if (response.data) {
-        user.setPlayerInventory(response.data.inventory_new || {});
-        user.setPlayer_data(response.data);
-        setUserInventory(response.data.inventory_new || {});
-      }
-    } catch (error) {
-      handleShowModal("Ошибка при передаче предметов");
-    } finally {
-      setMassOperationLoading(false);
-    }
-  };
-
-  const handleMassSell = async (items) => {
-    setMassOperationLoading(true);
-    try {
-      const totalValue = items.reduce((sum, item) => {
-        const itemData = user_inventory[item.itemId];
-        return sum + (itemData?.value || 0) * item.quantity;
-      }, 0);
-      
-      const response = {
-        message: `Предметы успешно проданы. Получено ${totalValue} 🌕`,
-        data: playerData
-      };
-      
-      setSelectedItems(new Set());
-      setShowMassSellModal(false);
-      handleShowModal(response.message);
-      
-      if (response.data) {
-        user.setPlayerInventory(response.data.inventory_new || {});
-        user.setPlayer_data(response.data);
-        setUserInventory(response.data.inventory_new || {});
-      }
-    } catch (error) {
-      handleShowModal("Ошибка при продаже предметов");
-    } finally {
-      setMassOperationLoading(false);
-    }
-  };
-
-  const handleMassDrop = async (items) => {
-    setMassOperationLoading(true);
-    try {
-      const totalCount = items.reduce((sum, item) => sum + item.quantity, 0);
-      const response = {
-        message: `Выброшено ${totalCount} предметов`,
-        data: playerData
-      };
-      
-      setSelectedItems(new Set());
-      setShowMassDropModal(false);
-      handleShowModal(response.message);
-      
-      if (response.data) {
-        user.setPlayerInventory(response.data.inventory_new || {});
-        user.setPlayer_data(response.data);
-        setUserInventory(response.data.inventory_new || {});
-      }
-    } catch (error) {
-      handleShowModal("Ошибка при выбрасывании предметов");
-    } finally {
-      setMassOperationLoading(false);
-    }
-  };
+  // Обработчик успешного завершения массовой операции
+  const handleOperationSuccess = useCallback(() => {
+    fetchPlayerData(); // Обновляем данные игрока
+    setSelectedItems(new Set()); // Очищаем выбранные предметы
+  }, [fetchPlayerData]);
 
   if (loading) {
     return (
@@ -377,30 +333,27 @@ const InventoryList = observer(() => {
       <MassTransferModal
         show={showMassTransferModal}
         onClose={() => setShowMassTransferModal(false)}
-        onSubmit={handleMassTransfer}
         selectedItems={selectedItems}
         inventory={user_inventory}
-        loading={massOperationLoading}
+        onSuccess={handleOperationSuccess}
       />
 
       {/* Модалка для массовой продажи */}
       <MassSellModal
         show={showMassSellModal}
         onClose={() => setShowMassSellModal(false)}
-        onSubmit={handleMassSell}
         selectedItems={selectedItems}
         inventory={user_inventory}
-        loading={massOperationLoading}
+        onSuccess={handleOperationSuccess}
       />
 
       {/* Модалка для массового выбрасывания */}
       <MassDropModal
         show={showMassDropModal}
         onClose={() => setShowMassDropModal(false)}
-        onSubmit={handleMassDrop}
         selectedItems={selectedItems}
         inventory={user_inventory}
-        loading={massOperationLoading}
+        onSuccess={handleOperationSuccess}
       />
 
       {/* Оповещение о результате операции */}
