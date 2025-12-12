@@ -1,12 +1,14 @@
 import { observer } from "mobx-react-lite";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useState, useCallback } from "react";
 import InventoryItem from "./InventoryItem";
-import { Row, Col, Form, Modal, Button } from "react-bootstrap";
+import { Row, Col, Form, Modal, Button, Badge, ListGroup } from "react-bootstrap";
 import TypeBar from "../components/TypeBar";
 import { Context } from "../index";
 import GetDataById from "../http/GetData";
 import { Spinner } from "react-bootstrap";
-import Fuse from "fuse.js"
+import Fuse from "fuse.js";
+import {MassTransferModal, MassDropModal, MassSellModal} from "./MassTransferModal";
+import "./InventoryList.css";
 
 const InventoryList = observer(() => {
   const { user } = useContext(Context);
@@ -17,8 +19,14 @@ const InventoryList = observer(() => {
   
   const [showModal, setShowModal] = useState(false);
   const [modalMessage, setModalMessage] = useState("");
+  
+  // Новые состояния для массовых операций
+  const [selectedItems, setSelectedItems] = useState(new Set());
+  const [showMassTransferModal, setShowMassTransferModal] = useState(false);
+  const [showMassSellModal, setShowMassSellModal] = useState(false);
+  const [showMassDropModal, setShowMassDropModal] = useState(false);
+  const [massOperationLoading, setMassOperationLoading] = useState(false);
 
-  // Безопасное получение selected_type
   const selected_type = user.selected_type !== undefined ? user.selected_type : null;
 
   useEffect(() => {
@@ -29,8 +37,6 @@ const InventoryList = observer(() => {
         
         if (playerData && playerData.data) {
           setPlayerData(playerData.data);
-          
-          // Защищенная установка инвентаря
           const safeInventory = playerData.data.inventory_new || {};
           user.setPlayerInventory(safeInventory);
           setUserInventory(safeInventory);
@@ -45,7 +51,12 @@ const InventoryList = observer(() => {
 
     fetchPlayer();
   }, [user]);
- 
+
+  // Очистка выбора при изменении типа предметов
+  useEffect(() => {
+    setSelectedItems(new Set());
+  }, [selected_type, query]);
+
   const handleShowModal = (message) => {
     setModalMessage(message);
     setShowModal(true);
@@ -55,6 +66,118 @@ const InventoryList = observer(() => {
   };
 
   const handleCloseModal = () => setShowModal(false);
+
+  // Обработчики для массовых операций
+  const toggleItemSelection = useCallback((itemId) => {
+    
+    setSelectedItems(prev => {
+      const newSet = new Set(prev);
+      
+      if (newSet.has(itemId)) {
+        newSet.delete(itemId);
+      } else {
+        newSet.add(itemId);
+      }
+      return newSet;
+    });
+  }, []);
+
+  const selectAllItems = useCallback(() => {
+    const inventory = user_inventory || {};
+    const filteredItemsWithKeys = Object.entries(inventory).filter(([key, item]) => {
+      if (!item || typeof item !== 'object') return false;
+      if (selected_type === null || selected_type === undefined) return true;
+      return item.type === selected_type;
+    });
+    
+    const allIds = filteredItemsWithKeys.map(([id]) => id);
+    setSelectedItems(new Set(allIds));
+  }, [user_inventory, selected_type]);
+
+  const clearSelection = useCallback(() => {
+    setSelectedItems(new Set());
+  }, []);
+
+  const handleMassTransfer = async (recipientName, items) => {
+    setMassOperationLoading(true);
+    try {
+      // items - массив объектов {itemId, quantity}
+      const totalCount = items.reduce((sum, item) => sum + item.quantity, 0);
+      const response = {
+        message: `${totalCount} предметов успешно переданы игроку ${recipientName}`,
+        data: playerData
+      };
+      
+      setSelectedItems(new Set());
+      setShowMassTransferModal(false);
+      handleShowModal(response.message);
+      
+      // Обновляем данные
+      if (response.data) {
+        user.setPlayerInventory(response.data.inventory_new || {});
+        user.setPlayer_data(response.data);
+        setUserInventory(response.data.inventory_new || {});
+      }
+    } catch (error) {
+      handleShowModal("Ошибка при передаче предметов");
+    } finally {
+      setMassOperationLoading(false);
+    }
+  };
+
+  const handleMassSell = async (items) => {
+    setMassOperationLoading(true);
+    try {
+      const totalValue = items.reduce((sum, item) => {
+        const itemData = user_inventory[item.itemId];
+        return sum + (itemData?.value || 0) * item.quantity;
+      }, 0);
+      
+      const response = {
+        message: `Предметы успешно проданы. Получено ${totalValue} 🌕`,
+        data: playerData
+      };
+      
+      setSelectedItems(new Set());
+      setShowMassSellModal(false);
+      handleShowModal(response.message);
+      
+      if (response.data) {
+        user.setPlayerInventory(response.data.inventory_new || {});
+        user.setPlayer_data(response.data);
+        setUserInventory(response.data.inventory_new || {});
+      }
+    } catch (error) {
+      handleShowModal("Ошибка при продаже предметов");
+    } finally {
+      setMassOperationLoading(false);
+    }
+  };
+
+  const handleMassDrop = async (items) => {
+    setMassOperationLoading(true);
+    try {
+      const totalCount = items.reduce((sum, item) => sum + item.quantity, 0);
+      const response = {
+        message: `Выброшено ${totalCount} предметов`,
+        data: playerData
+      };
+      
+      setSelectedItems(new Set());
+      setShowMassDropModal(false);
+      handleShowModal(response.message);
+      
+      if (response.data) {
+        user.setPlayerInventory(response.data.inventory_new || {});
+        user.setPlayer_data(response.data);
+        setUserInventory(response.data.inventory_new || {});
+      }
+    } catch (error) {
+      handleShowModal("Ошибка при выбрасывании предметов");
+    } finally {
+      setMassOperationLoading(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -74,29 +197,23 @@ const InventoryList = observer(() => {
     );
   }
 
-  // ЗАЩИЩЕННАЯ ФИЛЬТРАЦИЯ
   const inventory = user_inventory || {};
   
   const filteredItemsWithKeys = Object.entries(inventory).filter(
     ([key, item]) => {
-      // Проверяем что item существует и имеет тип
       if (!item || typeof item !== 'object') return false;
-      
-      // Если тип не выбран, показываем все предметы
       if (selected_type === null || selected_type === undefined) {
         return true;
       }
-      // Иначе фильтруем по выбранному типу
       return item.type === selected_type;
     }
   );
 
   const itemObjects = filteredItemsWithKeys.map(([id, data]) => ({ 
     id, 
-    ...(data || {}) // Защита от undefined data
+    ...(data || {})
   }));
 
-  // Защищенный Fuse.js
   let results = itemObjects;
   try {
     const fuse = new Fuse(itemObjects, {
@@ -108,7 +225,6 @@ const InventoryList = observer(() => {
     results = query ? fuse.search(query).map(result => result.item) : itemObjects;
   } catch (error) {
     console.error("Fuse.js error:", error);
-    // В случае ошибки Fuse.js используем простую фильтрацию
     if (query) {
       results = itemObjects.filter(item => 
         item.name && item.name.toLowerCase().includes(query.toLowerCase())
@@ -124,42 +240,170 @@ const InventoryList = observer(() => {
     );
   }
 
+  // Подсчет общей стоимости и количества выбранных предметов
+  let totalSelectedValue = 0;
+  let totalSelectedCount = 0;
+  
+  selectedItems.forEach(itemId => {
+    const item = user_inventory[itemId];
+    if (item) {
+      totalSelectedValue += (item.value || 0) * (item.count || 1);
+      totalSelectedCount += item.count || 1;
+    }
+  });
+
   return (
-    <div className="fantasy-paper content-overlay">
+    <div className="fantasy-paper content-overlay inventory-container">
+      {/* Панель массовых операций */}
+      {selectedItems.size > 0 && (
+        <div className="mass-operations-panel mb-3 p-3">
+          <div className="d-flex flex-wrap align-items-center gap-2 mb-2">
+            <span className="badge selected-count-badge">
+              Выбрано: <strong>{selectedItems.size}</strong> предметов
+              {totalSelectedCount > selectedItems.size && ` (${totalSelectedCount} шт)`}
+            </span>
+            <span className="badge value-badge">
+              Общая стоимость: <strong>{totalSelectedValue}</strong> 🌕
+            </span>
+          </div>
+          
+          <div className="d-flex flex-wrap gap-2">
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => setShowMassTransferModal(true)}
+              disabled={massOperationLoading}
+              className="mass-action-btn"
+            >
+              <i className="fas fa-share me-1"></i>
+              Передать
+            </Button>
+            <Button
+              variant="success"
+              size="sm"
+              onClick={() => setShowMassSellModal(true)}
+              disabled={massOperationLoading}
+              className="mass-action-btn"
+            >
+              <i className="fas fa-coins me-1"></i>
+              Продать ({totalSelectedValue} 🌕)
+            </Button>
+            <Button
+              variant="danger"
+              size="sm"
+              onClick={() => setShowMassDropModal(true)}
+              disabled={massOperationLoading}
+              className="mass-action-btn"
+            >
+              <i className="fas fa-trash me-1"></i>
+              Выбросить
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={clearSelection}
+              disabled={massOperationLoading}
+              className="mass-action-btn"
+            >
+              <i className="fas fa-times me-1"></i>
+              Очистить
+            </Button>
+            <Button
+              variant="outline-info"
+              size="sm"
+              onClick={selectAllItems}
+              disabled={massOperationLoading}
+              className="mass-action-btn"
+            >
+              <i className="fas fa-check-square me-1"></i>
+              Выбрать все ({results.length})
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* Поиск сверху */}
-      <Row className="inventory-search-row mb-3">
-        <Col>
-          <Form className="fantasy-form">
+      <div className="inventory-search-container mb-3">
+        <Form className="fantasy-form">
+          <div className="search-input-wrapper">
+            <i className="fas fa-search search-icon"></i>
             <Form.Control
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="🔍 Название предмета..."
+              placeholder="Название предмета..."
               className="inventory-search-input"
             />
-          </Form>
-        </Col>
-      </Row>
+          </div>
+        </Form>
+      </div>
 
       {/* Фильтр по типам */}
-      <Row className="inventory-filter-row mb-3">
-        <Col xs="auto">
-          <TypeBar />
-        </Col>
-      </Row>
+      <div className="inventory-filter-container mb-3">
+        <Row className="align-items-center">
+          <Col xs="auto">
+            <TypeBar />
+          </Col>
+          <Col className="text-end">
+            <Button
+              variant="outline-info"
+              size="sm"
+              onClick={selectAllItems}
+              disabled={selectedItems.size === results.length}
+              className="select-all-btn"
+            >
+              <i className="fas fa-check-circle me-1"></i>
+              Выбрать все ({results.length})
+            </Button>
+          </Col>
+        </Row>
+      </div>
 
       {/* Список предметов */}
-      <Row className="inventory-items-container">
+      <div className="inventory-items-container">
         {results.map((item) => (
           <InventoryItem 
             key={item.id} 
             devicekey={item.id} 
             device={item} 
             onShowModal={handleShowModal}
+            isSelected={selectedItems.has(item.id)}
+            onToggleSelect={toggleItemSelection}
           />
         ))}
-      </Row>
+      </div>
       
+      {/* Модалка для массовой передачи */}
+      <MassTransferModal
+        show={showMassTransferModal}
+        onClose={() => setShowMassTransferModal(false)}
+        onSubmit={handleMassTransfer}
+        selectedItems={selectedItems}
+        inventory={user_inventory}
+        loading={massOperationLoading}
+      />
+
+      {/* Модалка для массовой продажи */}
+      <MassSellModal
+        show={showMassSellModal}
+        onClose={() => setShowMassSellModal(false)}
+        onSubmit={handleMassSell}
+        selectedItems={selectedItems}
+        inventory={user_inventory}
+        loading={massOperationLoading}
+      />
+
+      {/* Модалка для массового выбрасывания */}
+      <MassDropModal
+        show={showMassDropModal}
+        onClose={() => setShowMassDropModal(false)}
+        onSubmit={handleMassDrop}
+        selectedItems={selectedItems}
+        inventory={user_inventory}
+        loading={massOperationLoading}
+      />
+
+      {/* Оповещение о результате операции */}
       <Modal show={showModal} onHide={handleCloseModal} backdrop="static" keyboard={false} centered className="fantasy-modal">
         <Modal.Header closeButton className="fantasy-card-header fantasy-card-header-primary">
           <Modal.Title className="fantasy-text-gold">Оповещение</Modal.Title>
