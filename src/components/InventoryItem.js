@@ -239,29 +239,38 @@ const InventoryItem = ({
   };
 
   return (
-    <Row xs={3} className="mb-2">
-      <Col xs={3} md={2}>
+    <Row className="mb-3 align-items-center">
+      {/* Колонка с изображением - больше на мобильных устройствах */}
+      <Col xs={4} md={3} lg={2} className="ps-0 ps-md-2">
         <div 
-          className={`inventory-item-container ${isSelected ? 'selected' : ''}`}
+          className={`inventory-item-image-container ${isSelected ? 'selected' : ''}`}
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
           onClick={handleContainerClick}
-          style={{ position: 'relative', padding: '2px' }}
+          style={{ 
+            position: 'relative',
+            padding: '5px',
+            backgroundColor: 'rgba(244, 228, 188, 0.8)',
+            borderRadius: '10px',
+            boxShadow: isSelected ? '0 0 0 3px rgba(40, 167, 69, 0.3)' : '0 2px 5px rgba(0, 0, 0, 0.1)',
+            border: `2px solid ${isSelected ? '#28a745' : '#c19a6b'}`
+          }}
         >
-          {/* Чекбокс для выбора предмета */}
+          {/* Чекбокс для выбора предмета - меньше на мобильных устройствах */}
           {onToggleSelect && (
             <div 
               className="inventory-item-checkbox"
               style={{
                 position: 'absolute',
-                top: '5px',
-                left: '5px',
-                zIndex: 1000,
-                backgroundColor: 'rgba(244, 228, 188, 0.9)',
-                borderRadius: '4px',
-                padding: '2px',
-                border: '2px solid #8b7355',
-                cursor: 'pointer'
+                top: '8px',
+                left: '8px',
+                zIndex: 100,
+                backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                borderRadius: '6px',
+                padding: '3px',
+                border: `2px solid ${isSelected ? '#28a745' : '#8b7355'}`,
+                cursor: 'pointer',
+                boxShadow: '0 2px 5px rgba(0, 0, 0, 0.2)'
               }}
             >
               <input
@@ -273,57 +282,76 @@ const InventoryItem = ({
                 }}
                 onClick={(e) => e.stopPropagation()}
                 style={{
-                  width: '20px',
-                  height: '20px',
+                  width: '18px',
+                  height: '18px',
                   cursor: 'pointer',
                   margin: 0,
-                  accentColor: '#28a745',
-                  transform: 'scale(1.2)'
+                  accentColor: '#28a745'
                 }}
               />
             </div>
           )}
           
-          <Image 
-            src={imageSrc}
-            className="list-images"
-            fluid
-            loading="lazy"
-            onError={(e) => {
-              e.target.src = exampleImage;
-            }}
+          {/* Изображение предмета - увеличенное на мобильных устройствах */}
+          <div 
+            className="item-image-wrapper"
             style={{
-              aspectRatio: '1/1',
-              objectFit: 'cover',
-              borderRadius: '6px'
+              width: '100%',
+              paddingBottom: '100%', // Квадратное соотношение
+              position: 'relative',
+              overflow: 'hidden',
+              borderRadius: '8px'
             }}
-          />
+          >
+            <Image 
+              src={imageSrc}
+              className="list-images item-image"
+              fluid
+              loading="lazy"
+              onError={(e) => {
+                e.target.src = exampleImage;
+              }}
+              style={{
+                position: 'absolute',
+                top: '0',
+                left: '0',
+                width: '100%',
+                height: '100%',
+                objectFit: 'contain',
+                objectPosition: 'center',
+                backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                padding: '5px'
+              }}
+            />
+          </div>
+          
           {/* Отображение уровня предмета (если есть) */}
           {shouldShowLevel && (
-          <div 
-            className="item-level-badge"
-            style={{
-              position: 'absolute',
-              bottom: '5px',
-              right: '5px',
-              width: '24px',
-              height: '24px',
-              backgroundColor: getRarityColor.color,
-              borderRadius: '50%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'white',
-              fontSize: '12px',
-              fontWeight: 'bold',
-              border: '2px solid white',
-              zIndex: 100
-            }}
-            title={`Уровень ${device.level}`}
-          >
-            {device.level}
-          </div>
-        )}
+            <div 
+              className="item-level-badge"
+              style={{
+                position: 'absolute',
+                bottom: '8px',
+                right: '8px',
+                width: '28px',
+                height: '28px',
+                backgroundColor: getRarityColor.color,
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'white',
+                fontSize: '12px',
+                fontWeight: 'bold',
+                border: '2px solid white',
+                zIndex: 100,
+                boxShadow: '0 2px 5px rgba(0, 0, 0, 0.3)'
+              }}
+              title={`Уровень ${device.level}`}
+            >
+              {device.level}
+            </div>
+          )}
           
           {/* Галочка для надетых предметов */}
           {isEquipped && (
@@ -332,11 +360,11 @@ const InventoryItem = ({
               title="Предмет надет"
               style={{
                 position: 'absolute',
-                top: '5px',
-                right: '5px',
-                width: '20px',
-                height: '20px',
-                backgroundColor: 'rgba(46, 204, 113, 0.9)',
+                top: '8px',
+                right: '8px',
+                width: '24px',
+                height: '24px',
+                backgroundColor: 'rgba(46, 204, 113, 0.95)',
                 borderRadius: '50%',
                 display: 'flex',
                 alignItems: 'center',
@@ -344,7 +372,9 @@ const InventoryItem = ({
                 color: 'white',
                 fontSize: '14px',
                 fontWeight: 'bold',
-                zIndex: 100
+                zIndex: 100,
+                border: '2px solid white',
+                boxShadow: '0 2px 5px rgba(0, 0, 0, 0.3)'
               }}
             >
               ✓
@@ -399,51 +429,27 @@ const InventoryItem = ({
             </div>
           )}
         </div>
-        <ModalAction
-          show={showModalSell} 
-          onClose={handleModalSellClose} 
-          device={device}
-          devicekey={devicekey}
-          action={handleSell}
-          handleRequest={handleRequest}
-          title="Продать предмет"
-          actionButtonText="Продать"
-          maxAmount={maxTransferAmount}
-          backdrop="static" 
-          keyboard={false} 
-          centered
-        />
-
-        <ModalAction
-          show={showModalDrop} 
-          onClose={handleModalDropClose} 
-          device={device}
-          devicekey={devicekey}
-          action={handleThrowAway}
-          handleRequest={handleRequest}
-          title="Выбросить предмет"
-          actionButtonText="Выбросить"
-          maxAmount={maxTransferAmount}
-          backdrop="static" 
-          keyboard={false} 
-          centered
-        />
-
       </Col>
+      
+      {/* Колонка с информацией */}
       <Col 
-        xs={9} 
+        xs={8} 
+        md={9} 
         lg={true} 
+        className="pe-0 pe-md-2"
         style={{ fontSize: "0.9rem" }}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
         onClick={handleContainerClick}
       >
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', marginBottom: '8px' }}>
             <span style={{ 
               marginRight: '8px', 
               fontWeight: '600',
-              color: isSelected ? '#28a745' : '#3e2723'
+              color: isSelected ? '#28a745' : '#3e2723',
+              fontSize: '1rem',
+              lineHeight: '1.2'
             }}>
               {formatItemName()}
             </span>
@@ -452,12 +458,13 @@ const InventoryItem = ({
               <span 
                 className="badge"
                 style={{ 
-                  fontSize: '9px',
-                  padding: '2px 6px',
+                  fontSize: '10px',
+                  padding: '3px 8px',
                   marginRight: '4px',
                   backgroundColor: `${getRarityColor.color} !important`,
                   color: device.rarity >= 4 ? '#212529' : 'white',
-                  border: `1px solid ${getRarityColor.color}`
+                  border: `1px solid ${getRarityColor.color}`,
+                  borderRadius: '12px'
                 }}
                 title={getRarityColor.name}
               >
@@ -468,11 +475,12 @@ const InventoryItem = ({
               <span 
                 className="badge bg-success"
                 style={{ 
-                  fontSize: '9px',
-                  padding: '2px 6px',
+                  fontSize: '10px',
+                  padding: '3px 8px',
                   marginRight: '4px',
                   backgroundColor: '#28a745 !important',
-                  border: '1px solid #1e7e34'
+                  border: '1px solid #1e7e34',
+                  borderRadius: '12px'
                 }}
                 title="Предмет надет"
               >
@@ -484,11 +492,12 @@ const InventoryItem = ({
               <span 
                 className="badge bg-warning"
                 style={{ 
-                  fontSize: '9px',
-                  padding: '2px 6px',
+                  fontSize: '10px',
+                  padding: '3px 8px',
                   backgroundColor: '#ffc107 !important',
                   color: '#212529 !important',
-                  border: '1px solid #e0a800'
+                  border: '1px solid #e0a800',
+                  borderRadius: '12px'
                 }}
                 title="Нельзя продать/выбросить единственный надетый экземпляр"
               >
@@ -500,10 +509,11 @@ const InventoryItem = ({
               <span 
                 className="badge bg-info"
                 style={{ 
-                  fontSize: '9px',
-                  padding: '2px 6px',
+                  fontSize: '10px',
+                  padding: '3px 8px',
                   backgroundColor: '#17a2b8 !important',
-                  border: '1px solid #138496'
+                  border: '1px solid #138496',
+                  borderRadius: '12px'
                 }}
                 title="Предмет выбран"
               >
@@ -512,19 +522,62 @@ const InventoryItem = ({
               </span>
             )}
           </div>
-          <div style={{ marginTop: "8px" }}>
-            <span style={{ color: '#ffd700', fontWeight: '700', fontSize: '1rem' }}>
+          
+          <div style={{ marginBottom: "8px" }}>
+            <span style={{ color: '#ffd700', fontWeight: '700', fontSize: '1.1rem' }}>
               <i className="fas fa-coins me-1"></i>
               {device.value} 🌕
             </span>
           </div>
+          
           {device.description && (
-            <div style={{ marginTop: "4px", fontSize: "0.8rem", color: '#666' }}>
-              <small>{device.description.substring(0, 50)}...</small>
+            <div style={{ 
+              marginTop: "4px", 
+              fontSize: "0.85rem", 
+              color: '#666',
+              lineHeight: '1.3',
+              display: '-webkit-box',
+              WebkitLineClamp: '2',
+              WebkitBoxOrient: 'vertical',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis'
+            }}>
+              {device.description}
             </div>
           )}
         </div>
       </Col>
+      
+      {/* Модальные окна */}
+      <ModalAction
+        show={showModalSell} 
+        onClose={handleModalSellClose} 
+        device={device}
+        devicekey={devicekey}
+        action={handleSell}
+        handleRequest={handleRequest}
+        title="Продать предмет"
+        actionButtonText="Продать"
+        maxAmount={maxTransferAmount}
+        backdrop="static" 
+        keyboard={false} 
+        centered
+      />
+
+      <ModalAction
+        show={showModalDrop} 
+        onClose={handleModalDropClose} 
+        device={device}
+        devicekey={devicekey}
+        action={handleThrowAway}
+        handleRequest={handleRequest}
+        title="Выбросить предмет"
+        actionButtonText="Выбросить"
+        maxAmount={maxTransferAmount}
+        backdrop="static" 
+        keyboard={false} 
+        centered
+      />
     </Row>
   );
 };

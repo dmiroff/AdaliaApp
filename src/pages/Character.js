@@ -4,7 +4,6 @@ import { Container, Spinner, Tabs, Tab, Card, Row, Col, Badge, ProgressBar, Over
 import { Context } from "../index";
 import { observer } from "mobx-react-lite";
 import { dict_translator } from "../utils/Helpers";
-//import "./щ";
 
 // Импортируем словари с описаниями
 import { attributesDescDict, skillsDescDict, talentsDescDict, abilitiesDescDict, keyMappingDict } from "../utils/descriptions";
@@ -15,7 +14,7 @@ const Character = observer(() => {
   const [loading, setLoading] = useState(true);
   const [delay, setDelay] = useState(false);
   const user_id = user.user.id;
-  const [useBlueTheme, setUseBlueTheme] = useState(true); // true - синий, false - оранжевый
+  const [useBlueTheme, setUseBlueTheme] = useState(true);
 
   useEffect(() => {
     const fetchPlayer = async () => {
@@ -53,8 +52,20 @@ const Character = observer(() => {
     return translatedValue
   }
 
-  const prepareDataValues = (value) => {
+  // Функция для перевода массива с английского на русский
+  const translateArray = (arr) => {
+    if (!Array.isArray(arr)) return arr;
+    return arr.map(item => dict_translator[item] || item);
+  }
+
+  const prepareDataValues = (value, key = null) => {
     if (value.constructor === Array) {
+      // Если это массив "influencing", переводим элементы
+      if (key === 'influencing' || key === 'влияющие') {
+        const translatedArray = translateArray(value);
+        return translatedArray.join(', ');
+      }
+      
       let valueString = ""
       let valueDict = arrToCountedDict(value)
       for (const [key, value] of Object.entries(valueDict)) {
@@ -76,7 +87,15 @@ const Character = observer(() => {
         if (valueString !== "") {
           valueString = valueString + ", "
         }
-        valueString = valueString + getTranslation(k) + " " + v 
+        // Для массива influencing внутри объекта
+        if (k === 'influencing' || k === 'влияющие') {
+          if (Array.isArray(v)) {
+            const translated = translateArray(v);
+            valueString = valueString + getTranslation(k) + ": " + translated.join(', ')
+            continue;
+          }
+        }
+        valueString = valueString + getTranslation(k) + ": " + prepareDataValues(v, k)
       }
       return valueString
     }
@@ -108,7 +127,7 @@ const Character = observer(() => {
           if (data_value !== "") {
             data_value = data_value + ", "
           }
-          data_value = data_value + dict_translator[key] + " " + prepareDataValues(value)
+          data_value = data_value + dict_translator[key] + ": " + prepareDataValues(value, key)
         }
       }
       dataDict[data_key] = data_value
@@ -157,6 +176,7 @@ const Character = observer(() => {
     const data = {
       "Атрибуты": {
         type: "Атрибуты",
+        displayType: "keyValue",
         data: {
           "Восприятие 👁": prepareAttString(playerData.perception, playerData.perception_increase),
           "Сила 🏋️": prepareAttString(playerData.strength, playerData.strength_increase),
@@ -170,6 +190,7 @@ const Character = observer(() => {
       },
       "Навыки": {
         type: "Навыки",
+        displayType: "keyValue",
         data: {
           "Торговля 💰": playerData.barter,
           "Устрашение 👺": playerData.intimidation,
@@ -198,19 +219,23 @@ const Character = observer(() => {
       },
       "Магия": {
         type: "Магия",
-        data: characterDataToShow(playerData.prepared_magic),
+        displayType: "magicCards",
+        data: playerData.prepared_magic || {},
       },
       "Таланты": {
         type: "Таланты",
-        data: arrToCountedDict(playerData.talents),
+        displayType: "cards",
+        data: arrToCountedDict(playerData.talents || []),
       },
       "Умения": {
         type: "Умения",
-        data: characterDataToShow(playerData.abilities)
+        displayType: "abilityCards",
+        data: playerData.abilities || {}
       },
       "Временные эффекты": {
         type: "Временные эффекты",
-        data: characterDataToShow(playerData.temporary_effects)
+        displayType: "cards",
+        data: playerData.temporary_effects || {}
       }
     };
 
@@ -219,11 +244,9 @@ const Character = observer(() => {
 
   // Функция для получения описания по категории и ключу
   const getDescription = (category, key) => {
-    // Сначала пробуем найти в mapping словаре
     const mappedKey = keyMappingDict[key];
     const searchKey = mappedKey || key;
     
-    // Получаем соответствующий словарь
     let dict;
     switch (category) {
       case "Атрибуты":
@@ -242,32 +265,27 @@ const Character = observer(() => {
         dict = {};
     }
     
-    // Создаем обратный mapping для поиска
     const reverseMapping = {};
     Object.keys(keyMappingDict).forEach(keyWithEmoji => {
       const cleanKey = keyMappingDict[keyWithEmoji];
       reverseMapping[cleanKey] = keyWithEmoji;
     });
     
-    // Пробуем разные варианты ключей по порядку:
     const possibleKeys = [
-      searchKey, // оригинальный ключ
-      keyMappingDict[searchKey], // если searchKey уже был с эмодзи
-      reverseMapping[searchKey], // обратный поиск
-      searchKey.replace(/[^\w\s]/g, '').trim() // чистый ключ
+      searchKey,
+      keyMappingDict[searchKey],
+      reverseMapping[searchKey],
+      searchKey.replace(/[^\w\s]/g, '').trim()
     ];
     
-    // Убираем undefined и дубликаты
     const uniqueKeys = [...new Set(possibleKeys.filter(Boolean))];
     
-    // Ищем первое совпадение
     for (const testKey of uniqueKeys) {
       if (dict[testKey]) {
         return dict[testKey];
       }
     }
     
-    // Если ничего не нашли
     return "Описание для этого элемента пока не добавлено";
   };
 
@@ -285,7 +303,6 @@ const Character = observer(() => {
     return max > 0 ? (current / max) * 100 : 0;
   };
 
-  // Упрощенный рендер тултипа
   const renderTooltip = (description) => (
     <Tooltip className="fantasy-tooltip">
       {description}
@@ -316,7 +333,6 @@ const Character = observer(() => {
     );
   }
 
-  // Единый компонент для отображения карточек в стиле "Атака"
   const renderStatCard = (title, icon, data, color = "warning") => (
     <Col md={6} lg={4} className="mb-3">
       <Card className="h-100 fantasy-card">
@@ -332,7 +348,6 @@ const Character = observer(() => {
               </Badge>
             </div>
           ))}
-          {/* Добавляем прогресс-бар здоровья в карточку "Основная информация" */}
           {title === "Основная информация" && (
               <div className="progress-section">
                 <div className="progress-label">
@@ -379,14 +394,12 @@ const Character = observer(() => {
             </div>
           </div>
         </div>
-
           )}
         </Card.Body>
       </Card>
     </Col>
   );
 
-  // Определяем тип бейджа на основе ключа и значения
   const getBadgeType = (key, value) => {
     if (typeof value === 'number') {
       if (key.includes('атака') || key.includes('урон') || key.includes('критическ')) return 'combat';
@@ -405,7 +418,7 @@ const Character = observer(() => {
     return 'primary';
   };
 
-  // Компонент для отображения элемента с тултипом
+  // Компонент для отображения элемента с тултипом (атрибуты и навыки)
   const AttributeWithTooltip = ({ category, itemKey, value }) => {
     const description = getDescription(category, itemKey);
     
@@ -423,6 +436,205 @@ const Character = observer(() => {
         </div>
       </OverlayTrigger>
     );
+  };
+
+  // Компонент для отображения карточек магии
+  const MagicCard = ({ spellKey, spellData }) => {
+    const description = getDescription("Магия", spellKey);
+    
+    return (
+      <Col xs={12} sm={6} md={4} lg={3} className="mb-3">
+        <OverlayTrigger
+          placement="top"
+          delay={{ show: 250, hide: 400 }}
+          overlay={renderTooltip(description)}
+        >
+          <Card className="h-100 fantasy-card">
+            <Card.Header className="fantasy-card-header fantasy-card-header-magic">
+              <h6 className="mb-0">{spellData.name || getTranslation(spellKey)}</h6>
+            </Card.Header>
+            <Card.Body>
+              {Object.entries(spellData).map(([key, value]) => {
+                if (key === 'name') return null;
+                
+                return (
+                  <div key={key} className="fantasy-stat-row">
+                    <span className="fantasy-text-muted">{getTranslation(key)}:</span>
+                    <span className="fantasy-text-bold">
+                      {Array.isArray(value) && (key === 'influencing' || key === 'влияющие') 
+                        ? translateArray(value).join(', ')
+                        : prepareDataValues(value, key)}
+                    </span>
+                  </div>
+                );
+              })}
+            </Card.Body>
+          </Card>
+        </OverlayTrigger>
+      </Col>
+    );
+  };
+
+  // Компонент для отображения карточек умений
+  const AbilityCard = ({ abilityKey, abilityData }) => {
+    const description = getDescription("Умения", abilityKey);
+    
+    return (
+      <Col xs={12} sm={6} md={4} lg={3} className="mb-3">
+        <OverlayTrigger
+          placement="top"
+          delay={{ show: 250, hide: 400 }}
+          overlay={renderTooltip(description)}
+        >
+          <Card className="h-100 fantasy-card">
+            <Card.Header className="fantasy-card-header fantasy-card-header-info">
+              <h6 className="mb-0">{abilityData.name || getTranslation(abilityKey)}</h6>
+            </Card.Header>
+            <Card.Body>
+              {Object.entries(abilityData).map(([key, value]) => {
+                if (key === 'name') return null;
+                
+                return (
+                  <div key={key} className="fantasy-stat-row">
+                    <span className="fantasy-text-muted">{getTranslation(key)}:</span>
+                    <span className="fantasy-text-bold">
+                      {Array.isArray(value) && (key === 'influencing' || key === 'влияющие') 
+                        ? translateArray(value).join(', ')
+                        : prepareDataValues(value, key)}
+                    </span>
+                  </div>
+                );
+              })}
+            </Card.Body>
+          </Card>
+        </OverlayTrigger>
+      </Col>
+    );
+  };
+
+  // Компонент для отображения карточек талантов и эффектов
+  const CardItem = ({ title, content, category, count = null }) => {
+    const description = getDescription(category, title);
+    
+    return (
+      <Col xs={12} sm={6} md={4} lg={3} className="mb-3">
+        <OverlayTrigger
+          placement="top"
+          delay={{ show: 250, hide: 400 }}
+          overlay={renderTooltip(description)}
+        >
+          <Card className="h-100 fantasy-card">
+            <Card.Header className={`fantasy-card-header fantasy-card-header-${getCategoryColor(category)}`}>
+              <h6 className="mb-0">
+                {title}
+                {count !== null && <Badge className="ms-2">x{count}</Badge>}
+              </h6>
+            </Card.Header>
+            <Card.Body>
+              {typeof content === 'object' && content !== null ? (
+                Object.entries(content).map(([key, value]) => (
+                  key !== 'name' && (
+                    <div key={key} className="fantasy-stat-row">
+                      <span className="fantasy-text-muted">{getTranslation(key)}:</span>
+                      <span className="fantasy-text-bold">
+                        {Array.isArray(value) && (key === 'influencing' || key === 'влияющие')
+                          ? translateArray(value).join(', ')
+                          : prepareDataValues(value, key)}
+                      </span>
+                    </div>
+                  )
+                ))
+              ) : (
+                <div className="text-center fantasy-text-muted">
+                  {prepareDataValues(content)}
+                </div>
+              )}
+            </Card.Body>
+          </Card>
+        </OverlayTrigger>
+      </Col>
+    );
+  };
+
+  // Функция для рендера разных типов данных
+  const renderSectionData = (category) => {
+    const categoryData = sectionData[category];
+    if (!categoryData) return null;
+
+    switch (categoryData.displayType) {
+      case 'keyValue':
+        return (
+          <div className="fantasy-attributes-grid">
+            {Object.entries(categoryData.data).map(([key, value]) => (
+              <AttributeWithTooltip
+                key={key}
+                category={category}
+                itemKey={key}
+                value={value}
+              />
+            ))}
+          </div>
+        );
+      
+      case 'magicCards':
+        return (
+          <Row>
+            {Object.entries(categoryData.data).map(([key, value]) => (
+              <MagicCard
+                key={key}
+                spellKey={key}
+                spellData={value}
+              />
+            ))}
+          </Row>
+        );
+      
+      case 'abilityCards':
+        return (
+          <Row>
+            {Object.entries(categoryData.data).map(([key, value]) => (
+              <AbilityCard
+                key={key}
+                abilityKey={key}
+                abilityData={value}
+              />
+            ))}
+          </Row>
+        );
+      
+      case 'cards':
+        return (
+          <Row>
+            {Object.entries(categoryData.data).map(([key, value]) => {
+              // Для талантов значение - это количество
+              if (category === "Таланты") {
+                return (
+                  <CardItem
+                    key={key}
+                    title={getTranslation(key)}
+                    content={value}
+                    category={category}
+                    count={value}
+                  />
+                );
+              }
+              
+              // Для остальных - объект с данными
+              return (
+                <CardItem
+                  key={key}
+                  title={getTranslation(key)}
+                  content={value}
+                  category={category}
+                />
+              );
+            })}
+          </Row>
+        );
+      
+      default:
+        return null;
+    }
   };
 
   return (
@@ -511,18 +723,7 @@ const Character = observer(() => {
                       <h5 className="mb-0">{category}</h5>
                     </Card.Header>
                     <Card.Body>
-                      {sectionData[category] && (
-                        <div className="fantasy-attributes-grid">
-                          {Object.entries(sectionData[category].data).map(([key, value]) => (
-                            <AttributeWithTooltip
-                              key={key}
-                              category={category}
-                              itemKey={key}
-                              value={value}
-                            />
-                          ))}
-                        </div>
-                      )}
+                      {renderSectionData(category)}
                     </Card.Body>
                   </Card>
                 </Col>

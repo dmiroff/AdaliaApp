@@ -253,7 +253,7 @@ const AuctionTab = observer(() => {
   }
 
   return (
-    <div className="fantasy-paper content-overlay">
+    <div className="fantasy-paper content-overlay bulk-purchase-tab">
       {/* Уведомления */}
       {error && (
         <Alert variant="danger" onClose={() => setError("")} dismissible>
@@ -301,7 +301,7 @@ const AuctionTab = observer(() => {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="🔍 Поиск по названию лота..."
-            className="inventory-search-input"
+            className="inventory-search-input bulk-purchase"
           />
         </Col>
         <Col md={4}>

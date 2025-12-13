@@ -390,7 +390,7 @@ const BulkPurchaseTab = observer(() => {
   }
 
   return (
-    <div className="fantasy-paper content-overlay">
+    <div className="fantasy-paper content-overlay bulk-purchase-tab">
       {error && (
         <Alert variant="danger" onClose={() => setError("")} dismissible>
           {error}
@@ -429,15 +429,15 @@ const BulkPurchaseTab = observer(() => {
         </Modal.Footer>
       </Modal>
 
-      {/* Упрощенная панель управления с одной кнопкой-переключателем */}
-      <Row className="mb-4">
+      {/* Упрощенная панель управления с поиском сразу без верхнего отступа */}
+      <Row className="mb-3">
         <Col md={8}>
           <Form.Control
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={`🔍 Поиск по ${currentMode === 'requests' ? 'заявкам' : 'складу'}...`}
-            className="inventory-search-input"
+            className="inventory-search-input bulk-purchase"
           />
         </Col>
         <Col md={4}>

@@ -279,7 +279,7 @@ const InventoryList = observer(() => {
       )}
 
       {/* Поиск сверху */}
-      <div className="inventory-search-container mb-3">
+      <div className="fantasy-paper content-overlay bulk-purchase-tab">
         <Form className="fantasy-form">
           <div className="search-input-wrapper">
             <i className="fas fa-search search-icon"></i>
@@ -288,7 +288,7 @@ const InventoryList = observer(() => {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Название предмета..."
-              className="inventory-search-input"
+              className="inventory-search-input bulk-purchase"
             />
           </div>
         </Form>
