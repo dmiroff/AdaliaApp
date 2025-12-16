@@ -1,672 +1,420 @@
-import React from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { observer } from "mobx-react-lite";
-import { useContext, useEffect, useState, useCallback, useRef } from "react";
-import { Row, Col, Form, Button, Card, Badge, Alert, Modal } from "react-bootstrap";
+import { Row, Col, Card, Button, Badge, Alert, Modal, Spinner, Form } from "react-bootstrap";
 import { Context } from "../index";
-import { Spinner } from "react-bootstrap";
-import Fuse from "fuse.js";
-import CreateBuyRequestModal from "./CreateBuyRequestModal";
-import SellModal from "./SellModal";
-import CancelRequestModal from "./CancelRequestModal";
-import StorageCollectModal from "./StorageCollectModal";
-import { fetchBuyRequests, createBuyRequest, sellToBuyRequest, collectPurchasedItems, cancelBuyRequest, getPlayerStorage } from "../http/bulkPurchase";
 import GetDataById from "../http/GetData";
+import { premiumPurchase } from "../http/premiumApi";
 
-const BulkPurchaseTab = observer(() => {
+const DonationTab = observer(() => {
   const { user } = useContext(Context);
-  const [buyRequests, setBuyRequests] = useState([]);
-  const [storageData, setStorageData] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [query, setQuery] = useState("");
-  const [selectedRequest, setSelectedRequest] = useState(null);
-  const [selectedStorageItem, setSelectedStorageItem] = useState(null);
-  
-  // Модальные окна
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showSellModal, setShowSellModal] = useState(false);
-  const [showCancelModal, setShowCancelModal] = useState(false);
-  const [showCollectModal, setShowCollectModal] = useState(false);
-  const [showErrorModal, setShowErrorModal] = useState(false);
-  const [modalError, setModalError] = useState("");
-  
-  const [sellAmount, setSellAmount] = useState("");
-  const [error, setError] = useState("");
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [success, setSuccess] = useState("");
-  const [currentMode, setCurrentMode] = useState('requests');
-
+  const [error, setError] = useState("");
   const [playerData, setPlayerData] = useState(null);
-  const [userInventory, setUserInventory] = useState({});
-  const [dataLoaded, setDataLoaded] = useState(false);
-  
-  // Флаги для предотвращения повторных загрузок
-  const hasLoadedPlayerData = useRef(false);
-  const hasLoadedRequests = useRef(false);
-  const hasLoadedStorage = useRef(false);
+  const [loading, setLoading] = useState(true);
+  const [delay, setDelay] = useState(false);
+  const [quantity, setQuantity] = useState(1); // Добавляем состояние для количества
 
-  // Функция для показа ошибки в модальном окне
-  const showErrorInModal = useCallback((errorMessage) => {
-    setModalError(errorMessage);
-    setShowErrorModal(true);
-  }, []);
-
-  // Функция закрытия модального окна ошибок
-  const handleCloseErrorModal = useCallback(() => {
-    setShowErrorModal(false);
-    setModalError("");
-  }, []);
-
-  // Функция переключения режима
-  const toggleMode = useCallback(() => {
-    setCurrentMode(prev => {
-      const newMode = prev === 'requests' ? 'storage' : 'requests';
-      // Сбрасываем флаги загрузки при переключении режима
-      if (newMode === 'requests') hasLoadedRequests.current = false;
-      if (newMode === 'storage') hasLoadedStorage.current = false;
-      return newMode;
-    });
-    setQuery("");
-  }, []);
-
-  // Функция для загрузки данных игрока
-  const loadPlayerData = useCallback(async () => {
-    if (hasLoadedPlayerData.current) return;
-    
-    try {
-      setLoading(true);
-      console.log("Loading player data...");
-      const playerDataResponse = await GetDataById();
-      
-      if (playerDataResponse && playerDataResponse.data) {
+  // Загрузка данных игрока
+  useEffect(() => {
+    const fetchPlayer = async () => {
+      try {
+        const playerDataResponse = await GetDataById();
         setPlayerData(playerDataResponse.data);
-        const safeInventory = playerDataResponse.data.inventory_new || {};
-        user.setPlayerInventory(safeInventory);
-        setUserInventory(safeInventory);
         user.setPlayer(playerDataResponse.data);
-        setDataLoaded(true);
-        hasLoadedPlayerData.current = true;
-        console.log("Player data loaded successfully");
+        setLoading(false);
+      } catch (err) {
+        console.error("Ошибка загрузки данных игрока:", err);
+        setError("Не удалось загрузить данные игрока");
+        setLoading(false);
       }
-    } catch (error) {
-      console.error("Error fetching player data:", error);
-      const errorMessage = error.response?.data?.detail || "Ошибка загрузки данных игрока";
-      showErrorInModal(errorMessage);
-      setError(errorMessage);
-    } finally {
-      setLoading(false);
-    }
-  }, [user, showErrorInModal]);
+    };
 
-  // Функция для загрузки заявок
-  const loadBuyRequests = useCallback(async (forceRefresh = false) => {
-    if (!dataLoaded) return;
-    
-    // Если уже загружено и не требуется принудительное обновление
-    if (hasLoadedRequests.current && !forceRefresh) return;
-    
-    try {
-      console.log("Loading buy requests...");
-      const requests = await fetchBuyRequests();
-      console.log(`Buy requests loaded: ${requests.length} items`);
-      
-      const safeRequests = Array.isArray(requests) ? requests : [];
-      setBuyRequests(safeRequests);
-      hasLoadedRequests.current = true;
-    } catch (error) {
-      console.error("Error fetching buy requests:", error);
-      const errorMessage = error.response?.data?.detail || "Ошибка загрузки заявок на скупку";
-      showErrorInModal(errorMessage);
-      setError(errorMessage);
-      setBuyRequests([]);
-    }
-  }, [dataLoaded, showErrorInModal]);
-
-  // Функция для загрузки склада
-  const loadStorage = useCallback(async (forceRefresh = false) => {
-    if (!dataLoaded) return;
-    
-    // Если уже загружено и не требуется принудительное обновление
-    if (hasLoadedStorage.current && !forceRefresh) return;
-    
-    try {
-      console.log("Loading storage data...");
-      const storage = await getPlayerStorage();
-      console.log(`Storage data loaded: ${storage?.data?.items?.length || 0} items`);
-      
-      const safeStorage = Array.isArray(storage?.data?.items) ? storage.data.items : [];
-      setStorageData(safeStorage);
-      hasLoadedStorage.current = true;
-    } catch (error) {
-      console.error("Error fetching storage:", error);
-      const errorMessage = error.response?.data?.detail || "Ошибка загрузки данных склада";
-      showErrorInModal(errorMessage);
-      setError(errorMessage);
-      setStorageData([]);
-    }
-  }, [dataLoaded, showErrorInModal]);
-
-  // Загрузка данных игрока при монтировании компонента
-  useEffect(() => {
-    loadPlayerData();
-  }, [loadPlayerData]);
-
-  // Загрузка заявок при изменении режима
-  useEffect(() => {
-    if (currentMode === 'requests' && dataLoaded) {
-      loadBuyRequests();
-    }
-  }, [currentMode, dataLoaded, loadBuyRequests]);
-
-  // Загрузка склада при изменении режима
-  useEffect(() => {
-    if (currentMode === 'storage' && dataLoaded) {
-      loadStorage();
-    }
-  }, [currentMode, dataLoaded, loadStorage]);
-
-  const updateUserData = useCallback(async () => {
-    try {
-      const playerDataResponse = await GetDataById();
-      if (playerDataResponse && playerDataResponse.data) {
-        setPlayerData(playerDataResponse.data);
-        const safeInventory = playerDataResponse.data.inventory_new || {};
-        user.setPlayerInventory(safeInventory);
-        setUserInventory(safeInventory);
-        user.setPlayer(playerDataResponse.data);
-        console.log("User data updated");
-      }
-    } catch (error) {
-      console.error("Error updating user data:", error);
-    }
+    fetchPlayer();
   }, [user]);
 
-  const handleSell = useCallback(async () => {
-    try {
-      setError("");
-      const amount = Number(sellAmount);
-      if (isNaN(amount) || amount <= 0) {
-        const errorMessage = "Введите корректное количество";
-        showErrorInModal(errorMessage);
-        setError(errorMessage);
-        return;
-      }
+  useEffect(() => {
+    if (playerData) {
+      setTimeout(() => {
+        setDelay(true);
+      }, 1000);
+    }
+  }, [playerData]);
 
-      const response = await sellToBuyRequest(selectedRequest.id, { amount });
-      
-      if (response.status) {
-        setSuccess(response.message);
-        setShowSellModal(false);
-        setSellAmount("");
+  // Список донатных товаров
+  const donationProducts = [
+    {
+      id: 1,
+      name: "💰 Торговец",
+      description: "Постоянный доступ к аукциону, бирже и скупке",
+      price: 200,
+      currency: "💎",
+      features: ["Доступ к торговле вне аукциона"],
+      purchased: playerData?.upgrades?.includes("Торговец") || false,
+      type: "permanent"
+    },
+    {
+      id: 2,
+      name: "🐎 Рысак",
+      description: "Верный спутник для ускоренного перемещения между локациями",
+      price: 500,
+      currency: "💎",
+      features: ["Быстрые перемещения"],
+      purchased: playerData?.upgrades?.includes("Рысак") || false,
+      type: "permanent"
+    },
+    {
+      id: 3,
+      name: "🌾 Пожинатель на 7 дней",
+      description: "Получите игровой опыт нового уровня",
+      price: 300,
+      currency: "💎",
+      features: ["+50% к опыту", "+50% к шансам выпадения предметов", "Отдых после боя"],
+      purchased: false,
+      type: "premium",
+      duration_days: 7
+    },
+    {
+      id: 4,
+      name: "🌾 Пожинатель на 30 дней",
+      description: "Исследуйте просторы Адалии с легкостью",
+      price: 1000,
+      currency: "💎",
+      features: ["+50% к опыту", "+50% к шансам выпадения предметов", "Отдых после боя"],
+      purchased: false,
+      type: "premium", 
+      duration_days: 30
+    },
+    {
+      id: 5,
+      name: "🌀 Камень забвения",
+      description: "Магический камень, позволяющий сбросить свойства предмета",
+      price: 50,
+      currency: "💎",
+      features: ["Сброс всех свойств предмета"],
+      purchased: false,
+      type: "consumable",
+      maxQuantity: 100 // Максимальное количество для покупки
+    }
+  ];
+
+  const handlePurchaseClick = (product) => {
+    setSelectedProduct(product);
+    setQuantity(1); // Сбрасываем количество при выборе нового товара
+    setShowConfirmModal(true);
+    setError("");
+  };
+
+  const handleConfirmPurchase = async () => {
+    try {
+      // Используем новый API метод с количеством для consumable товаров
+      const result = await premiumPurchase(
+        selectedProduct.id,
+        selectedProduct.type,
+        selectedProduct.duration_days,
+        selectedProduct.type === "consumable" ? quantity : undefined // Передаем количество только для consumable
+      );
+
+      if (result.status === 200) {
+        const message = selectedProduct.type === "consumable" 
+          ? `Покупка "${selectedProduct.name}" x${quantity} успешна!`
+          : `Покупка "${selectedProduct.name}" успешна!`;
+        setSuccess(message);
         
-        // Обновить данные игрока
-        await updateUserData();
-        
-        // Обновить список заявок
-        if (currentMode === 'requests') {
-          await loadBuyRequests(true); // Принудительное обновление
+        // Обновляем данные пользователя через контекст
+        if (user.updatePlayerData) {
+          user.updatePlayerData();
         }
         
-        setTimeout(() => setSuccess(""), 3000);
+        // Перезагружаем данные игрока
+        const playerDataResponse = await GetDataById();
+        setPlayerData(playerDataResponse.data);
+        user.setPlayer(playerDataResponse.data);
       } else {
-        const errorMessage = response.message || "Ошибка при продаже";
-        showErrorInModal(errorMessage);
-        setError(errorMessage);
+        setError(result.detail || "Ошибка при покупке");
       }
-    } catch (error) {
-      console.error("Error selling items:", error);
-      const errorMessage = error.response?.data?.detail || error.message || "Ошибка при продаже предметов";
-      showErrorInModal(errorMessage);
-      setError(errorMessage);
+    } catch (err) {
+      setError(err.message || "Ошибка при выполнении покупки");
     }
-  }, [selectedRequest, sellAmount, currentMode, showErrorInModal, updateUserData, loadBuyRequests]);
 
-  const handleCollect = useCallback(async (itemId, amount = 1) => {
-    try {
+    setShowConfirmModal(false);
+    setSelectedProduct(null);
+    
+    setTimeout(() => {
+      setSuccess("");
       setError("");
-      const response = await collectPurchasedItems(itemId, amount);
-      
-      if (response.status) {
-        setSuccess(response.message);
-        setShowCollectModal(false);
-        
-        // Обновить данные игрока
-        await updateUserData();
-        
-        // Обновить список склада
-        if (currentMode === 'storage') {
-          await loadStorage(true); // Принудительное обновление
-        }
-        
-        setTimeout(() => setSuccess(""), 3000);
-      } else {
-        const errorMessage = response.message || "Ошибка при получении предметов";
-        showErrorInModal(errorMessage);
-        setError(errorMessage);
-      }
-    } catch (error) {
-      console.error("Error collecting items:", error);
-      const errorMessage = error.response?.data?.detail || error.message || "Ошибка при получении предметов";
-      showErrorInModal(errorMessage);
-      setError(errorMessage);
+    }, 5000);
+  };
+
+  const formatPrice = (price, currency) => {
+    return `${price.toLocaleString('ru-RU')} ${currency}`;
+  };
+
+  const handleQuantityChange = (value) => {
+    const numValue = parseInt(value);
+    if (numValue > 0 && numValue <= (selectedProduct?.maxQuantity || 100)) {
+      setQuantity(numValue);
     }
-  }, [currentMode, showErrorInModal, updateUserData, loadStorage]);
+  };
 
-  const handleCancelRequest = useCallback(async () => {
-    try {
-      setError("");
-      const response = await cancelBuyRequest(selectedRequest.id);
-      
-      if (response.status) {
-        setSuccess(response.message);
-        setShowCancelModal(false);
-        
-        // Обновить данные игрока
-        await updateUserData();
-        
-        // Обновить список заявок
-        if (currentMode === 'requests') {
-          await loadBuyRequests(true); // Принудительное обновление
-        }
-        
-        setTimeout(() => setSuccess(""), 3000);
-      } else {
-        const errorMessage = response.message || "Ошибка при отмене заявки";
-        showErrorInModal(errorMessage);
-        setError(errorMessage);
-      }
-    } catch (error) {
-      console.error("Error cancelling buy request:", error);
-      const errorMessage = error.response?.data?.detail || error.message || "Ошибка при отмене заявки";
-      showErrorInModal(errorMessage);
-      setError(errorMessage);
-    }
-  }, [selectedRequest, currentMode, showErrorInModal, updateUserData, loadBuyRequests]);
+  // Рассчитываем общую стоимость с учетом количества
+  const calculateTotalPrice = () => {
+    if (!selectedProduct) return 0;
+    return selectedProduct.price * quantity;
+  };
 
-  const handleCreateRequest = useCallback(async (buyRequestData) => {
-    try {
-      setError("");
-      const response = await createBuyRequest(buyRequestData);
-      
-      if (response.status) {
-        setSuccess(response.message);
-        setShowCreateModal(false);
-        
-        // Обновить данные игрока
-        await updateUserData();
-        
-        // Обновить список заявок
-        if (currentMode === 'requests') {
-          await loadBuyRequests(true); // Принудительное обновление
-        }
-        
-        setTimeout(() => setSuccess(""), 3000);
-      } else {
-        const errorMessage = response.message || "Ошибка при создании заявки";
-        showErrorInModal(errorMessage);
-        setError(errorMessage);
-      }
-    } catch (error) {
-      console.error("Error creating buy request:", error);
-      const errorMessage = error.response?.data?.detail || error.message || "Ошибка при создании заявки";
-      showErrorInModal(errorMessage);
-      setError(errorMessage);
-    }
-  }, [currentMode, showErrorInModal, updateUserData, loadBuyRequests]);
+  // Проверяем активен ли премиум статус
+  const isPremiumActive = playerData?.premium_active || false;
 
-  const inventoryArray = React.useMemo(() => {
-    if (!userInventory || Object.keys(userInventory).length === 0) {
-        return [];
-    }
-
-    const filteredItemsWithKeys = Object.entries(userInventory).filter(
-        ([key, item]) => item && typeof item === 'object'
-    );
-
-    const itemObjects = filteredItemsWithKeys.map(([id, data]) => ({ 
-        id: parseInt(id), 
-        ...(data || {})
-    }));
-
-    return itemObjects;
-  }, [userInventory]);
-
-  // Безопасная фильтрация заявок
-  const filteredRequests = React.useMemo(() => {
-    if (!Array.isArray(buyRequests)) return [];
-    
-    if (query && buyRequests.length > 0 && currentMode === 'requests') {
-      try {
-        const fuse = new Fuse(buyRequests, {
-          keys: ["item_name"],
-          threshold: 0.3
-        });
-        const searchResults = fuse.search(query);
-        return searchResults.map(result => result.item);
-      } catch (error) {
-        console.error("Search error:", error);
-        return buyRequests;
-      }
-    }
-    
-    return buyRequests;
-  }, [buyRequests, query, currentMode]);
-
-  // Безопасная фильтрация склада
-  const filteredStorage = React.useMemo(() => {
-    if (!Array.isArray(storageData)) return [];
-    
-    if (query && storageData.length > 0 && currentMode === 'storage') {
-      try {
-        const fuse = new Fuse(storageData, {
-          keys: ["name"],
-          threshold: 0.3
-        });
-        const searchResults = fuse.search(query);
-        return searchResults.map(result => result.item);
-      } catch (error) {
-        console.error("Search error:", error);
-        return storageData;
-      }
-    }
-    
-    return storageData;
-  }, [storageData, query, currentMode]);
-
-  if (loading) {
+  if (!delay) {
     return (
-      <div className="d-flex justify-content-center align-items-center fantasy-paper p-4">
-        <Spinner animation="border" role="status" className="fantasy-text-primary">
-          <span className="visually-hidden">Loading...</span>
-        </Spinner>
+      <div className="d-flex justify-content-center align-items-center min-vh-50">
+        <div className="text-center">
+          <Spinner animation="border" variant="secondary" role="status" style={{ width: '3rem', height: '3rem' }}>
+            <span className="visually-hidden">Loading...</span>
+          </Spinner>
+          <p className="fantasy-text-gold">Загрузка данных персонажа...</p>
+        </div>
       </div>
     );
   }
 
-  if (!playerData) {
+  if (loading) {
     return (
-      <div className="fantasy-paper p-4 text-center">
-        <div className="fantasy-text-danger">Error: Player data not found</div>
+      <div className="d-flex justify-content-center align-items-center min-vh-50">
+        <div className="text-center">
+          <Spinner animation="border" variant="secondary" />
+          <p className="mt-2 text-muted">Загрузка...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="fantasy-paper content-overlay bulk-purchase-tab">
-      {error && (
-        <Alert variant="danger" onClose={() => setError("")} dismissible>
-          {error}
-        </Alert>
-      )}
+    <div className="fantasy-paper content-overlay">
+      {/* Уведомления */}
       {success && (
-        <Alert variant="success" onClose={() => setSuccess("")} dismissible>
-          {success}
+        <Alert variant="success" className="fantasy-alert">
+          <div className="text-center">
+            <h5>🎉 Покупка успешна!</h5>
+            <p className="mb-0">{success}</p>
+          </div>
         </Alert>
       )}
 
-      {/* Модальное окно для ошибок */}
+      {error && (
+        <Alert variant="danger" className="fantasy-alert">
+          <div className="text-center">
+            <h5>❌ Ошибка</h5>
+            <p className="mb-0">{error}</p>
+          </div>
+        </Alert>
+      )}
+
+      {/* Заголовок */}
+      <div className="text-center mb-5">
+        <h2 className="fantasy-text-dark">🌟 Премиум Магазин</h2>
+        <p className="fantasy-text-muted">
+          Улучшите игровой опыт используя дополнительные функции
+        </p>
+      </div>
+
+      {/* Баланс далеонов */}
+      <Card className="fantasy-card mb-4">
+        <Card.Body className="text-center">
+          <h5 className="fantasy-text-primary">Ваш баланс</h5>
+          <div className="fantasy-text-dark fs-3 fw-bold">
+            {(playerData?.daleons || 0).toLocaleString('ru-RU')} 💎
+          </div>
+          {isPremiumActive && (
+            <Badge bg="success" className="mt-2">
+              ⭐ Пожинатель активен
+            </Badge>
+          )}
+        </Card.Body>
+      </Card>
+
+      {/* Список товаров */}
+      <Row>
+        {donationProducts.map((product) => {
+          const isPurchased = product.type === "permanent" ? product.purchased : false;
+          const isDisabled = isPurchased || (playerData?.daleons || 0) < product.price;
+          
+          return (
+            <Col key={product.id} lg={6} className="mb-4">
+              <Card className={`fantasy-card h-100`}>
+                <Card.Body className="d-flex flex-column">
+                  <div className="text-center mb-3">
+                    <h4 className="fantasy-text-primary">{product.name}</h4>
+                    {product.type === "permanent" && product.purchased && (
+                      <Badge bg="success" className="mb-2">
+                        ✅ Приобретено
+                      </Badge>
+                    )}
+                    {product.type === "premium" && isPremiumActive && (
+                      <Badge bg="info" className="mb-2">
+                        ⭐ Активен
+                      </Badge>
+                    )}
+                  </div>
+
+                  <Card.Text className="fantasy-text-dark flex-grow-1">
+                    {product.description}
+                  </Card.Text>
+
+                  {/* Список особенностей */}
+                  <ul className="fantasy-feature-list">
+                    {product.features.map((feature, index) => (
+                      <li key={index} className="fantasy-text-muted">
+                        {feature}
+                      </li>
+                    ))}
+                  </ul>
+
+                  {/* Цена и кнопка */}
+                  <div className="mt-auto">
+                    <div className="text-center mb-3">
+                      <span className="fantasy-text-dark fs-3 fw-bold">
+                        {formatPrice(product.price, product.currency)}
+                      </span>
+                      {product.type === "consumable" && (
+                        <div className="mt-1">
+                          <small className="fantasy-text-muted">
+                            Можно купить оптом (до {product.maxQuantity || 100} шт)
+                          </small>
+                        </div>
+                      )}
+                    </div>
+                    
+                    <Button
+                      className={`fantasy-btn w-100 ${
+                        isDisabled 
+                          ? 'fantasy-btn-secondary fantasy-btn-disabled' 
+                          : 'fantasy-btn-gold'
+                      }`}
+                      onClick={() => !isDisabled && handlePurchaseClick(product)}
+                      disabled={isDisabled}
+                    >
+                      {product.type === "permanent" && product.purchased 
+                        ? 'Приобретено' 
+                        : (playerData?.daleons || 0) < product.price 
+                          ? 'Недостаточно средств'
+                          : product.type === "consumable"
+                            ? 'Купить'
+                            : 'Приобрести'
+                      }
+                    </Button>
+                  </div>
+                </Card.Body>
+              </Card>
+            </Col>
+          );
+        })}
+      </Row>
+
+      {/* Модальное окно подтверждения покупки */}
       <Modal 
-        show={showErrorModal} 
-        onHide={handleCloseErrorModal}
+        show={showConfirmModal} 
+        onHide={() => setShowConfirmModal(false)}
         centered
         className="fantasy-modal"
       >
-        <Modal.Header closeButton className="fantasy-card-header fantasy-card-header-danger">
-          <Modal.Title className="fantasy-text-gold">❌ Ошибка операции</Modal.Title>
+        <Modal.Header closeButton className="fantasy-card-header fantasy-card-header-primary">
+          <Modal.Title className="fantasy-text-gold">Подтверждение покупки</Modal.Title>
         </Modal.Header>
         <Modal.Body className="fantasy-modal-body">
-          <div className="text-center">
-            <div className="fs-1 mb-3">⚠️</div>
-            <h5 className="fantasy-text-dark mb-3">Не удалось выполнить операцию</h5>
-            <p className="fantasy-text-muted">{modalError}</p>
-          </div>
+          {selectedProduct && (
+            <div className="text-center">
+              <h4 className="fantasy-text-primary mb-3">{selectedProduct.name}</h4>
+              <p className="fantasy-text-dark">{selectedProduct.description}</p>
+              
+              {/* Поле выбора количества для consumable товаров */}
+              {selectedProduct.type === "consumable" && (
+                <div className="my-4">
+                  <Form.Label className="fantasy-text-dark">Количество:</Form.Label>
+                  <div className="d-flex align-items-center justify-content-center">
+                    <Button 
+                      variant="outline-secondary" 
+                      onClick={() => handleQuantityChange(Math.max(1, quantity - 1))}
+                      disabled={quantity <= 1}
+                      className="fantasy-btn-outline"
+                    >
+                      -
+                    </Button>
+                    <Form.Control
+                      type="number"
+                      value={quantity}
+                      onChange={(e) => handleQuantityChange(e.target.value)}
+                      min="1"
+                      max={selectedProduct.maxQuantity || 100}
+                      className="mx-2 text-center"
+                      style={{ width: '100px' }}
+                    />
+                    <Button 
+                      variant="outline-secondary" 
+                      onClick={() => handleQuantityChange(Math.min(selectedProduct.maxQuantity || 100, quantity + 1))}
+                      disabled={quantity >= (selectedProduct.maxQuantity || 100)}
+                      className="fantasy-btn-outline"
+                    >
+                      +
+                    </Button>
+                  </div>
+                  <div className="mt-2">
+                    <small className="fantasy-text-muted">
+                      Максимальное количество: {selectedProduct.maxQuantity || 100}
+                    </small>
+                  </div>
+                </div>
+              )}
+              
+              <div className="fantasy-price-display mb-3">
+                <span className="fantasy-text-gold fs-2 fw-bold">
+                  {selectedProduct.type === "consumable" 
+                    ? `${formatPrice(calculateTotalPrice(), selectedProduct.currency)} (${quantity} шт.)`
+                    : formatPrice(selectedProduct.price, selectedProduct.currency)
+                  }
+                </span>
+                {selectedProduct.type === "consumable" && (
+                  <div className="mt-1">
+                    <small className="fantasy-text-muted">
+                      {selectedProduct.price} 💎 за штуку
+                    </small>
+                  </div>
+                )}
+              </div>
+              
+              <Alert variant="info" className="fantasy-alert">
+                <small>
+                  С вашего счета будет списано {selectedProduct.type === "consumable" 
+                    ? calculateTotalPrice() 
+                    : selectedProduct.price} далеонов
+                </small>
+              </Alert>
+            </div>
+          )}
         </Modal.Body>
         <Modal.Footer className="fantasy-modal-footer">
           <Button 
-            className="fantasy-btn fantasy-btn-primary"
-            onClick={handleCloseErrorModal}
+            className="fantasy-btn fantasy-btn-secondary"
+            onClick={() => setShowConfirmModal(false)}
           >
-            Понятно
+            Отмена
+          </Button>
+          <Button 
+            className="fantasy-btn fantasy-btn-gold"
+            onClick={handleConfirmPurchase}
+            disabled={selectedProduct?.type === "consumable" && (playerData?.daleons || 0) < calculateTotalPrice()}
+          >
+            {selectedProduct?.type === "consumable" 
+              ? `Купить ${quantity} шт.`
+              : 'Подтвердить покупку'
+            }
           </Button>
         </Modal.Footer>
       </Modal>
-
-      {/* Упрощенная панель управления с поиском сразу без верхнего отступа */}
-      <Row className="mb-3">
-        <Col md={8}>
-          <Form.Control
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder={`🔍 Поиск по ${currentMode === 'requests' ? 'заявкам' : 'складу'}...`}
-            className="inventory-search-input bulk-purchase"
-          />
-        </Col>
-        <Col md={4}>
-          <div className="d-flex gap-2">
-            {/* Кнопка-переключатель режимов */}
-            <Button 
-              className="fantasy-btn fantasy-btn-primary flex-grow-1"
-              onClick={toggleMode}
-            >
-              {currentMode === 'requests' ? '📦 Перейти к складу' : '📋 Перейти к заявкам'}
-            </Button>
-            
-            {/* Кнопка создания заявки - только в режиме заявок */}
-            {currentMode === 'requests' && (
-              <Button 
-                className="fantasy-btn fantasy-btn-success"
-                onClick={() => setShowCreateModal(true)}
-              >
-                💰 Выставить заявку
-              </Button>
-            )}
-          </div>
-        </Col>
-      </Row>
-
-      {/* Заголовок текущего режима */}
-      <div className="mb-3">
-        <h4 className="fantasy-text-primary">
-          {currentMode === 'requests' ? '📋 Заявки на скупку' : '📦 Мой склад'}
-        </h4>
-        <div className="fantasy-text-muted small">
-          {currentMode === 'requests' 
-            ? 'Продавайте предметы по заявкам других игроков или создавайте свои' 
-            : 'Забирайте предметы, купленные по вашим заявкам'
-          }
-        </div>
-      </div>
-
-      {/* Режим заявок */}
-      {currentMode === 'requests' && (
-        <>
-          <Row>
-            {filteredRequests.map((request) => (
-              <Col key={request.id} md={6} lg={4} className="mb-3">
-                <BuyRequestCard 
-                  request={request} 
-                  onSellClick={() => {
-                    setSelectedRequest(request);
-                    setSellAmount("1");
-                    setShowSellModal(true);
-                  }}
-                  onCancelClick={() => {
-                    setSelectedRequest(request);
-                    setShowCancelModal(true);
-                  }}
-                  currentUserId={playerData?.id}
-                  userInventory={userInventory}
-                />
-              </Col>
-            ))}
-          </Row>
-
-          {filteredRequests.length === 0 && (
-            <div className="text-center fantasy-text-muted py-4">
-              {query ? "Заявки по вашему запросу не найдены" : "Заявок на скупку нет"}
-            </div>
-          )}
-        </>
-      )}
-
-      {/* Режим склада */}
-      {currentMode === 'storage' && (
-        <>
-          <Row>
-            {filteredStorage.map((storageItem) => (
-              <Col key={`${storageItem.item_id}-${storageItem.name}`} md={6} lg={4} className="mb-3">
-                <StorageItemCard 
-                  item={storageItem}
-                  onCollectClick={() => {
-                    setSelectedStorageItem(storageItem);
-                    setShowCollectModal(true);
-                  }}
-                />
-              </Col>
-            ))}
-          </Row>
-
-          {filteredStorage.length === 0 && (
-            <div className="text-center fantasy-text-muted py-4">
-              {query ? "Предметы по вашему запросу не найдены" : "Ваш склад пуст"}
-            </div>
-          )}
-        </>
-      )}
-
-      {/* Модальные окна */}
-      <SellModal
-        show={showSellModal}
-        onHide={() => setShowSellModal(false)}
-        selectedRequest={selectedRequest}
-        sellAmount={sellAmount}
-        setSellAmount={setSellAmount}
-        userInventory={userInventory}
-        onSell={handleSell}
-        loading={false}
-      />
-
-      <CancelRequestModal
-        show={showCancelModal}
-        onHide={() => setShowCancelModal(false)}
-        selectedRequest={selectedRequest}
-        onCancel={handleCancelRequest}
-        loading={false}
-      />
-
-      <StorageCollectModal
-        show={showCollectModal}
-        onHide={() => setShowCollectModal(false)}
-        selectedItem={selectedStorageItem}
-        onCollect={handleCollect}
-        loading={false}
-      />
-
-      <CreateBuyRequestModal 
-        show={showCreateModal}
-        onHide={() => setShowCreateModal(false)}
-        onCreate={handleCreateRequest}
-        playerData={playerData}
-        inventoryItems={inventoryArray}
-      />
     </div>
   );
 });
 
-// Компонент карточки заявки (без изменений)
-const BuyRequestCard = ({ request, onSellClick, onCancelClick, currentUserId, userInventory }) => {
-  const isMyRequest = request.user_id === currentUserId;
-  const itemIdStr = request.item_id.toString();
-  const canSell = userInventory[itemIdStr] && userInventory[itemIdStr].count > 0;
-
-  return (
-    <Card className={`fantasy-card h-100 ${isMyRequest ? 'border-warning' : ''}`}>
-      <Card.Body className="d-flex flex-column">
-        <div className="d-flex justify-content-between align-items-start mb-2">
-          <Card.Title className="fantasy-text-primary">{request.item_name}</Card.Title>
-          <div className="d-flex flex-column align-items-end">
-            <Badge bg={request.buy_amount > 10 ? "success" : request.buy_amount > 5 ? "warning" : "danger"}>
-              {request.buy_amount} шт.
-            </Badge>
-            {isMyRequest && (
-              <Badge bg="warning" className="mt-1">
-                Моя заявка
-              </Badge>
-            )}
-          </div>
-        </div>
-        
-        <Card.Text className="flex-grow-1">
-          <small className="fantasy-text-muted">
-            Цена за шт.: <strong>{request.buy_price} 🌕</strong><br/>
-            Общая сумма: <strong>{request.buy_price * request.buy_amount} 🌕</strong><br/>
-          </small>
-        </Card.Text>
-
-        <div className="mt-auto">
-          <Row className="g-2">
-            {!isMyRequest ? (
-              <Col>
-                <Button 
-                  size="sm" 
-                  className={`fantasy-btn fantasy-btn-gold w-100 ${!canSell ? 'fantasy-btn-disabled' : ''}`}
-                  onClick={onSellClick}
-                  disabled={!canSell}
-                >
-                  <span className="fantasy-btn-text">
-                    {canSell ? `Продать (${userInventory[itemIdStr].count} в инв.)` : "Нет в инвентаре"}
-                  </span>
-                </Button>
-              </Col>
-            ) : (
-              <Col>
-                <Button 
-                  size="sm" 
-                  className="fantasy-btn fantasy-btn-danger w-100"
-                  onClick={onCancelClick}
-                >
-                  <span className="fantasy-btn-text">Отменить заявку</span>
-                </Button>
-              </Col>
-            )}
-          </Row>
-        </div>
-      </Card.Body>
-    </Card>
-  );
-};
-
-// Компонент карточки предмета на складе (упрощенный)
-const StorageItemCard = ({ item, onCollectClick }) => {
-  return (
-    <Card className="fantasy-card h-100">
-      <Card.Body className="d-flex flex-column">
-        <div className="d-flex justify-content-between align-items-start mb-2">
-          <Card.Title className="fantasy-text-primary">{item.name}</Card.Title>
-          <Badge bg="info">
-            {item.count} шт.
-          </Badge>
-        </div>
-        
-        <Card.Text className="flex-grow-1">
-          <small className="fantasy-text-muted">
-            Вес за шт.: <strong>{item.weight} ⚖️</strong><br/>
-            Ценность: <strong>{item.value} 🌕</strong><br/>
-            ID: {item.item_id}
-          </small>
-        </Card.Text>
-
-        <div className="mt-auto">
-          <Button 
-            size="sm" 
-            className="fantasy-btn fantasy-btn-success w-100"
-            onClick={onCollectClick}
-          >
-            Забрать со склада
-          </Button>
-        </div>
-      </Card.Body>
-    </Card>
-  );
-};
-
-export default BulkPurchaseTab;
+export default DonationTab;

@@ -1,10 +1,9 @@
-// src/components/DonationTab.js
 import React, { useState, useContext, useEffect } from 'react';
 import { observer } from "mobx-react-lite";
-import { Row, Col, Card, Button, Badge, Alert, Modal, Spinner } from "react-bootstrap";
+import { Row, Col, Card, Button, Badge, Alert, Modal, Spinner, Form } from "react-bootstrap";
 import { Context } from "../index";
 import GetDataById from "../http/GetData";
-import { premiumPurchase } from "../http/premiumApi"; // Импортируем новый API
+import { premiumPurchase } from "../http/premiumApi";
 
 const DonationTab = observer(() => {
   const { user } = useContext(Context);
@@ -15,8 +14,9 @@ const DonationTab = observer(() => {
   const [playerData, setPlayerData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [delay, setDelay] = useState(false);
+  const [quantity, setQuantity] = useState(1); // Добавляем состояние для количества
 
-  // Загрузка данных игрока по аналогии с Character компонентом
+  // Загрузка данных игрока
   useEffect(() => {
     const fetchPlayer = async () => {
       try {
@@ -56,7 +56,7 @@ const DonationTab = observer(() => {
     },
     {
       id: 2,
-      name: "🐎  Рысак",
+      name: "🐎 Рысак",
       description: "Верный спутник для ускоренного перемещения между локациями",
       price: 500,
       currency: "💎",
@@ -85,26 +85,41 @@ const DonationTab = observer(() => {
       purchased: false,
       type: "premium", 
       duration_days: 30
+    },
+    {
+      id: 5,
+      name: "🌀 Камень забвения",
+      description: "Магический камень, позволяющий сбросить характеристики и перераспределить очки",
+      price: 50,
+      currency: "💎",
+      features: ["Сброс всех характеристик персонажа", "Возврат всех очков характеристик", "Возможность нового распределения"],
+      purchased: false,
+      type: "consumable",
+      maxQuantity: 100 // Максимальное количество для покупки
     }
   ];
 
   const handlePurchaseClick = (product) => {
     setSelectedProduct(product);
+    setQuantity(1); // Сбрасываем количество при выборе нового товара
     setShowConfirmModal(true);
     setError("");
   };
 
   const handleConfirmPurchase = async () => {
     try {
-      // Используем новый API метод
+      // Для consumable товаров передаем количество, для остальных - только ID и duration
       const result = await premiumPurchase(
         selectedProduct.id,
-        selectedProduct.type,
-        selectedProduct.duration_days
+        selectedProduct.type === "premium" ? selectedProduct.duration_days : null,
+        selectedProduct.type === "consumable" ? quantity : undefined
       );
 
       if (result.status === 200) {
-        setSuccess(`Покупка "${selectedProduct.name}" успешна!`);
+        const message = selectedProduct.type === "consumable" 
+          ? `Покупка "${selectedProduct.name}" x${quantity} успешна!`
+          : `Покупка "${selectedProduct.name}" успешна!`;
+        setSuccess(message);
         
         // Обновляем данные пользователя через контекст
         if (user.updatePlayerData) {
@@ -135,10 +150,22 @@ const DonationTab = observer(() => {
     return `${price.toLocaleString('ru-RU')} ${currency}`;
   };
 
+  const handleQuantityChange = (value) => {
+    const numValue = parseInt(value);
+    if (numValue > 0 && numValue <= (selectedProduct?.maxQuantity || 100)) {
+      setQuantity(numValue);
+    }
+  };
+
+  // Рассчитываем общую стоимость с учетом количества
+  const calculateTotalPrice = () => {
+    if (!selectedProduct) return 0;
+    return selectedProduct.price * quantity;
+  };
+
   // Проверяем активен ли премиум статус
   const isPremiumActive = playerData?.premium_active || false;
 
-  // Отображение загрузки по аналогии с Character
   if (!delay) {
     return (
       <div className="d-flex justify-content-center align-items-center min-vh-50">
@@ -216,7 +243,6 @@ const DonationTab = observer(() => {
           return (
             <Col key={product.id} lg={6} className="mb-4">
               <Card className={`fantasy-card h-100`}>
-                
                 <Card.Body className="d-flex flex-column">
                   <div className="text-center mb-3">
                     <h4 className="fantasy-text-primary">{product.name}</h4>
@@ -251,6 +277,13 @@ const DonationTab = observer(() => {
                       <span className="fantasy-text-dark fs-3 fw-bold">
                         {formatPrice(product.price, product.currency)}
                       </span>
+                      {product.type === "consumable" && (
+                        <div className="mt-1">
+                          <small className="fantasy-text-muted">
+                            Можно купить оптом (до {product.maxQuantity || 100} шт)
+                          </small>
+                        </div>
+                      )}
                     </div>
                     
                     <Button
@@ -266,7 +299,9 @@ const DonationTab = observer(() => {
                         ? 'Приобретено' 
                         : (playerData?.daleons || 0) < product.price 
                           ? 'Недостаточно средств'
-                          : 'Приобрести'
+                          : product.type === "consumable"
+                            ? 'Купить'
+                            : 'Приобрести'
                       }
                     </Button>
                   </div>
@@ -276,24 +311,6 @@ const DonationTab = observer(() => {
           );
         })}
       </Row>
-
-      {/* Дополнительная информация */}<Card className="fantasy-card mt-4">
-  <Card.Body>
-    <h4 className="fantasy-text-primary text-center">🌾Как управлять пожинателем?</h4>
-    <Row className="justify-content-center text-center"> {/* Добавлен justify-content-center */}
-      <Col md={5} className="mx-auto"> {/* Добавлен mx-auto для центрирования каждой колонки */}
-        <div className="fs-2"></div>
-        <h6>Пожинатель: ешь</h6>
-        <small className="fantasy-text-muted">По этой команде Пожинатель автоматически поглощает простую экипировку, превращая её в монеты, как если бы вы продали её торговцу</small>
-      </Col>
-      <Col md={5} className="mx-auto"> {/* Добавлен mx-auto для центрирования каждой колонки */}
-        <div className="fs-2"></div>
-        <h6>Пожинатель: не ешь</h6>
-        <small className="fantasy-text-muted">Пожинатель сохраняет свои остальные функции, переставая поглощать простую экипировку (ржавые предметы и любые предметы экипировки без свойств)</small>
-      </Col>
-    </Row>
-  </Card.Body>
-</Card>
 
       {/* Модальное окно подтверждения покупки */}
       <Modal 
@@ -310,14 +327,67 @@ const DonationTab = observer(() => {
             <div className="text-center">
               <h4 className="fantasy-text-primary mb-3">{selectedProduct.name}</h4>
               <p className="fantasy-text-dark">{selectedProduct.description}</p>
+              
+              {/* Поле выбора количества для consumable товаров */}
+              {selectedProduct.type === "consumable" && (
+                <div className="my-4">
+                  <Form.Label className="fantasy-text-dark">Количество:</Form.Label>
+                  <div className="d-flex align-items-center justify-content-center">
+                    <Button 
+                      variant="outline-secondary" 
+                      onClick={() => handleQuantityChange(Math.max(1, quantity - 1))}
+                      disabled={quantity <= 1}
+                      className="fantasy-btn-outline"
+                    >
+                      -
+                    </Button>
+                    <Form.Control
+                      type="number"
+                      value={quantity}
+                      onChange={(e) => handleQuantityChange(e.target.value)}
+                      min="1"
+                      max={selectedProduct.maxQuantity || 100}
+                      className="mx-2 text-center"
+                      style={{ width: '100px' }}
+                    />
+                    <Button 
+                      variant="outline-secondary" 
+                      onClick={() => handleQuantityChange(Math.min(selectedProduct.maxQuantity || 100, quantity + 1))}
+                      disabled={quantity >= (selectedProduct.maxQuantity || 100)}
+                      className="fantasy-btn-outline"
+                    >
+                      +
+                    </Button>
+                  </div>
+                  <div className="mt-2">
+                    <small className="fantasy-text-muted">
+                      Максимальное количество: {selectedProduct.maxQuantity || 100}
+                    </small>
+                  </div>
+                </div>
+              )}
+              
               <div className="fantasy-price-display mb-3">
                 <span className="fantasy-text-gold fs-2 fw-bold">
-                  {formatPrice(selectedProduct.price, selectedProduct.currency)}
+                  {selectedProduct.type === "consumable" 
+                    ? `${formatPrice(calculateTotalPrice(), selectedProduct.currency)} (${quantity} шт.)`
+                    : formatPrice(selectedProduct.price, selectedProduct.currency)
+                  }
                 </span>
+                {selectedProduct.type === "consumable" && (
+                  <div className="mt-1">
+                    <small className="fantasy-text-muted">
+                      {selectedProduct.price} 💎 за штуку
+                    </small>
+                  </div>
+                )}
               </div>
+              
               <Alert variant="info" className="fantasy-alert">
                 <small>
-                  С вашего счета будет списано {selectedProduct.price} далеонов
+                  С вашего счета будет списано {selectedProduct.type === "consumable" 
+                    ? calculateTotalPrice() 
+                    : selectedProduct.price} далеонов
                 </small>
               </Alert>
             </div>
@@ -333,8 +403,12 @@ const DonationTab = observer(() => {
           <Button 
             className="fantasy-btn fantasy-btn-gold"
             onClick={handleConfirmPurchase}
+            disabled={selectedProduct?.type === "consumable" && (playerData?.daleons || 0) < calculateTotalPrice()}
           >
-            Подтвердить покупку
+            {selectedProduct?.type === "consumable" 
+              ? `Купить ${quantity} шт.`
+              : 'Подтвердить покупку'
+            }
           </Button>
         </Modal.Footer>
       </Modal>

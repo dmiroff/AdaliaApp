@@ -10,12 +10,12 @@ const apiClient = axios.create({
   }
 });
 
-export const premiumPurchase = async (productId, productType, durationDays = null) => {
+export const premiumPurchase = async (productId, durationDays = null, quantity = 1) => {
   try {
     const requestData = {
       product_id: productId,
-      product_type: productType,
-      ...(durationDays && { duration_days: durationDays })
+      ...(durationDays && { duration_days: durationDays }),
+      ...(quantity && quantity > 1 && { quantity: quantity }) // Добавляем количество только если больше 1
     };
 
     const response = await apiClient.post(`/premium-purchase`, requestData);
@@ -30,10 +30,16 @@ export const premiumPurchase = async (productId, productType, durationDays = nul
       
       switch (status) {
         case 400:
-          throw new Error(detail.includes("Недостаточно") ? 
-            "Недостаточно далеонов для покупки" : 
-            detail.includes("уже приобретен") ? 
-            "Этот товар уже приобретен" : detail);
+          if (detail.includes("Недостаточно")) {
+            throw new Error("Недостаточно далеонов для покупки");
+          } else if (detail.includes("уже приобретен")) {
+            throw new Error("Этот товар уже приобретен");
+          } else if (detail.includes("Максимальное количество")) {
+            throw new Error(detail);
+          } else if (detail.includes("Количество должно быть")) {
+            throw new Error(detail);
+          }
+          throw new Error(detail);
         case 401:
           throw new Error("Ошибка авторизации. Пожалуйста, войдите заново");
         case 404:
