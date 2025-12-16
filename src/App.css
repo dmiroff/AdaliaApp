@@ -1903,3 +1903,140 @@ body .inventory-item-fantasy-dropdown .dropdown-item {
     font-size: 1.5rem;
   }
 }
+
+/* ===== КОМПАКТНАЯ КНОПКА НАСТРОЕК ===== */
+
+/* Стили для кнопки настроек в навбаре */
+.navbar-settings-btn {
+  background: linear-gradient(180deg, #3a7bd5 0%, #00d2ff 100%) !important;
+  border: 1px solid #000000 !important;
+  color: #ffffff !important;
+  font-family: "georgia", serif !important;
+  font-weight: bold !important;
+  padding: 6px 10px !important;
+  min-width: 40px !important;
+  height: 40px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: all 0.3s ease !important;
+}
+
+.navbar-settings-btn:hover {
+  transform: scale(1.1) !important;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3) !important;
+  color: #ffd700 !important;
+}
+
+/* На мобильных - скрыть компактную кнопку */
+@media (max-width: 991.98px) {
+  .navbar-settings-btn.d-lg-block {
+    display: none !important;
+  }
+}
+
+/* На десктопе - показать компактную кнопку */
+@media (min-width: 992px) {
+  .navbar-settings-btn.d-lg-block {
+    display: flex !important;
+    margin-left: auto !important;
+    margin-right: 10px !important;
+  }
+  
+  /* Делаем навбар компактнее */
+  .fantasy-navbar .nav {
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    padding-bottom: 5px !important;
+  }
+  
+  .fantasy-navbar .nav-link {
+    padding: 6px 10px !important;
+    font-size: 0.9rem !important;
+    white-space: nowrap !important;
+    min-width: fit-content !important;
+  }
+  
+  /* Убираем большой отступ у мобильной кнопки настроек на десктопе */
+  .fantasy-navbar .d-flex.justify-content-center.mt-2.w-100 {
+    display: none !important;
+  }
+}
+
+/* Адаптация для очень широких экранов */
+@media (min-width: 1200px) {
+  .navbar-settings-btn {
+    padding: 4px 8px !important;
+    min-width: 36px !important;
+    height: 36px !important;
+    font-size: 0.9rem !important;
+  }
+  
+  .fantasy-navbar .nav-link {
+    padding: 5px 8px !important;
+    font-size: 0.85rem !important;
+  }
+}
+
+/* Адаптация для очень узких экранов */
+@media (max-width: 768px) {
+  .fantasy-navbar .navbar-toggler {
+    width: 100% !important;
+    text-align: left !important;
+    padding: 10px 15px !important;
+    font-size: 1rem !important;
+  }
+  
+  .fantasy-navbar .nav-link {
+    padding: 12px 15px !important;
+    font-size: 0.95rem !important;
+  }
+}
+
+/* Общие стили для навбара чтобы избежать слипания */
+.fantasy-navbar {
+  padding: 8px 15px !important;
+  min-height: 60px !important;
+}
+
+.fantasy-navbar .container {
+  padding-left: 10px !important;
+  padding-right: 10px !important;
+}
+
+/* Стили для всех кнопок навбара чтобы были одинаковые */
+.fantasy-navbar .fantasy-btn {
+  font-family: "georgia", serif !important;
+  font-weight: bold !important;
+  font-style: normal !important;
+  text-transform: uppercase !important;
+  background: linear-gradient(180deg, #dd9a35ff 0%, #795725ff 100%) !important;
+  border: 1px solid #000000 !important;
+  color: #000000ff !important;
+  transition: all 0.3s ease !important;
+}
+
+.fantasy-navbar .fantasy-btn:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Убираем полосу прокрутки на десктопе */
+.fantasy-navbar .nav::-webkit-scrollbar {
+  height: 4px !important;
+}
+
+.fantasy-navbar .nav::-webkit-scrollbar-track {
+  background: rgba(139, 69, 19, 0.1) !important;
+}
+
+.fantasy-navbar .nav::-webkit-scrollbar-thumb {
+  background: rgba(139, 69, 19, 0.3) !important;
+  border-radius: 2px !important;
+}
+
+/* Для Firefox */
+.fantasy-navbar .nav {
+  scrollbar-width: thin !important;
+  scrollbar-color: rgba(139, 69, 19, 0.3) rgba(139, 69, 19, 0.1) !important;
+}

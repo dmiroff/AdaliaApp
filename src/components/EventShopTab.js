@@ -16,7 +16,9 @@ import {
 } from "react-bootstrap";
 import { Context } from "../index";
 import GetDataById from "../http/GetData";
+import EventShopHistory from "../components/EventShopHistory";
 import { eventShopPurchase } from "../http/eventShopApi";
+import PlayerImages from "../components/PlayerImages";
 
 const EventShopTab = observer(() => {
   const { user } = useContext(Context);
@@ -343,6 +345,9 @@ const EventShopTab = observer(() => {
         >
           <Tab eventKey="winter" title="❄️ Зимний магазин">
             {/* Контент зимнего магазина */}
+          </Tab>
+          <Tab eventKey="history" title="📜 История покупок">
+              <EventShopHistory />
           </Tab>
           <Tab eventKey="previous" title="📜 Архив" disabled>
             {/* Будут прошлые магазины */}
