@@ -14,7 +14,7 @@ const Rating = React.lazy(() => import('../pages/Rating'));
 const Prepare = React.lazy(() => import('../pages/Prepare'));
 const Trade = React.lazy(() => import('../pages/Trade'));
 const Map = React.lazy(() => import('../pages/Map'));
-const Donation = React.lazy(() => import('../pages/Donation'));
+const Donation = React.lazy(() => import('../pages/Shop'));
 const NotAuth = React.lazy(() => import('../pages/NotAuth'));
 const ItemPage = React.lazy(() => import('../pages/ItemPage'));
 const AuthChecker = React.lazy(() => import('../pages/AuthChecker'));

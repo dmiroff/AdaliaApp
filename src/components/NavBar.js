@@ -91,7 +91,7 @@ const NavBar = observer(() => {
               fontWeight: 'bold'
             }}
           >
-            💎 Премиум
+            💎 Магазин
           </Nav.Link>
         </Nav>
       </Navbar.Collapse>

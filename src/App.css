@@ -1655,3 +1655,251 @@ body .inventory-item-fantasy-dropdown .dropdown-item {
 .fantasy-card {
   animation: cardAppear 0.3s ease-out;
 }
+
+/* ===== ДОПОЛНИТЕЛЬНЫЕ СТИЛИ ДЛЯ МАГАЗИНА ===== */
+
+/* Стили для вкладок магазина */
+.fantasy-tabs .nav-link {
+  background: linear-gradient(135deg, rgba(139, 69, 19, 0.2) 0%, rgba(160, 82, 45, 0.1) 100%);
+  border: 2px solid transparent;
+  border-bottom: none;
+  color: #8b7355;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  padding: 12px 24px;
+  margin: 0 2px;
+  border-radius: 8px 8px 0 0;
+  font-family: 'Cinzel', serif;
+}
+
+.fantasy-tabs .nav-link:hover {
+  background: linear-gradient(135deg, rgba(139, 69, 19, 0.3) 0%, rgba(160, 82, 45, 0.2) 100%);
+  color: #a0522d;
+  border-color: #c19a6b;
+}
+
+.fantasy-tabs .nav-link.active {
+  background: linear-gradient(135deg, #8b4513 0%, #a0522d 100%);
+  color: #ffd700;
+  border-color: #8b4513;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 -2px 10px rgba(139, 69, 19, 0.3);
+  font-weight: 700;
+}
+
+.fantasy-tabs .nav-link.active::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #ffd700, #ffed4e, #ffd700);
+  animation: tabGlow 2s infinite;
+}
+
+@keyframes tabGlow {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 1; }
+}
+
+/* Улучшенные кнопки для магазина событий */
+.fantasy-btn-info {
+  background: linear-gradient(135deg, #0c5460 0%, #117a8b 100%);
+  border: 1px solid #000000;
+  border-radius: 6px;
+  color: #fff;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.fantasy-btn-info:hover {
+  background: linear-gradient(135deg, #117a8b 0%, #0c5460 100%);
+  border-color: #000000;
+  color: #fff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(13, 110, 253, 0.3);
+}
+
+.fantasy-btn-info:disabled {
+  background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+  opacity: 0.65;
+}
+
+/* Заголовки карточек для магазина событий */
+.fantasy-card-header-info {
+  background: linear-gradient(135deg, #0c5460 0%, #117a8b 100%);
+  border-bottom: 3px double #0a3d42;
+  color: #fff;
+}
+
+/* Стили для снежков (валюты события) */
+.snowflake-badge {
+  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+  color: #1565c0;
+  border: 1px solid #90caf9;
+  border-radius: 15px;
+  padding: 4px 12px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* Анимация для снежков */
+@keyframes snowflakeSpin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.snowflake-icon {
+  animation: snowflakeSpin 8s linear infinite;
+}
+
+/* Стили для товаров события */
+.event-shop-item {
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.event-shop-item::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    45deg,
+    transparent,
+    rgba(255, 255, 255, 0.1),
+    transparent
+  );
+  transform: rotate(45deg);
+  transition: all 0.6s ease;
+  opacity: 0;
+}
+
+.event-shop-item:hover::before {
+  opacity: 1;
+  animation: shimmer 1.5s ease-out;
+}
+
+@keyframes shimmer {
+  0% { left: -50%; }
+  100% { left: 150%; }
+}
+
+/* Редкость предметов */
+.rarity-common { color: #b0b0b0; }
+.rarity-uncommon { color: #27a82e; }
+.rarity-rare { color: #2196f3; }
+.rarity-epic { color: #9c27b0; }
+.rarity-legendary { color: #ff9800; }
+.rarity-mythic { color: #ff5722; }
+
+/* Бейджи редкости */
+.badge.bg-purple {
+  background-color: #6f42c1 !important;
+}
+
+.badge.bg-orange {
+  background-color: #fd7e14 !important;
+}
+
+/* Стили для выбора образа */
+.image-selection-card {
+  transition: all 0.3s ease;
+  cursor: pointer;
+  border: 2px solid transparent;
+}
+
+.image-selection-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+.image-selection-card.selected {
+  border-color: #17a2b8;
+  box-shadow: 0 0 15px rgba(23, 162, 184, 0.5);
+}
+
+/* Таймер события */
+.event-timer {
+  background: linear-gradient(135deg, #0c5460 0%, #117a8b 100%);
+  color: white;
+  border-radius: 20px;
+  padding: 8px 20px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+/* Стили для заголовков магазина */
+.shop-header {
+  text-align: center;
+  margin-bottom: 30px;
+  position: relative;
+}
+
+.shop-header h1 {
+  font-family: 'Cinzel', serif;
+  font-weight: 700;
+  color: #3e2723;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+  position: relative;
+  display: inline-block;
+}
+
+.shop-header h1::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 25%;
+  right: 25%;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, #8b4513, transparent);
+}
+
+/* Адаптивность для магазина */
+@media (max-width: 768px) {
+  .fantasy-tabs .nav-link {
+    padding: 10px 15px;
+    font-size: 0.9rem;
+    margin: 0 1px;
+  }
+  
+  .shop-header h1 {
+    font-size: 1.8rem;
+  }
+  
+  .event-timer {
+    font-size: 0.9rem;
+    padding: 6px 15px;
+  }
+}
+
+@media (max-width: 576px) {
+  .fantasy-tabs {
+    flex-direction: column;
+  }
+  
+  .fantasy-tabs .nav-link {
+    border-radius: 8px;
+    margin-bottom: 5px;
+    border: 2px solid transparent;
+  }
+  
+  .fantasy-tabs .nav-link.active {
+    border-radius: 8px;
+  }
+  
+  .shop-header h1 {
+    font-size: 1.5rem;
+  }
+}
