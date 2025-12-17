@@ -105,7 +105,7 @@ const PlayerSettings = () => {
                     </Form.Text>
                   </Form.Group>
 
-                  <Form.Group className="mb-3">
+                  {/*<Form.Group className="mb-3">
                     <Form.Label>Тема оформления:</Form.Label>
                     <Form.Select name="theme" defaultValue={settings.theme || "fantasy"}>
                       <option value="fantasy">Фэнтези (стандартная)</option>
@@ -113,7 +113,7 @@ const PlayerSettings = () => {
                       <option value="light">Светлая</option>
                       <option value="winter">Зимняя</option>
                     </Form.Select>
-                  </Form.Group>
+                  </Form.Group>*/}
                 </Col>
 
                 <Col md={6}>
@@ -127,18 +127,6 @@ const PlayerSettings = () => {
                     />
                     <Form.Text className="text-muted">
                       Отображать графические изображения кубиков при бросках
-                    </Form.Text>
-                  </Form.Group>
-
-                  <Form.Group className="mb-3">
-                    <Form.Check
-                      type="switch"
-                      name="show_item_images"
-                      label="Показывать изображения предметов"
-                      defaultChecked={settings.show_item_images !== false}
-                    />
-                    <Form.Text className="text-muted">
-                      Отображать изображения предметов в инвентаре и торговле
                     </Form.Text>
                   </Form.Group>
                 </Col>
@@ -166,18 +154,6 @@ const PlayerSettings = () => {
                       Показывать всплывающие уведомления о событиях в игре
                     </Form.Text>
                   </Form.Group>
-
-                  <Form.Group className="mb-3">
-                    <Form.Check
-                      type="switch"
-                      name="sound_enabled"
-                      label="Включить звуковые эффекты"
-                      defaultChecked={settings.sound_enabled !== false}
-                    />
-                    <Form.Text className="text-muted">
-                      Воспроизводить звуки при событиях и действиях
-                    </Form.Text>
-                  </Form.Group>
                 </Col>
 
                 <Col md={6}>
@@ -185,7 +161,6 @@ const PlayerSettings = () => {
                     <Form.Label>Язык интерфейса:</Form.Label>
                     <Form.Select name="language" defaultValue={settings.language || "ru"}>
                       <option value="ru">Русский</option>
-                      <option value="en">English</option>
                     </Form.Select>
                     <Form.Text className="text-muted">
                       Выбор языка для интерфейса и сообщений
@@ -206,11 +181,11 @@ const PlayerSettings = () => {
                 <Form.Check
                   type="switch"
                   name="auto_collect_loot"
-                  label="Автоматически собирать лут после боя"
+                  label="Автоматически продавать обычное снаряжение"
                   defaultChecked={settings.auto_collect_loot || false}
                 />
                 <Form.Text className="text-muted">
-                  При включении этой опции весь лут будет автоматически добавляться в инвентарь
+                  При включении этой опции обычное снаряжение автоматически будет продаваться (требуется Пожинатель)
                 </Form.Text>
               </Form.Group>
 
