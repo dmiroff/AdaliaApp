@@ -127,6 +127,68 @@ const PlayerImages = () => {
       emoji: "🏹",
       type: "event",
       rarity: "legendary"
+    },
+    
+    // Новогодние образы (новые)
+    "Images/Profiles/ng/newyear_barbarian.png": { 
+      name: "Новогодний варвар", 
+      emoji: "🎄",
+      type: "event",
+      rarity: "epic"
+    },
+    "Images/Profiles/ng/newyear_bard.png": { 
+      name: "Новогодний бард", 
+      emoji: "🎶",
+      type: "event",
+      rarity: "legendary"
+    },
+    "Images/Profiles/ng/newyear_darkpriest.png": { 
+      name: "Новогодний темный жрец", 
+      emoji: "🔮",
+      type: "event",
+      rarity: "rare"
+    },
+    "Images/Profiles/ng/newyear_dwarf.png": { 
+      name: "Новогодний дварф", 
+      emoji: "🧔",
+      type: "event",
+      rarity: "epic"
+    },
+    "Images/Profiles/ng/newyear_firemage.png": { 
+      name: "Новогодний маг огня", 
+      emoji: "🔥",
+      type: "event",
+      rarity: "legendary"
+    },
+    "Images/Profiles/ng/newyear_goblinrash.png": { 
+      name: "Новогодний гоблин", 
+      emoji: "👺",
+      type: "event",
+      rarity: "rare"
+    },
+    "Images/Profiles/ng/newyear_guardian.png": { 
+      name: "Новогодний страж", 
+      emoji: "🛡️",
+      type: "event",
+      rarity: "epic"
+    },
+    "Images/Profiles/ng/newyear_icemage.png": { 
+      name: "Новогодний маг льда", 
+      emoji: "❄️",
+      type: "event",
+      rarity: "legendary"
+    },
+    "Images/Profiles/ng/newyear_lifepriestess.png": { 
+      name: "Новогодняя жрица жизни", 
+      emoji: "🌿",
+      type: "event",
+      rarity: "epic"
+    },
+    "Images/Profiles/ng/newyear_paladin.png": { 
+      name: "Новогодний паладин", 
+      emoji: "⚔️",
+      type: "event",
+      rarity: "legendary"
     }
   };
 

@@ -137,7 +137,7 @@ const EventShopTab = observer(() => {
     {
       id: 3,
       name: "✨ Заказ образа",
-      description: "Выберите конкретный образ из доступной коллекции",
+      description: "Закажите конкретный образ на заказ",
       price: 3000,
       currency: "❄️",
       currencyId: 262,
@@ -167,11 +167,16 @@ const EventShopTab = observer(() => {
 
   // Список доступных образов для заказа
   const availableImages = [
-    { id: 1, name: "Ледяной рыцарь", description: "Доспехи из вечного льда", rarity: "epic" },
-    { id: 2, name: "Снежная фея", description: "Крылья из инея и снега", rarity: "legendary" },
-    { id: 3, name: "Полярный волк", description: "Шкура арктического хищника", rarity: "rare" },
-    { id: 4, name: "Новогодний маг", description: "Одеяния праздничного волшебства", rarity: "epic" },
-    { id: 5, name: "Морозный лучник", description: "Лук из хрустального льда", rarity: "legendary" }
+    { id: 1, name: "Новогодний варвар", description: "Снежный варвар", rarity: "epic", filename: "newyear_barbarian.png" },
+    { id: 2, name: "Новогодний бард", description: "Праздничный бард", rarity: "legendary", filename: "newyear_bard.png" },
+    { id: 3, name: "Новогодний темный жрец", description: "Зимний темный жрец", rarity: "rare", filename: "newyear_darkpriest.png" },
+    { id: 4, name: "Новогодний дварф", description: "Снежный дварф", rarity: "epic", filename: "newyear_dwarf.png" },
+    { id: 5, name: "Новогодний маг огня", description: "Огненный маг в новогоднем стиле", rarity: "legendary", filename: "newyear_firemage.png" },
+    { id: 6, name: "Новогодний гоблин", description: "Праздничный гоблин", rarity: "rare", filename: "newyear_goblinrash.png" },
+    { id: 7, name: "Новогодний страж", description: "Ледяной страж", rarity: "epic", filename: "newyear_guardian.png" },
+    { id: 8, name: "Новогодний маг льда", description: "Морозный маг", rarity: "legendary", filename: "newyear_icemage.png" },
+    { id: 9, name: "Новогодняя жрица жизни", description: "Снежная жрица", rarity: "epic", filename: "newyear_lifepriestess.png" },
+    { id: 10, name: "Новогодний паладин", description: "Святой паладин в новогоднем облачении", rarity: "legendary", filename: "newyear_paladin.png" }
   ];
 
   const handlePurchaseClick = (product) => {
@@ -224,15 +229,17 @@ const EventShopTab = observer(() => {
 
       // Подготавливаем дополнительные данные для покупки
       const extraData = selectedProduct.requiresSelection 
-        ? { selected_image_id: selectedImage.id }
-        : {};
+      ? { 
+          custom_image_request: selectedImage.trim()  // отправляем описание образа
+        }
+      : {};
 
-      const result = await eventShopPurchase(
-        selectedProduct.id,
-        selectedProduct.type,
-        quantity,
-        extraData
-      );
+    const result = await eventShopPurchase(
+      selectedProduct.id,
+      selectedProduct.type,
+      quantity,
+      extraData
+    );
 
       if (result.status === 200) {
         const message = selectedProduct.type === "consumable" 
@@ -482,182 +489,196 @@ const EventShopTab = observer(() => {
       <Modal 
         show={showConfirmModal} 
         onHide={() => {
-          setShowConfirmModal(false);
-          setSelectedImage(null);
+            setShowConfirmModal(false);
+            setSelectedImage(null);
         }}
         centered
         className="fantasy-modal"
         size={selectedProduct?.requiresSelection ? "lg" : "md"}
-      >
+        >
         <Modal.Header closeButton className="fantasy-card-header fantasy-card-header-info">
-          <Modal.Title className="fantasy-text-gold">
-            {selectedProduct?.requiresSelection ? 'Выбор образа' : 'Подтверждение покупки'}
-          </Modal.Title>
+            <Modal.Title className="fantasy-text-gold">
+            {selectedProduct?.requiresSelection ? 'Индивидуальный заказ образа' : 'Подтверждение покупки'}
+            </Modal.Title>
         </Modal.Header>
         <Modal.Body className="fantasy-modal-body">
-          {selectedProduct ? (
+            {selectedProduct ? (
             <div className="text-center">
-              <div className="fs-1 mb-3">{selectedProduct.image || "🎁"}</div>
-              <h4 className="fantasy-text-info mb-3">{selectedProduct.name || "Товар"}</h4>
-              <p className="fantasy-text-dark">{selectedProduct.description || "Описание товара"}</p>
-              
-              {/* Выбор образа для "Заказ образа" */}
-              {selectedProduct.requiresSelection && (
-                <div className="my-4">
-                  <h5 className="fantasy-text-dark mb-3">Выберите желаемый образ:</h5>
-                  <Row className="g-3">
-                    {availableImages.map((img) => (
-                      <Col md={6} key={img.id}>
-                        <Card 
-                          className={`fantasy-card cursor-pointer ${
-                            selectedImage?.id === img.id ? 'border-info border-2' : ''
-                          }`}
-                          onClick={() => setSelectedImage(img)}
-                        >
-                          <Card.Body>
-                            <div className="fs-2 mb-2">
-                              {img.rarity === 'legendary' ? '✨' : 
-                               img.rarity === 'epic' ? '🌟' : '⭐'}
-                            </div>
-                            <h6 className="fantasy-text-dark">{img.name}</h6>
-                            <small className="fantasy-text-muted">{img.description}</small>
-                            <div className="mt-2">
-                              <Badge bg={
-                                img.rarity === 'legendary' ? 'warning' :
-                                img.rarity === 'epic' ? 'purple' : 'info'
-                              }>
-                                {img.rarity === 'legendary' ? 'Легендарный' :
-                                 img.rarity === 'epic' ? 'Эпический' : 'Редкий'}
-                              </Badge>
-                            </div>
-                          </Card.Body>
-                        </Card>
-                      </Col>
-                    ))}
-                  </Row>
-                  
-                  {selectedImage && (
-                    <Alert variant="info" className="mt-3">
-                      Вы выбрали: <strong>{selectedImage.name}</strong>
+                <div className="fs-1 mb-3">{selectedProduct.image || "🎁"}</div>
+                <h4 className="fantasy-text-info mb-3">{selectedProduct.name || "Товар"}</h4>
+                <p className="fantasy-text-dark">{selectedProduct.description || "Описание товара"}</p>
+                
+                {/* Форма заказа кастомного образа */}
+                {selectedProduct.requiresSelection && (
+                <>
+                    <Alert variant="info" className="fantasy-alert mt-3 mb-4">
+                    <div className="d-flex align-items-center">
+                        <div className="fs-3 me-3">🎨</div>
+                        <div>
+                        <h6 className="fantasy-text-info mb-1">Индивидуальный заказ образа</h6>
+                        <p className="mb-0 fantasy-text-dark">
+                            Опишите администратору, какой образ вы хотите заказать. Будьте максимально подробны в описании.
+                            После покупки администратор свяжется с вами для уточнения деталей.
+                        </p>
+                        </div>
+                    </div>
                     </Alert>
-                  )}
-                </div>
-              )}
-              
-              {/* Поле выбора количества для consumable товаров */}
-              {selectedProduct.type === "consumable" && (
+                    
+                    <div className="mb-4">
+                    <Form>
+                        <Form.Group className="mb-3">
+                        <Form.Label className="fantasy-text-dark">
+                            <strong>Описание образа:</strong>
+                        </Form.Label>
+                        <Form.Control
+                            as="textarea"
+                            rows={4}
+                            placeholder="Опишите ваш желаемый образ: расу, пол, стиль одежды, оружие, элементы, цвета, идеи..."
+                            value={selectedImage || ''}
+                            onChange={(e) => setSelectedImage(e.target.value)}
+                            className="fantasy-textarea"
+                        />
+                        <Form.Text className="text-muted">
+                            Пример: "Хочу образ эльфа-мага в синих зимних одеждах с ледяным посохом и снежными эффектами"
+                        </Form.Text>
+                        </Form.Group>
+                        
+                        {selectedImage && selectedImage.length > 10 && (
+                        <Alert variant="success" className="fantasy-alert mt-3">
+                            <div className="d-flex align-items-center">
+                            <div className="fs-3 me-3">✅</div>
+                            <div>
+                                <h6 className="fantasy-text-success mb-1">Запрос сохранен:</h6>
+                                <p className="mb-0 fantasy-text-dark">
+                                {selectedImage.length > 100 ? selectedImage.substring(0, 100) + '...' : selectedImage}
+                                </p>
+                            </div>
+                            </div>
+                        </Alert>
+                        )}
+                    </Form>
+                    </div>
+                </>
+                )}
+                
+                {/* Поле выбора количества для consumable товаров */}
+                {selectedProduct.type === "consumable" && !selectedProduct.requiresSelection && (
                 <div className="my-4">
-                  <Form.Label className="fantasy-text-dark">Количество:</Form.Label>
-                  <div className="d-flex align-items-center justify-content-center">
+                    <Form.Label className="fantasy-text-dark">Количество:</Form.Label>
+                    <div className="d-flex align-items-center justify-content-center">
                     <Button 
-                      variant="outline-secondary" 
-                      onClick={() => handleQuantityChange(Math.max(1, quantity - 1))}
-                      disabled={quantity <= 1}
-                      className="fantasy-btn-outline"
+                        variant="outline-secondary" 
+                        onClick={() => handleQuantityChange(Math.max(1, quantity - 1))}
+                        disabled={quantity <= 1}
+                        className="fantasy-btn-outline"
                     >
-                      -
+                        -
                     </Button>
                     <Form.Control
-                      type="number"
-                      value={quantity}
-                      onChange={(e) => handleQuantityChange(e.target.value)}
-                      min="1"
-                      max={selectedProduct.maxQuantity || 10}
-                      className="mx-2 text-center"
-                      style={{ width: '100px' }}
+                        type="number"
+                        value={quantity}
+                        onChange={(e) => handleQuantityChange(e.target.value)}
+                        min="1"
+                        max={selectedProduct.maxQuantity || 10}
+                        className="mx-2 text-center"
+                        style={{ width: '100px' }}
                     />
                     <Button 
-                      variant="outline-secondary" 
-                      onClick={() => handleQuantityChange(Math.min(selectedProduct.maxQuantity || 10, quantity + 1))}
-                      disabled={quantity >= (selectedProduct.maxQuantity || 10)}
-                      className="fantasy-btn-outline"
+                        variant="outline-secondary" 
+                        onClick={() => handleQuantityChange(Math.min(selectedProduct.maxQuantity || 10, quantity + 1))}
+                        disabled={quantity >= (selectedProduct.maxQuantity || 10)}
+                        className="fantasy-btn-outline"
                     >
-                      +
+                        +
                     </Button>
-                  </div>
-                  <div className="mt-2">
+                    </div>
+                    <div className="mt-2">
                     <small className="fantasy-text-muted">
-                      Максимальное количество: {selectedProduct.maxQuantity || 10}
+                        Максимальное количество: {selectedProduct.maxQuantity || 10}
                     </small>
-                  </div>
+                    </div>
                 </div>
-              )}
-              
-              <div className="fantasy-price-display mb-3">
+                )}
+                
+                <div className="fantasy-price-display mb-3">
                 <div className="d-flex justify-content-center align-items-center">
-                  <span className="fantasy-text-info fs-2 fw-bold me-2">
-                    {selectedProduct.type === "consumable" 
-                      ? `${calculateTotalPrice().toLocaleString('ru-RU')}`
-                      : (selectedProduct.price || 0).toLocaleString('ru-RU')
+                    <span className="fantasy-text-info fs-2 fw-bold me-2">
+                    {selectedProduct.type === "consumable" && !selectedProduct.requiresSelection
+                        ? `${calculateTotalPrice().toLocaleString('ru-RU')}`
+                        : (selectedProduct.price || 0).toLocaleString('ru-RU')
                     }
-                  </span>
-                  <span className="fs-2">{selectedProduct.currency || "❄️"}</span>
+                    </span>
+                    <span className="fs-2">{selectedProduct.currency || "❄️"}</span>
                 </div>
-                {selectedProduct.type === "consumable" && (
-                  <div className="mt-1">
+                {selectedProduct.type === "consumable" && !selectedProduct.requiresSelection && (
+                    <div className="mt-1">
                     <small className="fantasy-text-muted">
-                      {selectedProduct.price || 0} {selectedProduct.currency || "❄️"} за штуку • {quantity} шт.
+                        {selectedProduct.price || 0} {selectedProduct.currency || "❄️"} за штуку • {quantity} шт.
                     </small>
-                  </div>
+                    </div>
                 )}
-              </div>
-              
-              <Alert variant="info" className="fantasy-alert">
-                <div className="d-flex justify-content-between align-items-center">
-                  <small>
-                    У вас: {snowballCount.toLocaleString('ru-RU')} {selectedProduct.currency || "❄️"}
-                  </small>
-                  <small>
-                    Будет списано: {selectedProduct.type === "consumable" 
-                      ? calculateTotalPrice()
-                      : selectedProduct.price || 0
-                    } {selectedProduct.currency || "❄️"}
-                  </small>
                 </div>
-                {selectedProduct.type === "consumable" && (
-                  <div className="mt-2">
+                
+                <Alert variant="info" className="fantasy-alert">
+                <div className="d-flex justify-content-between align-items-center">
                     <small>
-                      Останется: {Math.max(0, snowballCount - calculateTotalPrice())} {selectedProduct.currency || "❄️"}
+                    У вас: {snowballCount.toLocaleString('ru-RU')} {selectedProduct.currency || "❄️"}
                     </small>
-                  </div>
-                )}
-              </Alert>
+                    <small>
+                    Будет списано: {selectedProduct.type === "consumable" && !selectedProduct.requiresSelection
+                        ? calculateTotalPrice()
+                        : selectedProduct.price || 0
+                    } {selectedProduct.currency || "❄️"}
+                    </small>
+                </div>
+                <div className="mt-2">
+                    <small>
+                    Останется: {Math.max(0, snowballCount - (
+                        selectedProduct.type === "consumable" && !selectedProduct.requiresSelection
+                        ? calculateTotalPrice()
+                        : selectedProduct.price || 0
+                    ))} {selectedProduct.currency || "❄️"}
+                    </small>
+                </div>
+                </Alert>
             </div>
-          ) : (
+            ) : (
             <div className="text-center">
-              <p className="fantasy-text-dark">Товар не найден</p>
+                <p className="fantasy-text-dark">Товар не найден</p>
             </div>
-          )}
+            )}
         </Modal.Body>
         <Modal.Footer className="fantasy-modal-footer">
-          <Button 
+            <Button 
             className="fantasy-btn fantasy-btn-secondary"
             onClick={() => {
-              setShowConfirmModal(false);
-              setSelectedImage(null);
+                setShowConfirmModal(false);
+                setSelectedImage(null);
             }}
-          >
+            >
             Отмена
-          </Button>
-          <Button 
+            </Button>
+            <Button 
             className="fantasy-btn fantasy-btn-info"
             onClick={handleConfirmPurchase}
             disabled={
-              !selectedProduct ||
-              (selectedProduct?.requiresSelection ? !selectedImage :
-              selectedProduct?.type === "consumable" ? !canAfford(selectedProduct, quantity) :
-              !canAfford(selectedProduct))
+                !selectedProduct ||
+                (selectedProduct?.requiresSelection ? (!selectedImage || selectedImage.length < 10) :
+                selectedProduct?.type === "consumable" ? !canAfford(selectedProduct, quantity) :
+                !canAfford(selectedProduct))
             }
-          >
+            >
             {selectedProduct?.type === "consumable" 
-              ? `Купить ${quantity} шт.`
-              : selectedProduct?.requiresSelection
-                ? 'Подтвердить заказ'
+                ? selectedProduct?.requiresSelection
+                ? 'Отправить заявку на образ'
+                : `Купить ${quantity} шт.`
+                : selectedProduct?.requiresSelection
+                ? 'Отправить заявку на образ'
                 : 'Подтвердить покупку'
             }
-          </Button>
+            </Button>
         </Modal.Footer>
-      </Modal>
+        </Modal>
     </div>
   );
 });
