@@ -1,6 +1,6 @@
 // src/components/InventoryItem.js
 import { useState, useContext, useMemo } from "react";
-import { Row, Col, Image, Dropdown, DropdownButton } from "react-bootstrap";
+import { Row, Col, Image } from "react-bootstrap";
 import exampleImage from "../assets/Images/WIP.webp";
 import { useNavigate } from 'react-router-dom';
 import { INVENTORY_ROUTE } from "../utils/constants";
@@ -30,45 +30,43 @@ const InventoryItem = ({
   const itemId = devicekey;
 
   const shouldShowLevel = useMemo(() => {
-  if (device.level === undefined || device.level === null) return false;
+    if (device.level === undefined || device.level === null) return false;
     const levelNum = Number(device.level);
     return !isNaN(levelNum) && levelNum > 0;
   }, [device.level]);
 
   // Функция для получения цвета редкости
   const getRarityColor = useMemo(() => {
-      const name = device.name?.toLowerCase() || '';
-      
-      // Определяем редкость ТОЛЬКО по наличию маркеров в названии
-      if (name.includes('(л)')) {
-          return {
-              color: '#ff6f00',
-              name: 'легендарная',
-              badge: 'warning'
-          };
-      } else if (name.includes('(ор)')) {
-          return {
-              color: '#8e24aa',
-              name: 'очень редкая',
-              badge: 'purple'
-          };
-      } else if (name.includes('(р)')) {
-          return {
-              color: '#1e88e5',
-              name: 'редкая',
-              badge: 'primary'
-          };
-      } else {
-          // Если нет маркеров - обычная
-          return {
-              color: '#757575',
-              name: 'обычная',
-              badge: 'secondary'
-          };
-      }
-  }, [device.name]); // Только зависимость от названия
+    const name = device.name?.toLowerCase() || '';
+    
+    if (name.includes('(л)')) {
+      return {
+        color: '#ff6f00',
+        name: 'легендарная',
+        badge: 'warning'
+      };
+    } else if (name.includes('(ор)')) {
+      return {
+        color: '#8e24aa',
+        name: 'очень редкая',
+        badge: 'purple'
+      };
+    } else if (name.includes('(р)')) {
+      return {
+        color: '#1e88e5',
+        name: 'редкая',
+        badge: 'primary'
+      };
+    } else {
+      return {
+        color: '#757575',
+        name: 'обычная',
+        badge: 'secondary'
+      };
+    }
+  }, [device.name]);
 
-  // Функция для получения списка ID надетых предметов из player_data
+  // Функция для получения списка ID надетых предметов
   const getEquippedItemIds = useMemo(() => {
     const equippedIds = new Set();
     
@@ -126,12 +124,21 @@ const InventoryItem = ({
     return device.count || 0;
   }, [isEquipped, device.count]);
 
-  const handleMouseEnter = () => {
+  // Обработчик наведения на текстовую часть
+  const handleTextMouseEnter = () => {
     setShowMenu(true);
   };
 
-  const handleMouseLeave = () => {
+  const handleTextMouseLeave = () => {
     setShowMenu(false);
+  };
+
+  // Обработчик клика на текстовую часть (для мобильных устройств)
+  const handleTextClick = (e) => {
+    // На мобильных устройствах клик по тексту показывает/скрывает меню
+    if (window.innerWidth <= 768) {
+      setShowMenu(!showMenu);
+    }
   };
 
   const handleModalSell = (event) => {
@@ -150,25 +157,8 @@ const InventoryItem = ({
 
   const handleInspect = (event) => {
     event.stopPropagation();
+    setShowMenu(false);
     navigate(INVENTORY_ROUTE + "/" + devicekey);
-  };
-
-  // Упрощенный обработчик чекбокса
-  const handleCheckboxChange = (e) => {
-    e.stopPropagation();
-    e.preventDefault();
-    if (onToggleSelect) {
-      onToggleSelect(itemId);
-    }
-  };
-
-  // Обработчик клика по контейнеру
-  const handleContainerClick = (e) => {
-    // Пропускаем клики по чекбоксу
-    if (e.target.type === 'checkbox' || 
-        e.target.closest('.inventory-item-checkbox')) {
-      return;
-    }
   };
 
   const handleSell = async (value) => {
@@ -195,6 +185,7 @@ const InventoryItem = ({
 
   const handleWear = async (event) => {
     event.stopPropagation();
+    setShowMenu(false);
     try {
       const response = await WearDataById(devicekey);
 
@@ -240,23 +231,27 @@ const InventoryItem = ({
 
   return (
     <Row className="mb-3 align-items-center">
-      {/* Колонка с изображением - больше на мобильных устройствах */}
+      {/* Колонка с изображением */}
       <Col xs={4} md={3} lg={2} className="ps-0 ps-md-2">
         <div 
           className={`inventory-item-image-container ${isSelected ? 'selected' : ''}`}
-          onMouseEnter={handleMouseEnter}
-          onMouseLeave={handleMouseLeave}
-          onClick={handleContainerClick}
+          onClick={(e) => {
+            if (onToggleSelect) {
+              e.stopPropagation();
+              onToggleSelect(itemId);
+            }
+          }}
           style={{ 
             position: 'relative',
             padding: '5px',
             backgroundColor: 'rgba(244, 228, 188, 0.8)',
             borderRadius: '10px',
             boxShadow: isSelected ? '0 0 0 3px rgba(40, 167, 69, 0.3)' : '0 2px 5px rgba(0, 0, 0, 0.1)',
-            border: `2px solid ${isSelected ? '#28a745' : '#c19a6b'}`
+            border: `2px solid ${isSelected ? '#28a745' : '#c19a6b'}`,
+            cursor: onToggleSelect ? 'pointer' : 'default'
           }}
         >
-          {/* Чекбокс для выбора предмета - меньше на мобильных устройствах */}
+          {/* Чекбокс для выбора предмета */}
           {onToggleSelect && (
             <div 
               className="inventory-item-checkbox"
@@ -292,12 +287,12 @@ const InventoryItem = ({
             </div>
           )}
           
-          {/* Изображение предмета - увеличенное на мобильных устройствах */}
+          {/* Изображение предмета */}
           <div 
             className="item-image-wrapper"
             style={{
               width: '100%',
-              paddingBottom: '100%', // Квадратное соотношение
+              paddingBottom: '100%',
               position: 'relative',
               overflow: 'hidden',
               borderRadius: '8px'
@@ -325,7 +320,7 @@ const InventoryItem = ({
             />
           </div>
           
-          {/* Отображение уровня предмета (если есть) */}
+          {/* Отображение уровня предмета */}
           {shouldShowLevel && (
             <div 
               className="item-level-badge"
@@ -380,54 +375,6 @@ const InventoryItem = ({
               ✓
             </div>
           )}
-          
-          {showMenu && (
-            <div className="inventory-item-menu-wrapper">
-              <DropdownButton
-                show={showMenu}
-                onClick={(e) => e.stopPropagation()}
-                variant="dark"
-                title=""
-                id="inventory-item-fantasy-dropdown"
-                className="inventory-item-dropdown-right"
-              >
-                <Dropdown.Item onClick={handleInspect}>
-                  <i className="fas fa-search me-2"></i>
-                  осмотреть
-                </Dropdown.Item>
-                {device.is_equippable && (
-                  <Dropdown.Item onClick={handleWear}>
-                    <i className="fas fa-tshirt me-2"></i>
-                    надеть
-                  </Dropdown.Item>
-                )}
-                <Dropdown.Item 
-                  onClick={handleModalSell}
-                  className={!canTransfer ? 'disabled' : ''}
-                  style={!canTransfer ? { 
-                    opacity: 0.5, 
-                    cursor: 'not-allowed',
-                    color: '#999'
-                  } : {}}
-                >
-                  <i className="fas fa-coins me-2"></i>
-                  продать
-                </Dropdown.Item>
-                <Dropdown.Item 
-                  onClick={handleModalDrop}
-                  className={!canTransfer ? 'disabled' : ''}
-                  style={!canTransfer ? { 
-                    opacity: 0.5, 
-                    cursor: 'not-allowed',
-                    color: '#999'
-                  } : {}}
-                >
-                  <i className="fas fa-trash me-2"></i>
-                  выкинуть
-                </Dropdown.Item>
-              </DropdownButton>
-            </div>
-          )}
         </div>
       </Col>
       
@@ -436,12 +383,65 @@ const InventoryItem = ({
         xs={8} 
         md={9} 
         lg={true} 
-        className="pe-0 pe-md-2"
-        style={{ fontSize: "0.9rem" }}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
-        onClick={handleContainerClick}
+        className="pe-0 pe-md-2 text-info-container"
+        style={{ 
+          fontSize: "0.9rem", 
+          cursor: 'pointer',
+          position: 'relative',
+          paddingTop: '5px',
+          paddingBottom: '5px'
+        }}
+        onMouseEnter={handleTextMouseEnter}
+        onMouseLeave={handleTextMouseLeave}
+        onClick={handleTextClick}
       >
+        {/* Меню появляется в правом верхнем углу текстового блока */}
+        {showMenu && (
+          <div 
+            className="inventory-item-menu-wrapper"
+            onMouseEnter={() => setShowMenu(true)}
+            onMouseLeave={() => setShowMenu(false)}
+          >
+            <div style={{ padding: '2px 0' }}>
+              <button 
+                className="dropdown-item-custom"
+                onClick={handleInspect}
+              >
+                <i className="fas fa-search me-2"></i>
+                осмотреть
+              </button>
+              
+              {device.is_equippable && (
+                <button 
+                  className="dropdown-item-custom"
+                  onClick={handleWear}
+                >
+                  <i className="fas fa-tshirt me-2"></i>
+                  надеть
+                </button>
+              )}
+              
+              <button 
+                className="dropdown-item-custom"
+                onClick={handleModalSell}
+                disabled={!canTransfer}
+              >
+                <i className="fas fa-coins me-2"></i>
+                продать
+              </button>
+              
+              <button 
+                className="dropdown-item-custom"
+                onClick={handleModalDrop}
+                disabled={!canTransfer}
+              >
+                <i className="fas fa-trash me-2"></i>
+                выкинуть
+              </button>
+            </div>
+          </div>
+        )}
+        
         <div>
           <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', marginBottom: '8px' }}>
             <span style={{ 

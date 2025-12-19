@@ -1,3 +1,92 @@
+/* InventoryItem.css */
+
+/* СТИЛИ ДЛЯ МЕНЮ В ЛЕВОМ ВЕРХНЕМ УГЛУ ТЕКСТОВОГО БЛОКА */
+.inventory-item-menu-wrapper {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1000;
+  background-color: rgba(255, 255, 255, 0.98);
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  border: 2px solid #8b7355;
+  overflow: hidden;
+  width: 160px;
+  animation: menuFadeIn 0.2s ease-out;
+  transform-origin: top left;
+}
+
+@keyframes menuFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Контейнер для текстовой информации */
+.text-info-container {
+  position: relative !important;
+  min-height: 100px;
+  padding-right: 10px;
+}
+
+/* Стили для пунктов меню */
+.dropdown-item-custom {
+  width: 100%;
+  padding: 10px 16px;
+  border: none;
+  background-color: transparent;
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+  color: #3e2723;
+  transition: all 0.2s ease;
+  border-bottom: 1px solid #eee;
+}
+
+.dropdown-item-custom:last-child {
+  border-bottom: none;
+}
+
+.dropdown-item-custom:hover {
+  background-color: #f8f9fa;
+  color: #000;
+}
+
+.dropdown-item-custom:active {
+  background-color: #e9ecef;
+}
+
+.dropdown-item-custom:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  color: #999;
+}
+
+.dropdown-item-custom:disabled:hover {
+  background-color: transparent;
+}
+
+/* Иконки в меню */
+.dropdown-item-custom i {
+  width: 20px;
+  text-align: center;
+  margin-right: 10px;
+  color: #8b7355;
+}
+
+.dropdown-item-custom:hover i {
+  color: #d4af37;
+}
+
+/* Остальные стили остаются без изменений */
+
 /* УЛУЧШЕННЫЕ СТИЛИ ДЛЯ ВИДИМЫХ ЧЕКБОКСОВ */
 .inventory-item-checkbox {
   position: absolute;
@@ -65,6 +154,7 @@
   border: 1px solid #117a8b;
   font-weight: 700;
 }
+
 /* Стили для панели массовых операций */
 .mass-operations-panel {
   background: linear-gradient(135deg, #2d1f0f 0%, #4a3519 100%);
@@ -523,51 +613,6 @@
   text-align: right;
 }
 
-/* Для мобильных устройств */
-@media (max-width: 768px) {
-  .mass-operation-modal .modal-dialog {
-    margin: 10px;
-    max-width: calc(100% - 20px);
-  }
-  
-  .mass-quantity-slider {
-    height: 8px;
-  }
-  
-  .mass-quantity-slider::-webkit-slider-thumb {
-    width: 20px;
-    height: 20px;
-  }
-  
-  .mass-quantity-btn {
-    width: 30px;
-    height: 30px;
-    font-size: 1rem;
-  }
-  
-  .mass-quantity-display {
-    min-width: 60px;
-    font-size: 0.9rem;
-    padding: 4px 8px;
-  }
-  
-  .mass-submit-btn {
-    min-width: 140px;
-    padding: 6px 12px;
-    font-size: 0.9rem;
-  }
-  
-  .mass-cancel-btn {
-    min-width: 100px;
-    padding: 6px 12px;
-    font-size: 0.9rem;
-  }
-  
-  .mass-total-value {
-    font-size: 1.5rem;
-  }
-}
-
 /* Стили для строк предметов */
 .item-quantity-row {
   background: linear-gradient(135deg, #f4e4bc 0%, #e6d2a9 100%);
@@ -805,6 +850,17 @@
 
 /* Для мобильных устройств */
 @media (max-width: 768px) {
+  /* Уменьшаем меню на мобильных устройствах */
+  .inventory-item-menu-wrapper {
+    width: 140px;
+    font-size: 13px;
+  }
+  
+  .dropdown-item-custom {
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+  
   .inventory-item-checkbox input[type="checkbox"] {
     width: 20px;
     height: 20px;
@@ -838,6 +894,10 @@
   .quantity-slider::-webkit-slider-thumb {
     width: 20px;
     height: 20px;
+  }
+  
+  .text-info-container {
+    min-height: 80px;
   }
 }
 
@@ -935,6 +995,10 @@
   .inventory-item-image-container {
     margin: 0 auto;
     max-width: 140px;
+  }
+  
+  .inventory-item-menu-wrapper {
+    width: 130px;
   }
 }
 
