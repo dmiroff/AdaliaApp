@@ -1,6 +1,69 @@
 /* app.css - Объединенные стили приложения */
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=MedievalSharp&display=swap');
 
+/* ===== ЦВЕТОВАЯ ПАЛИТРА ===== */
+:root {
+  /* Основные цвета */
+  --color-primary-dark: #2f1b0c;
+  --color-primary: #4a2c14;
+  --color-primary-light: #6e4f37;
+  --color-primary-lighter: #8b4513;
+  
+  /* Вторичные цвета */
+  --color-secondary-dark: #1c1c1c;
+  --color-secondary: #2d2d2d;
+  --color-secondary-light: #3e2723;
+  
+  /* Акцентные цвета */
+  --color-accent-gold: gold;
+  --color-accent-golder: #fffacd;
+  --color-accent-bronze: #c19a6b;
+  --color-accent-bronze-light: #793c14;
+  --color-accent-bronze-lighter: #f4e4bc;
+  
+  /* Фоновые цвета */
+  --color-bg-dark: #1a0f2f;
+  --color-bg-primary: #0c1f2f;
+  --color-bg-secondary: #1c3a4a;
+  --color-bg-light: #f4e4bc;
+  
+  /* Статусные цвета */
+  --color-success-dark: #0f2f1a;
+  --color-success: #1c4a2c;
+  --color-success-light: #27a82e;
+  --color-success-lighter: #2e7d32;
+  
+  --color-warning-dark: #332100;
+  --color-warning: #664400;
+  --color-warning-light: #ef6c00;
+  --color-warning-lighter: #ff9800;
+  
+  --color-info-dark: #0c1f2f;
+  --color-info: #1c3a4a;
+  --color-info-light: #0c5460;
+  --color-info-lighter: #117a8b;
+  
+  --color-danger-dark: #3f0f0f;
+  --color-danger: #5c1a1a;
+  --color-danger-light: #dc3545;
+  --color-danger-lighter: #ef9a9a;
+  
+  /* Текстовые цвета */
+  --color-text-dark: #000000;
+  --color-text-medium: #5d4037;
+  --color-text-light: #8b7355;
+  --color-text-white: #ffffff;
+  
+  /* Дополнительные цвета */
+  --color-magic: #7e57c2;
+  --color-blue: #2196f3;
+  --color-green: #4caf50;
+  --color-red: #e53935;
+  --color-orange: #ff8c00;
+  --color-purple: #6f42c1;
+  --color-gray: #6c757d;
+}
+
 .fantasy-font {
   font-family: 'Cinzel', serif;
   font-weight: 700;
@@ -13,23 +76,21 @@ html, body, #root {
   padding: 0;
 }
 
-/* Убрали background-image из body - теперь он в React компоненте */
-
 /* ===== ТИПОГРАФИЯ И ТЕКСТ ===== */
-.fantasy-text-primary { color: #4f3729; }
-.fantasy-text-success { color: #7cb342; }
-.fantasy-text-warning { color: #ffb74d; }
-.fantasy-text-info { color: #4fc3f7; }
-.fantasy-text-danger { color: #ef9a9a; }
-.fantasy-text-muted { color: #8b7355; }
-.fantasy-text-dark { color: #3e2723; }
-.fantasy-text-gold { color: #ffd700; }
+.fantasy-text-primary { color: var(--color-text-medium); }
+.fantasy-text-success { color: var(--color-success-light); }
+.fantasy-text-warning { color: var(--color-warning-lighter); }
+.fantasy-text-info { color: var(--color-blue); }
+.fantasy-text-danger { color: var(--color-danger-lighter); }
+.fantasy-text-muted { color: var(--color-text-light); }
+.fantasy-text-dark { color: var(--color-text-dark); }
+.fantasy-text-gold { color: var(--color-accent-gold); }
 .fantasy-text-bold { font-weight: 600; }
 
 /* ===== ОСНОВНЫЕ КОМПОНЕНТЫ ===== */
 .fantasy-paper {
-  background: linear-gradient(135deg, #f4e4bc 0%, #e6d2a9 100%);
-  border: 2px solid #8b7355;
+  background: linear-gradient(135deg, var(--color-bg-light) 0%, var(--color-bg-light) 100%);
+  border: 2px solid var(--color-accent-bronze-light);
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   position: relative;
@@ -49,9 +110,9 @@ html, body, #root {
 }
 
 .content-overlay {
-  background: linear-gradient(135deg, rgba(244, 228, 188, 0.588) 0%, rgba(230, 210, 169, 0.9) 100%);
+  background: linear-gradient(135deg, rgba(244, 228, 188, 0.95) 0%, rgba(230, 210, 169, 0.98) 100%);
   backdrop-filter: blur(2px);
-  border: 0px solid #8b7355;
+  border: 0px solid var(--color-accent-bronze-light);
   border-radius: 8px;
   padding: 20px;
   margin: 10px 0;
@@ -62,8 +123,8 @@ html, body, #root {
 
 /* ===== КАРТОЧКИ ===== */
 .fantasy-card {
-  background: linear-gradient(135deg, #f4e4bc 0%, #e6d2a9 100%);
-  border: 2px solid #8b7355;
+  background: linear-gradient(135deg, var(--color-bg-light) 0%, var(--color-bg-light) 100%);
+  border: 2px solid var(--color-accent-bronze-light);
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   transition: all 0.3s ease;
@@ -87,25 +148,19 @@ html, body, #root {
 .fantasy-card:hover {
   transform: translateY(-3px);
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
-  border-color: #a0512d00;
-}
-
-.card {
-  background: linear-gradient(135deg, #f4e4bc 0%, #e6d2a9 100%);
-  border: 2px solid #8b7355;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  border-color: var(--color-primary-lighter);
 }
 
 /* ===== ЗАГОЛОВКИ КАРТОЧЕК ===== */
 .fantasy-card-header {
-  border-bottom: 3px double #3f2a1a;
+  border-bottom: 3px double var(--color-primary-dark);
   border-radius: 6px 6px 0 0;
   font-weight: 700;
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
   letter-spacing: 0.5px;
   position: relative;
   padding: 20px;
+  color: var(--color-accent-gold);
 }
 
 .fantasy-card-header::after {
@@ -120,65 +175,65 @@ html, body, #root {
 }
 
 .fantasy-card-header-primary {
-  background: linear-gradient(135deg, #7d5739 0%, #4c3e33 100%);
-  color: #d4af37;
+  background: linear-gradient(135deg, var(--color-primary-light) 0%, var(--color-secondary-light) 100%);
+  color: var(--color-accent-gold);
 }
 
 .fantasy-card-header-warning {
-  background: linear-gradient(135deg, #443414 0%, #664400 100%);
-  color: #ffb74d;
+  background: linear-gradient(135deg, var(--color-warning-dark) 0%, var(--color-warning) 100%);
+  color: var(--color-warning-lighter);
 }
 
 .fantasy-card-header-info {
-  background: linear-gradient(135deg, #0c1f2f 0%, #1c3a4a 100%);
-  border-color: #0277bd;
+  background: linear-gradient(135deg, var(--color-info-dark) 0%, var(--color-info) 100%);
+  border-color: var(--color-info-lighter);
 }
 
 .fantasy-card-header-secondary {
-  background: linear-gradient(135deg, #1c1c1c 0%, #2d2d2d 100%);
-  border-color: #616161;
+  background: linear-gradient(135deg, var(--color-secondary-dark) 0%, var(--color-secondary) 100%);
+  border-color: var(--color-gray);
 }
 
 .fantasy-card-header-danger {
-  background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
-  color: white;
+  background: linear-gradient(135deg, var(--color-danger-light) 0%, var(--color-danger) 100%);
+  color: var(--color-text-white);
 }
 
 .card-header {
-  background: linear-gradient(135deg, #6e4f37 0%, #4a2c14 100%);
-  border-bottom: 3px double #684832;
-  color: #d4af37;
+  background: linear-gradient(135deg, var(--color-primary-light) 0%, var(--color-primary) 100%);
+  border-bottom: 3px double var(--color-primary-light);
+  color: var(--color-accent-gold);
   font-weight: 700;
 }
 
 /* Специальные стили для биржи */
 .birzha-card {
-  background: linear-gradient(135deg, #f4e4bc 0%, #e6d2a9 100%);
-  border: 2px solid #8b7355;
+  background: linear-gradient(135deg, var(--color-bg-light) 0%, var(--color-bg-light) 100%);
+  border: 2px solid var(--color-accent-bronze-light);
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .birzha-card .birzha-card-header {
-  background: linear-gradient(135deg, #2f1b0c 0%, #4a2c14 100%);
-  border-color: #8f6649;
+  background: linear-gradient(135deg, var(--color-primary-lighter) 0%, var(--color-primary-lighter) 100%);
+  border-color: var(--color-accent-bronze);
 }
 
 /* ОБЯЗАТЕЛЬНО: Переопределяем цвет текста для заголовков с классом fantasy-text-gold */
 .fantasy-card-header .fantasy-text-gold,
 .birzha-card-header .fantasy-text-gold,
 .birzha-card .birzha-card-header .fantasy-text-gold {
-  color: #ffd700;
+  color: var(--color-accent-gold);
   text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.9);
   font-size: 1.3rem;
 }
 
 /* ===== КНОПКИ ===== */
 .fantasy-btn {
-  background: linear-gradient(135deg, #8b451389 0%, #a0512d7c 100%);
-  border: 1px solid #000000;
+  background: linear-gradient(135deg, var(--color-primary-lighter) 0%, var(--color-primary-lighter) 100%);
+  border: 1px solid var(--color-secondary-dark);
   border-radius: 6px;
-  color: #ffd700;
+  color: var(--color-accent-gold);
   font-weight: 600;
   padding: 8px 16px;
   transition: all 0.3s ease;
@@ -190,14 +245,17 @@ html, body, #root {
   display: inline-block;
   text-align: center;
   z-index: 2;
+  opacity: 0.95;
 }
 
 .fantasy-btn:hover {
   transform: translateY(-2px);
+  background: var(--color-accent-bronze);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-  border-color: #000000;
-  color: #fffacd;
+  border-color: var(--color-secondary-dark);
+  color: var(--color-accent-golder);
   text-decoration: none;
+  opacity: 1;
 }
 
 .fantasy-btn:active {
@@ -206,18 +264,18 @@ html, body, #root {
 }
 
 .fantasy-btn:disabled {
-  background: linear-gradient(135deg, #7a7572 0%, #8d8987 100%);
-  border-color: #000000;
+  background: linear-gradient(135deg, var(--color-gray) 0%, #8d8987 100%);
+  border-color: var(--color-secondary-dark);
   opacity: 0.65;
 }
 
 /* Варианты кнопок */
-.fantasy-btn-primary { background: linear-gradient(135deg, #2f1b0c 0%, #4a2c14 100%); }
-.fantasy-btn-success { background: linear-gradient(135deg, #0f2f1a 0%, #1c4a2c 100%); }
-.fantasy-btn-warning { background: linear-gradient(135deg, #332100 0%, #664400 100%); }
-.fantasy-btn-info { background: linear-gradient(135deg, #0c1f2f 0%, #1c3a4a 100%); }
-.fantasy-btn-danger { background: linear-gradient(135deg, #3f0f0f 0%, #5c1a1a 100%); }
-.fantasy-btn-magic { background: linear-gradient(135deg, #1a0f2f 0%, #2d1c4a 100%); }
+.fantasy-btn-primary { background: linear-gradient(135deg, var(--color-primary-dark) 0%, var(--color-primary) 100%); }
+.fantasy-btn-success { background: linear-gradient(135deg, var(--color-success-dark) 0%, var(--color-success) 100%); }
+.fantasy-btn-warning { background: linear-gradient(135deg, var(--color-warning-dark) 0%, var(--color-warning) 100%); }
+.fantasy-btn-info { background: linear-gradient(135deg, var(--color-info-dark) 0%, var(--color-info) 100%); }
+.fantasy-btn-danger { background: linear-gradient(135deg, var(--color-danger-dark) 0%, var(--color-danger) 100%); }
+.fantasy-btn-magic { background: linear-gradient(135deg, var(--color-bg-dark) 0%, var(--color-magic) 100%); }
 
 /* Размеры кнопок */
 .fantasy-btn-sm { padding: 4px 12px; font-size: 0.875em; }
@@ -252,22 +310,22 @@ html, body, #root {
 
 /* ===== ФОРМЫ ===== */
 .form-control {
-  background: linear-gradient(135deg, #faf3e0 0%, #f5e8c8 100%);
-  border: 2px solid #8b7355;
+  background: linear-gradient(135deg, var(--color-bg-light) 0%, var(--color-bg-light) 100%);
+  border: 2px solid var(--color-accent-bronze-light);
   border-radius: 4px;
-  color: #3e2723;
+  color: var(--color-text-dark);
   font-weight: 500;
 }
 
 .form-control:focus {
-  background: linear-gradient(135deg, #fff9e6 0%, #faf3e0 100%);
-  border-color: #a0522d;
+  background: linear-gradient(135deg, #fff9e6 0%, var(--color-bg-light) 100%);
+  border-color: var(--color-primary-lighter);
   box-shadow: 0 0 0 3px rgba(139, 69, 19, 0.3);
-  color: #3e2723;
+  color: var(--color-text-dark);
 }
 
 .form-label {
-  color: #3e2723;
+  color: var(--color-text-dark);
   font-weight: 600;
   text-shadow: 1px 1px 1px rgba(255, 255, 255, 0.5);
 }
@@ -278,9 +336,9 @@ html, body, #root {
 }
 
 .dropdown-toggle.fantasy-btn {
-  background: linear-gradient(135deg, #8b4513 0%, #a0522d 100%) !important;
-  border: 2px solid #000000 !important;
-  color: #ffd700 !important;
+  background: linear-gradient(135deg, var(--color-primary-lighter) 0%, var(--color-primary-lighter) 100%) !important;
+  border: 2px solid var(--color-secondary-dark) !important;
+  color: var(--color-accent-gold) !important;
   text-align: left;
   display: flex;
   justify-content: space-between;
@@ -297,9 +355,8 @@ html, body, #root {
 .dropdown-toggle.fantasy-btn:hover,
 .dropdown-toggle.fantasy-btn:focus,
 .dropdown-toggle.fantasy-btn:active {
-  background: linear-gradient(135deg, #a0522d 0%, #8b4513 100%) !important;
-  border-color: #000000 !important;
-  color: #fffacd !important;
+  border-color: var(--color-secondary-dark) !important;
+  color: var(--color-accent-golder) !important;
   transform: translateY(-1px);
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4) !important;
 }
@@ -309,8 +366,8 @@ html, body, #root {
 }
 
 .fantasy-dropdown-menu {
-  background: linear-gradient(135deg, #f4e4bc 0%, #e6d2a9 100%) !important;
-  border: 2px solid #8b7355 !important;
+  background: linear-gradient(135deg, var(--color-bg-light) 0%, var(--color-bg-light) 100%) !important;
+  border: 2px solid var(--color-accent-bronze-light) !important;
   border-radius: 6px !important;
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4) !important;
   padding: 5px 0 !important;
@@ -323,7 +380,7 @@ html, body, #root {
 }
 
 .fantasy-dropdown-menu .dropdown-item {
-  color: #3e2723 !important;
+  color: var(--color-text-dark) !important;
   font-weight: 500 !important;
   transition: all 0.2s ease !important;
   border-bottom: 1px solid #d7ccc8 !important;
@@ -334,21 +391,21 @@ html, body, #root {
 
 .fantasy-dropdown-menu .dropdown-item:hover,
 .fantasy-dropdown-menu .dropdown-item:focus {
-  background: linear-gradient(135deg, #8b4513 0%, #a0522d 100%) !important;
-  color: #ffd700 !important;
+  background: linear-gradient(135deg, var(--color-primary-lighter) 0%, var(--color-primary-lighter) 100%) !important;
+  color: var(--color-accent-gold) !important;
   transform: translateX(5px);
   padding-left: 20px !important;
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5) !important;
 }
 
 .fantasy-dropdown-menu .dropdown-item.active {
-  background: linear-gradient(135deg, #8b4513 0%, #a0522d 100%) !important;
-  color: #ffd700 !important;
+  background: linear-gradient(135deg, var(--color-primary-lighter) 0%, var(--color-primary-lighter) 100%) !important;
+  color: var(--color-accent-gold) !important;
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5) !important;
 }
 
 .fantasy-dropdown-menu .dropdown-divider {
-  border-top: 1px solid #8b7355 !important;
+  border-top: 1px solid var(--color-accent-bronze-light) !important;
   margin: 5px 0 !important;
   opacity: 0.5;
 }
@@ -363,9 +420,9 @@ html, body, #root {
 
 /* Стили для кнопки в TypeBar */
 .typebar-container .fantasy-btn {
-  background: linear-gradient(135deg, #8b4513 0%, #a0522d 100%) !important;
-  border: 2px solid #000000 !important;
-  color: #ffd700 !important;
+  background: linear-gradient(135deg, var(--color-primary-lighter) 0%, var(--color-primary-lighter) 100%) !important;
+  border: 2px solid var(--color-secondary-dark) !important;
+  color: var(--color-accent-gold) !important;
   padding: 8px 16px !important;
   font-size: 1rem !important;
   min-height: 40px;
@@ -424,15 +481,15 @@ html, body, #root {
 
 /* ===== СПИСКИ ===== */
 .list-group-item {
-  background: rgba(244, 228, 188, 0.7);
+  background: rgba(244, 228, 188, 0.9);
   border: 1px solid #bcaaa4;
-  color: #3e2723;
+  color: var(--color-text-dark);
   transition: all 0.3s ease;
 }
 
 .list-group-item:hover {
-  background: rgba(230, 210, 169, 0.9);
-  border-color: #8b7355;
+  background: var(--color-accent-bronze);
+  border-color: var(--color-accent-bronze-light);
 }
 
 /* ===== СТИЛИ ДЛЯ ПЕРСОНАЖА ===== */
@@ -459,12 +516,12 @@ html, body, #root {
 .experience-progress {
   position: relative;
   height: 36px;
-  background: rgba(139, 69, 19, 0.15);
-  border: 2px solid #8b7355;
+  background: rgba(139, 69, 19, 0.25);
+  border: 2px solid var(--color-accent-bronze-light);
   border-radius: 18px;
   overflow: visible;
   margin: 12px 0;
-  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.2);
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.3);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -476,17 +533,17 @@ html, body, #root {
   top: 0;
   left: 0;
   height: 100%;
-  background: linear-gradient(90deg, #2e7d32 0%, #4caf50 50%, #66bb6a 100%);
+  background: linear-gradient(90deg, var(--color-success-lighter) 0%, var(--color-green) 50%, #66bb6a 100%);
   border-radius: 16px;
   transition: width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
-  box-shadow: inset 0 0 10px rgba(76, 175, 80, 0.5);
+  box-shadow: inset 0 0 10px rgba(76, 175, 80, 0.7);
   z-index: 1;
 }
 
 /* Эффект пульсации для низкого здоровья */
 @keyframes lowHealthPulse {
-  0%, 100% { box-shadow: inset 0 0 10px rgba(76, 175, 80, 0.5); }
-  50% { box-shadow: inset 0 0 15px rgba(76, 175, 80, 0.8), 0 0 10px rgba(76, 175, 80, 0.5); }
+  0%, 100% { box-shadow: inset 0 0 10px rgba(76, 175, 80, 0.7); }
+  50% { box-shadow: inset 0 0 15px rgba(76, 175, 80, 0.9), 0 0 10px rgba(76, 175, 80, 0.7); }
 }
 
 .health-fill.low-health {
@@ -499,17 +556,17 @@ html, body, #root {
   top: 0;
   left: 0;
   height: 100%;
-  background: linear-gradient(90deg, #ff9800 0%, #ffb74d 50%, #ffcc80 100%);
+  background: linear-gradient(90deg, var(--color-warning-lighter) 0%, #ffb74d 50%, #ffcc80 100%);
   border-radius: 16px;
   transition: width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
-  box-shadow: inset 0 0 10px rgba(255, 152, 0, 0.5);
+  box-shadow: inset 0 0 10px rgba(255, 152, 0, 0.7);
   z-index: 1;
 }
 
 /* Альтернативный синий цвет для опыта */
 .experience-fill.blue-theme {
-  background: linear-gradient(90deg, #1976d2 0%, #2196f3 50%, #64b5f6 100%);
-  box-shadow: inset 0 0 10px rgba(33, 150, 243, 0.5);
+  background: linear-gradient(90deg, #1976d2 0%, var(--color-blue) 50%, #64b5f6 100%);
+  box-shadow: inset 0 0 10px rgba(33, 150, 243, 0.7);
 }
 
 /* Эффект блеска для прогресс-баров */
@@ -524,7 +581,7 @@ html, body, #root {
   background: linear-gradient(
     90deg,
     transparent,
-    rgba(255, 255, 255, 0.3),
+    rgba(255, 255, 255, 0.4),
     transparent
   );
   animation: shimmer 3s infinite;
@@ -541,12 +598,12 @@ html, body, #root {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  color: #fff;
+  color: var(--color-text-white);
   font-weight: 800;
   text-shadow: 
     2px 2px 4px rgba(0, 0, 0, 0.9),
-    0 0 10px rgba(0, 0, 0, 0.5),
-    0 0 5px rgba(0, 0, 0, 0.7);
+    0 0 10px rgba(0, 0, 0, 0.7),
+    0 0 5px rgba(0, 0, 0, 0.8);
   font-size: 1rem;
   letter-spacing: 0.5px;
   z-index: 10;
@@ -567,16 +624,16 @@ html, body, #root {
   top: 50%;
   right: 10px;
   transform: translateY(-50%);
-  color: #3e2723;
+  color: var(--color-text-dark);
   font-weight: 700;
   font-size: 0.9rem;
-  text-shadow: 0 0 3px rgba(255, 255, 255, 0.8);
+  text-shadow: 0 0 3px rgba(255, 255, 255, 0.9);
   z-index: 5;
-  background: rgba(244, 228, 188, 0.8);
+  background: rgba(244, 228, 188, 0.95);
   padding: 2px 8px;
   border-radius: 10px;
-  border: 1px solid #8b7355;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--color-accent-bronze-light);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 /* Текст под прогресс-барами */
@@ -585,7 +642,7 @@ html, body, #root {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 8px;
-  color: #3e2723;
+  color: var(--color-text-dark);
   font-weight: 700;
   padding: 0 5px;
 }
@@ -598,33 +655,33 @@ html, body, #root {
 }
 
 .progress-label-right {
-  color: #5d4037;
+  color: var(--color-text-medium);
   font-weight: 800;
   font-size: 1rem;
-  background: rgba(244, 228, 188, 0.7);
+  background: rgba(244, 228, 188, 0.95);
   padding: 2px 10px;
   border-radius: 12px;
-  border: 1px solid #8b7355;
+  border: 1px solid var(--color-accent-bronze-light);
   min-width: 60px;
   text-align: center;
 }
 
 /* Стили для иконок в лейблах */
 .health-icon {
-  color: #e53935;
+  color: var(--color-red);
   font-size: 1.2rem;
-  filter: drop-shadow(0 0 2px rgba(229, 57, 53, 0.5));
+  filter: drop-shadow(0 0 2px rgba(229, 57, 53, 0.7));
 }
 
 .experience-icon {
-  color: #ff9800;
+  color: var(--color-warning-lighter);
   font-size: 1.2rem;
-  filter: drop-shadow(0 0 2px rgba(255, 152, 0, 0.5));
+  filter: drop-shadow(0 0 2px rgba(255, 152, 0, 0.7));
 }
 
 .experience-icon.blue {
-  color: #2196f3;
-  filter: drop-shadow(0 0 2px rgba(33, 150, 243, 0.5));
+  color: var(--color-blue);
+  filter: drop-shadow(0 0 2px rgba(33, 150, 243, 0.7));
 }
 
 /* Строки статистики */
@@ -633,8 +690,8 @@ html, body, #root {
   justify-content: space-between;
   align-items: center;
   padding: 12px 0;
-  border-bottom: 1px solid #c19a6b;
-  color: #3e2723;
+  border-bottom: 1px solid var(--color-accent-bronze);
+  color: var(--color-text-dark);
   font-weight: 500;
 }
 
@@ -649,30 +706,31 @@ html, body, #root {
   border-radius: 12px;
   padding: 4px 12px;
   font-size: 0.9em;
-  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 2px 3px rgba(0, 0, 0, 0.2);
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.4);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 2px 3px rgba(0, 0, 0, 0.3);
+  opacity: 0.95;
 }
 
 .fantasy-badge-primary {
-  background: linear-gradient(135deg, #8b4513, #a0522d);
-  color: #ffd700;
+  background: linear-gradient(135deg, var(--color-primary-lighter), var(--color-primary-lighter));
+  color: var(--color-accent-gold);
   border-color: #654321;
 }
 
 .fantasy-badge-muted {
-  background: linear-gradient(135deg, #8b4513, #a0522d);
-  color: #000000;
+  background: linear-gradient(135deg, var(--color-primary-lighter), var(--color-primary-lighter));
+  color: var(--color-secondary-dark);
   border-color: #654321;
 }
 
 .fantasy-badge-warning {
-  background: linear-gradient(135deg, #ef6c00, #ff8f00);
+  background: linear-gradient(135deg, var(--color-warning-light), var(--color-warning-lighter));
   color: #ffe0b2;
   border-color: #e65100;
 }
 
 .fantasy-badge-success {
-  background: linear-gradient(135deg, #27a82e, #388e3c);
+  background: linear-gradient(135deg, var(--color-success-light), var(--color-success-lighter));
   color: #a5d6a7;
   border-color: #1b5e20;
 }
@@ -694,7 +752,7 @@ html, body, #root {
     padding: 0 15px;
     text-shadow: 
       1px 1px 3px rgba(0, 0, 0, 0.9),
-      0 0 8px rgba(0, 0, 0, 0.5);
+      0 0 8px rgba(0, 0, 0, 0.7);
   }
   
   .progress-text-backup {
@@ -776,7 +834,7 @@ html, body, #root {
 .health-progress .progress-text,
 .experience-progress .progress-text {
   /* Принудительно белый цвет с максимальным контрастом */
-  color: #FFFFFF !important;
+  color: var(--color-text-white) !important;
   mix-blend-mode: difference;
   font-weight: 900 !important;
   
@@ -800,57 +858,15 @@ html, body, #root {
 .health-fill .progress-text,
 .experience-fill .progress-text {
   text-shadow: 
-    0 0 4px #FFFFFF,
-    0 0 6px #FFFFFF,
-    0 0 8px #FFFFFF,
+    0 0 4px var(--color-text-white),
+    0 0 6px var(--color-text-white),
+    0 0 8px var(--color-text-white),
     2px 2px 2px #000000,
     -2px -2px 2px #000000 !important;
 }
 
-/* Вкладки */
-.fantasy-tabs .nav-tabs {
-  border-bottom: 3px double #8b4513;
-  background: transparent;
-}
-
-.fantasy-tabs .nav {
-  display: flex;
-  flex-wrap: nowrap;
-  overflow-x: auto;
-}
-
-.fantasy-tabs .nav-item {
-  flex: 1;
-  min-width: 120px;
-  text-align: center;
-}
-
 .fantasy-tabs .nav-link {
-  color: #5d4037;
-  border: 2px solid transparent;
-  border-radius: 8px 8px 0 0;
-  margin: 0 3px;
-  font-weight: 600;
-  transition: all 0.3s ease;
-  background: linear-gradient(135deg, #d7ccc8, #bcaaa4);
-  border-bottom: none;
-  white-space: nowrap;
-  padding: 0.5rem 0.75rem;
-}
-
-.fantasy-tabs .nav-link:hover {
-  background: linear-gradient(135deg, #efdcd3, #d7ccc8);
-  border-color: #8b4513;
-  color: #3e2723;
-  transform: translateY(-2px);
-}
-
-.fantasy-tabs .nav-link.active {
-  background: linear-gradient(135deg, #8b4513, #a0522d);
-  color: #ffd700;
-  border-color: #654321;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
-  box-shadow: 0 -3px 10px rgba(139, 69, 19, 0.3);
+  background: var(--color-accent-bronze-light);
 }
 
 /* ===== СТИЛИ ДЛЯ БИРЖИ ===== */
@@ -891,33 +907,33 @@ html, body, #root {
 
 /* Статистика под графиком */
 .birzha-chart-stats {
-  border-top: 1px solid #c19a6b;
+  border-top: 1px solid var(--color-accent-bronze);
   padding-top: 15px;
   margin-top: 15px;
 }
 
 /* Заголовки карточек биржи */
 .birzha-card-header {
-  background: linear-gradient(135deg, #2f1b0c 0%, #4a2c14 100%) !important;
-  border-bottom: 3px double #8f6649 !important;
+  background: linear-gradient(135deg, var(--color-primary-dark) 0%, var(--color-primary) 100%) !important;
+  border-bottom: 3px double var(--color-accent-bronze) !important;
   padding: 12px 15px !important;
 }
 
 .birzha-card-header-info {
-  background: linear-gradient(135deg, #0c1f2f 0%, #1c3a4a 100%) !important;
-  border-color: #0277bd !important;
+  background: linear-gradient(135deg, var(--color-info-dark) 0%, var(--color-info) 100%) !important;
+  border-color: var(--color-info-lighter) !important;
 }
 
 .birzha-card-header-primary {
-  background: linear-gradient(135deg, #7d5739 0%, #4c3e33 100%) !important;
+  background: linear-gradient(135deg, var(--color-primary-light) 0%, var(--color-secondary-light) 100%) !important;
 }
 
 .birzha-card-header-secondary {
-  background: linear-gradient(135deg, #1c1c1c 0%, #2d2d2d 100%) !important;
+  background: linear-gradient(135deg, var(--color-secondary-dark) 0%, var(--color-secondary) 100%) !important;
 }
 
 .birzha-card-header .fantasy-text-gold {
-  color: #ffd700 !important;
+  color: var(--color-accent-gold) !important;
   text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.9) !important;
 }
 
@@ -935,22 +951,22 @@ html, body, #root {
 }
 
 .birzha-info-icon {
-  color: #d4af37;
+  color: var(--color-accent-gold);
   font-weight: bold;
   flex-shrink: 0;
   margin-top: 2px;
 }
 
 .birzha-info-text {
-  color: #3e2723;
+  color: var(--color-text-dark);
   line-height: 1.4;
 }
 
 /* Индикаторы баланса */
 .birzha-balance-info {
-  background: rgba(244, 228, 188, 0.3);
+  background: rgba(244, 228, 188, 0.5);
   border-radius: 8px;
-  border: 1px solid #c19a6b;
+  border: 1px solid var(--color-accent-bronze);
 }
 
 .birzha-balance-indicator {
@@ -960,11 +976,11 @@ html, body, #root {
 }
 
 .birzha-balance-positive {
-  color: #27a82e;
+  color: var(--color-success-light);
 }
 
 .birzha-balance-negative {
-  color: #ef9a9a;
+  color: var(--color-danger-lighter);
 }
 
 /* Кнопки для мобильных */
@@ -1067,7 +1083,7 @@ html, body, #root {
 /* Ховер эффекты для десктопа */
 @media (hover: hover) and (pointer: fine) {
   .birzha-chart-card:hover {
-    box-shadow: 0 6px 20px rgba(139, 69, 19, 0.4);
+    box-shadow: 0 6px 20px rgba(139, 69, 19, 0.5);
   }
 }
 
@@ -1083,12 +1099,12 @@ html, body, #root {
 }
 
 .birzha-chart-wrapper::-webkit-scrollbar-track {
-  background: rgba(139, 69, 19, 0.1);
+  background: rgba(139, 69, 19, 0.2);
   border-radius: 2px;
 }
 
 .birzha-chart-wrapper::-webkit-scrollbar-thumb {
-  background: rgba(139, 69, 19, 0.5);
+  background: rgba(139, 69, 19, 0.7);
   border-radius: 2px;
 }
 
@@ -1105,9 +1121,9 @@ html, body, #root {
     width: 100%;
     border-radius: 0;
     border: none;
-    border-bottom: 1px solid #8b4513;
+    border-bottom: 1px solid var(--color-primary-lighter);
     padding: 12px 20px;
-    background: linear-gradient(135deg, #2f1b0c 0%, #4a2c14 100%);
+    background: linear-gradient(135deg, var(--color-primary-dark) 0%, var(--color-primary) 100%);
     outline: none !important;
     box-shadow: none !important;
   }
@@ -1118,8 +1134,8 @@ html, body, #root {
     left: 0;
     right: 0;
     z-index: 1050;
-    background: linear-gradient(135deg, #2f1b0c 0%, #4a2c14 100%);
-    border-top: 1px solid #8b4513;
+    background: linear-gradient(135deg, var(--color-primary-dark) 0%, var(--color-primary) 100%);
+    border-top: 1px solid var(--color-primary-lighter);
   }
 }
 
@@ -1129,27 +1145,27 @@ html, body, #root {
 }
 
 .location-point:hover {  
-  stroke: #ff8c00;
+  stroke: var(--color-orange);
   stroke-width: 3px;
 }
 
 .dungeon-item {
-  background: rgba(139, 69, 19, 0.1);
+  background: rgba(139, 69, 19, 0.2);
   border-radius: 5px;
-  border-left: 3px solid #8B4513;
+  border-left: 3px solid var(--color-primary-lighter);
   cursor: pointer;
   transition: all 0.3s ease;
 }
 
 .dungeon-item:hover {
-  background: rgba(139, 69, 19, 0.2);
+  background: rgba(139, 69, 19, 0.3);
   transform: translateX(5px);
 }
 
 .connection-item {
-  background: rgba(255, 215, 0, 0.1);
+  background: rgba(255, 215, 0, 0.2);
   border-radius: 5px;
-  border-left: 3px solid #ffd700;
+  border-left: 3px solid var(--color-accent-gold);
 }
 
 .fantasy-tooltip-content {
@@ -1158,21 +1174,21 @@ html, body, #root {
 }
 
 .fantasy-map-container {
-  border: 3px solid #8B4513;
-  box-shadow: 0 0 20px rgba(139, 69, 19, 0.3);
+  border: 3px solid var(--color-primary-lighter);
+  box-shadow: 0 0 20px rgba(139, 69, 19, 0.4);
 }
 
 /* ===== МОДАЛЬНЫЕ ОКНА ===== */
 .fantasy-modal .modal-content {
   background: linear-gradient(135deg, #f5e8c8 0%, #e8d5b5 100%);
-  border: 2px solid #8b4513;
+  border: 2px solid var(--color-primary-lighter);
   border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(139, 69, 19, 0.3);
+  box-shadow: 0 8px 32px rgba(139, 69, 19, 0.4);
 }
 
 .fantasy-modal .modal-header {
   background: linear-gradient(135deg, #d4a574 0%, #b08c5a 100%);
-  border-bottom: 2px solid #8b4513;
+  border-bottom: 2px solid var(--color-primary-lighter);
   border-radius: 10px 10px 0 0;
 }
 
@@ -1182,12 +1198,12 @@ html, body, #root {
 
 .fantasy-modal .modal-body {
   padding: 2rem;
-  background: rgba(255, 248, 225, 0.8);
+  background: rgba(255, 248, 225, 0.9);
 }
 
 .fantasy-modal .modal-footer {
   background: linear-gradient(135deg, #e8d5b5 0%, #d4a574 100%);
-  border-top: 2px solid #8b4513;
+  border-top: 2px solid var(--color-primary-lighter);
   border-radius: 0 0 10px 10px;
 }
 
@@ -1215,7 +1231,7 @@ html, body, #root {
 }
 
 @keyframes pulse-gold {
-  0% { box-shadow: 0 0 0 0 rgba(212, 175, 55, 0.4); }
+  0% { box-shadow: 0 0 0 0 rgba(212, 175, 55, 0.5); }
   70% { box-shadow: 0 0 0 10px rgba(212, 175, 55, 0); }
   100% { box-shadow: 0 0 0 0 rgba(212, 175, 55, 0); }
 }
@@ -1243,9 +1259,9 @@ html, body, #root {
   .fantasy-navbar .collapse.show,
   .fantasy-navbar .fantasy-mobile-menu,
   #responsive-navbar-nav {
-    background: linear-gradient(135deg, #5d3d1c81 0%, #8b592b5f 100%);
-    border-top: 2px solid #8b451300;
-    border-bottom: 3px double #8b451300;
+    background: linear-gradient(135deg, #5d3d1c 0%, #8b592b 100%);
+    border-top: 2px solid var(--color-primary-lighter);
+    border-bottom: 3px double var(--color-primary-lighter);
   }
 }
 
@@ -1328,24 +1344,24 @@ html, body, #root {
   right: 5px;
   width: 24px;
   height: 24px;
-  background-color: rgba(46, 204, 113, 0.9);
+  background-color: rgba(46, 204, 113, 0.95);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
+  color: var(--color-text-white);
   font-size: 16px;
   font-weight: bold;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
   z-index: 10;
-  border: 2px solid white;
+  border: 2px solid var(--color-text-white);
   animation: equipped-pulse 2s infinite;
 }
 
 @keyframes equipped-pulse {
   0% {
     transform: scale(1);
-    box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.7);
+    box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.8);
   }
   70% {
     transform: scale(1.1);
@@ -1359,7 +1375,7 @@ html, body, #root {
 
 /* Бейдж "надет" в названии предмета */
 .badge.bg-success {
-  background-color: #28a745 !important;
+  background-color: var(--color-success-lighter) !important;
   font-weight: 600;
   letter-spacing: 0.5px;
 }
@@ -1371,7 +1387,7 @@ html, body, #root {
   width: 100%;
   max-width: 80px;
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 /* ===== СТИЛИ ДРОПДАУНА ИНВЕНТАРЯ ===== */
@@ -1383,8 +1399,8 @@ html, body, #root {
 }
 
 .inventory-item-fantasy-dropdown .dropdown-toggle {
-  background: rgba(0, 0, 0, 0.7);
-  border: 1px solid #d4af37;
+  background: rgba(0, 0, 0, 0.8);
+  border: 1px solid var(--color-accent-gold);
   border-radius: 4px;
   width: 30px;
   height: 30px;
@@ -1392,7 +1408,7 @@ html, body, #root {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #d4af37;
+  color: var(--color-accent-gold);
 }
 
 .inventory-item-fantasy-dropdown .dropdown-toggle::after {
@@ -1400,16 +1416,16 @@ html, body, #root {
 }
 
 .inventory-item-fantasy-dropdown .dropdown-toggle:hover {
-  background: rgba(212, 175, 55, 0.2);
-  border-color: #ffd700;
-  color: #ffd700;
+  background: rgba(212, 175, 55, 0.3);
+  border-color: var(--color-accent-gold);
+  color: var(--color-accent-gold);
 }
 
 .inventory-item-fantasy-dropdown .dropdown-menu {
-  background: linear-gradient(135deg, #2d1f0f 0%, #4a3519 100%);
-  border: 2px solid #d4af37;
+  background: linear-gradient(135deg, #2d1f0f 0%, var(--color-primary) 100%);
+  border: 2px solid var(--color-accent-gold);
   border-radius: 8px;
-  box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
+  box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4);
   min-width: 140px;
   padding: 4px 0;
   margin-top: 5px;
@@ -1420,7 +1436,7 @@ html, body, #root {
   padding: 8px 16px;
   font-size: 0.9rem;
   transition: all 0.2s ease;
-  border-bottom: 1px solid rgba(212, 175, 55, 0.1);
+  border-bottom: 1px solid rgba(212, 175, 55, 0.2);
 }
 
 .inventory-item-fantasy-dropdown .dropdown-item:last-child {
@@ -1428,8 +1444,8 @@ html, body, #root {
 }
 
 .inventory-item-fantasy-dropdown .dropdown-item:hover {
-  background: rgba(212, 175, 55, 0.15);
-  color: #ffd700;
+  background: rgba(212, 175, 55, 0.25);
+  color: var(--color-accent-gold);
   transform: translateX(3px);
 }
 
@@ -1477,7 +1493,7 @@ html, body, #root {
 }
 
 .row .col .inventory-item-fantasy-dropdown .dropdown-menu {
-  background: linear-gradient(135deg, #2d1f0f 0%, #4a3519 100%);
+  background: linear-gradient(135deg, #2d1f0f 0%, var(--color-primary) 100%);
 }
 
 body .inventory-item-fantasy-dropdown .dropdown-item {
@@ -1493,20 +1509,20 @@ body .inventory-item-fantasy-dropdown .dropdown-item {
 }
 
 .inventory-search-input {
-  background: linear-gradient(135deg, #faf3e0 0%, #f5e8c8 100%);
-  border: 2px solid #8b7355;
+  background: linear-gradient(135deg, var(--color-bg-light) 0%, var(--color-bg-light) 100%);
+  border: 2px solid var(--color-accent-bronze-light);
   border-radius: 4px;
-  color: #3e2723;
+  color: var(--color-text-dark);
   font-weight: 500;
   padding: 0.375rem 0.75rem !important; /* Убираем большие отступы */
   height: 38px !important; /* Фиксированная высота */
 }
 
 .inventory-search-input:focus {
-  background: linear-gradient(135deg, #fff9e6 0%, #faf3e0 100%);
-  border-color: #a0522d;
-  box-shadow: 0 0 0 3px rgba(139, 69, 19, 0.3);
-  color: #3e2723;
+  background: linear-gradient(135deg, #fff9e6 0%, var(--color-bg-light) 100%);
+  border-color: var(--color-primary-lighter);
+  box-shadow: 0 0 0 3px rgba(139, 69, 19, 0.4);
+  color: var(--color-text-dark);
 }
 
 /* Убираем лишние отступы в панели управления */
@@ -1562,21 +1578,21 @@ body .inventory-item-fantasy-dropdown .dropdown-item {
 }
 
 .fantasy-attribute-item {
-  background: linear-gradient(135deg, rgba(244, 228, 188, 0.8) 0%, rgba(230, 210, 169, 0.9) 100%);
-  border: 2px solid #c19a6b;
+  background: linear-gradient(135deg, rgba(244, 228, 188, 0.9) 0%, rgba(230, 210, 169, 0.95) 100%);
+  border: 2px solid var(--color-accent-bronze);
   border-radius: 12px;
   padding: 18px 20px;
   transition: all 0.3s ease;
   cursor: pointer;
   margin-bottom: 12px;
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
 }
 
 .fantasy-attribute-item:hover {
-  background: linear-gradient(135deg, rgba(230, 210, 169, 0.95) 0%, rgba(212, 192, 149, 0.95) 100%);
-  border-color: #a0522d;
+  background: linear-gradient(135deg, rgba(230, 210, 169, 0.98) 0%, rgba(212, 192, 149, 0.98) 100%);
+  border-color: var(--color-primary-lighter);
   transform: translateY(-3px);
-  box-shadow: 0 6px 15px rgba(139, 69, 19, 0.25);
+  box-shadow: 0 6px 15px rgba(139, 69, 19, 0.3);
 }
 
 .attribute-content {
@@ -1588,7 +1604,7 @@ body .inventory-item-fantasy-dropdown .dropdown-item {
 
 .fantasy-attribute-key {
   font-weight: 700;
-  color: #3e2723;
+  color: var(--color-text-dark);
   font-size: 1rem;
   flex: 1;
   margin-right: 15px;
@@ -1596,8 +1612,8 @@ body .inventory-item-fantasy-dropdown .dropdown-item {
 }
 
 .fantasy-attribute-value {
-  background: linear-gradient(135deg, #8b4513, #a0522d);
-  color: #ffd700;
+  background: linear-gradient(135deg, var(--color-primary-lighter), var(--color-primary-lighter));
+  color: var(--color-accent-gold);
   padding: 6px 16px;
   border-radius: 20px;
   font-weight: 700;
@@ -1605,15 +1621,15 @@ body .inventory-item-fantasy-dropdown .dropdown-item {
   border: 2px solid #654321;
   min-width: 100px;
   text-align: center;
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2), 0 3px 6px rgba(0, 0, 0, 0.15);
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3), 0 3px 6px rgba(0, 0, 0, 0.2);
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.6);
 }
 
 /* Стили для отдельных карточек магии и умений */
 .fantasy-card .fantasy-stat-row {
   margin-bottom: 12px;
   padding: 10px 0;
-  border-bottom: 1px solid rgba(193, 154, 107, 0.4);
+  border-bottom: 1px solid rgba(193, 154, 107, 0.5);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -1627,7 +1643,7 @@ body .inventory-item-fantasy-dropdown .dropdown-item {
 
 .fantasy-card .fantasy-stat-row .fantasy-text-muted {
   font-size: 0.9rem;
-  color: #5d4037;
+  color: var(--color-text-medium);
   font-weight: 600;
   flex: 0 0 45%;
   word-break: break-word;
@@ -1635,19 +1651,12 @@ body .inventory-item-fantasy-dropdown .dropdown-item {
 
 .fantasy-card .fantasy-stat-row .fantasy-text-bold {
   font-weight: 600;
-  color: #3e2723;
+  color: var(--color-accent-gold);
   font-size: 0.95rem;
   text-align: right;
   flex: 0 0 55%;
   word-break: break-word;
   padding-left: 10px;
-}
-
-/* Специальные стили для карточек магии */
-.fantasy-card-header-magic {
-  background: linear-gradient(135deg, #1a0f2f 0%, #2d1c4a 100%) !important;
-  color: #d4b5ff !important;
-  border-color: #7e57c2 !important;
 }
 
 /* Адаптивность для мобильных устройств */
@@ -1719,14 +1728,14 @@ body .inventory-item-fantasy-dropdown .dropdown-item {
 /* Стили для тултипов */
 .fantasy-tooltip {
   font-family: 'Cinzel', serif;
-  background: linear-gradient(135deg, #2f1b0c 0%, #4a2c14 100%);
-  border: 1px solid #d4af37;
+  background: linear-gradient(135deg, var(--color-primary-dark) 0%, var(--color-primary) 100%);
+  border: 1px solid var(--color-accent-gold);
   border-radius: 8px;
-  color: #ffd700;
+  color: var(--color-accent-gold);
   font-size: 0.9rem;
   max-width: 300px;
   padding: 12px 16px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
   line-height: 1.4;
 }
 
@@ -1741,8 +1750,8 @@ body .inventory-item-fantasy-dropdown .dropdown-item {
   justify-content: space-between;
   align-items: center;
   padding: 14px 0;
-  border-bottom: 1px solid #c19a6b;
-  color: #3e2723;
+  border-bottom: 1px solid var(--color-accent-bronze);
+  color: var(--color-text-dark);
   font-weight: 500;
   min-height: 44px;
 }
@@ -1771,10 +1780,10 @@ body .inventory-item-fantasy-dropdown .dropdown-item {
 
 /* Стили для вкладок магазина */
 .fantasy-tabs .nav-link {
-  background: linear-gradient(135deg, rgba(139, 69, 19, 0.2) 0%, rgba(160, 82, 45, 0.1) 100%);
+  background: var(--color-accent-bronze-light);
   border: 2px solid transparent;
   border-bottom: none;
-  color: #8b7355;
+  color: gold;
   font-weight: 600;
   transition: all 0.3s ease;
   position: relative;
@@ -1786,17 +1795,16 @@ body .inventory-item-fantasy-dropdown .dropdown-item {
 }
 
 .fantasy-tabs .nav-link:hover {
-  background: linear-gradient(135deg, rgba(139, 69, 19, 0.3) 0%, rgba(160, 82, 45, 0.2) 100%);
-  color: #a0522d;
-  border-color: #c19a6b;
+  color: var(--color-text-dark);
+  border-color: var(--color-accent-bronze);
 }
 
 .fantasy-tabs .nav-link.active {
-  background: linear-gradient(135deg, #8b4513 0%, #a0522d 100%);
-  color: #ffd700;
-  border-color: #8b4513;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
-  box-shadow: 0 -2px 10px rgba(139, 69, 19, 0.3);
+  background: var(--color-primary-lighter);
+  color: var(--color-accent-gold);
+  border-color: var(--color-primary-lighter);
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 -2px 10px rgba(139, 69, 19, 0.4);
   font-weight: 700;
 }
 
@@ -1807,43 +1815,42 @@ body .inventory-item-fantasy-dropdown .dropdown-item {
   left: 0;
   right: 0;
   height: 3px;
-  background: linear-gradient(90deg, #ffd700, #ffed4e, #ffd700);
+  background: linear-gradient(90deg, var(--color-accent-gold), #ffed4e, var(--color-accent-gold));
   animation: tabGlow 2s infinite;
 }
 
 @keyframes tabGlow {
-  0%, 100% { opacity: 0.7; }
+  0%, 100% { opacity: 0.8; }
   50% { opacity: 1; }
 }
 
 /* Улучшенные кнопки для магазина событий */
 .fantasy-btn-info {
-  background: linear-gradient(135deg, #0c5460 0%, #117a8b 100%);
-  border: 1px solid #000000;
+  background: linear-gradient(135deg, var(--color-info-light) 0%, var(--color-info-lighter) 100%);
+  border: 1px solid var(--color-secondary-dark);
   border-radius: 6px;
-  color: #fff;
+  color: var(--color-text-white);
   font-weight: 600;
   transition: all 0.3s ease;
 }
 
 .fantasy-btn-info:hover {
-  background: linear-gradient(135deg, #117a8b 0%, #0c5460 100%);
-  border-color: #000000;
-  color: #fff;
+  background: linear-gradient(135deg, var(--color-info-lighter) 0%, var(--color-info-light) 100%);
+  border-color: var(--color-secondary-dark);
+  color: var(--color-text-white);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(13, 110, 253, 0.3);
+  box-shadow: 0 4px 12px rgba(13, 110, 253, 0.4);
 }
 
 .fantasy-btn-info:disabled {
-  background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+  background: linear-gradient(135deg, var(--color-gray) 0%, #5a6268 100%);
   opacity: 0.65;
 }
 
 /* Заголовки карточек для магазина событий */
 .fantasy-card-header-info {
-  background: linear-gradient(135deg, #0c5460 0%, #117a8b 100%);
   border-bottom: 3px double #0a3d42;
-  color: #fff;
+  color: var(--color-text-white);
 }
 
 /* Стили для снежков (валюты события) */
@@ -1886,7 +1893,7 @@ body .inventory-item-fantasy-dropdown .dropdown-item {
   background: linear-gradient(
     45deg,
     transparent,
-    rgba(255, 255, 255, 0.1),
+    rgba(255, 255, 255, 0.15),
     transparent
   );
   transform: rotate(45deg);
@@ -1906,15 +1913,15 @@ body .inventory-item-fantasy-dropdown .dropdown-item {
 
 /* Редкость предметов */
 .rarity-common { color: #b0b0b0; }
-.rarity-uncommon { color: #27a82e; }
-.rarity-rare { color: #2196f3; }
+.rarity-uncommon { color: var(--color-success-light); }
+.rarity-rare { color: var(--color-blue); }
 .rarity-epic { color: #9c27b0; }
-.rarity-legendary { color: #ff9800; }
+.rarity-legendary { color: var(--color-warning-lighter); }
 .rarity-mythic { color: #ff5722; }
 
 /* Бейджи редкости */
 .badge.bg-purple {
-  background-color: #6f42c1 !important;
+  background-color: var(--color-purple) !important;
 }
 
 .badge.bg-orange {
@@ -1930,25 +1937,25 @@ body .inventory-item-fantasy-dropdown .dropdown-item {
 
 .image-selection-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
 }
 
 .image-selection-card.selected {
   border-color: #17a2b8;
-  box-shadow: 0 0 15px rgba(23, 162, 184, 0.5);
+  box-shadow: 0 0 15px rgba(23, 162, 184, 0.6);
 }
 
 /* Таймер события */
 .event-timer {
-  background: linear-gradient(135deg, #0c5460 0%, #117a8b 100%);
-  color: white;
+  background: linear-gradient(135deg, var(--color-info-light) 0%, var(--color-info-lighter) 100%);
+  color: var(--color-text-white);
   border-radius: 20px;
   padding: 8px 20px;
   font-weight: 600;
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
 }
 
 /* Стили для заголовков магазина */
@@ -1961,8 +1968,8 @@ body .inventory-item-fantasy-dropdown .dropdown-item {
 .shop-header h1 {
   font-family: 'Cinzel', serif;
   font-weight: 700;
-  color: #3e2723;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+  color: var(--color-text-dark);
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
   position: relative;
   display: inline-block;
 }
@@ -1974,7 +1981,7 @@ body .inventory-item-fantasy-dropdown .dropdown-item {
   left: 25%;
   right: 25%;
   height: 3px;
-  background: linear-gradient(90deg, transparent, #8b4513, transparent);
+  background: linear-gradient(90deg, transparent, var(--color-primary-lighter), transparent);
 }
 
 /* Адаптивность для магазина */
@@ -2020,8 +2027,8 @@ body .inventory-item-fantasy-dropdown .dropdown-item {
 /* Стили для кнопки настроек в навбаре */
 .navbar-settings-btn {
   background: linear-gradient(180deg, #3a7bd5 0%, #00d2ff 100%) !important;
-  border: 1px solid #000000 !important;
-  color: #ffffff !important;
+  border: 1px solid var(--color-secondary-dark) !important;
+  color: var(--color-text-white) !important;
   font-family: "georgia", serif !important;
   font-weight: bold !important;
   padding: 6px 10px !important;
@@ -2035,8 +2042,8 @@ body .inventory-item-fantasy-dropdown .dropdown-item {
 
 .navbar-settings-btn:hover {
   transform: scale(1.1) !important;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3) !important;
-  color: #ffd700 !important;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4) !important;
+  color: var(--color-accent-gold) !important;
 }
 
 /* На мобильных - скрыть компактную кнопку */
@@ -2121,15 +2128,15 @@ body .inventory-item-fantasy-dropdown .dropdown-item {
   font-weight: bold !important;
   font-style: normal !important;
   text-transform: uppercase !important;
-  background: linear-gradient(180deg, #dd9a35ff 0%, #795725ff 100%) !important;
-  border: 1px solid #000000 !important;
-  color: #000000ff !important;
+  background: var(--color-accent-bronze-light);
+  border: 1px solid var(--color-secondary-dark) !important;
+  color: var(--color-accent-gold);
   transition: all 0.3s ease !important;
 }
 
 .fantasy-navbar .fantasy-btn:hover {
   transform: translateY(-2px) !important;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3) !important;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4) !important;
 }
 
 /* Убираем полосу прокрутки на десктопе */
@@ -2138,18 +2145,18 @@ body .inventory-item-fantasy-dropdown .dropdown-item {
 }
 
 .fantasy-navbar .nav::-webkit-scrollbar-track {
-  background: rgba(139, 69, 19, 0.1) !important;
+  background: rgba(139, 69, 19, 0.2) !important;
 }
 
 .fantasy-navbar .nav::-webkit-scrollbar-thumb {
-  background: rgba(139, 69, 19, 0.3) !important;
+  background: rgba(139, 69, 19, 0.4) !important;
   border-radius: 2px !important;
 }
 
 /* Для Firefox */
 .fantasy-navbar .nav {
   scrollbar-width: thin !important;
-  scrollbar-color: rgba(139, 69, 19, 0.3) rgba(139, 69, 19, 0.1) !important;
+  scrollbar-color: rgba(139, 69, 19, 0.4) rgba(139, 69, 19, 0.2) !important;
 }
 
 /* Стили для инвентаря */
@@ -2160,30 +2167,30 @@ body .inventory-item-fantasy-dropdown .dropdown-item {
 
 .inventory-filter-container {
   padding: 12px;
-  background: rgba(244, 228, 188, 0.6);
-  border: 1px solid #c19a6b;
+  background: rgba(244, 228, 188, 0.8);
+  border: 1px solid var(--color-accent-bronze);
   border-radius: 8px;
   margin-bottom: 15px;
 }
 
 .mass-operations-panel {
-  background: linear-gradient(135deg, rgba(139, 69, 19, 0.1) 0%, rgba(160, 82, 45, 0.05) 100%);
-  border: 2px solid #c19a6b;
+  background: linear-gradient(135deg, rgba(139, 69, 19, 0.2) 0%, rgba(160, 82, 45, 0.1) 100%);
+  border: 2px solid var(--color-accent-bronze);
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 .selected-count-badge {
-  background: linear-gradient(135deg, #8b4513, #a0522d) !important;
-  color: #ffd700 !important;
+  background: linear-gradient(135deg, var(--color-primary-lighter), var(--color-primary-lighter)) !important;
+  color: var(--color-accent-gold) !important;
   border: 1px solid #654321;
   padding: 6px 12px;
   font-size: 0.9rem;
 }
 
 .value-badge {
-  background: linear-gradient(135deg, #0c5460, #117a8b) !important;
-  color: white !important;
+  background: linear-gradient(135deg, var(--color-info-light), var(--color-info-lighter)) !important;
+  color: var(--color-text-white) !important;
   border: 1px solid #0a3d42;
   padding: 6px 12px;
   font-size: 0.9rem;

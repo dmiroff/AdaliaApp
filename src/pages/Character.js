@@ -1,6 +1,6 @@
 import GetDataById from "../http/GetData";
 import { useState, useContext, useEffect, useMemo } from "react";
-import { Container, Spinner, Tabs, Tab, Card, Row, Col, Badge, ProgressBar, OverlayTrigger, Tooltip } from "react-bootstrap";
+import { Container, Spinner, Tabs, Tab, Card, Row, Col, Badge, OverlayTrigger, Tooltip } from "react-bootstrap";
 import { Context } from "../index";
 import { observer } from "mobx-react-lite";
 import { dict_translator } from "../utils/Helpers";
@@ -115,26 +115,6 @@ const Character = observer(() => {
     return value
   }
 
-  const characterDataToShow = (data) => {
-    const dataDict = {}
-    for (const [data_key, data_values] of Object.entries(data)) {
-      let data_value = ""
-      for (const [key, value] of Object.entries(data_values)) {
-        if (key === "name") {
-          continue
-        }
-        if (key in dict_translator) {
-          if (data_value !== "") {
-            data_value = data_value + ", "
-          }
-          data_value = data_value + dict_translator[key] + ": " + prepareDataValues(value, key)
-        }
-      }
-      dataDict[data_key] = data_value
-    };
-    return dataDict
-  }
-
   const getModByAtt = (att, agi = false) => {
     let current = 10;
     let step = 1;
@@ -232,8 +212,8 @@ const Character = observer(() => {
         displayType: "abilityCards",
         data: playerData.abilities || {}
       },
-      "Временные эффекты": {
-        type: "Временные эффекты",
+      "Эффекты": {
+        type: "Эффекты",
         displayType: "cards",
         data: playerData.temporary_effects || {}
       }
@@ -337,7 +317,7 @@ const Character = observer(() => {
     <Col md={6} lg={4} className="mb-3">
       <Card className="h-100 fantasy-card">
         <Card.Header className={`fantasy-card-header fantasy-card-header-${color}`}>
-          <h6 className="mb-0">{icon} {title}</h6>
+          <h6 className="fantasy-text-gold">{icon} {title}</h6>
         </Card.Header>
         <Card.Body>
           {Object.entries(data).map(([key, value]) => (
@@ -399,24 +379,6 @@ const Character = observer(() => {
       </Card>
     </Col>
   );
-
-  const getBadgeType = (key, value) => {
-    if (typeof value === 'number') {
-      if (key.includes('атака') || key.includes('урон') || key.includes('критическ')) return 'combat';
-      if (key.includes('защита') || key.includes('сопротивление')) return 'primary';
-      if (key.includes('шанс') || key.includes('процент')) return 'crit';
-    }
-    
-    const combatKeys = ['атака', 'урон', 'критическ', 'бой', 'оружие'];
-    const magicKeys = ['маги', 'регенерац', 'воскрешен', 'элемент'];
-    const physicalKeys = ['защита', 'сопротивлен', 'броня', 'щит'];
-    
-    if (combatKeys.some(k => key.toLowerCase().includes(k))) return 'combat';
-    if (magicKeys.some(k => key.toLowerCase().includes(k))) return 'magic';
-    if (physicalKeys.some(k => key.toLowerCase().includes(k))) return 'physical';
-    
-    return 'primary';
-  };
 
   // Компонент для отображения элемента с тултипом (атрибуты и навыки)
   const AttributeWithTooltip = ({ category, itemKey, value }) => {
@@ -712,15 +674,15 @@ const Character = observer(() => {
           "Магия",
           "Таланты",
           "Умения",
-          "Временные эффекты",
+          "Эффекты",
         ].map((category) => (
           <Tab key={category} eventKey={category} title={getTabTitle(category)}>
             <Container fluid>
               <Row>
                 <Col>
                   <Card className="fantasy-card">
-                    <Card.Header className={`fantasy-card-header fantasy-card-header-${getCategoryColor(category)}`}>
-                      <h5 className="mb-0">{category}</h5>
+                    <Card.Header className={`fantasy-card-header`}>
+                      <h5 className="fantasy-text-gold">{category}</h5>
                     </Card.Header>
                     <Card.Body>
                       {renderSectionData(category)}
@@ -745,7 +707,7 @@ const getTabTitle = (category) => {
     "Магия": "🔮",
     "Таланты": "💫",
     "Умения": "⚡",
-    "Временные эффекты": "🕒"
+    "Эффекты": "🕒"
   };
   return `${icons[category]} ${category}`;
 };
@@ -758,7 +720,7 @@ const getCategoryColor = (category) => {
     "Магия": "magic", 
     "Таланты": "warning",
     "Умения": "info",
-    "Временные эффекты": "secondary"
+    "Эффекты": "secondary"
   };
   return colors[category] || "primary";
 };

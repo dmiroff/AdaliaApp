@@ -61,7 +61,7 @@ const EventShopHistory = () => {
   return (
     <Card className="fantasy-card">
       <Card.Header className="fantasy-card-header-info">
-        <h5>📜 История покупок в событийном магазине</h5>
+        <h5 className="fantasy-text-gold">📜 История покупок в событийном магазине</h5>
       </Card.Header>
       <Card.Body>
         {error && <Alert variant="danger">{error}</Alert>}
