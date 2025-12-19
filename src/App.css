@@ -273,48 +273,153 @@ html, body, #root {
 }
 
 /* ===== DROPDOWN ===== */
-.dropdown { position: relative; }
+.dropdown { 
+  position: relative; 
+}
 
 .dropdown-toggle.fantasy-btn {
-  background: linear-gradient(135deg, #8b4513 0%, #a0522d 100%);
-  border: 2px solid #000000;
-  color: #ffd700;
+  background: linear-gradient(135deg, #8b4513 0%, #a0522d 100%) !important;
+  border: 2px solid #000000 !important;
+  color: #ffd700 !important;
   text-align: left;
   display: flex;
   justify-content: space-between;
   align-items: center;
   width: 100%;
+  min-width: 150px;
+  font-weight: 600;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3) !important;
+  transition: all 0.3s ease !important;
+  z-index: 2;
+}
+
+.dropdown-toggle.fantasy-btn:hover,
+.dropdown-toggle.fantasy-btn:focus,
+.dropdown-toggle.fantasy-btn:active {
+  background: linear-gradient(135deg, #a0522d 0%, #8b4513 100%) !important;
+  border-color: #000000 !important;
+  color: #fffacd !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4) !important;
+}
+
+.dropdown-toggle.fantasy-btn:focus {
+  box-shadow: 0 0 0 0.2rem rgba(139, 69, 19, 0.25) !important;
 }
 
 .fantasy-dropdown-menu {
-  background: linear-gradient(135deg, #f4e4bc 0%, #e6d2a9 100%);
-  border: 2px solid #8b7355;
-  border-radius: 6px;
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
-  padding: 5px 0;
+  background: linear-gradient(135deg, #f4e4bc 0%, #e6d2a9 100%) !important;
+  border: 2px solid #8b7355 !important;
+  border-radius: 6px !important;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4) !important;
+  padding: 5px 0 !important;
   z-index: 1070;
   position: absolute;
+  margin-top: 5px !important;
+  min-width: 100% !important;
+  max-height: 70vh;
+  overflow-y: auto;
 }
 
 .fantasy-dropdown-menu .dropdown-item {
-  color: #3e2723;
-  font-weight: 500;
-  transition: all 0.2s ease;
-  border-bottom: 1px solid #d7ccc8;
-  background: transparent;
-  padding: 10px 15px;
+  color: #3e2723 !important;
+  font-weight: 500 !important;
+  transition: all 0.2s ease !important;
+  border-bottom: 1px solid #d7ccc8 !important;
+  background: transparent !important;
+  padding: 10px 15px !important;
+  cursor: pointer;
 }
 
-.fantasy-dropdown-menu .dropdown-item:hover {
-  background: linear-gradient(135deg, #8b4513 0%, #a0522d 100%);
-  color: #ffd700;
+.fantasy-dropdown-menu .dropdown-item:hover,
+.fantasy-dropdown-menu .dropdown-item:focus {
+  background: linear-gradient(135deg, #8b4513 0%, #a0522d 100%) !important;
+  color: #ffd700 !important;
   transform: translateX(5px);
-  padding-left: 20px;
+  padding-left: 20px !important;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5) !important;
 }
 
-.dropdown-item {
-  padding: 0.25rem 0.5rem;
-  font-size: 0.8rem;
+.fantasy-dropdown-menu .dropdown-item.active {
+  background: linear-gradient(135deg, #8b4513 0%, #a0522d 100%) !important;
+  color: #ffd700 !important;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5) !important;
+}
+
+.fantasy-dropdown-menu .dropdown-divider {
+  border-top: 1px solid #8b7355 !important;
+  margin: 5px 0 !important;
+  opacity: 0.5;
+}
+
+/* Убираем стандартные стили Bootstrap для dropdown */
+.btn-check:focus + .btn, 
+.btn:focus,
+.dropdown-toggle:focus {
+  box-shadow: 0 0 0 0.2rem rgba(139, 69, 19, 0.25) !important;
+  outline: none !important;
+}
+
+/* Стили для кнопки в TypeBar */
+.typebar-container .fantasy-btn {
+  background: linear-gradient(135deg, #8b4513 0%, #a0522d 100%) !important;
+  border: 2px solid #000000 !important;
+  color: #ffd700 !important;
+  padding: 8px 16px !important;
+  font-size: 1rem !important;
+  min-height: 40px;
+}
+
+/* Адаптивность для мобильных устройств */
+@media (max-width: 768px) {
+  .fantasy-dropdown-menu {
+    position: fixed !important;
+    top: auto !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    width: 90vw !important;
+    max-width: 300px !important;
+    max-height: 50vh !important;
+    z-index: 10000 !important;
+    margin-top: 10px !important;
+  }
+  
+  .dropdown-toggle.fantasy-btn {
+    min-width: 140px !important;
+    padding: 6px 12px !important;
+    font-size: 0.9rem !important;
+  }
+}
+
+@media (max-width: 576px) {
+  .dropdown-toggle.fantasy-btn {
+    min-width: 130px !important;
+    padding: 5px 10px !important;
+    font-size: 0.85rem !important;
+  }
+  
+  .fantasy-dropdown-menu {
+    width: 85vw !important;
+    max-height: 45vh !important;
+  }
+  
+  .fantasy-dropdown-menu .dropdown-item {
+    padding: 8px 12px !important;
+    font-size: 0.9rem !important;
+  }
+}
+
+/* Для горизонтальной ориентации на мобильных */
+@media (max-width: 768px) and (orientation: landscape) {
+  .fantasy-dropdown-menu {
+    max-height: 60vh !important;
+  }
+}
+
+/* Убираем стандартный маркер Bootstrap */
+.dropdown-toggle::after {
+  display: none !important;
 }
 
 /* ===== СПИСКИ ===== */
@@ -2045,4 +2150,103 @@ body .inventory-item-fantasy-dropdown .dropdown-item {
 .fantasy-navbar .nav {
   scrollbar-width: thin !important;
   scrollbar-color: rgba(139, 69, 19, 0.3) rgba(139, 69, 19, 0.1) !important;
+}
+
+/* Стили для инвентаря */
+.inventory-container {
+  padding: 15px !important;
+  min-height: auto;
+}
+
+.inventory-filter-container {
+  padding: 12px;
+  background: rgba(244, 228, 188, 0.6);
+  border: 1px solid #c19a6b;
+  border-radius: 8px;
+  margin-bottom: 15px;
+}
+
+.mass-operations-panel {
+  background: linear-gradient(135deg, rgba(139, 69, 19, 0.1) 0%, rgba(160, 82, 45, 0.05) 100%);
+  border: 2px solid #c19a6b;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.selected-count-badge {
+  background: linear-gradient(135deg, #8b4513, #a0522d) !important;
+  color: #ffd700 !important;
+  border: 1px solid #654321;
+  padding: 6px 12px;
+  font-size: 0.9rem;
+}
+
+.value-badge {
+  background: linear-gradient(135deg, #0c5460, #117a8b) !important;
+  color: white !important;
+  border: 1px solid #0a3d42;
+  padding: 6px 12px;
+  font-size: 0.9rem;
+}
+
+.mass-action-btn {
+  font-family: 'Cinzel', serif !important;
+  font-weight: 600 !important;
+  padding: 6px 12px !important;
+}
+
+.select-all-btn {
+  font-family: 'Cinzel', serif !important;
+  font-weight: 600 !important;
+  padding: 6px 12px !important;
+}
+
+.inventory-items-container {
+  margin-top: 15px;
+}
+
+/* Адаптивность для мобильных */
+@media (max-width: 768px) {
+  .inventory-container {
+    padding: 10px !important;
+  }
+  
+  .inventory-filter-container {
+    padding: 10px;
+    margin-bottom: 12px;
+  }
+  
+  .mass-operations-panel {
+    padding: 10px !important;
+  }
+  
+  .mass-action-btn {
+    padding: 5px 10px !important;
+    font-size: 0.85rem !important;
+  }
+  
+  .select-all-btn {
+    padding: 5px 10px !important;
+    font-size: 0.85rem !important;
+  }
+}
+
+@media (max-width: 576px) {
+  .inventory-container {
+    padding: 8px !important;
+  }
+  
+  .inventory-filter-container {
+    padding: 8px;
+    margin-bottom: 10px;
+  }
+  
+  .mass-operations-panel {
+    padding: 8px !important;
+  }
+  
+  .mass-action-btn {
+    padding: 4px 8px !important;
+    font-size: 0.8rem !important;
+  }
 }

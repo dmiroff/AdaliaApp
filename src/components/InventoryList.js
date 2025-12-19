@@ -209,8 +209,8 @@ const InventoryList = observer(() => {
   });
 
   return (
-    <div className="fantasy-paper content-overlay inventory-container">
-      {/* Панель массовых операций */}
+    <div className="fantasy-paper content-overlay inventory-container p-3"> {/* Уменьшили padding */}
+      {/* Поменяли порядок: 1. Панель массовых операций (если есть) */}
       {selectedItems.size > 0 && (
         <div className="mass-operations-panel mb-3 p-3">
           <div className="d-flex flex-wrap align-items-center gap-2 mb-2">
@@ -278,23 +278,7 @@ const InventoryList = observer(() => {
         </div>
       )}
 
-      {/* Поиск сверху */}
-      <div className="fantasy-paper content-overlay bulk-purchase-tab">
-        <Form className="fantasy-form">
-          <div className="search-input-wrapper">
-            <i className="fas fa-search search-icon"></i>
-            <Form.Control
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Название предмета..."
-              className="inventory-search-input bulk-purchase"
-            />
-          </div>
-        </Form>
-      </div>
-
-      {/* Фильтр по типам */}
+      {/* 2. Фильтр по типам - теперь САМЫЙ ВЕРХНИЙ элемент */}
       <div className="inventory-filter-container mb-3">
         <Row className="align-items-center">
           <Col xs="auto">
@@ -315,7 +299,23 @@ const InventoryList = observer(() => {
         </Row>
       </div>
 
-      {/* Список предметов */}
+      {/* 3. Поиск */}
+      <div className="fantasy-paper content-overlay bulk-purchase-tab mb-3">
+        <Form className="fantasy-form">
+          <div className="search-input-wrapper">
+            <i className="fas fa-search search-icon"></i>
+            <Form.Control
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Название предмета..."
+              className="inventory-search-input bulk-purchase"
+            />
+          </div>
+        </Form>
+      </div>
+
+      {/* 4. Список предметов */}
       <div className="inventory-items-container">
         {results.map((item) => (
           <InventoryItem 

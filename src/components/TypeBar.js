@@ -1,9 +1,8 @@
 import { observer } from "mobx-react-lite";
-import { useContext, forwardRef, useState, useRef, useEffect, useCallback } from "react";
+import { useContext, useEffect, useState } from "react";
 import { Dropdown } from 'react-bootstrap';
 import { Context } from "../index";
 
-// Translation dictionary
 const translations = {
   "head": "Шлем",
   "cloak": "Плащ",
@@ -26,63 +25,21 @@ const translations = {
   "goods": "Товары",
 };
 
-// Кастомный Toggle с позиционированием
-const CustomToggle = forwardRef(({ children, onClick }, ref) => {
-  const toggleRef = useRef(null);
-  
-  const handleRef = (element) => {
-    if (typeof ref === 'function') {
-      ref(element);
-    } else if (ref) {
-      ref.current = element;
-    }
-    toggleRef.current = element;
-  };
-
-  return (
-    <button
-      ref={handleRef}
-      className="fantasy-btn fantasy-btn-primary fantasy-btn-sm"
-      onClick={(e) => {
-        e.preventDefault();
-        onClick(e);
-      }}
-      
-    >
-      {children}
-      <span style={{ marginLeft: '10px' }}>▼</span>
-    </button>
-  );
-});
-
 const TypeBar = observer(() => {
   const { user } = useContext(Context);
   const inventory_new = user.inventory_new || {}; 
   const selected_type = user.selected_type;
-  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 200 });
-  const [showDropdown, setShowDropdown] = useState(false);
-  const containerRef = useRef(null);
   const [displayText, setDisplayText] = useState('Все типы');
 
   // Extract unique types from inventory_new
   const uniqueTypes = Array.from(new Set(Object.values(inventory_new).map(item => item.type)));
 
-  // Функция для проверки, является ли значение "не выбранным" (NaN, null, undefined)
   const isUnselectedType = (type) => {
     return type === null || type === undefined || (typeof type === 'number' && isNaN(type));
   };
 
-  // Инициализация при первом рендере - устанавливаем "Все типы" по умолчанию
-  useEffect(() => {
-    // Если selected_type равен NaN (начальное значение), устанавливаем null для "Все типы"
-    if (isUnselectedType(selected_type)) {
-      user.setSelectedType(null);
-    }
-  }, [user, selected_type]);
-
   // Обновление отображаемого текста при изменении selected_type
   useEffect(() => {
-    // Проверяем на NaN, null и undefined
     if (isUnselectedType(selected_type)) {
       setDisplayText('Все типы');
     } else {
@@ -90,71 +47,33 @@ const TypeBar = observer(() => {
     }
   }, [selected_type]);
 
-  // Функция для обновления позиции dropdown с useCallback для стабильности
-  const updateDropdownPosition = useCallback(() => {
-    const toggle = containerRef.current?.querySelector('.fantasy-btn');
-    if (toggle) {
-      const rect = toggle.getBoundingClientRect();
-      setDropdownPosition({
-        top: rect.bottom + window.scrollY,
-        left: rect.left + window.scrollX,
-        width: rect.width
-      });
-    }
-  }, []);
-
-  // Обработчик открытия/закрытия dropdown
-  const handleToggle = (isOpen) => {
-    if (isOpen) {
-      updateDropdownPosition();
-    }
-    setShowDropdown(isOpen);
+  const handleTypeSelect = (type) => {
+    user.setSelectedType(type);
   };
 
-  // Проверяем, выбран ли конкретный тип (не NaN, не null, не undefined)
-  const isTypeSelected = !isUnselectedType(selected_type);
-
-  useEffect(() => {
-    const handleResize = () => {
-      if (showDropdown) {
-        updateDropdownPosition();
-      }
-    };
-
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [showDropdown, updateDropdownPosition]);
-
   return (
-    <div className="typebar-container" ref={containerRef}>
-      <Dropdown 
-        show={showDropdown} 
-        onToggle={handleToggle}
-      >
-        <Dropdown.Toggle as={CustomToggle}>
-          {displayText}
+    <div className="typebar-container">
+      <Dropdown>
+        <Dropdown.Toggle 
+          variant="primary" 
+          size="sm"
+          className="fantasy-btn"
+        >
+          <span className="d-flex align-items-center justify-content-between w-100">
+            {displayText}
+            <span style={{ marginLeft: '10px', fontSize: '0.8em' }}>▼</span>
+          </span>
         </Dropdown.Toggle>
 
         <Dropdown.Menu 
           className="fantasy-dropdown-menu"
-          style={{
-            position: 'fixed',
-            top: `${dropdownPosition.top}px`,
-            left: `${dropdownPosition.left}px`,
-            width: `${dropdownPosition.width}px`,
-            zIndex: 10000,
-            display: showDropdown ? 'block' : 'none'
-          }}
         >
           {/* Опция "Все типы" */}
           <Dropdown.Item
             key="all"
-            active={!isTypeSelected}
-            onClick={() => {
-              user.setSelectedType(null);
-              setShowDropdown(false);
-            }}
-            className={!isTypeSelected ? "fantasy-text-gold" : "fantasy-text-dark"}
+            active={isUnselectedType(selected_type)}
+            onClick={() => handleTypeSelect(null)}
+            className={isUnselectedType(selected_type) ? "fantasy-text-gold" : "fantasy-text-dark"}
           >
             Все типы
           </Dropdown.Item>
@@ -166,17 +85,14 @@ const TypeBar = observer(() => {
               <Dropdown.Item
                 key={type}
                 active={type === selected_type}
-                onClick={() => {
-                  user.setSelectedType(type);
-                  setShowDropdown(false);
-                }}
+                onClick={() => handleTypeSelect(type)}
                 className={type === selected_type ? "fantasy-text-gold" : "fantasy-text-dark"}
               >
                 {translations[type] || type}
               </Dropdown.Item>
             ))
           ) : (
-            <Dropdown.Item className="fantasy-text-muted text-center">
+            <Dropdown.Item disabled className="fantasy-text-muted text-center">
               Нет предметов
             </Dropdown.Item>
           )}

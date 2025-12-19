@@ -10,13 +10,13 @@ const Inventory = () => {
     const [showEquipment, setShowEquipment] = useState(false);
     
     return (
-      <Container className="mt-5 pt-4"> {/* Увеличиваем отступ сверху */}
-        <Row className="d-flex justify-content-center align-items-center mb-4">
+      <Container className="mt-3 pt-3"> {/* Уменьшили отступы */}
+        <Row className="d-flex justify-content-center align-items-center mb-3"> {/* Уменьшили margin-bottom */}
           <Col xs={12} md={8} lg={6} className="text-center p-3">
             <Button 
               onClick={() => setShowEquipment(!showEquipment)}
               className={`fantasy-btn ${showEquipment ? 'fantasy-btn-warning' : 'fantasy-btn-success'} fantasy-btn-lg w-100`}
-              style={{ minHeight: '60px' }}
+              style={{ minHeight: '50px' }}
             >
               {showEquipment ? "✖ Спрятать снаряжение" : "Показать снаряжение"}
             </Button>
@@ -24,7 +24,7 @@ const Inventory = () => {
         </Row>
         
         {showEquipment && (
-          <Row className="mb-4">
+          <Row className="mb-3"> {/* Уменьшили margin-bottom */}
             <Col>
               <Equipment />
             </Col>
@@ -34,7 +34,7 @@ const Inventory = () => {
         <Row>
           <Col>
             <Suspense fallback={
-              <div className="fantasy-paper p-4 text-center mt-3">
+              <div className="fantasy-paper p-3 text-center mt-2">
                 <div className="fantasy-text-muted fs-5">Загрузка инвентаря...</div>
               </div>
             }>
