@@ -1,4 +1,4 @@
-// src/components/InventoryItem.js
+// src/components/InventoryItem.js (ваш оригинальный код с минимальными изменениями)
 import { useState, useContext, useMemo } from "react";
 import { Row, Col, Image } from "react-bootstrap";
 import exampleImage from "../assets/Images/WIP.webp";
@@ -231,7 +231,6 @@ const InventoryItem = ({
 
   return (
     <Row className="mb-3 align-items-center">
-      {/* Колонка с изображением */}
       <Col xs={4} md={3} lg={2} className="ps-0 ps-md-2">
         <div 
           className={`inventory-item-image-container ${isSelected ? 'selected' : ''}`}
@@ -243,12 +242,18 @@ const InventoryItem = ({
           }}
           style={{ 
             position: 'relative',
-            padding: '5px',
             backgroundColor: 'rgba(244, 228, 188, 0.8)',
             borderRadius: '10px',
             boxShadow: isSelected ? '0 0 0 3px rgba(40, 167, 69, 0.3)' : '0 2px 5px rgba(0, 0, 0, 0.1)',
             border: `2px solid ${isSelected ? '#28a745' : '#c19a6b'}`,
-            cursor: onToggleSelect ? 'pointer' : 'default'
+            cursor: onToggleSelect ? 'pointer' : 'default',
+            overflow: 'hidden',
+            padding: '10px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '100%',
+            height: '100%'
           }}
         >
           {/* Чекбокс для выбора предмета */}
@@ -287,38 +292,24 @@ const InventoryItem = ({
             </div>
           )}
           
-          {/* Изображение предмета */}
-          <div 
-            className="item-image-wrapper"
+          {/* Изображение предмета - ПРОСТОЕ РЕШЕНИЕ */}
+          <Image 
+            src={imageSrc}
+            className="list-images item-image"
+            fluid
+            loading="lazy"
+            onError={(e) => {
+              e.target.src = exampleImage;
+            }}
             style={{
               width: '100%',
-              paddingBottom: '100%',
-              position: 'relative',
-              overflow: 'hidden',
+              height: 'auto',
+              maxHeight: '100%',
+              objectFit: 'contain',
+              backgroundColor: 'rgba(255, 255, 255, 0.9)',
               borderRadius: '8px'
             }}
-          >
-            <Image 
-              src={imageSrc}
-              className="list-images item-image"
-              fluid
-              loading="lazy"
-              onError={(e) => {
-                e.target.src = exampleImage;
-              }}
-              style={{
-                position: 'absolute',
-                top: '0',
-                left: '0',
-                width: '100%',
-                height: '100%',
-                objectFit: 'contain',
-                objectPosition: 'center',
-                backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                padding: '5px'
-              }}
-            />
-          </div>
+          />
           
           {/* Отображение уровня предмета */}
           {shouldShowLevel && (
@@ -328,15 +319,15 @@ const InventoryItem = ({
                 position: 'absolute',
                 bottom: '8px',
                 right: '8px',
-                width: '28px',
-                height: '28px',
+                width: '24px',
+                height: '24px',
                 backgroundColor: getRarityColor.color,
                 borderRadius: '50%',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 color: 'white',
-                fontSize: '12px',
+                fontSize: '10px',
                 fontWeight: 'bold',
                 border: '2px solid white',
                 zIndex: 100,
@@ -357,15 +348,15 @@ const InventoryItem = ({
                 position: 'absolute',
                 top: '8px',
                 right: '8px',
-                width: '24px',
-                height: '24px',
+                width: '20px',
+                height: '20px',
                 backgroundColor: 'rgba(46, 204, 113, 0.95)',
                 borderRadius: '50%',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 color: 'white',
-                fontSize: '14px',
+                fontSize: '12px',
                 fontWeight: 'bold',
                 zIndex: 100,
                 border: '2px solid white',
