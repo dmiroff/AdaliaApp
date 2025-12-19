@@ -356,9 +356,6 @@ const EventShopTab = observer(() => {
           <Tab eventKey="history" title="📜 История покупок">
               <EventShopHistory />
           </Tab>
-          <Tab eventKey="previous" title="📜 Архив" disabled>
-            {/* Будут прошлые магазины */}
-          </Tab>
         </Tabs>
       </div>
 

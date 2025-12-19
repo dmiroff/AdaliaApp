@@ -343,7 +343,7 @@ const Character = observer(() => {
           {Object.entries(data).map(([key, value]) => (
             <div key={key} className="fantasy-stat-row">
               <span>{key}:</span>
-              <Badge className={`fantasy-badge fantasy-badge-${getBadgeType(key, value)}`}>
+              <Badge className={`fantasy-badge fantasy-badge-muted`}>
                 {value}
               </Badge>
             </div>
@@ -497,7 +497,7 @@ const Character = observer(() => {
                 return (
                   <div key={key} className="fantasy-stat-row">
                     <span className="fantasy-text-muted">{getTranslation(key)}:</span>
-                    <span className="fantasy-text-bold">
+                    <span className="fantasy-text-bold text-muted">
                       {Array.isArray(value) && (key === 'influencing' || key === 'влияющие') 
                         ? translateArray(value).join(', ')
                         : prepareDataValues(value, key)}
