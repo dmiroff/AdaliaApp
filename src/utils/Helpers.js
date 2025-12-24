@@ -9,6 +9,7 @@ const classDataToDict = (classData) => {
 export default classDataToDict;
 
 export const dict_translator = {
+  "sign_affected": "Влияет на",
   "type": "Тип",
   "weapon_damage": "Урон",
   "buff_ally": "Поддержка",

@@ -422,8 +422,8 @@ const Character = observer(() => {
                 return (
                   <div key={key} className="fantasy-stat-row">
                     <span className="fantasy-text-muted">{getTranslation(key)}:</span>
-                    <span className="fantasy-text-bold">
-                      {Array.isArray(value) && (key === 'influencing' || key === 'влияющие') 
+                    <span className="fantasy-text-bold text-muted">
+                      {Array.isArray(value) && (key === 'influencing' || key === 'влияющие') && (key === 'cab_target_yourself')
                         ? translateArray(value).join(', ')
                         : prepareDataValues(value, key)}
                     </span>
@@ -498,7 +498,7 @@ const Character = observer(() => {
                   key !== 'name' && (
                     <div key={key} className="fantasy-stat-row">
                       <span className="fantasy-text-muted">{getTranslation(key)}:</span>
-                      <span className="fantasy-text-bold">
+                      <span className="fantasy-text-bold text-muted">
                         {Array.isArray(value) && (key === 'influencing' || key === 'влияющие')
                           ? translateArray(value).join(', ')
                           : prepareDataValues(value, key)}

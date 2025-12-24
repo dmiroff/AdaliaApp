@@ -242,7 +242,7 @@ const InventoryList = observer(() => {
               className="mass-action-btn"
             >
               <i className="fas fa-coins me-1"></i>
-              Продать ({totalSelectedValue} 🌕)
+              Продать
             </Button>
             <Button
               variant="danger"
