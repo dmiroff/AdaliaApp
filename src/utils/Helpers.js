@@ -10,6 +10,7 @@ export default classDataToDict;
 
 export const dict_translator = {
   "sign_affected": "Влияет на",
+  "rating_snow": "Снежков",
   "type": "Тип",
   "weapon_damage": "Урон",
   "buff_ally": "Поддержка",
