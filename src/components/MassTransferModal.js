@@ -1,6 +1,6 @@
 // src/components/MassOperationModals.js
 import { useState, useEffect } from "react";
-import { Modal, Button, Form, ListGroup, Spinner } from "react-bootstrap";
+import { Modal, Button, Form, ListGroup, Spinner, InputGroup } from "react-bootstrap";
 import {MassDropItems, MassSellItems, MassTransferItems} from "../http/SupportFunctions";
 
 // Массовая продажа
@@ -30,6 +30,29 @@ export const MassSellModal = ({ show, onClose, selectedItems, inventory, onSucce
     ));
   };
 
+  const handleInputChange = (itemId, value) => {
+    const numValue = parseInt(value);
+    if (isNaN(numValue) || numValue < 1) {
+      return;
+    }
+    setItemsWithQuantity(prev => prev.map(item => 
+      item.itemId === itemId 
+        ? { ...item, quantity: Math.min(numValue, item.maxQuantity) }
+        : item
+    ));
+  };
+
+  const handleSetMax = (itemId) => {
+    const item = itemsWithQuantity.find(item => item.itemId === itemId);
+    if (item) {
+      handleQuantityChange(itemId, item.maxQuantity);
+    }
+  };
+
+  const handleSetMin = (itemId) => {
+    handleQuantityChange(itemId, 1);
+  };
+
   const handleSubmit = async () => {
     const itemsToSubmit = itemsWithQuantity.map(item => ({
       itemId: item.itemId,
@@ -42,15 +65,12 @@ export const MassSellModal = ({ show, onClose, selectedItems, inventory, onSucce
       const result = await MassSellItems(itemsToSubmit);
       console.log('Массовая продажа успешна:', result);
       
-      // Показываем сообщение об успехе
       alert(result.message || 'Предметы успешно проданы!');
       
-      // Вызываем callback для обновления данных
       if (onSuccess) {
         onSuccess();
       }
       
-      // Закрываем модальное окно
       onClose();
     } catch (error) {
       console.error('Ошибка массовой продажи:', error);
@@ -103,38 +123,111 @@ export const MassSellModal = ({ show, onClose, selectedItems, inventory, onSucce
                 </span>
               </div>
               
-              <div className="d-flex align-items-center gap-3">
-                <span className="mass-quantity-label">Количество:</span>
-                <Form.Range
-                  min="1"
-                  max={item.maxQuantity}
-                  value={item.quantity}
-                  onChange={(e) => handleQuantityChange(item.itemId, parseInt(e.target.value))}
-                  className="mass-quantity-slider"
-                  disabled={loading}
-                />
-                <div className="quantity-controls d-flex align-items-center">
-                  <Button
-                    variant="outline-secondary"
-                    size="sm"
-                    onClick={() => handleQuantityChange(item.itemId, item.quantity - 1)}
-                    disabled={item.quantity <= 1 || loading}
-                    className="mass-quantity-btn"
-                  >
-                    -
-                  </Button>
-                  <span className="mass-quantity-display">
-                    {item.quantity} / {item.maxQuantity}
-                  </span>
-                  <Button
-                    variant="outline-secondary"
-                    size="sm"
-                    onClick={() => handleQuantityChange(item.itemId, item.quantity + 1)}
-                    disabled={item.quantity >= item.maxQuantity || loading}
-                    className="mass-quantity-btn"
-                  >
-                    +
-                  </Button>
+              <div className="d-flex flex-column gap-3">
+                {/* Ползунок */}
+                <div className="d-flex align-items-center gap-3">
+                  <span className="mass-quantity-label">Ползунок:</span>
+                  <Form.Range
+                    min="1"
+                    max={item.maxQuantity}
+                    value={item.quantity}
+                    onChange={(e) => handleQuantityChange(item.itemId, parseInt(e.target.value))}
+                    className="mass-quantity-slider flex-grow-1"
+                    disabled={loading}
+                  />
+                </div>
+                
+                {/* Прямой ввод числа */}
+                <div className="d-flex align-items-center gap-3">
+                  <span className="mass-quantity-label">Прямой ввод:</span>
+                  <div className="d-flex align-items-center gap-2">
+                    <Button
+                      variant="outline-secondary"
+                      size="sm"
+                      onClick={() => handleSetMin(item.itemId)}
+                      disabled={item.quantity <= 1 || loading}
+                      className="mass-quantity-btn"
+                      title="Установить минимум"
+                    >
+                      Мин
+                    </Button>
+                    
+                    <InputGroup size="sm" style={{ width: '120px' }}>
+                      <Button
+                        variant="outline-secondary"
+                        onClick={() => handleQuantityChange(item.itemId, item.quantity - 1)}
+                        disabled={item.quantity <= 1 || loading}
+                      >
+                        -
+                      </Button>
+                      <Form.Control
+                        type="number"
+                        min="1"
+                        max={item.maxQuantity}
+                        value={item.quantity}
+                        onChange={(e) => handleInputChange(item.itemId, e.target.value)}
+                        className="text-center"
+                        disabled={loading}
+                      />
+                      <Button
+                        variant="outline-secondary"
+                        onClick={() => handleQuantityChange(item.itemId, item.quantity + 1)}
+                        disabled={item.quantity >= item.maxQuantity || loading}
+                      >
+                        +
+                      </Button>
+                    </InputGroup>
+                    
+                    <Button
+                      variant="outline-secondary"
+                      size="sm"
+                      onClick={() => handleSetMax(item.itemId)}
+                      disabled={item.quantity >= item.maxQuantity || loading}
+                      className="mass-quantity-btn"
+                      title="Установить максимум"
+                    >
+                      Макс
+                    </Button>
+                  </div>
+                </div>
+                
+                {/* Быстрые кнопки */}
+                <div className="d-flex align-items-center gap-3">
+                  <span className="mass-quantity-label">Быстрый выбор:</span>
+                  <div className="d-flex gap-1">
+                    {[1, 5, 10, 25, 50].map(num => (
+                      <Button
+                        key={num}
+                        variant="outline-primary"
+                        size="sm"
+                        onClick={() => handleQuantityChange(item.itemId, Math.min(num, item.maxQuantity))}
+                        disabled={loading || num > item.maxQuantity}
+                        className="mass-quick-btn"
+                        active={item.quantity === Math.min(num, item.maxQuantity)}
+                      >
+                        {num}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              
+              {/* Прогресс бар */}
+              <div className="mt-2">
+                <div className="d-flex justify-content-between small text-muted">
+                  <span>0</span>
+                  <span>Использовано: {item.quantity} из {item.maxQuantity}</span>
+                  <span>{item.maxQuantity}</span>
+                </div>
+                <div className="progress" style={{ height: '5px' }}>
+                  <div 
+                    className="progress-bar bg-warning" 
+                    role="progressbar" 
+                    style={{ width: `${(item.quantity / item.maxQuantity) * 100}%` }}
+                    aria-valuenow={item.quantity}
+                    aria-valuemin="0"
+                    aria-valuemax={item.maxQuantity}
+                  />
                 </div>
               </div>
             </div>
@@ -255,6 +348,29 @@ export const MassTransferModal = ({ show, onClose, selectedItems, inventory, onS
     ));
   };
 
+  const handleInputChange = (itemId, value) => {
+    const numValue = parseInt(value);
+    if (isNaN(numValue) || numValue < 1) {
+      return;
+    }
+    setItemsWithQuantity(prev => prev.map(item => 
+      item.itemId === itemId 
+        ? { ...item, quantity: Math.min(numValue, item.maxQuantity) }
+        : item
+    ));
+  };
+
+  const handleSetMax = (itemId) => {
+    const item = itemsWithQuantity.find(item => item.itemId === itemId);
+    if (item) {
+      handleQuantityChange(itemId, item.maxQuantity);
+    }
+  };
+
+  const handleSetMin = (itemId) => {
+    handleQuantityChange(itemId, 1);
+  };
+
   const handleSubmit = async () => {
     if (!recipientName.trim()) {
       alert("Введите имя получателя");
@@ -272,15 +388,12 @@ export const MassTransferModal = ({ show, onClose, selectedItems, inventory, onS
       const result = await MassTransferItems(recipientName, itemsToSubmit);
       console.log('Массовая передача успешна:', result);
       
-      // Показываем сообщение об успехе
       alert(result.message || 'Предметы успешно переданы!');
       
-      // Вызываем callback для обновления данных
       if (onSuccess) {
         onSuccess();
       }
       
-      // Закрываем модальное окно
       onClose();
     } catch (error) {
       console.error('Ошибка массовой передачи:', error);
@@ -380,38 +493,111 @@ export const MassTransferModal = ({ show, onClose, selectedItems, inventory, onS
                   </span>
                 </div>
                 
-                <div className="d-flex align-items-center gap-3">
-                  <span className="mass-quantity-label">Количество:</span>
-                  <Form.Range
-                    min="1"
-                    max={item.maxQuantity}
-                    value={item.quantity}
-                    onChange={(e) => handleQuantityChange(item.itemId, parseInt(e.target.value))}
-                    className="mass-quantity-slider"
-                    disabled={loading}
-                  />
-                  <div className="quantity-controls d-flex align-items-center">
-                    <Button
-                      variant="outline-secondary"
-                      size="sm"
-                      onClick={() => handleQuantityChange(item.itemId, item.quantity - 1)}
-                      disabled={item.quantity <= 1 || loading}
-                      className="mass-quantity-btn"
-                    >
-                      -
-                    </Button>
-                    <span className="mass-quantity-display">
-                      {item.quantity} / {item.maxQuantity}
-                    </span>
-                    <Button
-                      variant="outline-secondary"
-                      size="sm"
-                      onClick={() => handleQuantityChange(item.itemId, item.quantity + 1)}
-                      disabled={item.quantity >= item.maxQuantity || loading}
-                      className="mass-quantity-btn"
-                    >
-                      +
-                    </Button>
+                <div className="d-flex flex-column gap-3">
+                  {/* Ползунок */}
+                  <div className="d-flex align-items-center gap-3">
+                    <span className="mass-quantity-label">Ползунок:</span>
+                    <Form.Range
+                      min="1"
+                      max={item.maxQuantity}
+                      value={item.quantity}
+                      onChange={(e) => handleQuantityChange(item.itemId, parseInt(e.target.value))}
+                      className="mass-quantity-slider flex-grow-1"
+                      disabled={loading}
+                    />
+                  </div>
+                  
+                  {/* Прямой ввод числа */}
+                  <div className="d-flex align-items-center gap-3">
+                    <span className="mass-quantity-label">Прямой ввод:</span>
+                    <div className="d-flex align-items-center gap-2">
+                      <Button
+                        variant="outline-secondary"
+                        size="sm"
+                        onClick={() => handleSetMin(item.itemId)}
+                        disabled={item.quantity <= 1 || loading}
+                        className="mass-quantity-btn"
+                        title="Установить минимум"
+                      >
+                        Мин
+                      </Button>
+                      
+                      <InputGroup size="sm" style={{ width: '120px' }}>
+                        <Button
+                          variant="outline-secondary"
+                          onClick={() => handleQuantityChange(item.itemId, item.quantity - 1)}
+                          disabled={item.quantity <= 1 || loading}
+                        >
+                          -
+                        </Button>
+                        <Form.Control
+                          type="number"
+                          min="1"
+                          max={item.maxQuantity}
+                          value={item.quantity}
+                          onChange={(e) => handleInputChange(item.itemId, e.target.value)}
+                          className="text-center"
+                          disabled={loading}
+                        />
+                        <Button
+                          variant="outline-secondary"
+                          onClick={() => handleQuantityChange(item.itemId, item.quantity + 1)}
+                          disabled={item.quantity >= item.maxQuantity || loading}
+                        >
+                          +
+                        </Button>
+                      </InputGroup>
+                      
+                      <Button
+                        variant="outline-secondary"
+                        size="sm"
+                        onClick={() => handleSetMax(item.itemId)}
+                        disabled={item.quantity >= item.maxQuantity || loading}
+                        className="mass-quantity-btn"
+                        title="Установить максимум"
+                      >
+                        Макс
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  {/* Быстрые кнопки */}
+                  <div className="d-flex align-items-center gap-3">
+                    <span className="mass-quantity-label">Быстрый выбор:</span>
+                    <div className="d-flex gap-1">
+                      {[1, 5, 10, 25, 50].map(num => (
+                        <Button
+                          key={num}
+                          variant="outline-primary"
+                          size="sm"
+                          onClick={() => handleQuantityChange(item.itemId, Math.min(num, item.maxQuantity))}
+                          disabled={loading || num > item.maxQuantity}
+                          className="mass-quick-btn"
+                          active={item.quantity === Math.min(num, item.maxQuantity)}
+                        >
+                          {num}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Прогресс бар */}
+                <div className="mt-2">
+                  <div className="d-flex justify-content-between small text-muted">
+                    <span>0</span>
+                    <span>Использовано: {item.quantity} из {item.maxQuantity}</span>
+                    <span>{item.maxQuantity}</span>
+                  </div>
+                  <div className="progress" style={{ height: '5px' }}>
+                    <div 
+                      className="progress-bar bg-info" 
+                      role="progressbar" 
+                      style={{ width: `${(item.quantity / item.maxQuantity) * 100}%` }}
+                      aria-valuenow={item.quantity}
+                      aria-valuemin="0"
+                      aria-valuemax={item.maxQuantity}
+                    />
                   </div>
                 </div>
               </div>
@@ -499,6 +685,29 @@ export const MassDropModal = ({ show, onClose, selectedItems, inventory, onSucce
     ));
   };
 
+  const handleInputChange = (itemId, value) => {
+    const numValue = parseInt(value);
+    if (isNaN(numValue) || numValue < 1) {
+      return;
+    }
+    setItemsWithQuantity(prev => prev.map(item => 
+      item.itemId === itemId 
+        ? { ...item, quantity: Math.min(numValue, item.maxQuantity) }
+        : item
+    ));
+  };
+
+  const handleSetMax = (itemId) => {
+    const item = itemsWithQuantity.find(item => item.itemId === itemId);
+    if (item) {
+      handleQuantityChange(itemId, item.maxQuantity);
+    }
+  };
+
+  const handleSetMin = (itemId) => {
+    handleQuantityChange(itemId, 1);
+  };
+
   const handleSubmit = async () => {
     if (confirmText !== "ПОДТВЕРЖДАЮ") {
       alert('Введите "ПОДТВЕРЖДАЮ" для подтверждения удаления');
@@ -514,15 +723,12 @@ export const MassDropModal = ({ show, onClose, selectedItems, inventory, onSucce
     try {
       const result = await MassDropItems(itemsToSubmit);
       
-      // Показываем сообщение об успехе
       alert(result.message || 'Предметы успешно выброшены!');
       
-      // Вызываем callback для обновления данных
       if (onSuccess) {
         onSuccess();
       }
       
-      // Закрываем модальное окно
       onClose();
     } catch (error) {
       console.error('Ошибка массового выбрасывания:', error);
@@ -578,42 +784,112 @@ export const MassDropModal = ({ show, onClose, selectedItems, inventory, onSucce
                   </span>
                 </div>
                 
-                <div className="d-flex align-items-center gap-3">
-                  <span className="mass-quantity-label">Количество:</span>
-                  <Form.Range
-                    min="1"
-                    max={item.maxQuantity}
-                    value={item.quantity}
-                    onChange={(e) => handleQuantityChange(item.itemId, parseInt(e.target.value))}
-                    className="mass-quantity-slider"
-                    disabled={loading}
-                  />
-                  <div className="quantity-controls d-flex align-items-center">
-                    <Button
-                      variant="outline-secondary"
-                      size="sm"
-                      onClick={() => handleQuantityChange(item.itemId, item.quantity - 1)}
-                      disabled={item.quantity <= 1 || loading}
-                      className="mass-quantity-btn"
-                    >
-                      -
-                    </Button>
-                    <span className="mass-quantity-display">
-                      {item.quantity} / {item.maxQuantity}
-                    </span>
-                    <Button
-                      variant="outline-secondary"
-                      size="sm"
-                      onClick={() => handleQuantityChange(item.itemId, item.quantity + 1)}
-                      disabled={item.quantity >= item.maxQuantity || loading}
-                      className="mass-quantity-btn"
-                    >
-                      +
-                    </Button>
+                <div className="d-flex flex-column gap-3">
+                  {/* Ползунок */}
+                  <div className="d-flex align-items-center gap-3">
+                    <span className="mass-quantity-label">Ползунок:</span>
+                    <Form.Range
+                      min="1"
+                      max={item.maxQuantity}
+                      value={item.quantity}
+                      onChange={(e) => handleQuantityChange(item.itemId, parseInt(e.target.value))}
+                      className="mass-quantity-slider flex-grow-1"
+                      disabled={loading}
+                    />
                   </div>
-                  <span className="mass-item-count">
-                    {item.quantity} шт
-                  </span>
+                  
+                  {/* Прямой ввод числа */}
+                  <div className="d-flex align-items-center gap-3">
+                    <span className="mass-quantity-label">Прямой ввод:</span>
+                    <div className="d-flex align-items-center gap-2">
+                      <Button
+                        variant="outline-secondary"
+                        size="sm"
+                        onClick={() => handleSetMin(item.itemId)}
+                        disabled={item.quantity <= 1 || loading}
+                        className="mass-quantity-btn"
+                        title="Установить минимум"
+                      >
+                        Мин
+                      </Button>
+                      
+                      <InputGroup size="sm" style={{ width: '120px' }}>
+                        <Button
+                          variant="outline-secondary"
+                          onClick={() => handleQuantityChange(item.itemId, item.quantity - 1)}
+                          disabled={item.quantity <= 1 || loading}
+                        >
+                          -
+                        </Button>
+                        <Form.Control
+                          type="number"
+                          min="1"
+                          max={item.maxQuantity}
+                          value={item.quantity}
+                          onChange={(e) => handleInputChange(item.itemId, e.target.value)}
+                          className="text-center"
+                          disabled={loading}
+                        />
+                        <Button
+                          variant="outline-secondary"
+                          onClick={() => handleQuantityChange(item.itemId, item.quantity + 1)}
+                          disabled={item.quantity >= item.maxQuantity || loading}
+                        >
+                          +
+                        </Button>
+                      </InputGroup>
+                      
+                      <Button
+                        variant="outline-secondary"
+                        size="sm"
+                        onClick={() => handleSetMax(item.itemId)}
+                        disabled={item.quantity >= item.maxQuantity || loading}
+                        className="mass-quantity-btn"
+                        title="Установить максимум"
+                      >
+                        Макс
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  {/* Быстрые кнопки */}
+                  <div className="d-flex align-items-center gap-3">
+                    <span className="mass-quantity-label">Быстрый выбор:</span>
+                    <div className="d-flex gap-1">
+                      {[1, 5, 10, 25, 50].map(num => (
+                        <Button
+                          key={num}
+                          variant="outline-danger"
+                          size="sm"
+                          onClick={() => handleQuantityChange(item.itemId, Math.min(num, item.maxQuantity))}
+                          disabled={loading || num > item.maxQuantity}
+                          className="mass-quick-btn"
+                          active={item.quantity === Math.min(num, item.maxQuantity)}
+                        >
+                          {num}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Прогресс бар */}
+                <div className="mt-2">
+                  <div className="d-flex justify-content-between small text-muted">
+                    <span>0</span>
+                    <span>Использовано: {item.quantity} из {item.maxQuantity}</span>
+                    <span>{item.maxQuantity}</span>
+                  </div>
+                  <div className="progress" style={{ height: '5px' }}>
+                    <div 
+                      className="progress-bar bg-danger" 
+                      role="progressbar" 
+                      style={{ width: `${(item.quantity / item.maxQuantity) * 100}%` }}
+                      aria-valuenow={item.quantity}
+                      aria-valuemin="0"
+                      aria-valuemax={item.maxQuantity}
+                    />
+                  </div>
                 </div>
               </div>
             ))}
