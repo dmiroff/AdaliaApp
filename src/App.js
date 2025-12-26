@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter } from 'react-router-dom';
 import AppRouter from './components/AppRouter';
 import NavBar from './components/NavBar';
+import Footer from './components/Footer'; // Импорт футера
 import { observer } from 'mobx-react-lite';
 import { Container } from 'react-bootstrap';
 import backgroundImage from './assets/Images/background.webp';
@@ -15,17 +16,19 @@ const App = observer(() => {
     backgroundRepeat: 'no-repeat',
     backgroundAttachment: 'fixed',
     minHeight: '100vh',
-    paddingTop: '56px' // Высота navbar
+    display: 'flex',
+    flexDirection: 'column'
   };
 
   return (
-    <div style={appStyle}>
-      <Container className="main-container">
-        <BrowserRouter>
-          <NavBar />
+    <div style={appStyle} className="app-container">
+      <BrowserRouter>
+        <NavBar />
+        <Container className="main-content py-4">
           <AppRouter />
-        </BrowserRouter>
-      </Container>
+        </Container>
+        <Footer />
+      </BrowserRouter>
     </div>
   );
 });

@@ -8,10 +8,9 @@ import {
   NOT_AUTH_ROUTE, 
   TRADE_ROUTE,
   MAP_ROUTE,
-  DONATION_ROUTE 
+  DONATION_ROUTE,
+  TERMS_ROUTE // Добавляем новую константу
 } from "./utils/constants";
-
-// УБИРАЕМ все импорты страниц! Они теперь ленивые в AppRouter
 
 export const authRoutes = [
     {
@@ -60,5 +59,9 @@ export const publicRoutes = [
     {
         path: NOT_AUTH_ROUTE,
         name: 'NotAuth',    
+    },
+    {
+        path: TERMS_ROUTE,
+        name: 'TermsAndPrivacy',    
     },
 ]

@@ -1,14 +1,16 @@
 import { observer } from "mobx-react-lite";
-import { useContext, useEffect, useState, useCallback } from "react";
+import { useContext, useEffect, useState, useCallback, useMemo } from "react";
 import InventoryItem from "./InventoryItem";
-import { Row, Col, Form, Modal, Button, Badge, ListGroup } from "react-bootstrap";
-import TypeBar from "../components/TypeBar";
+import { Row, Col, Form, Modal, Button, Badge } from "react-bootstrap";
 import { Context } from "../index";
 import GetDataById from "../http/GetData";
 import { Spinner } from "react-bootstrap";
 import Fuse from "fuse.js";
 import { MassTransferModal, MassDropModal, MassSellModal } from "../components/MassTransferModal";
 import "./InventoryList.css";
+
+// Импортируем словарь переводов
+import { dict_translator } from "../utils/Helpers";
 
 const InventoryList = observer(() => {
   const { user } = useContext(Context);
@@ -20,14 +22,110 @@ const InventoryList = observer(() => {
   const [showModal, setShowModal] = useState(false);
   const [modalMessage, setModalMessage] = useState("");
   
-  // Новые состояния для массовых операций
+  // Состояния для массовых операций
   const [selectedItems, setSelectedItems] = useState(new Set());
   const [showMassTransferModal, setShowMassTransferModal] = useState(false);
   const [showMassSellModal, setShowMassSellModal] = useState(false);
   const [showMassDropModal, setShowMassDropModal] = useState(false);
   const [massOperationLoading, setMassOperationLoading] = useState(false);
 
-  const selected_type = user.selected_type !== undefined ? user.selected_type : null;
+  // Состояния для двух фильтров
+  const [filters, setFilters] = useState([
+    { field: "type", operator: "equals", value: "" },
+    { field: "is_equippable", operator: "equals", value: "" }
+  ]);
+
+  // Функция для перевода значений с использованием словаря
+  const translateValue = useCallback((value) => {
+    if (value === null || value === undefined) return "";
+    
+    const strValue = String(value).toLowerCase();
+    return dict_translator[strValue] || dict_translator[value] || value;
+  }, []);
+
+  // Функция для получения перевода типа предмета
+  const getTranslatedType = useCallback((type) => {
+    if (!type) return type;
+    return translateValue(type);
+  }, [translateValue]);
+
+  // Доступные поля для фильтрации
+  const filterFields = useMemo(() => [
+    { 
+      id: "type", 
+      name: "Тип предмета", 
+      type: "select",
+      options: () => {
+        const types = Array.from(
+          new Set(Object.values(user_inventory).map(item => item.type).filter(Boolean))
+        );
+        return types.map(type => ({ 
+          value: type, 
+          label: getTranslatedType(type)
+        })).sort((a, b) => a.label.localeCompare(b.label));
+      }
+    },
+    { 
+      id: "is_equippable", 
+      name: "Можно надеть", 
+      type: "boolean",
+      options: [
+        { value: "true", label: "Да" },
+        { value: "false", label: "Нет" }
+      ]
+    },
+    { 
+      id: "value", 
+      name: "Стоимость", 
+      type: "number",
+      operators: [
+        { id: "greater", name: ">" },
+        { id: "less", name: "<" },
+        { id: "equals", name: "=" },
+        { id: "greaterOrEquals", name: "≥" },
+        { id: "lessOrEquals", name: "≤" }
+      ]
+    },
+    { 
+      id: "weight", 
+      name: "Вес", 
+      type: "number",
+      operators: [
+        { id: "greater", name: ">" },
+        { id: "less", name: "<" },
+        { id: "equals", name: "=" },
+        { id: "greaterOrEquals", name: "≥" },
+        { id: "lessOrEquals", name: "≤" }
+      ]
+    },
+    { 
+      id: "undefined", 
+      name: "Распознан", 
+      type: "boolean",
+      options: [
+        { value: "false", label: "Распознанный" },
+        { value: "true", label: "Нераспознанный" }
+      ]
+    },
+    { 
+      id: "junk", 
+      name: "Хлам", 
+      type: "boolean",
+      options: [
+        { value: "true", label: "Да" },
+        { value: "false", label: "Нет" }
+      ]
+    },
+    { 
+      id: "corrupted", 
+      name: "Проклят", 
+      type: "boolean",
+      options: [
+        { value: "true", label: "Да" },
+        { value: "false", label: "Нет" }
+      ]
+    }
+  ], [user_inventory, getTranslatedType]);
 
   // Функция для обновления данных игрока
   const fetchPlayerData = useCallback(async () => {
@@ -59,10 +157,10 @@ const InventoryList = observer(() => {
     fetchData();
   }, [fetchPlayerData]);
 
-  // Очистка выбора при изменении типа предметов
+  // Очистка выбора при изменении фильтров или поиска
   useEffect(() => {
     setSelectedItems(new Set());
-  }, [selected_type, query]);
+  }, [filters, query]);
 
   const handleShowModal = (message) => {
     setModalMessage(message);
@@ -89,52 +187,153 @@ const InventoryList = observer(() => {
 
   const selectAllItems = useCallback(() => {
     const inventory = user_inventory || {};
-    
-    // Сначала фильтруем по типу
-    let filteredItems = Object.entries(inventory).filter(([key, item]) => {
-      if (!item || typeof item !== 'object') return false;
-      if (selected_type === null || selected_type === undefined) return true;
-      return item.type === selected_type;
-    });
-
-    // Затем фильтруем по поисковому запросу, если он есть
-    if (query) {
-      try {
-        const fuse = new Fuse(filteredItems.map(([id, data]) => ({ 
-          id, 
-          ...(data || {})
-        })), {
-          keys: ["name"],
-          includeScore: true,
-          threshold: 0.3
-        });
-        
-        filteredItems = fuse.search(query).map(result => {
-          const { id, ...data } = result.item;
-          return [id, data];
-        });
-      } catch (error) {
-        console.error("Fuse.js error in selectAllItems:", error);
-        filteredItems = filteredItems.filter(([key, item]) => 
-          item.name && item.name.toLowerCase().includes(query.toLowerCase())
-        );
-      }
-    }
-    
+    const filteredItems = filterInventoryItems(inventory);
     const allIds = filteredItems.map(([id]) => id);
     setSelectedItems(new Set(allIds));
-  }, [user_inventory, selected_type, query]); // Добавили query в зависимости
+  }, [user_inventory, filters, query]);
 
   const clearSelection = useCallback(() => {
     setSelectedItems(new Set());
   }, []);
 
+  // Обработчики для фильтров
+  const updateFilter = useCallback((index, field, value) => {
+    setFilters(prev => {
+      const newFilters = [...prev];
+      if (field === "field") {
+        // При изменении поля сбрасываем оператор и значение
+        const fieldConfig = filterFields.find(f => f.id === value);
+        newFilters[index] = { 
+          field: value, 
+          operator: fieldConfig?.type === "number" ? "greater" : "equals",
+          value: "" 
+        };
+      } else {
+        newFilters[index] = { ...newFilters[index], [field]: value };
+      }
+      return newFilters;
+    });
+  }, [filterFields]);
+
+  const removeFilter = useCallback((index) => {
+    setFilters(prev => {
+      const newFilters = [...prev];
+      newFilters[index] = { field: "", operator: "equals", value: "" };
+      return newFilters;
+    });
+  }, []);
+
+  const resetFilters = useCallback(() => {
+    setFilters([
+      { field: "", operator: "equals", value: "" },
+      { field: "", operator: "equals", value: "" }
+    ]);
+  }, []);
+
+  // Функция применения фильтров к предметам
+  const applyFiltersToItems = useCallback((items) => {
+    return items.filter(([id, item]) => {
+      // Применяем оба фильтра
+      return filters.every(filter => {
+        if (!filter.field || filter.value === "") return true;
+        
+        const fieldConfig = filterFields.find(f => f.id === filter.field);
+        if (!fieldConfig) return true;
+        
+        let itemValue = item[filter.field];
+        
+        // Для поля "corrupted" проверяем наличие свойства
+        if (filter.field === "corrupted") {
+          itemValue = item.corrupted || false;
+        }
+        
+        // Обработка разных типов полей
+        switch (fieldConfig.type) {
+          case "boolean":
+            // Для boolean сравниваем строковые значения
+            return String(itemValue) === filter.value;
+            
+          case "number":
+            const numValue = parseFloat(itemValue) || 0;
+            const filterNumValue = parseFloat(filter.value) || 0;
+            
+            switch (filter.operator) {
+              case "greater":
+                return numValue > filterNumValue;
+              case "less":
+                return numValue < filterNumValue;
+              case "equals":
+                return numValue === filterNumValue;
+              case "greaterOrEquals":
+                return numValue >= filterNumValue;
+              case "lessOrEquals":
+                return numValue <= filterNumValue;
+              default:
+                return true;
+            }
+            
+          case "select":
+            // Для типа предмета
+            return itemValue === filter.value;
+            
+          default:
+            return true;
+        }
+      });
+    });
+  }, [filters, filterFields]);
+
+  // Функция фильтрации предметов (фильтры + поиск)
+  const filterInventoryItems = useCallback((inventory) => {
+    let items = Object.entries(inventory).filter(([key, item]) => {
+      return item && typeof item === 'object';
+    });
+
+    // Применяем кастомные фильтры
+    items = applyFiltersToItems(items);
+
+    // Применяем поиск
+    if (query) {
+      try {
+        const itemObjects = items.map(([id, data]) => ({ 
+          id, 
+          ...(data || {})
+        }));
+        
+        const fuse = new Fuse(itemObjects, {
+          keys: ["name", "description"],
+          includeScore: true,
+          threshold: 0.4
+        });
+        
+        const searchResults = fuse.search(query);
+        items = searchResults.map(result => {
+          const { id, ...data } = result.item;
+          return [id, data];
+        });
+      } catch (error) {
+        console.error("Fuse.js error:", error);
+        items = items.filter(([key, item]) => 
+          item.name && item.name.toLowerCase().includes(query.toLowerCase())
+        );
+      }
+    }
+
+    return items;
+  }, [applyFiltersToItems, query]);
+
   // Обработчик успешного завершения массовой операции
   const handleOperationSuccess = useCallback(() => {
-    fetchPlayerData(); // Обновляем данные игрока
-    setSelectedItems(new Set()); // Очищаем выбранные предметы
+    fetchPlayerData();
+    setSelectedItems(new Set());
   }, [fetchPlayerData]);
 
+  // Подсчет статистики по активным фильтрам
+  const activeFiltersCount = useMemo(() => {
+    return filters.filter(f => f.field && f.value !== "").length;
+  }, [filters]);
+
+  // Условные возвраты должны быть ПОСЛЕ всех хуков
   if (loading) {
     return (
       <div className="d-flex justify-content-center align-items-center fantasy-paper p-4">
@@ -155,38 +354,15 @@ const InventoryList = observer(() => {
 
   const inventory = user_inventory || {};
   
-  const filteredItemsWithKeys = Object.entries(inventory).filter(
-    ([key, item]) => {
-      if (!item || typeof item !== 'object') return false;
-      if (selected_type === null || selected_type === undefined) {
-        return true;
-      }
-      return item.type === selected_type;
-    }
-  );
-
-  const itemObjects = filteredItemsWithKeys.map(([id, data]) => ({ 
+  // Получаем отфильтрованные предметы
+  const filteredItems = filterInventoryItems(inventory);
+  
+  const itemObjects = filteredItems.map(([id, data]) => ({ 
     id, 
     ...(data || {})
   }));
 
   let results = itemObjects;
-  try {
-    const fuse = new Fuse(itemObjects, {
-      keys: ["name"],
-      includeScore: true,
-      threshold: 0.3 
-    });
-    
-    results = query ? fuse.search(query).map(result => result.item) : itemObjects;
-  } catch (error) {
-    console.error("Fuse.js error:", error);
-    if (query) {
-      results = itemObjects.filter(item => 
-        item.name && item.name.toLowerCase().includes(query.toLowerCase())
-      );
-    }
-  }
 
   if (!Object.keys(inventory).length) {
     return (
@@ -209,8 +385,8 @@ const InventoryList = observer(() => {
   });
 
   return (
-    <div className="fantasy-paper content-overlay inventory-container p-3"> {/* Уменьшили padding */}
-      {/* Поменяли порядок: 1. Панель массовых операций (если есть) */}
+    <div className="fantasy-paper content-overlay inventory-container p-3">
+      {/* Панель массовых операций */}
       {selectedItems.size > 0 && (
         <div className="mass-operations-panel mb-3 p-3">
           <div className="d-flex flex-wrap align-items-center gap-2 mb-2">
@@ -268,7 +444,7 @@ const InventoryList = observer(() => {
               variant="outline-info"
               size="sm"
               onClick={selectAllItems}
-              disabled={massOperationLoading}
+              disabled={massOperationLoading || results.length === 0}
               className="mass-action-btn"
             >
               <i className="fas fa-check-square me-1"></i>
@@ -278,28 +454,188 @@ const InventoryList = observer(() => {
         </div>
       )}
 
-      {/* 2. Фильтр по типам - теперь САМЫЙ ВЕРХНИЙ элемент */}
-      <div className="inventory-filter-container mb-3">
-        <Row className="align-items-center">
-          <Col xs="auto">
-            <TypeBar />
-          </Col>
-          <Col className="text-end">
-            <Button
-              variant="outline-info"
-              size="sm"
-              onClick={selectAllItems}
-              disabled={selectedItems.size === results.length}
-              className="select-all-btn"
-            >
-              <i className="fas fa-check-circle me-1"></i>
-              Выбрать все ({results.length})
-            </Button>
-          </Col>
+      {/* Два настраиваемых фильтра */}
+      <div className="custom-filters-container mb-3">
+        <div className="d-flex justify-content-between align-items-center mb-3">
+          <h6 className="fantasy-text-dark mb-0">Фильтры предметов</h6>
+          <div className="d-flex gap-2">
+            {activeFiltersCount > 0 && (
+              <Button
+                variant="outline-secondary"
+                size="sm"
+                onClick={resetFilters}
+              >
+                <i className="fas fa-times-circle me-1"></i>
+                Сбросить все фильтры
+              </Button>
+            )}
+          </div>
+        </div>
+        
+        <Row className="g-3">
+          {filters.map((filter, index) => {
+            const fieldConfig = filterFields.find(f => f.id === filter.field);
+            
+            return (
+              <Col md={6} key={index}>
+                <div className="filter-card p-3">
+                  <div className="d-flex justify-content-between align-items-center mb-2">
+                    <small className="text-muted">Фильтр {index + 1}</small>
+                    {filter.field && (
+                      <Button
+                        variant="link"
+                        size="sm"
+                        className="text-danger p-0"
+                        onClick={() => removeFilter(index)}
+                        title="Удалить фильтр"
+                      >
+                        <i className="fas fa-times"></i>
+                      </Button>
+                    )}
+                  </div>
+                  
+                  <div className="filter-controls">
+                    {/* Выбор поля */}
+                    <Form.Group className="mb-2">
+                      <Form.Label size="sm">Поле</Form.Label>
+                      <Form.Select
+                        size="sm"
+                        value={filter.field}
+                        onChange={(e) => updateFilter(index, "field", e.target.value)}
+                      >
+                        <option value="">Выберите поле...</option>
+                        {filterFields.map(field => (
+                          <option key={field.id} value={field.id}>
+                            {field.name}
+                          </option>
+                        ))}
+                      </Form.Select>
+                    </Form.Group>
+                    
+                    {/* Выбор оператора (для числовых полей) */}
+                    {fieldConfig?.type === "number" && filter.field && (
+                      <Form.Group className="mb-2">
+                        <Form.Label size="sm">Условие</Form.Label>
+                        <Form.Select
+                          size="sm"
+                          value={filter.operator}
+                          onChange={(e) => updateFilter(index, "operator", e.target.value)}
+                        >
+                          {fieldConfig.operators.map(op => (
+                            <option key={op.id} value={op.id}>
+                              {op.name}
+                            </option>
+                          ))}
+                        </Form.Select>
+                      </Form.Group>
+                    )}
+                    
+                    {/* Поле ввода значения */}
+                    {filter.field && (
+                      <Form.Group className="mb-2">
+                        <Form.Label size="sm">Значение</Form.Label>
+                        
+                        {fieldConfig?.type === "select" && (
+                          <Form.Select
+                            size="sm"
+                            value={filter.value}
+                            onChange={(e) => updateFilter(index, "value", e.target.value)}
+                          >
+                            <option value="">Любое...</option>
+                            {fieldConfig.options().map(opt => (
+                              <option key={opt.value} value={opt.value}>
+                                {opt.label}
+                              </option>
+                            ))}
+                          </Form.Select>
+                        )}
+                        
+                        {fieldConfig?.type === "boolean" && (
+                          <Form.Select
+                            size="sm"
+                            value={filter.value}
+                            onChange={(e) => updateFilter(index, "value", e.target.value)}
+                          >
+                            <option value="">Любое...</option>
+                            {fieldConfig.options.map(opt => (
+                              <option key={opt.value} value={opt.value}>
+                                {opt.label}
+                              </option>
+                            ))}
+                          </Form.Select>
+                        )}
+                        
+                        {fieldConfig?.type === "number" && (
+                          <Form.Control
+                            type="number"
+                            size="sm"
+                            value={filter.value}
+                            onChange={(e) => updateFilter(index, "value", e.target.value)}
+                            placeholder="Введите число..."
+                            min="0"
+                            step="0.1"
+                          />
+                        )}
+                      </Form.Group>
+                    )}
+                  </div>
+                </div>
+              </Col>
+            );
+          })}
         </Row>
+        
+        {/* Отображение активных фильтров */}
+        {activeFiltersCount > 0 && (
+          <div className="active-filters-display mt-3 p-2">
+            <small className="text-muted d-flex align-items-center flex-wrap gap-1">
+              <i className="fas fa-filter"></i>
+              <span>Активные фильтры:</span>
+              {filters.map((filter, index) => {
+                if (!filter.field || filter.value === "") return null;
+                
+                const fieldConfig = filterFields.find(f => f.id === filter.field);
+                let displayValue = filter.value;
+                
+                // Форматирование значения для отображения
+                if (fieldConfig?.type === "boolean") {
+                  const option = fieldConfig.options.find(opt => opt.value === filter.value);
+                  displayValue = option ? option.label : filter.value;
+                } else if (fieldConfig?.type === "select") {
+                  const options = fieldConfig.options();
+                  const option = options.find(opt => opt.value === filter.value);
+                  displayValue = option ? option.label : filter.value;
+                } else if (fieldConfig?.type === "number") {
+                  const operatorName = fieldConfig.operators?.find(op => op.id === filter.operator)?.name || filter.operator;
+                  displayValue = `${operatorName} ${filter.value}`;
+                }
+                
+                return (
+                  <Badge 
+                    key={index}
+                    bg="info"
+                    className="d-flex align-items-center gap-1 me-1 mb-1"
+                    style={{ fontSize: '0.75rem' }}
+                  >
+                    {fieldConfig?.name}: {displayValue}
+                    <Button
+                      variant="link"
+                      size="sm"
+                      className="text-white p-0"
+                      onClick={() => removeFilter(index)}
+                      style={{ minWidth: '16px', height: '16px' }}
+                    >
+                      <i className="fas fa-times" style={{ fontSize: '0.6rem' }}></i>
+                    </Button>
+                  </Badge>
+                );
+              })}
+            </small>
+          </div>
+        )}
       </div>
 
-      {/* 3. Поиск */}
+      {/* Поиск */}
       <div className="fantasy-paper content-overlay bulk-purchase-tab mb-3">
         <Form className="fantasy-form">
           <div className="search-input-wrapper">
@@ -308,28 +644,58 @@ const InventoryList = observer(() => {
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Название предмета..."
+              placeholder="Название или описание предмета..."
               className="inventory-search-input bulk-purchase"
             />
+            {query && (
+              <Button
+                variant="link"
+                size="sm"
+                className="clear-search-btn"
+                onClick={() => setQuery('')}
+                title="Очистить поиск"
+              >
+                <i className="fas fa-times"></i>
+              </Button>
+            )}
           </div>
+          <Form.Text className="text-muted" style={{ fontSize: '0.75rem' }}>
+            Найдено предметов: {results.length}
+            {activeFiltersCount > 0 && (
+              <span className="ms-2">
+                <i className="fas fa-filter text-info me-1"></i>
+                Активных фильтров: {activeFiltersCount}
+              </span>
+            )}
+          </Form.Text>
         </Form>
       </div>
 
-      {/* 4. Список предметов */}
+      {/* Список предметов */}
       <div className="inventory-items-container">
-        {results.map((item) => (
-          <InventoryItem 
-            key={item.id} 
-            devicekey={item.id} 
-            device={item} 
-            onShowModal={handleShowModal}
-            isSelected={selectedItems.has(item.id)}
-            onToggleSelect={toggleItemSelection}
-          />
-        ))}
+        {results.length > 0 ? (
+          results.map((item) => (
+            <InventoryItem 
+              key={item.id} 
+              devicekey={item.id} 
+              device={item} 
+              onShowModal={handleShowModal}
+              isSelected={selectedItems.has(item.id)}
+              onToggleSelect={toggleItemSelection}
+              isUnidentified={item.undefined === true}
+            />
+          ))
+        ) : (
+          <div className="text-center p-4 fantasy-text-muted">
+            <i className="fas fa-search fa-2x mb-3"></i>
+            <p>Предметы не найдены</p>
+            {query && <p>Попробуйте изменить поисковый запрос</p>}
+            {activeFiltersCount > 0 && <p>Или измените фильтры</p>}
+          </div>
+        )}
       </div>
       
-      {/* Модалка для массовой передачи */}
+      {/* Модалки для массовых операций */}
       <MassTransferModal
         show={showMassTransferModal}
         onClose={() => setShowMassTransferModal(false)}
@@ -338,7 +704,6 @@ const InventoryList = observer(() => {
         onSuccess={handleOperationSuccess}
       />
 
-      {/* Модалка для массовой продажи */}
       <MassSellModal
         show={showMassSellModal}
         onClose={() => setShowMassSellModal(false)}
@@ -347,7 +712,6 @@ const InventoryList = observer(() => {
         onSuccess={handleOperationSuccess}
       />
 
-      {/* Модалка для массового выбрасывания */}
       <MassDropModal
         show={showMassDropModal}
         onClose={() => setShowMassDropModal(false)}

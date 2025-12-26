@@ -2277,3 +2277,115 @@ body .inventory-item-fantasy-dropdown .dropdown-item {
   border-radius: 6px;
   border-left: 3px solid #007bff;
 }
+
+/* Стили для футера */
+footer {
+  background-color: rgba(33, 37, 41, 0.95);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Стили для страницы с соглашением */
+.nav-tabs .nav-link {
+  color: #adb5bd;
+  border: none;
+}
+
+.nav-tabs .nav-link.active {
+  color: #ffffff;
+  background-color: #495057;
+  border: 1px solid #495057;
+}
+
+.nav-tabs .nav-link:hover {
+  color: #ffffff;
+  border: none;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+  .tab-content {
+    font-size: 0.85rem;
+  }
+  
+  .tab-content h4 {
+    font-size: 1.3rem;
+  }
+  
+  .tab-content h5 {
+    font-size: 1.1rem;
+  }
+  
+  footer {
+    font-size: 0.8rem;
+  }
+}
+
+/* App.css */
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+/* Стили для основного приложения */
+.app-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.main-content {
+  flex: 1 0 auto;
+}
+
+/* Стили для футера */
+footer {
+  background-color: rgba(0, 0, 0, 0.9);
+  border-top: 1px solid #444;
+  flex-shrink: 0;
+  width: 100%;
+}
+
+/* Стили для страницы соглашений */
+.tab-content {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  line-height: 1.6;
+  font-size: 0.95rem;
+}
+
+.tab-content h4 {
+  color: #f8f9fa;
+  border-bottom: 2px solid #6c757d;
+  padding-bottom: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.tab-content h5 {
+  color: #e9ecef;
+  margin-top: 1.5rem;
+  margin-bottom: 1rem;
+  font-size: 1.1rem;
+}
+
+.tab-content p, .tab-content ul {
+  color: #dee2e6;
+  margin-bottom: 1rem;
+}
+
+/* Стили для навигации вкладок */
+.nav-tabs .nav-link {
+  color: #adb5bd;
+  border: 1px solid transparent;
+  border-bottom: none;
+}
+
+.nav-tabs .nav-link.active {
+  color: #ffffff;
+  background-color: #495057;
+  border-color: #495057 #495057 transparent;
+}
+
+.nav-tabs .nav-link:hover {
+  color: #ffffff;
+  border-color: #6c757d #6c757d transparent;
+}

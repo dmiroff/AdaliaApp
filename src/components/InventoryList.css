@@ -1,0 +1,336 @@
+/* ===== СТИЛИ ДЛЯ ИНВЕНТАРЯ И ФИЛЬТРОВ ===== */
+
+/* Панель массовых операций */
+.mass-operations-panel {
+  background: linear-gradient(135deg, rgba(139, 69, 19, 0.15) 0%, rgba(160, 82, 45, 0.1) 100%);
+  border: 2px solid var(--color-accent-bronze-light);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  backdrop-filter: blur(2px);
+}
+
+.selected-count-badge {
+  background: linear-gradient(135deg, var(--color-primary-light), var(--color-primary)) !important;
+  color: var(--color-accent-gold) !important;
+  border: 1px solid var(--color-accent-bronze);
+  padding: 6px 12px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.value-badge {
+  background: linear-gradient(135deg, var(--color-info), var(--color-info-light)) !important;
+  color: var(--color-text-white) !important;
+  border: 1px solid var(--color-info-lighter);
+  padding: 6px 12px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.mass-action-btn {
+  font-family: 'Cinzel', serif !important;
+  font-weight: 600 !important;
+  padding: 6px 12px !important;
+  background: linear-gradient(135deg, var(--color-primary-lighter), var(--color-primary-lighter)) !important;
+  border: 1px solid var(--color-accent-bronze) !important;
+  color: var(--color-accent-gold) !important;
+  transition: all 0.3s ease !important;
+}
+
+.mass-action-btn:hover {
+  background: linear-gradient(135deg, var(--color-accent-bronze-light), var(--color-primary-lighter)) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(139, 69, 19, 0.3) !important;
+  color: var(--color-accent-golder) !important;
+}
+
+.mass-action-btn:disabled {
+  background: linear-gradient(135deg, var(--color-gray) 0%, #8d8987 100%) !important;
+  opacity: 0.65 !important;
+  transform: none !important;
+}
+
+/* Контейнер фильтров */
+.custom-filters-container {
+  background: linear-gradient(135deg, rgba(244, 228, 188, 0.95) 0%, rgba(230, 210, 169, 0.98) 100%);
+  border: 2px solid var(--color-accent-bronze-light);
+  border-radius: 10px;
+  padding: 15px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(2px);
+}
+
+/* Карточка фильтра */
+.filter-card {
+  background: linear-gradient(135deg, rgba(244, 228, 188, 0.8) 0%, rgba(230, 210, 169, 0.9) 100%);
+  border: 2px solid var(--color-accent-bronze);
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.filter-card:hover {
+  background: linear-gradient(135deg, rgba(244, 228, 188, 0.9) 0%, rgba(230, 210, 169, 0.95) 100%);
+  border-color: var(--color-accent-bronze-light);
+  box-shadow: 0 4px 8px rgba(139, 69, 19, 0.2);
+}
+
+/* Элементы управления фильтрами */
+.filter-controls .form-label {
+  font-size: 0.8rem;
+  margin-bottom: 0.25rem;
+  color: var(--color-text-dark);
+  font-weight: 600;
+}
+
+.filter-controls .form-select,
+.filter-controls .form-control {
+  background: linear-gradient(135deg, var(--color-bg-light) 0%, var(--color-bg-light) 100%);
+  border: 2px solid var(--color-accent-bronze);
+  color: var(--color-text-dark);
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.filter-controls .form-select:focus,
+.filter-controls .form-control:focus {
+  background: linear-gradient(135deg, #fff9e6 0%, var(--color-bg-light) 100%);
+  border-color: var(--color-primary-lighter);
+  box-shadow: 0 0 0 3px rgba(139, 69, 19, 0.25);
+  color: var(--color-text-dark);
+}
+
+/* Отображение активных фильтров */
+.active-filters-display {
+  background: linear-gradient(135deg, rgba(139, 69, 19, 0.1) 0%, rgba(160, 82, 45, 0.05) 100%);
+  border-radius: 6px;
+  border-left: 3px solid var(--color-info-lighter);
+  border-top: 1px solid var(--color-accent-bronze);
+}
+
+.active-filters-display .badge {
+  font-size: 0.75rem !important;
+  padding: 4px 8px !important;
+  background: linear-gradient(135deg, var(--color-info), var(--color-info-light)) !important;
+  color: var(--color-text-white) !important;
+  border: 1px solid var(--color-info-lighter);
+  font-weight: 600;
+}
+
+.active-filters-display .badge .btn {
+  color: var(--color-text-white) !important;
+  text-shadow: none;
+  min-width: 16px;
+  height: 16px;
+}
+
+.active-filters-display .badge .btn:hover {
+  color: var(--color-accent-gold) !important;
+}
+
+/* Поисковая строка */
+.search-input-wrapper {
+  position: relative;
+}
+
+.search-input-wrapper .search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-text-light);
+  z-index: 10;
+}
+
+.search-input-wrapper .clear-search-btn {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 4px;
+  color: var(--color-text-light);
+  z-index: 10;
+  background: none;
+  border: none;
+}
+
+.search-input-wrapper .clear-search-btn:hover {
+  color: var(--color-primary-lighter);
+}
+
+.inventory-search-input {
+  padding-left: 40px !important;
+  padding-right: 40px !important;
+  background: linear-gradient(135deg, var(--color-bg-light) 0%, var(--color-bg-light) 100%);
+  border: 2px solid var(--color-accent-bronze-light);
+  border-radius: 4px;
+  color: var(--color-text-dark);
+  font-weight: 500;
+  height: 38px !important;
+}
+
+.inventory-search-input:focus {
+  background: linear-gradient(135deg, #fff9e6 0%, var(--color-bg-light) 100%);
+  border-color: var(--color-primary-lighter);
+  box-shadow: 0 0 0 3px rgba(139, 69, 19, 0.25);
+  color: var(--color-text-dark);
+}
+
+/* ВЕРНУТЬ СТАРЫЕ РАЗМЕРЫ ОКОШЕК ПРЕДМЕТОВ - ВЕРТИКАЛЬНЫЙ СПИСОК */
+.inventory-items-container {
+  display: block; /* Вместо grid - обычный блок */
+  margin-top: 15px;
+}
+
+/* Каждый предмет инвентаря - старый стиль */
+.inventory-items-container > * {
+  margin-bottom: 10px;
+  width: 100%;
+}
+
+/* Убираем последний отступ */
+.inventory-items-container > *:last-child {
+  margin-bottom: 0;
+}
+
+/* Адаптивность для вертикального списка */
+@media (max-width: 768px) {
+  .filter-card {
+    margin-bottom: 15px;
+  }
+  
+  .custom-filters-container {
+    padding: 12px;
+  }
+  
+  .mass-operations-panel {
+    padding: 12px !important;
+  }
+  
+  .mass-action-btn {
+    padding: 5px 10px !important;
+    font-size: 0.85rem !important;
+  }
+  
+  .inventory-search-input {
+    padding-left: 35px !important;
+    padding-right: 35px !important;
+    height: 36px !important;
+  }
+  
+  .inventory-items-container > * {
+    margin-bottom: 8px;
+  }
+}
+
+@media (max-width: 576px) {
+  .custom-filters-container {
+    padding: 10px;
+  }
+  
+  .mass-operations-panel {
+    padding: 10px !important;
+  }
+  
+  .mass-action-btn {
+    padding: 4px 8px !important;
+    font-size: 0.8rem !important;
+  }
+  
+  .inventory-search-input {
+    padding-left: 30px !important;
+    padding-right: 30px !important;
+    height: 34px !important;
+    font-size: 0.9rem;
+  }
+  
+  .inventory-items-container > * {
+    margin-bottom: 6px;
+  }
+}
+
+/* Стили для пустого состояния */
+.text-center.p-4.fantasy-text-muted {
+  padding: 40px 20px !important;
+  background: linear-gradient(135deg, rgba(244, 228, 188, 0.7) 0%, rgba(230, 210, 169, 0.8) 100%);
+  border-radius: 8px;
+  border: 2px dashed var(--color-accent-bronze);
+  margin-top: 20px;
+}
+
+.text-center.p-4.fantasy-text-muted i {
+  color: var(--color-text-light);
+  font-size: 2.5rem;
+  margin-bottom: 15px;
+  opacity: 0.7;
+}
+
+.text-center.p-4.fantasy-text-muted p {
+  color: var(--color-text-medium);
+  font-size: 1.1rem;
+  margin-bottom: 5px;
+}
+
+/* Кнопка выбора всех предметов */
+.btn-outline-info.mass-action-btn {
+  background: transparent !important;
+  border: 2px solid var(--color-info-lighter) !important;
+  color: var(--color-info-lighter) !important;
+}
+
+.btn-outline-info.mass-action-btn:hover {
+  background: linear-gradient(135deg, var(--color-info), var(--color-info-light)) !important;
+  color: var(--color-text-white) !important;
+}
+
+/* Кнопка очистки выбора */
+.btn-secondary.mass-action-btn {
+  background: linear-gradient(135deg, var(--color-secondary), var(--color-secondary-light)) !important;
+  border: 1px solid var(--color-secondary-dark) !important;
+  color: var(--color-text-white) !important;
+}
+
+.btn-secondary.mass-action-btn:hover {
+  background: linear-gradient(135deg, var(--color-secondary-light), var(--color-secondary)) !important;
+  color: var(--color-accent-golder) !important;
+}
+
+/* Кнопка сброса фильтров */
+.btn-outline-secondary {
+  background: transparent !important;
+  border: 2px solid var(--color-accent-bronze) !important;
+  color: var(--color-text-dark) !important;
+  font-weight: 600;
+}
+
+.btn-outline-secondary:hover {
+  background: linear-gradient(135deg, var(--color-accent-bronze-light), var(--color-primary-lighter)) !important;
+  border-color: var(--color-accent-bronze-light) !important;
+  color: var(--color-text-dark) !important;
+}
+
+/* Улучшенные стили для заголовков фильтров */
+.custom-filters-container h6 {
+  color: var(--color-text-dark);
+  font-weight: 700;
+  font-family: 'Cinzel', serif;
+  letter-spacing: 0.5px;
+  border-bottom: 2px solid var(--color-accent-bronze);
+  padding-bottom: 8px;
+  margin-bottom: 15px;
+}
+
+/* Стили для текста количества найденных предметов */
+.form-text.text-muted {
+  color: var(--color-text-medium) !important;
+  font-size: 0.85rem;
+  margin-top: 5px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.form-text.text-muted .fas.fa-filter.text-info {
+  color: var(--color-info-lighter) !important;
+}
