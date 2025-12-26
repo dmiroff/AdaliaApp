@@ -250,28 +250,6 @@
   }
 }
 
-/* Стили для пустого состояния */
-.text-center.p-4.fantasy-text-muted {
-  padding: 40px 20px !important;
-  background: linear-gradient(135deg, rgba(244, 228, 188, 0.7) 0%, rgba(230, 210, 169, 0.8) 100%);
-  border-radius: 8px;
-  border: 2px dashed var(--color-accent-bronze);
-  margin-top: 20px;
-}
-
-.text-center.p-4.fantasy-text-muted i {
-  color: var(--color-text-light);
-  font-size: 2.5rem;
-  margin-bottom: 15px;
-  opacity: 0.7;
-}
-
-.text-center.p-4.fantasy-text-muted p {
-  color: var(--color-text-medium);
-  font-size: 1.1rem;
-  margin-bottom: 5px;
-}
-
 /* Кнопка выбора всех предметов */
 .btn-outline-info.mass-action-btn {
   background: transparent !important;
@@ -319,18 +297,4 @@
   border-bottom: 2px solid var(--color-accent-bronze);
   padding-bottom: 8px;
   margin-bottom: 15px;
-}
-
-/* Стили для текста количества найденных предметов */
-.form-text.text-muted {
-  color: var(--color-text-medium) !important;
-  font-size: 0.85rem;
-  margin-top: 5px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.form-text.text-muted .fas.fa-filter.text-info {
-  color: var(--color-info-lighter) !important;
 }

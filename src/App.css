@@ -51,7 +51,7 @@
   /* Текстовые цвета */
   --color-text-dark: #000000;
   --color-text-medium: #5d4037;
-  --color-text-light: #8b7355;
+  --color-text-light: #996d3a;
   --color-text-white: #ffffff;
   
   /* Дополнительные цвета */
@@ -122,6 +122,7 @@ html, body, #root {
 }
 
 /* ===== КАРТОЧКИ ===== */
+/* Найдите и исправьте в вашем CSS: */
 .fantasy-card {
   background: linear-gradient(135deg, var(--color-bg-light) 0%, var(--color-bg-light) 100%);
   border: 2px solid var(--color-accent-bronze-light);
@@ -131,8 +132,12 @@ html, body, #root {
   position: relative;
   overflow: hidden;
   animation: fadeIn 0.4s ease-out;
+  color: var(--color-text-dark); /* Добавьте эту строку */
 }
 
+.fantasy-card .card-body {
+  color: var(--color-text-dark) !important; /* Добавьте эту строку */
+}
 .fantasy-card::before {
   content: "";
   position: absolute;
@@ -2354,38 +2359,94 @@ footer {
 }
 
 .tab-content h4 {
-  color: #f8f9fa;
   border-bottom: 2px solid #6c757d;
   padding-bottom: 0.5rem;
   margin-bottom: 1.5rem;
 }
 
 .tab-content h5 {
-  color: #e9ecef;
   margin-top: 1.5rem;
   margin-bottom: 1rem;
   font-size: 1.1rem;
 }
 
 .tab-content p, .tab-content ul {
-  color: #dee2e6;
   margin-bottom: 1rem;
 }
 
-/* Стили для навигации вкладок */
-.nav-tabs .nav-link {
-  color: #adb5bd;
-  border: 1px solid transparent;
-  border-bottom: none;
+/* Стили для формы авторизации */
+.login-container,
+.register-container {
+  animation: fadeIn 0.5s ease-out;
 }
 
-.nav-tabs .nav-link.active {
-  color: #ffffff;
-  background-color: #495057;
-  border-color: #495057 #495057 transparent;
+.fantasy-input {
+  background: linear-gradient(135deg, var(--color-bg-light) 0%, var(--color-bg-light) 100%);
+  border: 2px solid var(--color-accent-bronze-light);
+  border-radius: 6px;
+  color: var(--color-text-dark);
+  font-weight: 500;
+  transition: all 0.3s ease;
 }
 
-.nav-tabs .nav-link:hover {
-  color: #ffffff;
-  border-color: #6c757d #6c757d transparent;
+.fantasy-input:focus {
+  background: linear-gradient(135deg, #fff9e6 0%, var(--color-bg-light) 100%);
+  border-color: var(--color-primary-lighter);
+  box-shadow: 0 0 0 3px rgba(139, 69, 19, 0.25);
+  color: var(--color-text-dark);
 }
+
+.fantasy-input:disabled {
+  background: rgba(244, 228, 188, 0.5);
+  opacity: 0.7;
+}
+
+/* Кнопки для форм */
+.fantasy-btn {
+  font-family: 'Cinzel', serif;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  transition: all 0.3s ease;
+}
+
+.fantasy-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.fantasy-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Анимация появления */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Адаптивность для мобильных */
+@media (max-width: 576px) {
+  .login-container,
+  .register-container {
+    padding: 1rem !important;
+    margin: 1rem !important;
+  }
+  
+  .fantasy-input {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.9rem;
+  }
+  
+  .fantasy-btn {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+  }
+}
+
