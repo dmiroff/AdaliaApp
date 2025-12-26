@@ -18,6 +18,7 @@ const Donation = React.lazy(() => import('../pages/Shop'));
 const NotAuth = React.lazy(() => import('../pages/NotAuth'));
 const ItemPage = React.lazy(() => import('../pages/ItemPage'));
 const AuthChecker = React.lazy(() => import('../pages/AuthChecker'));
+const TermsAndPrivacyPage = React.lazy(() => import('../pages/TermsAndPrivacyPage')); // Добавляем импорт
 
 const AppRouter = () => {
     const { user } = useContext(Context);
@@ -52,6 +53,7 @@ const AppRouter = () => {
                     switch (name) {
                         case 'Auth': Component = Auth; break;
                         case 'NotAuth': Component = NotAuth; break;
+                        case 'TermsAndPrivacy': Component = TermsAndPrivacyPage; break; // Добавляем case
                         default: return null;
                     }
                     
