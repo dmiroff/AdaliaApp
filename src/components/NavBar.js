@@ -1,20 +1,44 @@
 import { observer } from "mobx-react-lite";
 import { useNavigate } from "react-router-dom";
 import { Nav, Navbar, Button } from "react-bootstrap";
-import { useState } from "react";
+import { useState, useRef } from "react"; // Добавляем useRef
 import SettingsModal from "./SettingsModal";
 
 const NavBar = observer(() => {
   const navigate = useNavigate();
   const [showSettings, setShowSettings] = useState(false);
+  const navRef = useRef(null); // Создаем ref для управления навбаром
 
   const handleSettingsClick = () => {
+    // Закрываем навбар на мобильных устройствах
+    if (window.innerWidth < 992) {
+      const navbarToggler = document.querySelector('.navbar-toggler');
+      if (navbarToggler && !navbarToggler.classList.contains('collapsed')) {
+        navbarToggler.click(); // Имитируем клик для закрытия
+      }
+    }
     setShowSettings(true);
+  };
+
+  // Обработчик для навигации (также закрывает меню на мобильных)
+  const handleNavLinkClick = (path) => {
+    if (window.innerWidth < 992) {
+      const navbarToggler = document.querySelector('.navbar-toggler');
+      if (navbarToggler && !navbarToggler.classList.contains('collapsed')) {
+        navbarToggler.click();
+      }
+    }
+    navigate(path);
   };
 
   return (
     <>
-      <Navbar collapseOnSelect expand="lg" className="fantasy-navbar">
+      <Navbar 
+        collapseOnSelect 
+        expand="lg" 
+        className="fantasy-navbar"
+        ref={navRef}
+      >
         <Navbar.Toggle 
           aria-controls="responsive-navbar-nav" 
           className="fantasy-btn fantasy-btn-lg w-100"
@@ -23,42 +47,42 @@ const NavBar = observer(() => {
           <Nav className="w-100">
             <Nav.Link 
               eventKey="inventory" 
-              onClick={() => navigate("/inventory")}
+              onClick={() => handleNavLinkClick("/inventory")}
               className="fantasy-btn fantasy-btn-warning fantasy-btn-lg mx-1 my-1 w-100"
             >
               Инвентарь
             </Nav.Link>
             <Nav.Link 
               eventKey="character" 
-              onClick={() => navigate("/character")}
+              onClick={() => handleNavLinkClick("/character")}
               className="fantasy-btn fantasy-btn-warning fantasy-btn-lg mx-1 my-1 w-100"
             >
               Персонаж
             </Nav.Link>
             <Nav.Link 
               eventKey="map" 
-              onClick={() => navigate("/map")}
+              onClick={() => handleNavLinkClick("/map")}
               className="fantasy-btn fantasy-btn-warning fantasy-btn-lg mx-1 my-1 w-100"
             >
               Карта
             </Nav.Link>
             <Nav.Link 
               eventKey="rating" 
-              onClick={() => navigate("/rating")}
+              onClick={() => handleNavLinkClick("/rating")}
               className="fantasy-btn fantasy-btn-warning fantasy-btn-lg mx-1 my-1 w-100"
             >
               Рейтинг
             </Nav.Link>
             <Nav.Link 
               eventKey="trade" 
-              onClick={() => navigate("/trade")}
+              onClick={() => handleNavLinkClick("/trade")}
               className="fantasy-btn fantasy-btn-warning fantasy-btn-lg mx-1 my-1 w-100"
             >
               Торговля
             </Nav.Link>
             <Nav.Link 
               eventKey="donation" 
-              onClick={() => navigate("/donation")}
+              onClick={() => handleNavLinkClick("/donation")}
               className="fantasy-btn fantasy-btn-warning fantasy-btn-lg mx-1 my-1 w-100"
             >
               💎 Магазин
