@@ -442,7 +442,7 @@ const InventoryItem = ({
               fontSize: '1rem',
               lineHeight: '1.2'
             }}>
-              {formatItemName()}
+              <div className="fantasy-text-dark">{formatItemName()}</div>
             </span>
             {/* Бейдж редкости */}
             {device.rarity > 1 && (
@@ -517,7 +517,7 @@ const InventoryItem = ({
           <div style={{ marginBottom: "8px" }}>
             <span style={{ color: '#ffd700', fontWeight: '700', fontSize: '1.1rem' }}>
               <i className="fas fa-coins me-1"></i>
-              {device.value} 🌕
+              <div className="fantasy-text-dark">{device.value} 🌕</div>
             </span>
           </div>
           
