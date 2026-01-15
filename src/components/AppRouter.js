@@ -17,6 +17,7 @@ const Map = React.lazy(() => import('../pages/Map'));
 const Donation = React.lazy(() => import('../pages/Shop'));
 const NotAuth = React.lazy(() => import('../pages/NotAuth'));
 const ItemPage = React.lazy(() => import('../pages/ItemPage'));
+const Guild = React.lazy(() => import('../pages/Guild'));
 const AuthChecker = React.lazy(() => import('../pages/AuthChecker'));
 const TermsAndPrivacyPage = React.lazy(() => import('../pages/TermsAndPrivacyPage')); // Добавляем импорт
 
@@ -40,6 +41,7 @@ const AppRouter = () => {
                         case 'Trade': Component = Trade; break;
                         case 'Map': Component = Map; break;
                         case 'Donation': Component = Donation; break;
+                        case 'Guild': Component = Guild; break;
                         default: return null;
                     }
                     

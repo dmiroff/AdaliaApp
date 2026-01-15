@@ -1,33 +1,23 @@
 import { observer } from "mobx-react-lite";
 import { useNavigate } from "react-router-dom";
 import { Nav, Navbar, Button } from "react-bootstrap";
-import { useState, useRef } from "react"; // Добавляем useRef
+import { useState, useRef } from "react";
 import SettingsModal from "./SettingsModal";
 
 const NavBar = observer(() => {
   const navigate = useNavigate();
   const [showSettings, setShowSettings] = useState(false);
-  const navRef = useRef(null); // Создаем ref для управления навбаром
+  const [expanded, setExpanded] = useState(false); // Добавляем state для управления expanded
 
   const handleSettingsClick = () => {
     // Закрываем навбар на мобильных устройствах
-    if (window.innerWidth < 992) {
-      const navbarToggler = document.querySelector('.navbar-toggler');
-      if (navbarToggler && !navbarToggler.classList.contains('collapsed')) {
-        navbarToggler.click(); // Имитируем клик для закрытия
-      }
-    }
+    setExpanded(false);
     setShowSettings(true);
   };
 
   // Обработчик для навигации (также закрывает меню на мобильных)
   const handleNavLinkClick = (path) => {
-    if (window.innerWidth < 992) {
-      const navbarToggler = document.querySelector('.navbar-toggler');
-      if (navbarToggler && !navbarToggler.classList.contains('collapsed')) {
-        navbarToggler.click();
-      }
-    }
+    setExpanded(false);
     navigate(path);
   };
 
@@ -37,7 +27,8 @@ const NavBar = observer(() => {
         collapseOnSelect 
         expand="lg" 
         className="fantasy-navbar"
-        ref={navRef}
+        expanded={expanded}
+        onToggle={() => setExpanded(!expanded)}
       >
         <Navbar.Toggle 
           aria-controls="responsive-navbar-nav" 
@@ -58,6 +49,13 @@ const NavBar = observer(() => {
               className="fantasy-btn fantasy-btn-warning fantasy-btn-lg mx-1 my-1 w-100"
             >
               Персонаж
+            </Nav.Link>
+            <Nav.Link 
+              eventKey="guild" 
+              onClick={() => handleNavLinkClick("/guild")}
+              className="fantasy-btn fantasy-btn-warning fantasy-btn-lg mx-1 my-1 w-100"
+            >
+              🏰 Гильдия
             </Nav.Link>
             <Nav.Link 
               eventKey="map" 

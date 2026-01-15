@@ -138,7 +138,7 @@ const EventShopTab = observer(() => {
       id: 3,
       name: "✨ Заказ образа",
       description: "Закажите конкретный образ на заказ",
-      price: 3000,
+      price: 2500,
       currency: "❄️",
       currencyId: 262,
       features: [
