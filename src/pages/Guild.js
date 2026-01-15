@@ -1,5 +1,5 @@
-// Guild.jsx - обновленная версия с использованием констант
-import React, { useState, useContext, useEffect, useRef } from "react";
+// Guild.jsx - исправленная версия без моргания
+import React, { useState, useContext, useEffect, useRef, useLayoutEffect } from "react";
 import { 
   Container, 
   Spinner, 
@@ -26,8 +26,187 @@ import {
   GuildRequestAction
 } from "../http/guildService";
 import { SERVER_APP_API_URL } from "../utils/constants";
-import { dict_translator, attributes_dict } from "../utils/Helpers"; // Импортируем переводы
+import { dict_translator, attributes_dict } from "../utils/Helpers";
 import "./Guild.css";
+
+// Компонент выпадающего меню
+const GuildDropdownMenu = ({ 
+  isOpen, 
+  onClose, 
+  target, 
+  member, 
+  onMemberAction
+}) => {
+  const menuRef = useRef(null);
+  const [position, setPosition] = useState(null);
+  const [isPositionReady, setIsPositionReady] = useState(false);
+
+  useLayoutEffect(() => {
+    if (isOpen && target) {
+      const updatePosition = () => {
+        const rect = target.getBoundingClientRect();
+        const viewportHeight = window.innerHeight;
+        const viewportWidth = window.innerWidth;
+        
+        // Ожидаемые размеры меню
+        const menuWidth = 180;
+        const menuHeight = 200;
+        
+        // Рассчитываем позицию
+        let top = rect.bottom + 5;
+        let left = rect.right - menuWidth;
+        
+        // Проверяем, помещается ли меню снизу
+        if (top + menuHeight > viewportHeight - 20) {
+          // Не помещается снизу - показываем сверху
+          top = rect.top - menuHeight - 5;
+        }
+        
+        // Проверяем, чтобы не вылезло за левый край
+        if (left < 10) {
+          left = 10;
+        }
+        
+        // Проверяем, чтобы не вылезло за правый край
+        if (left + menuWidth > viewportWidth - 10) {
+          left = viewportWidth - menuWidth - 10;
+        }
+        
+        setPosition({ top, left });
+        setIsPositionReady(true);
+      };
+      
+      // Сбрасываем состояние готовности
+      setIsPositionReady(false);
+      
+      // Используем requestAnimationFrame для синхронизации с браузером
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          updatePosition();
+        });
+      });
+      
+      const handleResizeAndScroll = () => {
+        updatePosition();
+      };
+      
+      window.addEventListener('resize', handleResizeAndScroll);
+      window.addEventListener('scroll', handleResizeAndScroll, true);
+      
+      return () => {
+        window.removeEventListener('resize', handleResizeAndScroll);
+        window.removeEventListener('scroll', handleResizeAndScroll, true);
+      };
+    } else {
+      setPosition(null);
+      setIsPositionReady(false);
+    }
+  }, [isOpen, target]);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target) && 
+          target && !target.contains(event.target)) {
+        onClose();
+      }
+    };
+
+    if (isOpen && isPositionReady) {
+      setTimeout(() => {
+        document.addEventListener('mousedown', handleClickOutside);
+        document.addEventListener('touchstart', handleClickOutside);
+      }, 10);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, [isOpen, target, onClose, isPositionReady]);
+
+  if (!isOpen || !isPositionReady || !position) return null;
+
+  const handleAction = (action, playerName) => {
+    onClose();
+    let message = '';
+    let confirmAction = false;
+    
+    switch (action) {
+      case "promote":
+        message = `Назначить "${playerName}" офицером гильдии?`;
+        confirmAction = window.confirm(message);
+        break;
+      case "demote":
+        message = `Разжаловать "${playerName}" из офицеров?`;
+        confirmAction = window.confirm(message);
+        break;
+      case "transfer":
+        message = `Передать гильдию игроку "${playerName}"?\n\nВы перестанете быть лидером и станете офицером.`;
+        confirmAction = window.confirm(message);
+        break;
+      case "kick":
+        message = `Вы уверены, что хотите исключить "${playerName}" из гильдии?`;
+        confirmAction = window.confirm(message);
+        break;
+    }
+    
+    if (confirmAction) {
+      onMemberAction(action, playerName);
+    }
+  };
+
+  return (
+    <div 
+      ref={menuRef}
+      className="guild-dropdown-menu show"
+      style={{
+        position: 'fixed',
+        top: `${position.top}px`,
+        left: `${position.left}px`,
+        zIndex: 99999,
+        minWidth: '180px',
+        pointerEvents: 'auto'
+      }}
+    >
+      {!member.isTargetLeader && (
+        <>
+          {!member.isTargetOfficer ? (
+            <button
+              className="dropdown-item"
+              onClick={() => handleAction("promote", member.name)}
+            >
+              ⭐ Назначить офицером
+            </button>
+          ) : (
+            <button
+              className="dropdown-item"
+              onClick={() => handleAction("demote", member.name)}
+            >
+              ⬇️ Разжаловать офицера
+            </button>
+          )}
+          <button
+            className="dropdown-item"
+            onClick={() => handleAction("transfer", member.name)}
+          >
+            👑 Передать гильдию
+          </button>
+          <div className="dropdown-divider" />
+        </>
+      )}
+      
+      {(member.isCurrentUserOfficer && member.role !== "leader") || 
+      (member.isCurrentUserLeader && !member.isTargetLeader) ? (
+        <button
+          className="dropdown-item text-danger"
+          onClick={() => handleAction("kick", member.name)}
+        >
+          🚫 Исключить из гильдии
+        </button>
+      ) : null}
+    </div>
+  );
+};
 
 const Guild = observer(() => {
   const { user, guild } = useContext(Context);
@@ -41,7 +220,7 @@ const Guild = observer(() => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [openDropdownId, setOpenDropdownId] = useState(null);
-  const dropdownRefs = useRef({});
+  const triggerRefs = useRef({});
 
   // Словарь для перевода названий подземелий
   const dungeonTranslations = {
@@ -91,15 +270,21 @@ const Guild = observer(() => {
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (openDropdownId && dropdownRefs.current[openDropdownId]) {
-        if (!dropdownRefs.current[openDropdownId].contains(event.target)) {
-          setOpenDropdownId(null);
+      if (openDropdownId && triggerRefs.current[openDropdownId]) {
+        if (!triggerRefs.current[openDropdownId].contains(event.target)) {
+          // Проверяем, был ли клик по меню
+          const menu = document.querySelector('.guild-dropdown-menu.show');
+          if (!menu || !menu.contains(event.target)) {
+            setOpenDropdownId(null);
+          }
         }
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    document.addEventListener('touchstart', handleClickOutside);
+    if (openDropdownId) {
+      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('touchstart', handleClickOutside);
+    }
     
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
@@ -116,13 +301,11 @@ const Guild = observer(() => {
       console.log("Guild data received:", result.data);
       guild.setGuildData(result.data);
       
-      // Обрабатываем данные участников перед сохранением
       if (result.data.members) {
         const processedMembers = result.data.members.map(member => ({
           ...member,
           class_display: translateClass(member.class),
           race_display: translateRace(member.race),
-          // Обрабатываем подземелья если они есть
           dungeons: member.dungeons ? member.dungeons.map(dungeon => ({
             ...dungeon,
             display_name: translateDungeon(dungeon.key) || dungeon.display_name
@@ -185,10 +368,8 @@ const Guild = observer(() => {
   const handleViewMemberDetails = (memberId) => {
     const member = guild.getMemberById(memberId);
     if (member) {
-      // Обогащаем данные перед показом
       const enrichedMember = {
         ...member,
-        // Убедимся, что все данные переведены
         class_display: member.class_display || translateClass(member.class),
         race_display: member.race_display || translateRace(member.race),
         strength_display: translateAttribute("strength"),
@@ -515,269 +696,205 @@ const Guild = observer(() => {
     const fillPercentage = calculateGuildFillPercentage(guildData);
 
     return (
-      <Row className="g-3">
-        <Col lg={8}>
-          <Card className="fantasy-card h-100">
-            <Card.Header className="fantasy-card-header fantasy-card-header-primary">
-              <Row className="align-items-center">
-                <Col>
-                  <h4 className="fantasy-text-dark mb-0">{guildData.name}</h4>
-                </Col>
-                <Col xs="auto">
-                  {getRoleBadge(guildData.player_role)}
-                </Col>
-              </Row>
-            </Card.Header>
-            <Card.Body>
-              <div className="mb-4">
-                <p className="fantasy-text-muted">{guildData.description || "Нет описания"}</p>
-              </div>
-              
-              <Row className="mb-4">
-                <Col md={4}>
-                  <div className="guild-stat">
-                    <div className="fantasy-text-dark">Участников</div>
-                    <div className="fantasy-text-dark">
-                      {guildData.total_members || 0}/{guildData.members_limit || 20}
+      <>
+        <Row className="g-3">
+          <Col lg={8}>
+            <Card className="fantasy-card h-100">
+              <Card.Header className="fantasy-card-header fantasy-card-header-primary">
+                <Row className="align-items-center">
+                  <Col>
+                    <h4 className="fantasy-text-dark mb-0">{guildData.name}</h4>
+                  </Col>
+                  <Col xs="auto">
+                    {getRoleBadge(guildData.player_role)}
+                  </Col>
+                </Row>
+              </Card.Header>
+              <Card.Body>
+                <div className="mb-4">
+                  <p className="fantasy-text-muted">{guildData.description || "Нет описания"}</p>
+                </div>
+                
+                <Row className="mb-4">
+                  <Col md={4}>
+                    <div className="guild-stat">
+                      <div className="fantasy-text-dark">Участников</div>
+                      <div className="fantasy-text-dark">
+                        {guildData.total_members || 0}/{guildData.members_limit || 20}
+                      </div>
+                      <div className="mt-2">
+                        <ProgressBar 
+                          now={fillPercentage} 
+                          variant={fillPercentage > 90 ? "danger" : fillPercentage > 70 ? "warning" : "success"}
+                          style={{ height: "6px" }}
+                        />
+                      </div>
                     </div>
-                    <div className="mt-2">
-                      <ProgressBar 
-                        now={fillPercentage} 
-                        variant={fillPercentage > 90 ? "danger" : fillPercentage > 70 ? "warning" : "success"}
-                        style={{ height: "6px" }}
-                      />
+                  </Col>
+                  <Col md={4}>
+                    <div className="guild-stat">
+                      <div className="fantasy-text-dark">Замков</div>
+                      <div className="fantasy-text-dark">{guildData.castles?.length || 0}</div>
                     </div>
-                  </div>
-                </Col>
-                <Col md={4}>
-                  <div className="guild-stat">
-                    <div className="fantasy-text-dark">Замков</div>
-                    <div className="fantasy-text-dark">{guildData.castles?.length || 0}</div>
-                  </div>
-                </Col>
-              </Row>
+                  </Col>
+                </Row>
 
-              <div className="d-flex gap-2 flex-wrap">
-                {(guildData.player_role === "leader" || guildData.player_role === "officer") && (
+                <div className="d-flex gap-2 flex-wrap">
+                  {(guildData.player_role === "leader" || guildData.player_role === "officer") && (
+                    <Button 
+                      variant="warning" 
+                      className="fantasy-btn"
+                      onClick={() => setShowOfficerModal(true)}
+                    >
+                      👑 Офицерские функции
+                    </Button>
+                  )}
                   <Button 
-                    variant="warning" 
+                    variant="danger" 
                     className="fantasy-btn"
-                    onClick={() => setShowOfficerModal(true)}
+                    onClick={() => setShowLeaveModal(true)}
                   >
-                    👑 Офицерские функции
+                    🚪 Покинуть гильдию
                   </Button>
-                )}
-                <Button 
-                  variant="danger" 
-                  className="fantasy-btn"
-                  onClick={() => setShowLeaveModal(true)}
-                >
-                  🚪 Покинуть гильдию
-                </Button>
-              </div>
-            </Card.Body>
-          </Card>
-        </Col>
+                </div>
+              </Card.Body>
+            </Card>
+          </Col>
 
-        <Col lg={4}>
-          <Card className="fantasy-card h-100">
-            <Card.Header className="fantasy-card-header fantasy-card-header-info">
-              <h5>📊 Статистика</h5>
-            </Card.Header>
-            <Card.Body>
-              <ListGroup variant="flush">
-                <ListGroup.Item className="d-flex justify-content-between align-items-center">
-                  <span>Онлайн:</span>
-                  <Badge bg="success">{guildData.online_members || 0}</Badge>
-                </ListGroup.Item>
-                <ListGroup.Item className="d-flex justify-content-between align-items-center">
-                  <span>Оффлайн:</span>
-                  <Badge bg="secondary">{(guildData.total_members || 0) - (guildData.online_members || 0)}</Badge>
-                </ListGroup.Item>
-                <ListGroup.Item className="d-flex justify-content-between align-items-center">
-                  <span>Офицеров:</span>
-                  <Badge bg="warning">{guildData.officers?.length || 0}</Badge>
-                </ListGroup.Item>
-                <ListGroup.Item className="d-flex justify-content-between align-items-center">
-                  <span>Заявок:</span>
-                  <Badge bg="info">{Object.keys(guildData.requests || {}).length}</Badge>
-                </ListGroup.Item>
-              </ListGroup>
-            </Card.Body>
-          </Card>
-        </Col>
+          <Col lg={4}>
+            <Card className="fantasy-card h-100">
+              <Card.Header className="fantasy-card-header fantasy-card-header-info">
+                <h5>📊 Статистика</h5>
+              </Card.Header>
+              <Card.Body>
+                <ListGroup variant="flush">
+                  <ListGroup.Item className="d-flex justify-content-between align-items-center">
+                    <span>Онлайн:</span>
+                    <Badge bg="success">{guildData.online_members || 0}</Badge>
+                  </ListGroup.Item>
+                  <ListGroup.Item className="d-flex justify-content-between align-items-center">
+                    <span>Оффлайн:</span>
+                    <Badge bg="secondary">{(guildData.total_members || 0) - (guildData.online_members || 0)}</Badge>
+                  </ListGroup.Item>
+                  <ListGroup.Item className="d-flex justify-content-between align-items-center">
+                    <span>Офицеров:</span>
+                    <Badge bg="warning">{guildData.officers?.length || 0}</Badge>
+                  </ListGroup.Item>
+                  <ListGroup.Item className="d-flex justify-content-between align-items-center">
+                    <span>Заявок:</span>
+                    <Badge bg="info">{Object.keys(guildData.requests || {}).length}</Badge>
+                  </ListGroup.Item>
+                </ListGroup>
+              </Card.Body>
+            </Card>
+          </Col>
+        </Row>
 
-        <Col xs={12}>
-          <Card className="fantasy-card">
-            <Card.Header className="fantasy-card-header fantasy-card-header-success">
-              <h5>👥 Состав гильдии ({guildData.total_members || 0})</h5>
-            </Card.Header>
-            <Card.Body>
-              <Row>
-                {guild.members.map((member, index) => {
-                  const memberId = member.id || index;
-                  const isCurrentUserLeader = guildData?.player_role === "leader";
-                  const isCurrentUserOfficer = guildData?.player_role === "officer";
-                  const isTargetOfficer = member.role === "officer";
-                  const isTargetLeader = member.role === "leader";
-                  const isCurrentUser = member.id === user.user?.id;
-                  const canManage = (isCurrentUserLeader || isCurrentUserOfficer) && !isCurrentUser;
-                  const characterImageUrl = getCharacterImageUrl(member.character_art);
-                  const isDropdownOpen = openDropdownId === memberId;
-                  
-                  return (
-                    <Col md={6} lg={4} key={memberId} className="mb-3">
-                      <Card className="fantasy-card member-card">
-                        <Card.Body>
-                          <div className="d-flex align-items-center justify-content-between">
-                            <div className="d-flex align-items-center flex-grow-1">
-                              <div className="member-avatar me-3">
-                                {characterImageUrl ? (
-                                  <>
-                                    <img 
-                                      src={characterImageUrl}
-                                      alt={member.name}
-                                      className={`avatar-img ${member.is_online ? 'online' : 'offline'}`}
-                                      onError={(e) => {
-                                        e.target.style.display = 'none';
-                                        const fallback = e.target.parentNode.querySelector('.avatar-circle');
-                                        if (fallback) fallback.style.display = 'flex';
-                                      }}
-                                      style={{ display: 'block' }}
-                                    />
-                                    <div 
-                                      className={`avatar-circle ${member.is_online ? 'online' : 'offline'}`}
-                                      style={{ display: 'none' }}
-                                    >
+        <Row className="mt-3">
+          <Col xs={12}>
+            <Card className="fantasy-card">
+              <Card.Header className="fantasy-card-header fantasy-card-header-success">
+                <h5>👥 Состав гильдии ({guildData.total_members || 0})</h5>
+              </Card.Header>
+              <Card.Body>
+                <Row>
+                  {guild.members.map((member, index) => {
+                    const memberId = member.id || index;
+                    const isCurrentUserLeader = guildData?.player_role === "leader";
+                    const isCurrentUserOfficer = guildData?.player_role === "officer";
+                    const isTargetOfficer = member.role === "officer";
+                    const isTargetLeader = member.role === "leader";
+                    const isCurrentUser = member.id === user.user?.id;
+                    const canManage = (isCurrentUserLeader || isCurrentUserOfficer) && !isCurrentUser;
+                    const characterImageUrl = getCharacterImageUrl(member.character_art);
+                    const isDropdownOpen = openDropdownId === memberId;
+                    
+                    return (
+                      <Col md={6} lg={4} key={memberId} className="mb-3">
+                        <Card className="fantasy-card member-card">
+                          <Card.Body style={{ position: 'relative' }}>
+                            <div className="d-flex align-items-center justify-content-between">
+                              <div className="d-flex align-items-center flex-grow-1">
+                                <div className="member-avatar me-3">
+                                  {characterImageUrl ? (
+                                    <>
+                                      <img 
+                                        src={characterImageUrl}
+                                        alt={member.name}
+                                        className={`avatar-img ${member.is_online ? 'online' : 'offline'}`}
+                                        onError={(e) => {
+                                          e.target.style.display = 'none';
+                                          const fallback = e.target.parentNode.querySelector('.avatar-circle');
+                                          if (fallback) fallback.style.display = 'flex';
+                                        }}
+                                        style={{ display: 'block' }}
+                                      />
+                                      <div 
+                                        className={`avatar-circle ${member.is_online ? 'online' : 'offline'}`}
+                                        style={{ display: 'none' }}
+                                      >
+                                        {getCharacterFallback(member.class)}
+                                      </div>
+                                    </>
+                                  ) : (
+                                    <div className={`avatar-circle ${member.is_online ? 'online' : 'offline'}`}>
                                       {getCharacterFallback(member.class)}
                                     </div>
-                                  </>
-                                ) : (
-                                  <div className={`avatar-circle ${member.is_online ? 'online' : 'offline'}`}>
-                                    {getCharacterFallback(member.class)}
-                                  </div>
-                                )}
-                              </div>
-                              <div className="member-info flex-grow-1">
-                                <div className="d-flex align-items-center">
-                                  <h6 className="mb-0 me-2">{member.name || "Без имени"}</h6>
-                                  {getRoleBadge(member.role)}
-                                </div>
-                                <div className="member-details">
-                                  <small className="text-muted d-block">
-                                    {member.class_display || translateClass(member.class)} • Ур. {member.level || 1}
-                                  </small>
-                                  <small className="text-muted">
-                                    {member.is_online ? "🟢 Онлайн" : `⚫ ${formatOnlineStatus(member.status_block_time)}`}
-                                  </small>
-                                </div>
-                              </div>
-                            </div>
-                            {canManage && (
-                              <div 
-                                className="dropdown-container"
-                                ref={el => dropdownRefs.current[memberId] = el}
-                                style={{ position: 'relative' }}
-                              >
-                                <button
-                                  className="btn btn-sm btn-outline-info me-2"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    e.preventDefault();
-                                    handleViewMemberDetails(member.id);
-                                  }}
-                                  title="Просмотреть детали"
-                                >
-                                  📊
-                                </button>
-                                <button
-                                  className="member-action-btn"
-                                  onClick={(e) => toggleDropdown(memberId, e)}
-                                  aria-label="Действия с участником"
-                                >
-                                  ⋯
-                                </button>
-                                <div 
-                                  className={`dropdown-menu ${isDropdownOpen ? 'show' : ''}`}
-                                >
-                                  {isCurrentUserLeader && !isTargetLeader && (
-                                    <>
-                                      {!isTargetOfficer ? (
-                                        <button
-                                          className="dropdown-item"
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            e.preventDefault();
-                                            setOpenDropdownId(null);
-                                            if (window.confirm(`Назначить "${member.name}" офицером гильдии?`)) {
-                                              handleMemberAction("promote", member.name);
-                                            }
-                                          }}
-                                        >
-                                          ⭐ Назначить офицером
-                                        </button>
-                                      ) : (
-                                        <button
-                                          className="dropdown-item"
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            e.preventDefault();
-                                            setOpenDropdownId(null);
-                                            if (window.confirm(`Разжаловать "${member.name}" из офицеров?`)) {
-                                              handleMemberAction("demote", member.name);
-                                            }
-                                          }}
-                                        >
-                                          ⬇️ Разжаловать офицера
-                                        </button>
-                                      )}
-                                      <button
-                                        className="dropdown-item"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          e.preventDefault();
-                                          setOpenDropdownId(null);
-                                          if (window.confirm(`Передать гильдию игроку "${member.name}"?\n\nВы перестанете быть лидером и станете офицером.`)) {
-                                            handleMemberAction("transfer", member.name);
-                                          }
-                                        }}
-                                      >
-                                        👑 Передать гильдию
-                                      </button>
-                                      <div className="dropdown-divider" />
-                                    </>
                                   )}
-                                  
-                                  {(isCurrentUserOfficer && member.role !== "leader") || 
-                                  (isCurrentUserLeader && !isTargetLeader) ? (
-                                    <button
-                                      className="dropdown-item text-danger"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        e.preventDefault();
-                                        setOpenDropdownId(null);
-                                        if (window.confirm(`Вы уверены, что хотите исключить "${member.name}" из гильдии?`)) {
-                                          handleMemberAction("kick", member.name);
-                                        }
-                                      }}
-                                    >
-                                      🚫 Исключить из гильдии
-                                    </button>
-                                  ) : null}
+                                </div>
+                                <div className="member-info flex-grow-1">
+                                  <div className="d-flex align-items-center">
+                                    <h6 className="mb-0 me-2">{member.name || "Без имени"}</h6>
+                                    {getRoleBadge(member.role)}
+                                  </div>
+                                  <div className="member-details">
+                                    <small className="text-muted d-block">
+                                      {member.class_display || translateClass(member.class)} • Ур. {member.level || 1}
+                                    </small>
+                                    <small className="text-muted">
+                                      {member.is_online ? "🟢 Онлайн" : `⚫ ${formatOnlineStatus(member.status_block_time)}`}
+                                    </small>
+                                  </div>
                                 </div>
                               </div>
-                            )}
-                          </div>
-                        </Card.Body>
-                      </Card>
-                    </Col>
-                  );
-                })}
-              </Row>
-            </Card.Body>
-          </Card>
-        </Col>
-      </Row>
+                              {canManage && (
+                                <div 
+                                  className="dropdown-container"
+                                  style={{ position: 'relative' }}
+                                >
+                                  <button
+                                    className="btn btn-sm btn-outline-info me-2"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      e.preventDefault();
+                                      handleViewMemberDetails(member.id);
+                                    }}
+                                    title="Просмотреть детали"
+                                  >
+                                    📊
+                                  </button>
+                                  <button
+                                    ref={el => triggerRefs.current[memberId] = el}
+                                    className="member-action-btn"
+                                    onClick={(e) => toggleDropdown(memberId, e)}
+                                    aria-label="Действия с участником"
+                                  >
+                                    ⋯
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          </Card.Body>
+                        </Card>
+                      </Col>
+                    );
+                  })}
+                </Row>
+              </Card.Body>
+            </Card>
+          </Col>
+        </Row>
+      </>
     );
   };
 
@@ -1053,26 +1170,36 @@ const Guild = observer(() => {
         justify
       >
         <Tab eventKey="general" title="🏰 Общее">
-          <div className="fantasy-text-gold">
-            {renderGeneralTab()}
-          </div>
+          {renderGeneralTab()}
         </Tab>
         
-        {guild.hasGuild && (
-          <Tab eventKey="castles" title="🏯 Замки">
-            <div className="fantasy-text-gold">
-              {renderCastlesTab()}
-            </div>
-          </Tab>
-        )}
+        <Tab 
+          eventKey="castles" 
+          title="🏯 Замки"
+          disabled={!guild.hasGuild}
+        >
+          {guild.hasGuild ? renderCastlesTab() : (
+            <Card className="fantasy-card">
+              <Card.Body className="text-center">
+                <p className="fantasy-text-muted">Вы не состоите в гильдии</p>
+              </Card.Body>
+            </Card>
+          )}
+        </Tab>
         
-        {guild.hasGuild && (
-          <Tab eventKey="settlement" title="🏘️ Поселение">
-            <div className="fantasy-text-gold">
-              {renderSettlementTab()}
-            </div>
-          </Tab>
-        )}
+        <Tab 
+          eventKey="settlement" 
+          title="🏘️ Поселение"
+          disabled={!guild.hasGuild}
+        >
+          {guild.hasGuild ? renderSettlementTab() : (
+            <Card className="fantasy-card">
+              <Card.Body className="text-center">
+                <p className="fantasy-text-muted">Вы не состоите в гильдии</p>
+              </Card.Body>
+            </Card>
+          )}
+        </Tab>
       </Tabs>
 
       <Modal 
@@ -1176,6 +1303,23 @@ const Guild = observer(() => {
 
       {showOfficerModal && renderOfficerModal()}
       {showMemberDetailsModal && renderMemberDetailsModal()}
+
+      {/* Рендерим выпадающее меню вне дерева карточек */}
+      {openDropdownId && triggerRefs.current[openDropdownId] && guild.members.find(m => (m.id || m.name) === openDropdownId) && (
+        <GuildDropdownMenu
+          isOpen={true}
+          onClose={() => setOpenDropdownId(null)}
+          target={triggerRefs.current[openDropdownId]}
+          member={{
+            ...guild.members.find(m => (m.id || m.name) === openDropdownId),
+            isCurrentUserLeader: guild.guildData?.player_role === "leader",
+            isCurrentUserOfficer: guild.guildData?.player_role === "officer",
+            isTargetOfficer: guild.members.find(m => (m.id || m.name) === openDropdownId)?.role === "officer",
+            isTargetLeader: guild.members.find(m => (m.id || m.name) === openDropdownId)?.role === "leader"
+          }}
+          onMemberAction={handleMemberAction}
+        />
+      )}
     </Container>
   );
 });

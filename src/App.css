@@ -2597,3 +2597,12 @@ footer {
 .modal-backdrop {
   z-index: var(--z-index-modal-backdrop) !important;
 }
+
+/* Добавьте это в самый конец app.css файла */
+.guild-container .member-card {
+  overflow: visible !important;
+}
+
+.guild-container .dropdown-menu {
+  z-index: 1000 !important;
+}
