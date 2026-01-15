@@ -9,7 +9,8 @@ import {
   TRADE_ROUTE,
   MAP_ROUTE,
   DONATION_ROUTE,
-  TERMS_ROUTE // Добавляем новую константу
+  TERMS_ROUTE,
+  GUILD_ROUTE // Добавляем новую константу
 } from "./utils/constants";
 
 export const authRoutes = [
@@ -48,6 +49,10 @@ export const authRoutes = [
     {
         path: DONATION_ROUTE,
         name: 'Donation',
+    },
+    {
+        path: GUILD_ROUTE, // Добавляем гильдию
+        name: 'Guild',
     },
 ]
 
