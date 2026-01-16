@@ -1,0 +1,302 @@
+/* CastleStorage.css - дополнительные стили */
+
+/* Карточка предмета */
+.castle-storage-item-card {
+  display: flex;
+  align-items: flex-start;
+  padding: 12px;
+  background: linear-gradient(135deg, var(--color-bg-light) 0%, var(--color-bg-light) 100%);
+  border: 2px solid var(--color-border);
+  border-radius: 8px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.castle-storage-item-card:hover {
+  border-color: var(--color-accent-gold);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.castle-storage-item-card.selected {
+  border-color: var(--color-success);
+  background: linear-gradient(135deg, rgba(40, 167, 69, 0.05) 0%, rgba(40, 167, 69, 0.1) 100%);
+}
+
+/* Чекбокс */
+.castle-storage-item-card .item-checkbox {
+  margin-right: 12px;
+  margin-top: 4px;
+}
+
+.castle-storage-item-card .item-checkbox input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: var(--color-success);
+}
+
+/* Иконка предмета */
+.castle-storage-item-card .item-icon {
+  position: relative;
+  margin-right: 12px;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-bg-lighter);
+  border-radius: 6px;
+  border: 1px solid var(--color-border);
+}
+
+.castle-storage-item-card .item-icon i {
+  font-size: 24px;
+  color: var(--color-text-muted);
+}
+
+.castle-storage-item-card .item-type-badge {
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--color-secondary);
+  color: white;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  white-space: nowrap;
+}
+
+/* Информация о предмете */
+.castle-storage-item-card .item-info {
+  flex: 1;
+}
+
+.castle-storage-item-card .item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 6px;
+}
+
+.castle-storage-item-card .item-name {
+  font-weight: 600;
+  color: var(--color-text-dark);
+  font-size: 1rem;
+  margin-right: 10px;
+}
+
+.castle-storage-item-card .item-value {
+  font-weight: bold;
+  color: var(--color-accent-gold);
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.castle-storage-item-card .item-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.castle-storage-item-card .item-detail {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  display: flex;
+  align-items: center;
+}
+
+.castle-storage-item-card .item-description {
+  font-size: 0.9rem;
+  color: var(--color-text);
+  margin-bottom: 6px;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Бейджи */
+.castle-storage-item-card .item-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.castle-storage-item-card .rarity-badge,
+.castle-storage-item-card .date-badge {
+  font-size: 0.75rem;
+  padding: 2px 6px;
+  border-radius: 10px;
+}
+
+.castle-storage-item-card .rarity-badge {
+  background: var(--color-accent-bronze) !important;
+  color: white;
+}
+
+.castle-storage-item-card .date-badge {
+  background: var(--color-info) !important;
+  color: white;
+}
+
+/* Меню предмета */
+.castle-storage-item-card .item-menu {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 10;
+}
+
+.castle-storage-item-card .menu-content {
+  background: white;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  min-width: 150px;
+}
+
+.castle-storage-item-card .menu-item {
+  width: 100%;
+  padding: 8px 12px;
+  text-align: left;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--color-border);
+  cursor: pointer;
+  color: var(--color-text-dark);
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+}
+
+.castle-storage-item-card .menu-item:last-child {
+  border-bottom: none;
+}
+
+.castle-storage-item-card .menu-item:hover {
+  background: var(--color-bg-lighter);
+}
+
+.castle-storage-item-card .menu-item i {
+  margin-right: 8px;
+  width: 16px;
+  text-align: center;
+}
+
+/* Сетки предметов */
+.inventory-items-grid,
+.storage-items-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 12px;
+  max-height: 600px;
+  overflow-y: auto;
+  padding: 10px 5px;
+}
+
+@media (max-width: 768px) {
+  .inventory-items-grid,
+  .storage-items-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Панели массовых операций */
+.mass-operations-panel {
+  background: linear-gradient(135deg, rgba(0, 123, 255, 0.05) 0%, rgba(0, 123, 255, 0.1) 100%);
+  border: 2px solid var(--color-accent-blue);
+  border-radius: 8px;
+}
+
+.selected-count-badge {
+  background: var(--color-success) !important;
+  color: white;
+  font-size: 0.9rem;
+  padding: 6px 12px;
+}
+
+.mass-action-btn {
+  min-width: 120px;
+}
+
+/* Панели фильтров */
+.filters-panel {
+  background: var(--color-bg-lighter);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+}
+
+.filters-panel .form-select,
+.filters-panel .form-control {
+  background: white;
+  border: 1px solid var(--color-border);
+}
+
+/* Статистика замка */
+.castle-stats {
+  background: var(--color-bg-lighter);
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
+}
+
+.access-info {
+  border-radius: 8px;
+  border: 1px solid;
+}
+
+.access-info.access-granted {
+  background: linear-gradient(135deg, rgba(40, 167, 69, 0.05) 0%, rgba(40, 167, 69, 0.1) 100%);
+  border-color: var(--color-success);
+}
+
+.access-info.access-denied {
+  background: linear-gradient(135deg, rgba(220, 53, 69, 0.05) 0%, rgba(220, 53, 69, 0.1) 100%);
+  border-color: var(--color-danger);
+}
+
+/* Выбор замка */
+.castle-select-item {
+  cursor: pointer;
+  padding: 12px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  border-left: 3px solid transparent;
+}
+
+.castle-select-item:hover {
+  background: var(--color-bg-lighter);
+  border-left-color: var(--color-accent-gold);
+}
+
+.castle-select-item.active {
+  background: linear-gradient(135deg, rgba(255, 193, 7, 0.1) 0%, rgba(255, 193, 7, 0.05) 100%);
+  border-left-color: var(--color-warning);
+}
+
+.castle-icon {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-bg-lighter);
+  border-radius: 50%;
+  color: var(--color-accent-bronze);
+}
+
+.castle-name {
+  font-weight: 600;
+  color: var(--color-text-dark);
+}
+
+.castle-location {
+  color: var(--color-text-muted);
+}

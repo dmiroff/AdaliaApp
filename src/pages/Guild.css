@@ -406,3 +406,106 @@
   opacity: 1;
   transform: translateY(0);
 }
+
+.castle-card {
+  transition: transform 0.3s ease;
+}
+
+.castle-card:hover {
+  transform: translateY(-5px);
+}
+
+.castle-stat {
+  margin-bottom: 1rem;
+}
+
+.castle-stat .stat-label {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  margin-bottom: 0.25rem;
+}
+
+.castle-stat .stat-value {
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: var(--color-text-dark);
+}
+
+.level-badge {
+  font-size: 1.2rem;
+  padding: 0.5rem 0.75rem;
+}
+
+.upgrade-levels-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+}
+
+.upgrade-level-item {
+  background: var(--color-bg-lighter);
+  padding: 0.5rem;
+  border-radius: 6px;
+  border: 1px solid var(--color-border);
+}
+
+.upgrade-name {
+  font-size: 0.8rem;
+  color: var(--color-text-dark);
+}
+
+.upgrade-level {
+  font-size: 0.9rem;
+  min-width: 30px;
+  text-align: center;
+}
+
+.upgrade-progress {
+  background-color: var(--color-bg-light);
+}
+
+.storage-progress {
+  background: var(--color-bg-lighter);
+  padding: 0.75rem;
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
+}
+
+.workers-type {
+  display: flex;
+  align-items: center;
+  padding: 0.5rem;
+  background: var(--color-bg-lighter);
+  border-radius: 6px;
+  font-size: 0.9rem;
+}
+
+.workers-type.wood {
+  border-left: 3px solid var(--color-success);
+}
+
+.workers-type.stone {
+  border-left: 3px solid var(--color-secondary);
+}
+
+.workers-type.steel {
+  border-left: 3px solid var(--color-danger);
+}
+
+.workers-type.glass {
+  border-left: 3px solid var(--color-info);
+}
+
+.castle-id {
+  font-size: 0.7rem;
+  opacity: 0.7;
+}
+
+/* Цвета для бейджей */
+.bg-purple {
+  background-color: #6f42c1 !important;
+}
+
+.bg-orange {
+  background-color: #fd7e14 !important;
+}

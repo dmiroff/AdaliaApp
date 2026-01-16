@@ -251,3 +251,127 @@ export const InviteToGuild = async (playerName) => {
     };
   }
 };
+
+// ФИКС: Убрать дублирование /api в URL
+export const GetCastleStorage = async (castleId) => {
+  try {
+    const response = await apiClient.get(`/guild/castles/${castleId}/storage`, {
+      headers: {
+        "Authorization": `Bearer ${localStorage.getItem("access_token")}`
+      }
+    });
+    
+    return {
+      status: response.data.status || 200,
+      data: response.data,
+      message: response.data.message || "Данные хранилища получены"
+    };
+  } catch (error) {
+    console.error('Error fetching castle storage:', error);
+    return {
+      status: error.response?.status || 500,
+      message: error.response?.data?.message || 'Ошибка загрузки хранилища замка',
+      data: error.response?.data?.data || {}
+    };
+  }
+};
+
+export const TransferToCastleStorage = async (castleId, items) => {
+  try {
+    const response = await apiClient.post(`/guild/castles/${castleId}/storage/transfer-to`, {
+      items
+    }, {
+      headers: {
+        "Authorization": `Bearer ${localStorage.getItem("access_token")}`
+      }
+    });
+    
+    return {
+      status: response.data.status || 200,
+      data: response.data,
+      message: response.data.message || "Предметы перенесены"
+    };
+  } catch (error) {
+    console.error('Error transferring to castle storage:', error);
+    return {
+      status: error.response?.status || 500,
+      message: error.response?.data?.message || 'Ошибка переноса предметов в замок',
+      data: error.response?.data?.data || {}
+    };
+  }
+};
+
+export const TransferFromCastleStorage = async (castleId, items) => {
+  try {
+    const response = await apiClient.post(`/guild/castles/${castleId}/storage/transfer-from`, {
+      items
+    }, {
+      headers: {
+        "Authorization": `Bearer ${localStorage.getItem("access_token")}`
+      }
+    });
+    
+    return {
+      status: response.data.status || 200,
+      data: response.data,
+      message: response.data.message || "Предметы изъяты"
+    };
+  } catch (error) {
+    console.error('Error transferring from castle storage:', error);
+    return {
+      status: error.response?.status || 500,
+      message: error.response?.data?.message || 'Ошибка изъятия предметов из замка',
+      data: error.response?.data?.data || {}
+    };
+  }
+};
+
+// Обновить описание гильдии
+export const UpdateGuildDescription = async (description) => {
+  try {
+    const response = await apiClient.put(`/guild/description`, {
+      description: description
+    }, {
+      headers: {
+        "Authorization": `Bearer ${localStorage.getItem("access_token")}`
+      }
+    });
+    
+    return {
+      status: response.data.status || response.status,
+      data: response.data.data || response.data,
+      message: response.data.message || "Описание гильдии обновлено"
+    };
+  } catch (error) {
+    console.error("Error updating guild description:", error);
+    return {
+      status: error.response?.status || 500,
+      message: error.response?.data?.message || "Ошибка обновления описания гильдии",
+      data: error.response?.data?.data || {}
+    };
+  }
+};
+
+// Распустить гильдию (только для лидера)
+export const DisbandGuild = async () => {
+  try {
+    const response = await apiClient.delete(`/guild/disband`, {
+      headers: {
+        "Authorization": `Bearer ${localStorage.getItem("access_token")}`
+      }
+    });
+    
+    return {
+      status: response.data.status || response.status,
+      data: response.data.data || response.data,
+      message: response.data.message || "Гильдия распущена"
+    };
+  } catch (error) {
+    console.error("Error disbanding guild:", error);
+    return {
+      status: error.response?.status || 500,
+      message: error.response?.data?.message || "Ошибка при роспуске гильдии",
+      data: error.response?.data?.data || {}
+    };
+  }
+};

@@ -870,9 +870,6 @@ html, body, #root {
     -2px -2px 2px #000000 !important;
 }
 
-.fantasy-tabs .nav-link {
-  background: var(--color-accent-bronze-light);
-}
 
 /* ===== СТИЛИ ДЛЯ БИРЖИ ===== */
 .birzha-container {
@@ -1783,47 +1780,6 @@ body .inventory-item-fantasy-dropdown .dropdown-item {
 
 /* ===== ДОПОЛНИТЕЛЬНЫЕ СТИЛИ ДЛЯ МАГАЗИНА ===== */
 
-/* Стили для вкладок магазина */
-.fantasy-tabs .nav-link {
-  background: var(--color-accent-bronze-light);
-  border: 2px solid transparent;
-  border-bottom: none;
-  color: gold;
-  font-weight: 600;
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
-  padding: 12px 24px;
-  margin: 0 2px;
-  border-radius: 8px 8px 0 0;
-  font-family: 'Cinzel', serif;
-}
-
-.fantasy-tabs .nav-link:hover {
-  color: var(--color-text-dark);
-  border-color: var(--color-accent-bronze);
-}
-
-.fantasy-tabs .nav-link.active {
-  background: var(--color-primary-lighter);
-  color: var(--color-accent-gold);
-  border-color: var(--color-primary-lighter);
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.6);
-  box-shadow: 0 -2px 10px rgba(139, 69, 19, 0.4);
-  font-weight: 700;
-}
-
-.fantasy-tabs .nav-link.active::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, var(--color-accent-gold), #ffed4e, var(--color-accent-gold));
-  animation: tabGlow 2s infinite;
-}
-
 @keyframes tabGlow {
   0%, 100% { opacity: 0.8; }
   50% { opacity: 1; }
@@ -1989,41 +1945,202 @@ body .inventory-item-fantasy-dropdown .dropdown-item {
   background: linear-gradient(90deg, transparent, var(--color-primary-lighter), transparent);
 }
 
-/* Адаптивность для магазина */
+/* ===== СТИЛИ ДЛЯ ВКЛАДОК ===== */
+/* ===== СТИЛИ ДЛЯ ВКЛАДОК ===== */
+.fantasy-tabs {
+  background: rgba(244, 228, 188, 0.8);
+  border: 2px solid var(--color-accent-bronze);
+  border-radius: 8px;
+  padding: 10px;
+  margin-bottom: 20px;
+}
+
+.fantasy-tabs .nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.fantasy-tabs .nav-item {
+  margin: 0;
+}
+
+/* Стили для кнопок-вкладок - КОРИЧНЕВЫЙ ФОН, ЧЕРНЫЙ ТЕКСТ */
+.fantasy-tabs .nav-link {
+  background: var(--color-accent-bronze-light); /* Коричневый фон */
+  border: 2px solid transparent;
+  border-bottom: none;
+  color: var(--color-text-dark) !important; /* Черный текст */
+  font-weight: 600;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  padding: 12px 20px;
+  margin: 0 3px;
+  border-radius: 6px 6px 0 0;
+  font-family: 'Cinzel', serif;
+  text-decoration: none;
+  white-space: nowrap;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.fantasy-tabs .nav-link:hover {
+  background: var(--color-accent-bronze); /* Темнее при наведении */
+  color: var(--color-text-dark) !important; /* Черный текст при наведении */
+  border-color: var(--color-accent-bronze);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Активная вкладка - КОРИЧНЕВЫЙ ФОН, ЧЕРНЫЙ ТЕКСТ */
+.fantasy-tabs .nav-link.active {
+  background: var(--color-accent-bronze-light) !important; /* Коричневый фон */
+  color: var(--color-text-dark) !important; /* Черный текст */
+  border-color: var(--color-primary-lighter);
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 -2px 10px rgba(139, 69, 19, 0.4);
+  font-weight: 700;
+}
+
+.fantasy-tabs .nav-link.active:hover {
+  background: var(--color-accent-bronze) !important; /* Темнее при наведении */
+  border-color: var(--color-primary-lighter);
+  color: var(--color-text-dark) !important; /* Черный текст при наведении */
+  transform: translateY(-2px);
+}
+
+/* Подчеркивание для активной вкладки - темно-коричневое */
+.fantasy-tabs .nav-link.active::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--color-primary-dark), var(--color-primary-lighter), var(--color-primary-dark));
+  animation: tabGlow 2s infinite;
+}
+
+@keyframes tabGlow {
+  0%, 100% { opacity: 0.8; }
+  50% { opacity: 1; }
+}
+
+/* Контент вкладок */
+.fantasy-tabs .tab-content {
+  background: linear-gradient(135deg, var(--color-bg-light) 0%, var(--color-bg-light) 100%);
+  border: 2px solid var(--color-accent-bronze);
+  border-top: none;
+  border-radius: 0 0 8px 8px;
+  padding: 20px;
+  margin-top: -2px;
+  position: relative;
+  z-index: 1;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Адаптивность для мобильных устройств */
 @media (max-width: 768px) {
+  .fantasy-tabs .nav {
+    gap: 5px;
+  }
+  
   .fantasy-tabs .nav-link {
     padding: 10px 15px;
+    margin: 0 2px;
     font-size: 0.9rem;
-    margin: 0 1px;
+    border-radius: 6px;
   }
   
-  .shop-header h1 {
-    font-size: 1.8rem;
-  }
-  
-  .event-timer {
-    font-size: 0.9rem;
-    padding: 6px 15px;
+  .fantasy-tabs .tab-content {
+    padding: 15px;
   }
 }
 
 @media (max-width: 576px) {
-  .fantasy-tabs {
+  .fantasy-tabs .nav {
     flex-direction: column;
+    gap: 4px;
   }
   
   .fantasy-tabs .nav-link {
-    border-radius: 8px;
-    margin-bottom: 5px;
-    border: 2px solid transparent;
+    padding: 8px 12px;
+    margin: 0;
+    font-size: 0.85rem;
+    border-radius: 6px;
+    width: 100%;
+    text-align: center;
   }
   
   .fantasy-tabs .nav-link.active {
-    border-radius: 8px;
+    border-radius: 6px;
   }
   
-  .shop-header h1 {
-    font-size: 1.5rem;
+  .fantasy-tabs .tab-content {
+    padding: 12px;
+  }
+}
+
+/* Для очень широких экранов - больше отступов */
+@media (min-width: 1200px) {
+  .fantasy-tabs .nav {
+    gap: 10px;
+  }
+  
+  .fantasy-tabs .nav-link {
+    padding: 14px 24px;
+    margin: 0 5px;
+  }
+}
+
+/* Анимация переключения вкладок */
+@keyframes fadeInTab {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fantasy-tabs .tab-pane.active {
+  animation: fadeInTab 0.3s ease-out;
+}
+
+/* Стили для разделителей между вкладками */
+.fantasy-tabs .nav-item:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  right: -6px;
+  top: 25%;
+  height: 50%;
+  width: 1px;
+  background: rgba(193, 154, 107, 0.5);
+}
+
+@media (max-width: 576px) {
+  .fantasy-tabs .nav-item:not(:last-child)::after {
+    display: none;
+  }
+}
+
+/* Стили для иконок во вкладках (если есть) */
+.fantasy-tabs .nav-link i,
+.fantasy-tabs .nav-link svg {
+  margin-right: 8px;
+  vertical-align: middle;
+}
+
+@media (max-width: 576px) {
+  .fantasy-tabs .nav-link i,
+  .fantasy-tabs .nav-link svg {
+    margin-right: 5px;
+    font-size: 0.9em;
   }
 }
 

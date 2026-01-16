@@ -6,6 +6,7 @@ export default class GuildStore {
         this._guildData = null;
         this._members = [];
         this._selectedMember = null;
+        this._selectedCastle = null; // Новое поле для выбранного замка
         this._leaderboard = null;
         this._loading = false;
         this._error = null;
@@ -24,6 +25,10 @@ export default class GuildStore {
 
     setSelectedMember(member) {
         this._selectedMember = member;
+    }
+
+    setSelectedCastle(castle) { // Новый setter
+        this._selectedCastle = castle;
     }
 
     setLeaderboard(leaderboard) {
@@ -49,6 +54,10 @@ export default class GuildStore {
 
     get selectedMember() {
         return this._selectedMember;
+    }
+
+    get selectedCastle() { // Новый геттер
+        return this._selectedCastle;
     }
 
     get leaderboard() {
@@ -82,6 +91,12 @@ export default class GuildStore {
         return this._members.find(member => member.name === name);
     }
 
+    // Получить замок по ID
+    getCastleById(castleId) { // Новый метод
+        if (!this._guildData?.castles) return null;
+        return this._guildData.castles.find(castle => castle.id === castleId);
+    }
+
     // Получить онлайн членов
     get onlineMembers() {
         return this._members.filter(member => member.is_online);
@@ -108,6 +123,34 @@ export default class GuildStore {
                 : 0,
             totalStrength: this._members.reduce((sum, m) => sum + (m.strength || 0), 0),
             totalAgility: this._members.reduce((sum, m) => sum + (m.agility || 0), 0)
+        };
+    }
+
+    // Получить статистику по замкам
+    get castlesStatistics() { // Новый метод
+        if (!this._guildData?.castles) return null;
+        
+        const castles = this._guildData.castles;
+        return {
+            totalCastles: castles.length,
+            totalStorageCapacity: castles.reduce((sum, c) => sum + (c.storage_capacity || 0), 0),
+            totalStorageUsed: castles.reduce((sum, c) => sum + (c.current_weight || 0), 0),
+            totalStorageItems: castles.reduce((sum, c) => sum + (c.storage_items_count || 0), 0),
+            totalWorkers: castles.reduce((sum, c) => {
+                const workers = c.workers_wood?.length || 0 + 
+                              c.workers_stone?.length || 0 + 
+                              c.workers_steel?.length || 0 + 
+                              c.workers_glass?.length || 0;
+                return sum + workers;
+            }, 0),
+            castles: castles.map(castle => ({
+                id: castle.id,
+                name: castle.name,
+                location: castle.location,
+                storagePercentage: castle.current_weight && castle.storage_capacity 
+                    ? (castle.current_weight / castle.storage_capacity) * 100 
+                    : 0
+            }))
         };
     }
 
@@ -155,6 +198,7 @@ export default class GuildStore {
         this._guildData = null;
         this._members = [];
         this._selectedMember = null;
+        this._selectedCastle = null; // Очищаем выбранный замок
         this._leaderboard = null;
         this._error = null;
         this._lastUpdated = null;

@@ -1,5 +1,5 @@
-// Guild.jsx - исправленная версия без моргания
-import React, { useState, useContext, useEffect, useRef, useLayoutEffect } from "react";
+// Guild.js - оптимизированная версия
+import React, { useState, useContext, useEffect, useRef, useCallback, useMemo } from "react";
 import { 
   Container, 
   Spinner, 
@@ -23,190 +23,192 @@ import {
   CreateGuild, 
   LeaveGuild, 
   GuildMemberAction,
-  GuildRequestAction
+  GuildRequestAction,
+  UpdateGuildDescription,
+  InviteToGuild
 } from "../http/guildService";
-import { SERVER_APP_API_URL } from "../utils/constants";
 import { dict_translator, attributes_dict } from "../utils/Helpers";
 import "./Guild.css";
+import CastleStorage from "../components/CastleStorage";
 
-// Компонент выпадающего меню
-const GuildDropdownMenu = ({ 
-  isOpen, 
-  onClose, 
-  target, 
+// Константы вынесены за компонент для предотвращения пересоздания
+const DUNGEON_TRANSLATIONS = {
+  "Dungeon_Stone": "🏔 Кристаллические горы",
+  "Dungeon_Ice": "❄ Студёный престол", 
+  "Dungeon_Electricity": "⚡ Грозовой перевал",
+  "Dungeon_Light": "🌝 Цитадель света",
+  "Dungeon_Death": "💀 Некрополь",
+  "Dungeon_Fire": "🔥 Огненные озёра",
+  "Dungeon_Dark": "🌚 Цитадель тьмы",
+  "Dungeon_Life": "🌿 Сердце Цветения",
+  "Dungeon_Wind": "💨 Штормовой грот",
+  "Dungeon_Sound": "🌀 Пещеры эха",
+  "Dungeon_Power": "👑 Чертог власти"
+};
+
+const ROLE_BADGES = {
+  leader: <Badge bg="danger" className="ms-1">Лидер</Badge>,
+  officer: <Badge bg="warning" text="dark" className="ms-1">Офицер</Badge>,
+  member: <Badge bg="secondary" className="ms-1">Участник</Badge>
+};
+
+// Вспомогательные функции вынесены за компонент
+const getCharacterFallback = (characterClass) => {
+  if (!characterClass) return "👤";
+  const classLower = characterClass.toLowerCase();
+  if (classLower.includes("маг") || classLower.includes("mage") || classLower.includes("wizard")) return "🔮";
+  if (classLower.includes("воин") || classLower.includes("fighter") || classLower.includes("warrior")) return "⚔️";
+  if (classLower.includes("лучник") || classLower.includes("ranger") || classLower.includes("archer")) return "🏹";
+  if (classLower.includes("жрец") || classLower.includes("priest") || classLower.includes("cleric")) return "🙏";
+  if (classLower.includes("разбойник") || classLower.includes("rogue") || classLower.includes("thief")) return "🗡️";
+  if (classLower.includes("паладин") || classLower.includes("paladin") || classLower.includes("knight")) return "🛡️";
+  return "👤";
+};
+
+// Компонент выпадающего меню для управления участниками
+const MemberActionsDropdown = React.memo(({ 
   member, 
-  onMemberAction
+  currentUserRole,
+  currentUserId,
+  onAction,
+  position = "bottom-end"
 }) => {
-  const menuRef = useRef(null);
-  const [position, setPosition] = useState(null);
-  const [isPositionReady, setIsPositionReady] = useState(false);
+  const [show, setShow] = useState(false);
+  const targetRef = useRef(null);
+  const dropdownRef = useRef(null);
 
-  useLayoutEffect(() => {
-    if (isOpen && target) {
-      const updatePosition = () => {
-        const rect = target.getBoundingClientRect();
-        const viewportHeight = window.innerHeight;
-        const viewportWidth = window.innerWidth;
-        
-        // Ожидаемые размеры меню
-        const menuWidth = 180;
-        const menuHeight = 200;
-        
-        // Рассчитываем позицию
-        let top = rect.bottom + 5;
-        let left = rect.right - menuWidth;
-        
-        // Проверяем, помещается ли меню снизу
-        if (top + menuHeight > viewportHeight - 20) {
-          // Не помещается снизу - показываем сверху
-          top = rect.top - menuHeight - 5;
-        }
-        
-        // Проверяем, чтобы не вылезло за левый край
-        if (left < 10) {
-          left = 10;
-        }
-        
-        // Проверяем, чтобы не вылезло за правый край
-        if (left + menuWidth > viewportWidth - 10) {
-          left = viewportWidth - menuWidth - 10;
-        }
-        
-        setPosition({ top, left });
-        setIsPositionReady(true);
-      };
-      
-      // Сбрасываем состояние готовности
-      setIsPositionReady(false);
-      
-      // Используем requestAnimationFrame для синхронизации с браузером
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          updatePosition();
-        });
-      });
-      
-      const handleResizeAndScroll = () => {
-        updatePosition();
-      };
-      
-      window.addEventListener('resize', handleResizeAndScroll);
-      window.addEventListener('scroll', handleResizeAndScroll, true);
-      
-      return () => {
-        window.removeEventListener('resize', handleResizeAndScroll);
-        window.removeEventListener('scroll', handleResizeAndScroll, true);
-      };
-    } else {
-      setPosition(null);
-      setIsPositionReady(false);
+  const isCurrentUser = member.id === currentUserId;
+  const isTargetOfficer = member.role === "officer";
+  const isTargetLeader = member.role === "leader";
+  const isCurrentUserLeader = currentUserRole === "leader";
+  const isCurrentUserOfficer = currentUserRole === "officer";
+
+  // Проверка доступных действий
+  const canPromote = isCurrentUserLeader && !isTargetLeader && !isTargetOfficer;
+  const canDemote = isCurrentUserLeader && !isTargetLeader && isTargetOfficer;
+  const canTransfer = isCurrentUserLeader && !isTargetLeader;
+  const canKick = !isCurrentUser && (
+    (isCurrentUserLeader && !isTargetLeader) ||
+    (isCurrentUserOfficer && member.role === "member")
+  );
+
+  const handleAction = useCallback((action) => {
+    setShow(false);
+    let confirmMessage = "";
+
+    switch (action) {
+      case "promote":
+        confirmMessage = `Назначить "${member.name}" офицером гильдии?`;
+        break;
+      case "demote":
+        confirmMessage = `Разжаловать "${member.name}" из офицеров?`;
+        break;
+      case "transfer":
+        confirmMessage = `Передать гильдию игроку "${member.name}"?\n\nВы перестанете быть лидером и станете офицером.`;
+        break;
+      case "kick":
+        confirmMessage = `Вы уверены, что хотите исключить "${member.name}" из гильдии?`;
+        break;
+      default:
+        return;
     }
-  }, [isOpen, target]);
+
+    if (window.confirm(confirmMessage)) {
+      onAction(action, member.name);
+    }
+  }, [member.name, onAction]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (menuRef.current && !menuRef.current.contains(event.target) && 
-          target && !target.contains(event.target)) {
-        onClose();
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target) &&
+          targetRef.current && !targetRef.current.contains(event.target)) {
+        setShow(false);
       }
     };
 
-    if (isOpen && isPositionReady) {
-      setTimeout(() => {
-        document.addEventListener('mousedown', handleClickOutside);
-        document.addEventListener('touchstart', handleClickOutside);
-      }, 10);
+    if (show) {
+      document.addEventListener('mousedown', handleClickOutside);
     }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [show]);
 
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-      document.removeEventListener('touchstart', handleClickOutside);
-    };
-  }, [isOpen, target, onClose, isPositionReady]);
-
-  if (!isOpen || !isPositionReady || !position) return null;
-
-  const handleAction = (action, playerName) => {
-    onClose();
-    let message = '';
-    let confirmAction = false;
-    
-    switch (action) {
-      case "promote":
-        message = `Назначить "${playerName}" офицером гильдии?`;
-        confirmAction = window.confirm(message);
-        break;
-      case "demote":
-        message = `Разжаловать "${playerName}" из офицеров?`;
-        confirmAction = window.confirm(message);
-        break;
-      case "transfer":
-        message = `Передать гильдию игроку "${playerName}"?\n\nВы перестанете быть лидером и станете офицером.`;
-        confirmAction = window.confirm(message);
-        break;
-      case "kick":
-        message = `Вы уверены, что хотите исключить "${playerName}" из гильдии?`;
-        confirmAction = window.confirm(message);
-        break;
-    }
-    
-    if (confirmAction) {
-      onMemberAction(action, playerName);
-    }
-  };
+  if (isCurrentUser || (!canPromote && !canDemote && !canTransfer && !canKick)) {
+    return null;
+  }
 
   return (
-    <div 
-      ref={menuRef}
-      className="guild-dropdown-menu show"
-      style={{
-        position: 'fixed',
-        top: `${position.top}px`,
-        left: `${position.left}px`,
-        zIndex: 99999,
-        minWidth: '180px',
-        pointerEvents: 'auto'
-      }}
-    >
-      {!member.isTargetLeader && (
-        <>
-          {!member.isTargetOfficer ? (
+    <div ref={dropdownRef} className="position-relative">
+      <button
+        ref={targetRef}
+        className={`member-action-btn ${isCurrentUserLeader ? 'leader' : 'officer'}`}
+        onClick={(e) => {
+          e.stopPropagation();
+          setShow(!show);
+        }}
+        title={isCurrentUserLeader ? "Действия лидера" : "Действия офицера"}
+      >
+        {isCurrentUserLeader ? "👑" : "⭐"}
+      </button>
+
+      {show && (
+        <div 
+          className="guild-dropdown-menu show"
+          style={{
+            position: 'absolute',
+            top: '100%',
+            right: 0,
+            zIndex: 1050,
+            minWidth: '200px'
+          }}
+        >
+          {canPromote && (
             <button
               className="dropdown-item"
-              onClick={() => handleAction("promote", member.name)}
+              onClick={() => handleAction("promote")}
             >
-              ⭐ Назначить офицером
-            </button>
-          ) : (
-            <button
-              className="dropdown-item"
-              onClick={() => handleAction("demote", member.name)}
-            >
-              ⬇️ Разжаловать офицера
+              <i className="fas fa-star me-2"></i>
+              Назначить офицером
             </button>
           )}
-          <button
-            className="dropdown-item"
-            onClick={() => handleAction("transfer", member.name)}
-          >
-            👑 Передать гильдию
-          </button>
-          <div className="dropdown-divider" />
-        </>
+          
+          {canDemote && (
+            <button
+              className="dropdown-item"
+              onClick={() => handleAction("demote")}
+            >
+              <i className="fas fa-arrow-down me-2"></i>
+              Разжаловать офицера
+            </button>
+          )}
+          
+          {canTransfer && (
+            <button
+              className="dropdown-item"
+              onClick={() => handleAction("transfer")}
+            >
+              <i className="fas fa-crown me-2"></i>
+              Передать гильдию
+            </button>
+          )}
+          
+          {(canPromote || canDemote || canTransfer) && canKick && (
+            <div className="dropdown-divider"></div>
+          )}
+          
+          {canKick && (
+            <button
+              className="dropdown-item text-danger"
+              onClick={() => handleAction("kick")}
+            >
+              <i className="fas fa-user-times me-2"></i>
+              Исключить из гильдии
+            </button>
+          )}
+        </div>
       )}
-      
-      {(member.isCurrentUserOfficer && member.role !== "leader") || 
-      (member.isCurrentUserLeader && !member.isTargetLeader) ? (
-        <button
-          className="dropdown-item text-danger"
-          onClick={() => handleAction("kick", member.name)}
-        >
-          🚫 Исключить из гильдии
-        </button>
-      ) : null}
     </div>
   );
-};
+});
 
 const Guild = observer(() => {
   const { user, guild } = useContext(Context);
@@ -215,116 +217,79 @@ const Guild = observer(() => {
   const [showLeaveModal, setShowLeaveModal] = useState(false);
   const [showOfficerModal, setShowOfficerModal] = useState(false);
   const [showMemberDetailsModal, setShowMemberDetailsModal] = useState(false);
+  const [showEditDescriptionModal, setShowEditDescriptionModal] = useState(false);
+  const [showInviteModal, setShowInviteModal] = useState(false);
   const [guildName, setGuildName] = useState("");
   const [guildDescription, setGuildDescription] = useState("");
+  const [editDescription, setEditDescription] = useState("");
+  const [invitePlayerName, setInvitePlayerName] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const [openDropdownId, setOpenDropdownId] = useState(null);
-  const triggerRefs = useRef({});
+  const [selectedMember, setSelectedMember] = useState(null);
+  const [processingAction, setProcessingAction] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState(null);
 
-  // Словарь для перевода названий подземелий
-  const dungeonTranslations = {
-    "Dungeon_Stone": "🏔 Кристаллические горы",
-    "Dungeon_Ice": "❄ Студёный престол", 
-    "Dungeon_Electricity": "⚡ Грозовой перевал",
-    "Dungeon_Light": "🌝 Цитадель света",
-    "Dungeon_Death": "💀 Некрополь",
-    "Dungeon_Fire": "🔥 Огненные озёра",
-    "Dungeon_Dark": "🌚 Цитадель тьмы",
-    "Dungeon_Life": "🌿 Сердце Цветения",
-    "Dungeon_Wind": "💨 Штормовой грот",
-    "Dungeon_Sound": "🌀 Пещеры эха",
-    "Dungeon_Power": "👑 Чертог власти"
-  };
+  // Мемоизированные утилиты
+  const translateAttribute = useCallback((attribute) => attributes_dict[attribute] || attribute, []);
+  const translateClass = useCallback((className) => className, []);
+  const translateRace = useCallback((race) => race, []);
+  const translateDungeon = useCallback((dungeonKey) => DUNGEON_TRANSLATIONS[dungeonKey] || dict_translator[dungeonKey] || dungeonKey, []);
 
-  // Функция для перевода характеристик
-  const translateAttribute = (attribute) => {
-    return attributes_dict[attribute] || attribute;
-  };
+  // Мемоизированная функция для получения бейджа роли
+  const getRoleBadge = useCallback((role) => ROLE_BADGES[role] || ROLE_BADGES.member, []);
 
-  // Функция для перевода класса
-  const translateClass = (className) => {
-    return className;
-  };
-
-  // Функция для перевода расы
-  const translateRace = (race) => {
-    return race;
-  };
-
-  // Функция для перевода подземелья
-  const translateDungeon = (dungeonKey) => {
-    return dungeonTranslations[dungeonKey] || dict_translator[dungeonKey] || dungeonKey;
-  };
-
+  // Получение данных гильдии
   useEffect(() => {
     fetchGuildData();
-    const interval = setInterval(() => {
-      if (guild.hasGuild) {
-        fetchGuildData();
-      }
-    }, 30000);
+  }, []);
 
-    return () => clearInterval(interval);
-  }, [guild.hasGuild]);
-
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (openDropdownId && triggerRefs.current[openDropdownId]) {
-        if (!triggerRefs.current[openDropdownId].contains(event.target)) {
-          // Проверяем, был ли клик по меню
-          const menu = document.querySelector('.guild-dropdown-menu.show');
-          if (!menu || !menu.contains(event.target)) {
-            setOpenDropdownId(null);
-          }
-        }
-      }
-    };
-
-    if (openDropdownId) {
-      document.addEventListener('mousedown', handleClickOutside);
-      document.addEventListener('touchstart', handleClickOutside);
-    }
-    
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-      document.removeEventListener('touchstart', handleClickOutside);
-    };
-  }, [openDropdownId]);
-
-  const fetchGuildData = async () => {
+  const fetchGuildData = useCallback(async () => {
     guild.setLoading(true);
+    setIsRefreshing(true);
     setError("");
-    const result = await GetGuildData();
-    
-    if (result && result.status === 200) {
-      console.log("Guild data received:", result.data);
-      guild.setGuildData(result.data);
-      
-      if (result.data.members) {
-        const processedMembers = result.data.members.map(member => ({
-          ...member,
-          class_display: translateClass(member.class),
-          race_display: translateRace(member.race),
-          dungeons: member.dungeons ? member.dungeons.map(dungeon => ({
-            ...dungeon,
-            display_name: translateDungeon(dungeon.key) || dungeon.display_name
-          })) : []
-        }));
-        guild.setMembers(processedMembers);
+    try {
+      const result = await GetGuildData();
+      if (result && result.status === 200) {
+        guild.setGuildData(result.data);
+        if (result.data.members) {
+          const processedMembers = result.data.members.map(member => ({
+            ...member,
+            class_display: translateClass(member.class),
+            race_display: translateRace(member.race),
+            dungeons: member.dungeons ? member.dungeons.map(dungeon => ({
+              ...dungeon,
+              display_name: translateDungeon(dungeon.key) || dungeon.display_name
+            })) : []
+          }));
+          guild.setMembers(processedMembers);
+        }
+        setLastUpdated(new Date());
+      } else {
+        setError(result?.message || "Не удалось загрузить данные гильдии");
       }
-    } else {
-      setError(result?.message || "Не удалось загрузить данные гильдии");
+    } catch (error) {
+      setError("Ошибка при загрузке данных гильдии");
+      console.error("Guild data fetch error:", error);
+    } finally {
+      guild.setLoading(false);
+      setIsRefreshing(false);
     }
-    guild.setLoading(false);
-  };
+  }, [guild, translateClass, translateRace, translateDungeon]);
 
-  const handleCreateGuild = async () => {
+  // Оптимизированные обработчики
+  const handleRefresh = useCallback(() => {
+    fetchGuildData();
+  }, [fetchGuildData]);
+
+  const handleCreateGuild = useCallback(async () => {
     if (!guildName.trim()) {
       setError("Введите название гильдии");
       return;
     }
 
+    setProcessingAction(true);
+    setError("");
     const result = await CreateGuild(guildName, guildDescription);
     if (result && result.status === 200) {
       setSuccess("Гильдия успешно создана!");
@@ -335,9 +300,12 @@ const Guild = observer(() => {
     } else {
       setError(result?.message || "Не удалось создать гильдию");
     }
-  };
+    setProcessingAction(false);
+  }, [guildName, guildDescription, fetchGuildData]);
 
-  const handleLeaveGuild = async () => {
+  const handleLeaveGuild = useCallback(async () => {
+    setProcessingAction(true);
+    setError("");
     const result = await LeaveGuild();
     if (result && result.status === 200) {
       setSuccess("Вы успешно вышли из гильдии");
@@ -347,277 +315,104 @@ const Guild = observer(() => {
     } else {
       setError(result?.message || "Не удалось выйти из гильдии");
     }
-  };
+    setProcessingAction(false);
+  }, [guild, fetchGuildData]);
 
-  const handleMemberAction = async (action, playerName) => {
+  const handleMemberAction = useCallback(async (action, playerName) => {
+    setProcessingAction(true);
     setError("");
     setSuccess("");
     
-    const result = await GuildMemberAction(action, playerName);
-    if (result && result.status === 200) {
-      setSuccess(result.message);
-      setOpenDropdownId(null);
-      setTimeout(() => {
+    try {
+      const result = await GuildMemberAction(action, playerName);
+      if (result && result.status === 200) {
+        setSuccess(result.message);
+        setTimeout(() => {
+          fetchGuildData();
+        }, 500);
+      } else {
+        setError(result?.message || "Не удалось выполнить действие");
+      }
+    } catch (error) {
+      setError("Ошибка при выполнении действия");
+    } finally {
+      setProcessingAction(false);
+    }
+  }, [fetchGuildData]);
+
+  const handleRequestAction = useCallback(async (action, applicantName) => {
+    setProcessingAction(true);
+    setError("");
+    setSuccess("");
+    
+    try {
+      const result = await GuildRequestAction(action, applicantName);
+      if (result && result.status === 200) {
+        setSuccess(result.message);
         fetchGuildData();
-      }, 300);
-    } else {
-      setError(result?.message || "Не удалось выполнить действие");
+      } else {
+        setError(result?.message || "Не удалось выполнить действие");
+      }
+    } catch (error) {
+      setError("Ошибка при обработке заявки");
+    } finally {
+      setProcessingAction(false);
     }
-  };
+  }, [fetchGuildData]);
 
-  const handleViewMemberDetails = (memberId) => {
-    const member = guild.getMemberById(memberId);
-    if (member) {
-      const enrichedMember = {
-        ...member,
-        class_display: member.class_display || translateClass(member.class),
-        race_display: member.race_display || translateRace(member.race),
-        strength_display: translateAttribute("strength"),
-        agility_display: translateAttribute("agility"),
-        intelligence_display: translateAttribute("intelligence"),
-        stamina_display: translateAttribute("constitution")
-      };
-      guild.setSelectedMember(enrichedMember);
-      setShowMemberDetailsModal(true);
-    } else {
-      setError("Данные участника не найдены");
-    }
-  };
-
-  const renderMemberDetailsModal = () => {
-    const selectedMemberDetails = guild.selectedMember;
-    if (!selectedMemberDetails) return null;
-
-    return (
-      <Modal 
-        show={showMemberDetailsModal} 
-        onHide={() => setShowMemberDetailsModal(false)} 
-        size="lg" 
-        centered
-        className="fantasy-modal member-details-modal"
-        backdrop="static"
-      >
-        <Modal.Header closeButton className="fantasy-card-header fantasy-card-header-info">
-          <Modal.Title className="fantasy-text-gold">
-            📊 Детали участника
-          </Modal.Title>
-        </Modal.Header>
-        <Modal.Body className="fantasy-card" style={{ background: 'linear-gradient(135deg, var(--color-bg-light) 0%, var(--color-bg-light) 100%)' }}>
-          <div className="mb-4">
-            <Row className="align-items-center mb-3">
-              <Col xs="auto">
-                <div className="member-details-avatar">
-                  {getCharacterImageUrl(selectedMemberDetails.character_art) ? (
-                    <img 
-                      src={getCharacterImageUrl(selectedMemberDetails.character_art)}
-                      alt={selectedMemberDetails.name}
-                      className="avatar-img-details"
-                      onError={(e) => {
-                        e.target.style.display = 'none';
-                        const fallback = e.target.parentNode.querySelector('.avatar-circle-details');
-                        if (fallback) fallback.style.display = 'flex';
-                      }}
-                      style={{ display: 'block' }}
-                    />
-                  ) : null}
-                  <div 
-                    className={`avatar-circle-details ${selectedMemberDetails.is_online ? 'online' : 'offline'}`}
-                    style={!getCharacterImageUrl(selectedMemberDetails.character_art) ? { display: 'flex' } : { display: 'none' }}
-                  >
-                    {getCharacterFallback(selectedMemberDetails.class)}
-                  </div>
-                </div>
-              </Col>
-              <Col>
-                <h4 className="fantasy-text-dark mb-1">{selectedMemberDetails.name}</h4>
-                <div className="d-flex align-items-center flex-wrap gap-2">
-                  <Badge bg="primary" className="fantasy-badge">
-                    Ур. {selectedMemberDetails.level}
-                  </Badge>
-                  <Badge bg="secondary" className="fantasy-badge">
-                    {selectedMemberDetails.class_display || translateClass(selectedMemberDetails.class)}
-                  </Badge>
-                  <Badge bg="info" className="fantasy-badge">
-                    {selectedMemberDetails.race_display || translateRace(selectedMemberDetails.race)}
-                  </Badge>
-                  <Badge 
-                    bg={selectedMemberDetails.role === 'leader' ? 'danger' : selectedMemberDetails.role === 'officer' ? 'warning' : 'secondary'}
-                    className="fantasy-badge"
-                  >
-                    {selectedMemberDetails.role_display || selectedMemberDetails.role}
-                  </Badge>
-                </div>
-                <div className="mt-2">
-                  <span className={selectedMemberDetails.is_online ? 'fantasy-text-success' : 'fantasy-text-muted'}>
-                    {selectedMemberDetails.online_status || (selectedMemberDetails.is_online ? 'Онлайн' : 'Оффлайн')}
-                  </span>
-                </div>
-              </Col>
-            </Row>
-
-            {/* Характеристики */}
-            {(selectedMemberDetails.strength || selectedMemberDetails.agility || 
-              selectedMemberDetails.intelligence || selectedMemberDetails.constitution) && (
-              <div className="mb-4">
-                <h5 className="fantasy-text-dark mb-3">💪 Характеристики</h5>
-                <Row>
-                  <Col md={3} sm={6} className="mb-3">
-                    <Card className="fantasy-card attribute-card">
-                      <Card.Body className="text-center">
-                        <div className="attribute-value fantasy-text-dark">
-                          {selectedMemberDetails.strength || 0}
-                        </div>
-                        <div className="attribute-label fantasy-text-muted">
-                          {selectedMemberDetails.strength_display || translateAttribute("strength")}
-                        </div>
-                      </Card.Body>
-                    </Card>
-                  </Col>
-                  <Col md={3} sm={6} className="mb-3">
-                    <Card className="fantasy-card attribute-card">
-                      <Card.Body className="text-center">
-                        <div className="attribute-value fantasy-text-dark">
-                          {selectedMemberDetails.agility || 0}
-                        </div>
-                        <div className="attribute-label fantasy-text-muted">
-                          {selectedMemberDetails.agility_display || translateAttribute("agility")}
-                        </div>
-                      </Card.Body>
-                    </Card>
-                  </Col>
-                  <Col md={3} sm={6} className="mb-3">
-                    <Card className="fantasy-card attribute-card">
-                      <Card.Body className="text-center">
-                        <div className="attribute-value fantasy-text-dark">
-                          {selectedMemberDetails.intelligence || 0}
-                        </div>
-                        <div className="attribute-label fantasy-text-muted">
-                          {selectedMemberDetails.intelligence_display || translateAttribute("intelligence")}
-                        </div>
-                      </Card.Body>
-                    </Card>
-                  </Col>
-                  <Col md={3} sm={6} className="mb-3">
-                    <Card className="fantasy-card attribute-card">
-                      <Card.Body className="text-center">
-                        <div className="attribute-value fantasy-text-dark">
-                          {selectedMemberDetails.constitution || 0}
-                        </div>
-                        <div className="attribute-label fantasy-text-muted">
-                          {selectedMemberDetails.stamina_display || translateAttribute("constitution")}
-                        </div>
-                      </Card.Body>
-                    </Card>
-                  </Col>
-                </Row>
-              </div>
-            )}
-
-            {/* Прогресс по подземельям */}
-            {selectedMemberDetails.dungeons && selectedMemberDetails.dungeons.length > 0 ? (
-              <div className="mb-4">
-                <h5 className="fantasy-text-dark mb-3">🏆 Прогресс по подземельям</h5>
-                <Row className="g-3">
-                  {selectedMemberDetails.dungeons.map((dungeon) => (
-                    <Col md={6} key={dungeon.key || dungeon.display_name}>
-                      <Card className="fantasy-card dungeon-card">
-                        <Card.Body>
-                          <div className="d-flex justify-content-between align-items-center mb-2">
-                            <h6 className="fantasy-text-dark mb-0">
-                              {dungeon.display_name || translateDungeon(dungeon.key) || "Подземелье"}
-                            </h6>
-                            <Badge bg="warning" className="fantasy-badge">
-                              {dungeon.current_floor || 0}/{dungeon.max_floor || 0}
-                            </Badge>
-                          </div>
-                          <ProgressBar 
-                            now={dungeon.progress_percent || 0} 
-                            variant="warning" 
-                            className="mb-2"
-                            style={{ height: '8px' }}
-                          />
-                          <div className="d-flex justify-content-between">
-                            <small className="fantasy-text-muted">
-                              Этаж {dungeon.current_floor || 0}
-                            </small>
-                            <small className="fantasy-text-muted">
-                              {(dungeon.progress_percent || 0).toFixed(1)}%
-                            </small>
-                          </div>
-                        </Card.Body>
-                      </Card>
-                    </Col>
-                  ))}
-                </Row>
-              </div>
-            ) : (
-              <div className="mb-4">
-                <h5 className="fantasy-text-dark mb-3">🏆 Прогресс по подземельям</h5>
-                <Alert variant="info" className="fantasy-text-muted">
-                  У игрока нет прогресса по подземельям
-                </Alert>
-              </div>
-            )}
-
-            {/* Дополнительная информация */}
-            {selectedMemberDetails.guild_join_date && (
-              <div>
-                <h5 className="fantasy-text-dark mb-3">📅 Информация о вступлении</h5>
-                <Card className="fantasy-card">
-                  <Card.Body>
-                    <p className="fantasy-text-muted mb-0">
-                      В гильдии с: {new Date(selectedMemberDetails.guild_join_date).toLocaleDateString('ru-RU')}
-                    </p>
-                  </Card.Body>
-                </Card>
-              </div>
-            )}
-          </div>
-        </Modal.Body>
-        <Modal.Footer className="border-top border-secondary">
-          <Button 
-            variant="secondary" 
-            className="fantasy-btn"
-            onClick={() => setShowMemberDetailsModal(false)}
-          >
-            Закрыть
-          </Button>
-        </Modal.Footer>
-      </Modal>
-    );
-  };
-
-  const handleRequestAction = async (action, applicantName) => {
+  const handleUpdateDescription = useCallback(async () => {
+    setProcessingAction(true);
     setError("");
-    setSuccess("");
     
-    const result = await GuildRequestAction(action, applicantName);
-    if (result && result.status === 200) {
-      setSuccess(result.message);
-      fetchGuildData();
-    } else {
-      setError(result?.message || "Не удалось выполнить действие");
+    try {
+      const result = await UpdateGuildDescription(editDescription);
+      if (result && result.status === 200) {
+        setSuccess("Описание гильдии успешно обновлено!");
+        setShowEditDescriptionModal(false);
+        fetchGuildData();
+      } else {
+        setError(result?.message || "Не удалось обновить описание");
+      }
+    } catch (error) {
+      setError("Ошибка при обновлении описания");
+    } finally {
+      setProcessingAction(false);
     }
-  };
+  }, [editDescription, fetchGuildData]);
 
-  const getRoleBadge = (role) => {
-    const badges = {
-      leader: <Badge bg="danger" className="ms-1">Лидер</Badge>,
-      officer: <Badge bg="warning" text="dark" className="ms-1">Офицер</Badge>,
-      member: <Badge bg="secondary" className="ms-1">Участник</Badge>
-    };
-    return badges[role] || <Badge bg="secondary">Участник</Badge>;
-  };
+  const handleInvitePlayer = useCallback(async () => {
+    if (!invitePlayerName.trim()) {
+      setError("Введите имя игрока");
+      return;
+    }
 
-  const formatOnlineStatus = (statusBlockTime) => {
-    if (!statusBlockTime) return "давно";
+    setProcessingAction(true);
+    setError("");
     
+    try {
+      const result = await InviteToGuild(invitePlayerName);
+      if (result && result.status === 200) {
+        setSuccess(result.message || `Приглашение отправлено игроку ${invitePlayerName}`);
+        setShowInviteModal(false);
+        setInvitePlayerName("");
+      } else {
+        setError(result?.message || "Не удалось отправить приглашение");
+      }
+    } catch (error) {
+      setError("Ошибка при отправке приглашения");
+    } finally {
+      setProcessingAction(false);
+    }
+  }, [invitePlayerName]);
+
+  // Оптимизированные функции форматирования
+  const formatOnlineStatus = useCallback((statusBlockTime) => {
+    if (!statusBlockTime) return "давно";
     try {
       const now = new Date();
       const blockTime = new Date(statusBlockTime);
       const diffMs = now - blockTime;
       const diffMins = Math.floor(diffMs / 60000);
-      
       if (diffMins < 1) return "только что";
       if (diffMins < 60) return `${diffMins} мин назад`;
       if (diffMins < 1440) return `${Math.floor(diffMins / 60)} ч назад`;
@@ -625,58 +420,42 @@ const Guild = observer(() => {
     } catch (e) {
       return "давно";
     }
-  };
+  }, []);
 
-  const toggleDropdown = (memberId, e) => {
-    if (e) {
-      e.stopPropagation();
-      e.preventDefault();
-    }
-    setOpenDropdownId(openDropdownId === memberId ? null : memberId);
-  };
-
-  const getCharacterImageUrl = (characterArt) => {
-    if (!characterArt) return null;
+  const formatLastUpdated = useCallback(() => {
+    if (!lastUpdated) return "никогда";
+    const now = new Date();
+    const diff = Math.floor((now - lastUpdated) / 1000);
     
-    let imageUrl = characterArt;
-    if (imageUrl.includes('.gif') || imageUrl.includes('.png')) {
-      imageUrl = imageUrl.replace('.gif', '.webp').replace('.png', '.webp');
-    } else if (!imageUrl.includes('.webp')) {
-      imageUrl = imageUrl + '.webp';
-    }
-    
-    return `${SERVER_APP_API_URL}/images/characters/${imageUrl}`;
-  };
+    if (diff < 60) return "только что";
+    if (diff < 3600) return `${Math.floor(diff / 60)} мин назад`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)} ч назад`;
+    return `${Math.floor(diff / 86400)} д назад`;
+  }, [lastUpdated]);
 
-  const getCharacterFallback = (characterClass) => {
-    if (!characterClass) return "👤";
-    
-    const classLower = characterClass.toLowerCase();
-    if (classLower.includes("маг") || classLower.includes("mage") || classLower.includes("wizard")) return "🔮";
-    if (classLower.includes("воин") || classLower.includes("fighter") || classLower.includes("warrior")) return "⚔️";
-    if (classLower.includes("лучник") || classLower.includes("ranger") || classLower.includes("archer")) return "🏹";
-    if (classLower.includes("жрец") || classLower.includes("priest") || classLower.includes("cleric")) return "🙏";
-    if (classLower.includes("разбойник") || classLower.includes("rogue") || classLower.includes("thief")) return "🗡️";
-    if (classLower.includes("паладин") || classLower.includes("paladin") || classLower.includes("knight")) return "🛡️";
-    return "👤";
-  };
-
-  const calculateGuildFillPercentage = (guildData) => {
-    if (!guildData || !guildData.total_members || !guildData.members_limit) return 0;
-    return (guildData.total_members / guildData.members_limit) * 100;
-  };
-
-  const renderGeneralTab = () => {
+  // Оптимизированные компоненты вкладок
+  const renderGeneralTab = useCallback(() => {
     const guildData = guild.guildData;
     
     if (!guildData || !guildData.has_guild) {
       return (
         <Card className="fantasy-card">
           <Card.Header className="fantasy-card-header fantasy-card-header-primary">
-            <h4>Вы не состоите в гильдии</h4>
+            <div className="d-flex justify-content-between align-items-center">
+              <h4>Вы не состоите в гильдии</h4>
+              <Button 
+                variant="outline-info" 
+                size="sm"
+                onClick={handleRefresh}
+                disabled={isRefreshing}
+              >
+                <i className={`fas fa-sync-alt ${isRefreshing ? 'fa-spin' : ''}`}></i>
+              </Button>
+            </div>
           </Card.Header>
           <Card.Body className="text-center">
             <div className="mb-4">
+              <i className="fas fa-users fa-3x text-muted mb-3"></i>
               <p className="fantasy-text-muted">Присоединитесь к существующей или создайте свою гильдию!</p>
             </div>
             <div className="d-flex justify-content-center gap-3">
@@ -685,6 +464,7 @@ const Guild = observer(() => {
                 className="fantasy-btn fantasy-btn-primary"
                 onClick={() => setShowCreateModal(true)}
               >
+                <i className="fas fa-plus me-2"></i>
                 Создать гильдию
               </Button>
             </div>
@@ -693,7 +473,11 @@ const Guild = observer(() => {
       );
     }
 
-    const fillPercentage = calculateGuildFillPercentage(guildData);
+    const fillPercentage = guildData.total_members && guildData.members_limit 
+      ? (guildData.total_members / guildData.members_limit) * 100 
+      : 0;
+    const isLeader = guildData.player_role === "leader";
+    const isOfficer = guildData.player_role === "officer";
 
     return (
       <>
@@ -703,22 +487,64 @@ const Guild = observer(() => {
               <Card.Header className="fantasy-card-header fantasy-card-header-primary">
                 <Row className="align-items-center">
                   <Col>
-                    <h4 className="fantasy-text-gold mb-0">{guildData.name}</h4>
+                    <h4 className="fantasy-text-gold mb-0">
+                      <i className="fas fa-users me-2"></i>
+                      {guildData.name}
+                    </h4>
                   </Col>
                   <Col xs="auto">
-                    {getRoleBadge(guildData.player_role)}
+                    <div className="d-flex align-items-center gap-2">
+                      {getRoleBadge(guildData.player_role)}
+                      <Button 
+                        variant="outline-info" 
+                        size="sm"
+                        onClick={handleRefresh}
+                        disabled={isRefreshing}
+                        title="Обновить данные"
+                      >
+                        <i className={`fas fa-sync-alt ${isRefreshing ? 'fa-spin' : ''}`}></i>
+                      </Button>
+                    </div>
                   </Col>
                 </Row>
+                {lastUpdated && (
+                  <small className="fantasy-text-muted d-block mt-1">
+                    <i className="fas fa-clock me-1"></i>
+                    Обновлено: {formatLastUpdated()}
+                  </small>
+                )}
               </Card.Header>
               <Card.Body>
                 <div className="mb-4">
-                  <p className="fantasy-text-muted">{guildData.description || "Нет описания"}</p>
+                  <div className="d-flex justify-content-between align-items-start mb-2">
+                    <h6 className="fantasy-text-dark mb-0">Описание гильдии:</h6>
+                    {(isLeader || isOfficer) && (
+                      <Button 
+                        variant="outline-info" 
+                        size="sm"
+                        className="fantasy-btn"
+                        onClick={() => {
+                          setEditDescription(guildData.description || "");
+                          setShowEditDescriptionModal(true);
+                        }}
+                      >
+                        <i className="fas fa-edit me-1"></i>
+                        Изменить
+                      </Button>
+                    )}
+                  </div>
+                  <p className="fantasy-text-muted mb-0">
+                    {guildData.description || "Нет описания"}
+                  </p>
                 </div>
                 
                 <Row className="mb-4">
                   <Col md={4}>
                     <div className="guild-stat">
-                      <div className="fantasy-text-dark">Участников</div>
+                      <div className="fantasy-text-dark">
+                        <i className="fas fa-user-friends me-2"></i>
+                        Участников
+                      </div>
                       <div className="fantasy-text-dark">
                         {guildData.total_members || 0}/{guildData.members_limit || 20}
                       </div>
@@ -733,30 +559,45 @@ const Guild = observer(() => {
                   </Col>
                   <Col md={4}>
                     <div className="guild-stat">
-                      <div className="fantasy-text-dark">Замков</div>
+                      <div className="fantasy-text-dark">
+                        <i className="fas fa-castle me-2"></i>
+                        Замков
+                      </div>
                       <div className="fantasy-text-dark">{guildData.castles?.length || 0}</div>
                     </div>
                   </Col>
                 </Row>
 
                 <div className="d-flex gap-2 flex-wrap">
-                  {(guildData.player_role === "leader" || guildData.player_role === "officer") && (
+                  {(isLeader || isOfficer) && (
                     <Button 
                       variant="warning" 
                       className="fantasy-btn"
                       onClick={() => setShowOfficerModal(true)}
                     >
-                      👑 Офицерские функции
+                      <i className="fas fa-crown me-2"></i>
+                      Функции управления
                     </Button>
                   )}
+                  
                   <Button 
                     variant="danger" 
                     className="fantasy-btn"
                     onClick={() => setShowLeaveModal(true)}
+                    disabled={isLeader && guildData.total_members > 1}
                   >
-                    🚪 Покинуть гильдию
+                    <i className="fas fa-door-open me-2"></i>
+                    Покинуть гильдию
                   </Button>
                 </div>
+
+                {isLeader && guildData.total_members > 1 && (
+                  <Alert variant="warning" className="mt-3">
+                    <i className="fas fa-exclamation-triangle me-2"></i>
+                    Вы не можете покинуть гильдию, пока являетесь лидером и в гильдии есть другие участники.
+                    Сначала передайте лидерство другому участнику.
+                  </Alert>
+                )}
               </Card.Body>
             </Card>
           </Col>
@@ -764,24 +605,39 @@ const Guild = observer(() => {
           <Col lg={4}>
             <Card className="fantasy-card h-100">
               <Card.Header className="fantasy-card-header fantasy-card-header-info">
-                <h5 className="fantasy-text-gold">📊 Статистика</h5>
+                <h5 className="fantasy-text-gold">
+                  <i className="fas fa-chart-bar me-2"></i>
+                  Статистика
+                </h5>
               </Card.Header>
               <Card.Body>
                 <ListGroup variant="flush">
                   <ListGroup.Item className="d-flex justify-content-between align-items-center">
-                    <span>Онлайн:</span>
+                    <span className="fantasy-text-dark">
+                      <i className="fas fa-wifi me-2"></i>
+                      Онлайн:
+                    </span>
                     <Badge bg="success">{guildData.online_members || 0}</Badge>
                   </ListGroup.Item>
                   <ListGroup.Item className="d-flex justify-content-between align-items-center">
-                    <span>Оффлайн:</span>
+                    <span className="fantasy-text-dark">
+                      <i className="fas fa-moon me-2"></i>
+                      Оффлайн:
+                    </span>
                     <Badge bg="secondary">{(guildData.total_members || 0) - (guildData.online_members || 0)}</Badge>
                   </ListGroup.Item>
                   <ListGroup.Item className="d-flex justify-content-between align-items-center">
-                    <span>Офицеров:</span>
+                    <span className="fantasy-text-dark">
+                      <i className="fas fa-star me-2"></i>
+                      Офицеров:
+                    </span>
                     <Badge bg="warning">{guildData.officers?.length || 0}</Badge>
                   </ListGroup.Item>
                   <ListGroup.Item className="d-flex justify-content-between align-items-center">
-                    <span>Заявок:</span>
+                    <span className="fantasy-text-dark">
+                      <i className="fas fa-envelope me-2"></i>
+                      Заявок:
+                    </span>
                     <Badge bg="info">{Object.keys(guildData.requests || {}).length}</Badge>
                   </ListGroup.Item>
                 </ListGroup>
@@ -794,53 +650,47 @@ const Guild = observer(() => {
           <Col xs={12}>
             <Card className="fantasy-card">
               <Card.Header className="fantasy-card-header fantasy-card-header-success">
-                <h5 className="fantasy-text-gold">👥 Состав гильдии ({guildData.total_members || 0})</h5>
+                <div className="d-flex justify-content-between align-items-center">
+                  <h5 className="fantasy-text-gold">
+                    <i className="fas fa-users me-2"></i>
+                    Состав гильдии ({guildData.total_members || 0})
+                  </h5>
+                  <Button 
+                    variant="outline-info" 
+                    size="sm"
+                    onClick={handleRefresh}
+                    disabled={isRefreshing}
+                    title="Обновить список"
+                  >
+                    <i className={`fas fa-sync-alt ${isRefreshing ? 'fa-spin' : ''}`}></i>
+                  </Button>
+                </div>
               </Card.Header>
               <Card.Body>
                 <Row>
                   {guild.members.map((member, index) => {
                     const memberId = member.id || index;
-                    const isCurrentUserLeader = guildData?.player_role === "leader";
-                    const isCurrentUserOfficer = guildData?.player_role === "officer";
+                    const isCurrentUser = member.id === user.user?.id;
+                    const isCurrentUserLeader = guildData.player_role === "leader";
+                    const isCurrentUserOfficer = guildData.player_role === "officer";
                     const isTargetOfficer = member.role === "officer";
                     const isTargetLeader = member.role === "leader";
-                    const isCurrentUser = member.id === user.user?.id;
-                    const canManage = (isCurrentUserLeader || isCurrentUserOfficer) && !isCurrentUser;
-                    const characterImageUrl = getCharacterImageUrl(member.character_art);
-                    const isDropdownOpen = openDropdownId === memberId;
                     
+                    // Проверяем, может ли текущий пользователь управлять этим участником
+                    const canLeaderManage = isCurrentUserLeader && !isCurrentUser;
+                    const canOfficerManage = isCurrentUserOfficer && member.role === "member" && !isCurrentUser;
+                    const shouldShowActions = canLeaderManage || canOfficerManage;
+
                     return (
                       <Col md={6} lg={4} key={memberId} className="mb-3">
-                        <Card className="fantasy-card member-card">
-                          <Card.Body style={{ position: 'relative' }}>
+                        <Card className="fantasy-card member-card h-100">
+                          <Card.Body>
                             <div className="d-flex align-items-center justify-content-between">
                               <div className="d-flex align-items-center flex-grow-1">
                                 <div className="member-avatar me-3">
-                                  {characterImageUrl ? (
-                                    <>
-                                      <img 
-                                        src={characterImageUrl}
-                                        alt={member.name}
-                                        className={`avatar-img ${member.is_online ? 'online' : 'offline'}`}
-                                        onError={(e) => {
-                                          e.target.style.display = 'none';
-                                          const fallback = e.target.parentNode.querySelector('.avatar-circle');
-                                          if (fallback) fallback.style.display = 'flex';
-                                        }}
-                                        style={{ display: 'block' }}
-                                      />
-                                      <div 
-                                        className={`avatar-circle ${member.is_online ? 'online' : 'offline'}`}
-                                        style={{ display: 'none' }}
-                                      >
-                                        {getCharacterFallback(member.class)}
-                                      </div>
-                                    </>
-                                  ) : (
-                                    <div className={`avatar-circle ${member.is_online ? 'online' : 'offline'}`}>
-                                      {getCharacterFallback(member.class)}
-                                    </div>
-                                  )}
+                                  <div className={`avatar-circle ${member.is_online ? 'online' : 'offline'}`}>
+                                    {getCharacterFallback(member.class)}
+                                  </div>
                                 </div>
                                 <div className="member-info flex-grow-1">
                                   <div className="d-flex align-items-center">
@@ -851,38 +701,36 @@ const Guild = observer(() => {
                                     <small className="text-muted d-block">
                                       {member.class_display || translateClass(member.class)} • Ур. {member.level || 1}
                                     </small>
-                                    <small className="text-muted">
+                                    <small className={member.is_online ? "text-success" : "text-muted"}>
                                       {member.is_online ? "🟢 Онлайн" : `⚫ ${formatOnlineStatus(member.status_block_time)}`}
                                     </small>
                                   </div>
                                 </div>
                               </div>
-                              {canManage && (
-                                <div 
-                                  className="dropdown-container"
-                                  style={{ position: 'relative' }}
+                              
+                              <div className="d-flex align-items-center gap-1">
+                                {/* Кнопка просмотра деталей - всегда видна */}
+                                <button
+                                  className="btn btn-sm btn-outline-info"
+                                  onClick={() => {
+                                    setSelectedMember(member);
+                                    setShowMemberDetailsModal(true);
+                                  }}
+                                  title="Просмотреть детали"
                                 >
-                                  <button
-                                    className="btn btn-sm btn-outline-info me-2"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      e.preventDefault();
-                                      handleViewMemberDetails(member.id);
-                                    }}
-                                    title="Просмотреть детали"
-                                  >
-                                    📊
-                                  </button>
-                                  <button
-                                    ref={el => triggerRefs.current[memberId] = el}
-                                    className="member-action-btn"
-                                    onClick={(e) => toggleDropdown(memberId, e)}
-                                    aria-label="Действия с участником"
-                                  >
-                                    ⋯
-                                  </button>
-                                </div>
-                              )}
+                                  <i className="fas fa-chart-bar"></i>
+                                </button>
+                                
+                                {/* Кнопка действий - только для тех, у кого есть права */}
+                                {shouldShowActions && (
+                                  <MemberActionsDropdown
+                                    member={member}
+                                    currentUserRole={guildData.player_role}
+                                    currentUserId={user.user?.id}
+                                    onAction={handleMemberAction}
+                                  />
+                                )}
+                              </div>
                             </div>
                           </Card.Body>
                         </Card>
@@ -896,15 +744,18 @@ const Guild = observer(() => {
         </Row>
       </>
     );
-  };
+  }, [guild.guildData, guild.members, user.user?.id, isRefreshing, lastUpdated, 
+      handleRefresh, formatLastUpdated, getRoleBadge, formatOnlineStatus, 
+      handleMemberAction, translateClass]);
 
-  const renderCastlesTab = () => {
+  const renderCastlesTab = useCallback(() => {
     const guildData = guild.guildData;
     
     if (!guildData || !guildData.has_guild) {
       return (
         <Card className="fantasy-card">
           <Card.Body className="text-center">
+            <i className="fas fa-castle fa-3x text-muted mb-3"></i>
             <p className="fantasy-text-muted">Вы не состоите в гильдии</p>
           </Card.Body>
         </Card>
@@ -913,134 +764,442 @@ const Guild = observer(() => {
 
     return (
       <Row className="g-3">
-        {guildData.castles?.map((castle, index) => (
-          <Col md={6} lg={4} key={castle.id || index}>
-            <Card className="fantasy-card h-100">
-              <Card.Header className="fantasy-card-header fantasy-card-header-warning">
-                <h5>🏰 {castle.name || "Без названия"}</h5>
-              </Card.Header>
-              <Card.Body>
-                <div className="mb-3">
-                  <p className="fantasy-text-muted">
-                    <strong>Локация:</strong> {castle.location || "Неизвестно"}
-                  </p>
-                </div>
-                
-                <div className="mb-3">
-                  <div className="d-flex justify-content-between mb-1">
-                    <span>Уровень:</span>
-                    <span>{castle.level || 1}</span>
+        {guildData.castles?.map((castle, index) => {
+          const storagePercentage = castle.current_weight && castle.storage_capacity 
+            ? (castle.current_weight / castle.storage_capacity) * 100 
+            : 0;
+          const totalWorkers = (castle.workers_wood?.length || 0) + 
+                              (castle.workers_stone?.length || 0) + 
+                              (castle.workers_steel?.length || 0) + 
+                              (castle.workers_glass?.length || 0);
+          const siegeStatus = castle.siege && Object.keys(castle.siege).length > 0 
+            ? { hasSiege: true, status: "В осаде" }
+            : { hasSiege: false, status: "Без осады" };
+
+          return (
+            <Col md={6} lg={4} key={castle.id || index}>
+              <Card className="fantasy-card h-100">
+                <Card.Header className="fantasy-card-header fantasy-card-header-warning">
+                  <div className="d-flex justify-content-between align-items-center">
+                    <h5 className="fantasy-text-gold mb-0">
+                      <i className="fas fa-castle me-2"></i>
+                      {castle.name || "Без названия"}
+                    </h5>
+                    <Badge bg={siegeStatus.hasSiege ? "danger" : "success"} className="siege-badge">
+                      {siegeStatus.status}
+                    </Badge>
                   </div>
-                  <ProgressBar now={(castle.level || 1) * 20} variant="warning" />
-                </div>
-                
-                <ListGroup variant="flush" className="mb-3">
-                  <ListGroup.Item className="d-flex justify-content-between">
-                    <span>Защита:</span>
-                    <Badge bg="danger">{castle.defense || 0}</Badge>
-                  </ListGroup.Item>
-                  <ListGroup.Item className="d-flex justify-content-between">
-                    <span>Гарнизон:</span>
-                    <Badge bg="info">{castle.garrison || 0}/{castle.max_garrison || 100}</Badge>
-                  </ListGroup.Item>
-                  <ListGroup.Item className="d-flex justify-content-between">
-                    <span>Построек:</span>
-                    <Badge bg="secondary">{(castle.buildings && Object.keys(castle.buildings).length) || 0}</Badge>
-                  </ListGroup.Item>
-                </ListGroup>
-                
-                <Button variant="outline-warning" className="w-100 fantasy-btn">
-                  Управление замком
-                </Button>
-              </Card.Body>
-            </Card>
-          </Col>
-        ))}
+                </Card.Header>
+                <Card.Body>                  
+                  <div className="mb-4">
+                    <h6 className="fantasy-text-dark mb-3">
+                      <i className="fas fa-chart-bar me-2"></i>
+                      Основные показатели
+                    </h6>
+                    <Row className="mb-3">
+                      <Col xs={6}>
+                        <div className="castle-stat">
+                          <div className="stat-label">Уровень замка</div>
+                          <div className="stat-value">
+                            <Badge bg="warning">{castle.level || 1}</Badge>
+                          </div>
+                        </div>
+                      </Col>
+                      <Col xs={6}>
+                        <div className="castle-stat">
+                          <div className="stat-label">Руны</div>
+                          <div className="stat-value">
+                            <Badge bg="purple">{castle.current_runes || 0}</Badge>
+                          </div>
+                        </div>
+                      </Col>
+                    </Row>
+                    
+                    <div className="storage-info mb-3 p-2" style={{ background: 'var(--color-bg-lighter)', borderRadius: '6px' }}>
+                      <div className="d-flex justify-content-between align-items-center mb-2">
+                        <span className="fantasy-text-dark">
+                          <i className="fas fa-warehouse me-2"></i>
+                          Хранилище (ур. {castle.storage_lvl || 1})
+                        </span>
+                        <Badge bg="secondary">{castle.storage_items_count || 0} предм.</Badge>
+                      </div>
+                      <ProgressBar 
+                        now={storagePercentage} 
+                        variant={storagePercentage > 90 ? "danger" : storagePercentage > 70 ? "warning" : "success"}
+                        className="mb-1"
+                      />
+                      <div className="d-flex justify-content-between">
+                        <small className="fantasy-text-muted">
+                          {castle.current_weight ? castle.current_weight.toFixed(1) : 0} / {castle.storage_capacity || 1000} кг
+                        </small>
+                        <small className="fantasy-text-muted">{storagePercentage.toFixed(1)}%</small>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="mb-4">
+                    <h6 className="fantasy-text-dark mb-3">
+                      <i className="fas fa-tools me-2"></i>
+                      Уровни построек
+                    </h6>
+                    <div className="buildings-grid">
+                      {[
+                        { name: "🏗️ Камнерезня", level: castle.stonecraft_lvl || 0, color: "secondary" },
+                        { name: "🪵 Деревообр.", level: castle.woodcraft_lvl || 0, color: "success" },
+                        { name: "🔥 Плавильня", level: castle.smelter_lvl || 0, color: "danger" },
+                        { name: "🔮 Стеклодув", level: castle.glass_lvl || 0, color: "info" },
+                        { name: "🏰 Стены", level: castle.wall_lvl || 0, color: "dark" },
+                        { name: "⚔️ Казармы", level: castle.barracs_lvl || 0, color: "danger" },
+                        { name: "🧪 Алхимик", level: castle.alchemist_lvl || 0, color: "purple" },
+                        { name: "✨ Руны", level: castle.runestones_lvl || 0, color: "warning" },
+                      ].map((building, idx) => (
+                        <div key={idx} className="building-item">
+                          <span className="building-name">{building.name}</span>
+                          <Badge bg={building.color} className="building-level">{building.level}</Badge>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  <div className="mb-4">
+                    <h6 className="fantasy-text-dark mb-3">
+                      <i className="fas fa-users me-2"></i>
+                      Рабочие: {totalWorkers}
+                    </h6>
+                    <Row className="g-2">
+                      {[
+                        { icon: "tree", text: "Дерево", count: castle.workers_wood?.length || 0, color: "success" },
+                        { icon: "mountain", text: "Камень", count: castle.workers_stone?.length || 0, color: "secondary" },
+                        { icon: "industry", text: "Сталь", count: castle.workers_steel?.length || 0, color: "danger" },
+                        { icon: "wine-glass", text: "Стекло", count: castle.workers_glass?.length || 0, color: "info" },
+                      ].map((worker, idx) => (
+                        <Col xs={6} key={idx}>
+                          <div className="workers-type">
+                            <i className={`fas fa-${worker.icon} me-2 text-${worker.color}`}></i>
+                            {worker.text}: <Badge bg={worker.color}>{worker.count}</Badge>
+                          </div>
+                        </Col>
+                      ))}
+                    </Row>
+                  </div>
+                  
+                  <div className="d-grid gap-2">
+                    <Button 
+                      variant="outline-warning" 
+                      className="fantasy-btn"
+                      onClick={() => {
+                        guild.setSelectedCastle(castle);
+                        setActiveTab("castleStorage");
+                      }}
+                    >
+                      <i className="fas fa-warehouse me-2"></i>
+                      Управление хранилищем
+                    </Button>
+                  </div>
+                </Card.Body>
+              </Card>
+            </Col>
+          );
+        })}
         
         {(!guildData.castles || guildData.castles.length === 0) && (
           <Col xs={12}>
             <Card className="fantasy-card">
               <Card.Body className="text-center">
-                <p className="fantasy-text-muted">У гильдии пока нет замков</p>
-                <Button variant="primary" className="fantasy-btn">
-                  Захватить замок
-                </Button>
+                <i className="fas fa-castle fa-3x text-muted mb-3"></i>
+                <h5 className="fantasy-text-muted mb-3">У гильдии пока нет замков</h5>
+                <p className="fantasy-text-muted mb-4">
+                  Захватите замок, чтобы получить доступ к общему хранилищу и улучшениям для гильдии!
+                </p>
               </Card.Body>
             </Card>
           </Col>
         )}
       </Row>
     );
-  };
+  }, [guild.guildData, guild.setSelectedCastle]);
 
-  const renderSettlementTab = () => {
+  // Мемоизированные модальные окна
+  const renderCreateModal = useMemo(() => (
+    <Modal 
+      show={showCreateModal} 
+      onHide={() => setShowCreateModal(false)} 
+      centered
+      className="fantasy-modal create-guild-modal"
+      backdrop="static"
+    >
+      <Modal.Header closeButton className="fantasy-card-header fantasy-card-header-primary">
+        <Modal.Title className="fantasy-text-gold">
+          <i className="fas fa-plus-circle me-2"></i>
+          Создание гильдии
+        </Modal.Title>
+      </Modal.Header>
+      <Modal.Body className="fantasy-card">
+        <Form>
+          <Form.Group className="mb-3">
+            <Form.Label className="fantasy-text-dark">Название гильдии</Form.Label>
+            <Form.Control
+              type="text"
+              value={guildName}
+              onChange={(e) => setGuildName(e.target.value)}
+              placeholder="Введите название гильдии"
+              autoFocus
+              className="fantasy-input"
+              maxLength={30}
+            />
+            <Form.Text className="text-muted">
+              Максимум 30 символов
+            </Form.Text>
+          </Form.Group>
+          <Form.Group className="mb-3">
+            <Form.Label className="fantasy-text-dark">Описание (необязательно)</Form.Label>
+            <Form.Control
+              as="textarea"
+              rows={3}
+              value={guildDescription}
+              onChange={(e) => setGuildDescription(e.target.value)}
+              placeholder="Опишите вашу гильдию..."
+              className="fantasy-input"
+              maxLength={200}
+            />
+            <Form.Text className="text-muted">
+              Максимум 200 символов
+            </Form.Text>
+          </Form.Group>
+        </Form>
+      </Modal.Body>
+      <Modal.Footer className="border-top border-secondary">
+        <Button 
+          variant="secondary" 
+          onClick={() => setShowCreateModal(false)}
+          className="fantasy-btn"
+          disabled={processingAction}
+        >
+          Отмена
+        </Button>
+        <Button 
+          variant="primary" 
+          onClick={handleCreateGuild}
+          className="fantasy-btn"
+          disabled={!guildName.trim() || processingAction}
+        >
+          {processingAction ? (
+            <>
+              <Spinner animation="border" size="sm" className="me-2" />
+              Создание...
+            </>
+          ) : (
+            <>
+              <i className="fas fa-plus me-2"></i>
+              Создать гильдию
+            </>
+          )}
+        </Button>
+      </Modal.Footer>
+    </Modal>
+  ), [showCreateModal, guildName, guildDescription, processingAction, handleCreateGuild]);
+
+  const renderLeaveModal = useMemo(() => {
     const guildData = guild.guildData;
-    
-    if (!guildData || !guildData.has_guild) {
-      return (
-        <Card className="fantasy-card">
-          <Card.Body className="text-center">
-            <p className="fantasy-text-muted">Вы не состоите в гильдии</p>
-          </Card.Body>
-        </Card>
-      );
-    }
-
-    const settlement = guildData.settlement;
-    if (!settlement) {
-      return (
-        <Card className="fantasy-card">
-          <Card.Body className="text-center">
-            <p className="fantasy-text-muted">У гильдии нет поселения</p>
-            <Button variant="primary" className="fantasy-btn">
-              Основать поселение
-            </Button>
-          </Card.Body>
-        </Card>
-      );
-    }
     
     return (
-      <Row className="g-3">
-        <Col xs={12}>
-          <Card className="fantasy-card">
-            <Card.Header className="fantasy-card-header fantasy-card-header-success">
-              <h4>🏘️ {settlement.name || "Поселение"}</h4>
-            </Card.Header>
-            <Card.Body>
-              <Row className="mb-4">
-                <Col md={4}>
-                  <div className="settlement-stat">
-                    <div className="settlement-stat-label">Уровень поселения</div>
-                    <div className="settlement-stat-value">{settlement.level || 1}</div>
-                  </div>
-                </Col>
-                <Col md={4}>
-                  <div className="settlement-stat">
-                    <div className="settlement-stat-label">Население</div>
-                    <div className="settlement-stat-value">{settlement.population || 0}</div>
-                  </div>
-                </Col>
-                <Col md={4}>
-                  <div className="settlement-stat">
-                    <div className="settlement-stat-label">Защита</div>
-                    <div className="settlement-stat-value">{settlement.defense || 0}</div>
-                  </div>
-                </Col>
-              </Row>
-              
-              <div className="text-center">
-                <p className="fantasy-text-muted">Раздел поселения в разработке</p>
+      <Modal 
+        show={showLeaveModal} 
+        onHide={() => setShowLeaveModal(false)} 
+        centered
+        className="fantasy-modal leave-guild-modal"
+        backdrop="static"
+      >
+        <Modal.Header closeButton className="fantasy-card-header fantasy-card-header-danger">
+          <Modal.Title className="fantasy-text-gold">
+            <i className="fas fa-door-open me-2"></i>
+            Покинуть гильдию
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body className="fantasy-card">
+          <div className="text-center mb-4">
+            <i className="fas fa-door-open fa-3x text-danger mb-3"></i>
+            <p className="fantasy-text-dark">Вы уверены, что хотите покинуть гильдию <strong>"{guildData?.name}"</strong>?</p>
+          </div>
+          {guildData?.player_role === "leader" && guildData?.total_members > 1 && (
+            <Alert variant="danger" className="fantasy-alert">
+              <div className="d-flex align-items-start">
+                <i className="fas fa-exclamation-circle me-2 mt-1"></i>
+                <div>
+                  <strong>Вы являетесь лидером гильдии!</strong>
+                  <p className="mb-0 mt-1">
+                    Если вы выйдете сейчас, гильдия будет распущена, а все участники потеряют доступ к замкам и ресурсам.
+                    Рассмотрите возможность передачи лидерства перед выходом.
+                  </p>
+                </div>
               </div>
-            </Card.Body>
-          </Card>
-        </Col>
-      </Row>
+            </Alert>
+          )}
+        </Modal.Body>
+        <Modal.Footer className="border-top border-secondary">
+          <Button 
+            variant="secondary" 
+            onClick={() => setShowLeaveModal(false)}
+            className="fantasy-btn"
+            disabled={processingAction}
+          >
+            Отмена
+          </Button>
+          <Button 
+            variant="danger" 
+            onClick={handleLeaveGuild}
+            className="fantasy-btn"
+            disabled={processingAction}
+          >
+            {processingAction ? (
+              <>
+                <Spinner animation="border" size="sm" className="me-2" />
+                Выход...
+              </>
+            ) : (
+              <>
+                <i className="fas fa-door-open me-2"></i>
+                Покинуть гильдию
+              </>
+            )}
+          </Button>
+        </Modal.Footer>
+      </Modal>
     );
-  };
+  }, [showLeaveModal, guild.guildData, processingAction, handleLeaveGuild]);
 
+  const renderEditDescriptionModal = useMemo(() => (
+    <Modal 
+      show={showEditDescriptionModal} 
+      onHide={() => setShowEditDescriptionModal(false)} 
+      centered
+      className="fantasy-modal"
+      backdrop="static"
+    >
+      <Modal.Header closeButton className="fantasy-card-header fantasy-card-header-info">
+        <Modal.Title className="fantasy-text-gold">
+          <i className="fas fa-edit me-2"></i>
+          Изменить описание гильдии
+        </Modal.Title>
+      </Modal.Header>
+      <Modal.Body className="fantasy-card">
+        <Form>
+          <Form.Group className="mb-3">
+            <Form.Label className="fantasy-text-dark">Новое описание</Form.Label>
+            <Form.Control
+              as="textarea"
+              rows={4}
+              value={editDescription}
+              onChange={(e) => setEditDescription(e.target.value)}
+              placeholder="Опишите вашу гильдию..."
+              className="fantasy-input"
+              maxLength={200}
+            />
+            <Form.Text className="text-muted">
+              {editDescription.length}/200 символов
+            </Form.Text>
+          </Form.Group>
+        </Form>
+      </Modal.Body>
+      <Modal.Footer className="border-top border-secondary">
+        <Button 
+          variant="secondary" 
+          onClick={() => setShowEditDescriptionModal(false)}
+          className="fantasy-btn"
+          disabled={processingAction}
+        >
+          Отмена
+        </Button>
+        <Button 
+          variant="primary" 
+          onClick={handleUpdateDescription}
+          className="fantasy-btn"
+          disabled={processingAction || !editDescription.trim()}
+        >
+          {processingAction ? (
+            <>
+              <Spinner animation="border" size="sm" className="me-2" />
+              Сохранение...
+            </>
+          ) : (
+            <>
+              <i className="fas fa-save me-2"></i>
+              Сохранить
+            </>
+          )}
+        </Button>
+      </Modal.Footer>
+    </Modal>
+  ), [showEditDescriptionModal, editDescription, processingAction, handleUpdateDescription]);
+
+  const renderInviteModal = useMemo(() => (
+    <Modal 
+      show={showInviteModal} 
+      onHide={() => setShowInviteModal(false)} 
+      centered
+      className="fantasy-modal"
+      backdrop="static"
+    >
+      <Modal.Header closeButton className="fantasy-card-header fantasy-card-header-success">
+        <Modal.Title className="fantasy-text-gold">
+          <i className="fas fa-user-plus me-2"></i>
+          Пригласить игрока в гильдию
+        </Modal.Title>
+      </Modal.Header>
+      <Modal.Body className="fantasy-card">
+        <Form>
+          <Form.Group className="mb-3">
+            <Form.Label className="fantasy-text-dark">Имя игрока</Form.Label>
+            <Form.Control
+              type="text"
+              value={invitePlayerName}
+              onChange={(e) => setInvitePlayerName(e.target.value)}
+              placeholder="Введите имя игрока"
+              className="fantasy-input"
+              autoFocus
+            />
+            <Form.Text className="text-muted">
+              Игрок получит приглашение присоединиться к вашей гильдии
+            </Form.Text>
+          </Form.Group>
+        </Form>
+      </Modal.Body>
+      <Modal.Footer className="border-top border-secondary">
+        <Button 
+          variant="secondary" 
+          onClick={() => setShowInviteModal(false)}
+          className="fantasy-btn"
+          disabled={processingAction}
+        >
+          Отмена
+        </Button>
+        <Button 
+          variant="success" 
+          onClick={handleInvitePlayer}
+          className="fantasy-btn"
+          disabled={processingAction || !invitePlayerName.trim()}
+        >
+          {processingAction ? (
+            <>
+              <Spinner animation="border" size="sm" className="me-2" />
+              Отправка...
+            </>
+          ) : (
+            <>
+              <i className="fas fa-paper-plane me-2"></i>
+              Отправить приглашение
+            </>
+          )}
+        </Button>
+      </Modal.Footer>
+    </Modal>
+  ), [showInviteModal, invitePlayerName, processingAction, handleInvitePlayer]);
+
+  // Рендер модальных окон, которые зависят от состояния
   const renderOfficerModal = () => {
     const guildData = guild.guildData;
+    const isLeader = guildData?.player_role === "leader";
+    const isOfficer = guildData?.player_role === "officer";
     const requests = guildData?.requests || {};
     const requestEntries = Object.entries(requests);
     
@@ -1054,71 +1213,129 @@ const Guild = observer(() => {
         backdrop="static"
       >
         <Modal.Header closeButton className="fantasy-card-header fantasy-card-header-warning">
-          <Modal.Title className="fantasy-text-muted">👑 Офицерские функции</Modal.Title>
+          <Modal.Title className="fantasy-text-gold">
+            <i className={`fas ${isLeader ? 'fa-crown' : 'fa-star'} me-2`}></i>
+            {isLeader ? "Функции лидера" : "Функции офицера"}
+          </Modal.Title>
         </Modal.Header>
-        <Modal.Body className="fantasy-card" style={{ background: 'linear-gradient(135deg, var(--color-bg-light) 0%, var(--color-bg-light) 100%)', padding: '1.5rem' }}>
+        <Modal.Body className="fantasy-card">
+          {/* Заявки на вступление */}
           <div className="mb-4">
-            <h5 className="fantasy-text-dark mb-3">📨 Заявки на вступление ({requestEntries.length})</h5>
+            <div className="d-flex justify-content-between align-items-center mb-3">
+              <h5 className="fantasy-text-dark mb-0">
+                <i className="fas fa-envelope me-2"></i>
+                Заявки на вступление ({requestEntries.length})
+              </h5>
+              <Badge bg={requestEntries.length > 0 ? "info" : "secondary"}>
+                {requestEntries.length}
+              </Badge>
+            </div>
+            
             {requestEntries.length === 0 ? (
-              <div className="text-center py-4">
-                <p className="fantasy-text-muted mb-0">Нет заявок на вступление</p>
-              </div>
+              <Alert variant="info" className="fantasy-alert">
+                <i className="fas fa-info-circle me-2"></i>
+                Нет заявок на вступление
+              </Alert>
             ) : (
-              <Row className="mt-3 g-3">
+              <div className="requests-list">
                 {requestEntries.map(([applicantName, requestInfo]) => (
-                  <Col md={6} key={applicantName}>
-                    <Card className="fantasy-card request-card" style={{ border: '2px solid var(--color-accent-bronze-light)' }}>
-                      <Card.Body>
-                        <div className="d-flex justify-content-between align-items-start">
-                          <div className="flex-grow-1">
-                            <h6 className="fantasy-text-dark mb-2">{applicantName}</h6>
-                            {requestInfo.level && (
-                              <small className="fantasy-text-muted">
-                                Ур. {requestInfo.level} • {translateClass(requestInfo.class) || "Неизвестный класс"}
-                              </small>
-                            )}
+                  <Card key={applicantName} className="fantasy-card mb-3">
+                    <Card.Body>
+                      <Row className="align-items-center">
+                        <Col md={8}>
+                          <div className="d-flex align-items-center mb-2">
+                            <h6 className="fantasy-text-dark mb-0 me-3">{applicantName}</h6>
+                            <Badge bg="primary">Ур. {requestInfo.level || 1}</Badge>
                           </div>
+                          <div className="mb-2">
+                            <small className="fantasy-text-muted">
+                              <i className="fas fa-user me-2"></i>
+                              {translateClass(requestInfo.class) || "Неизвестный класс"}
+                            </small>
+                          </div>
+                          {requestInfo.message && (
+                            <div className="mt-2">
+                              <small className="fantasy-text-muted">
+                                <i className="fas fa-comment me-2"></i>
+                                {requestInfo.message}
+                              </small>
+                            </div>
+                          )}
+                        </Col>
+                        <Col md={4} className="text-end">
                           <div className="d-flex flex-column gap-2">
                             <Button 
                               variant="success" 
                               size="sm"
                               className="fantasy-btn"
                               onClick={() => handleRequestAction("accept", applicantName)}
+                              disabled={processingAction}
                             >
-                              ✅ Принять
+                              <i className="fas fa-check me-1"></i>
+                              Принять
                             </Button>
                             <Button 
                               variant="danger" 
                               size="sm"
                               className="fantasy-btn"
                               onClick={() => handleRequestAction("reject", applicantName)}
+                              disabled={processingAction}
                             >
-                              ❌ Отклонить
+                              <i className="fas fa-times me-1"></i>
+                              Отклонить
                             </Button>
                           </div>
-                        </div>
-                      </Card.Body>
-                    </Card>
-                  </Col>
+                        </Col>
+                      </Row>
+                    </Card.Body>
+                  </Card>
                 ))}
-              </Row>
+              </div>
             )}
           </div>
-          
+
+          {/* Быстрые действия */}
           <div className="mt-4 pt-4 border-top border-secondary">
-            <h5 className="fantasy-text-dark mb-3">⚙️ Быстрые действия</h5>
-            <div className="d-flex gap-2 flex-wrap">
-              <Button variant="outline-info" className="fantasy-btn">
-                📨 Пригласить игрока
+            <h5 className="fantasy-text-dark mb-3">
+              <i className="fas fa-bolt me-2"></i>
+              Быстрые действия
+            </h5>
+            <div className="d-flex flex-wrap gap-2 mb-4">
+              <Button 
+                variant="outline-info" 
+                className="fantasy-btn"
+                onClick={() => {
+                  setShowOfficerModal(false);
+                  setShowInviteModal(true);
+                }}
+              >
+                <i className="fas fa-user-plus me-2"></i>
+                Пригласить игрока
               </Button>
-              <Button variant="outline-info" className="fantasy-btn">
-                ⚙️ Настройки гильдии
+              
+              <Button 
+                variant="outline-warning" 
+                className="fantasy-btn"
+                onClick={() => {
+                  setShowOfficerModal(false);
+                  setShowEditDescriptionModal(true);
+                  setEditDescription(guildData.description || "");
+                }}
+              >
+                <i className="fas fa-edit me-2"></i>
+                Изменить описание
               </Button>
-              <Button variant="outline-info" className="fantasy-btn" onClick={() => { setShowOfficerModal(false); setActiveTab("castles"); }}>
-                🏰 Управление замками
-              </Button>
-              <Button variant="outline-info" className="fantasy-btn">
-                💰 Ресурсы гильдии
+
+              <Button 
+                variant="outline-info" 
+                className="fantasy-btn"
+                onClick={() => {
+                  setShowOfficerModal(false);
+                  setActiveTab("castles");
+                }}
+              >
+                <i className="fas fa-castle me-2"></i>
+                Управление замками
               </Button>
             </div>
           </div>
@@ -1128,7 +1345,9 @@ const Guild = observer(() => {
             variant="secondary" 
             className="fantasy-btn"
             onClick={() => setShowOfficerModal(false)}
+            disabled={processingAction}
           >
+            <i className="fas fa-times me-2"></i>
             Закрыть
           </Button>
         </Modal.Footer>
@@ -1136,7 +1355,80 @@ const Guild = observer(() => {
     );
   };
 
-  if (guild.loading) {
+  const renderMemberDetailsModal = () => {
+    if (!selectedMember) return null;
+
+    return (
+      <Modal 
+        show={showMemberDetailsModal} 
+        onHide={() => setShowMemberDetailsModal(false)} 
+        size="lg" 
+        centered
+        className="fantasy-modal member-details-modal"
+        backdrop="static"
+      >
+        <Modal.Header closeButton className="fantasy-card-header fantasy-card-header-info">
+          <Modal.Title className="fantasy-text-gold">
+            <i className="fas fa-user-circle me-2"></i>
+            Детали участника
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body className="fantasy-card">
+          <Row className="align-items-center mb-4">
+            <Col xs="auto">
+              <div className="member-details-avatar">
+                <div className={`avatar-circle-details ${selectedMember.is_online ? 'online' : 'offline'}`}>
+                  {getCharacterFallback(selectedMember.class)}
+                </div>
+              </div>
+            </Col>
+            <Col>
+              <h4 className="fantasy-text-dark mb-1">{selectedMember.name}</h4>
+              <div className="d-flex align-items-center flex-wrap gap-2">
+                <Badge bg="primary" className="fantasy-badge">
+                  Ур. {selectedMember.level}
+                </Badge>
+                <Badge bg="secondary" className="fantasy-badge">
+                  {selectedMember.class_display || translateClass(selectedMember.class)}
+                </Badge>
+                <Badge bg="info" className="fantasy-badge">
+                  {selectedMember.race_display || translateRace(selectedMember.race)}
+                </Badge>
+                <Badge 
+                  bg={selectedMember.role === 'leader' ? 'danger' : selectedMember.role === 'officer' ? 'warning' : 'secondary'}
+                  className="fantasy-badge"
+                >
+                  {selectedMember.role === 'leader' ? 'Лидер' : selectedMember.role === 'officer' ? 'Офицер' : 'Участник'}
+                </Badge>
+              </div>
+              <div className="mt-2">
+                <Badge bg={selectedMember.is_online ? 'success' : 'secondary'}>
+                  {selectedMember.is_online ? '🟢 Онлайн' : '⚫ Оффлайн'}
+                </Badge>
+                {!selectedMember.is_online && selectedMember.status_block_time && (
+                  <small className="fantasy-text-muted ms-2">
+                    ({formatOnlineStatus(selectedMember.status_block_time)})
+                  </small>
+                )}
+              </div>
+            </Col>
+          </Row>
+        </Modal.Body>
+        <Modal.Footer className="border-top border-secondary">
+          <Button 
+            variant="secondary" 
+            className="fantasy-btn"
+            onClick={() => setShowMemberDetailsModal(false)}
+          >
+            <i className="fas fa-times me-2"></i>
+            Закрыть
+          </Button>
+        </Modal.Footer>
+      </Modal>
+    );
+  };
+
+  if (guild.loading && !isRefreshing) {
     return (
       <div className="d-flex justify-content-center align-items-center min-vh-50">
         <div className="text-center">
@@ -1153,13 +1445,15 @@ const Guild = observer(() => {
     <Container fluid className="guild-container">
       {error && (
         <Alert variant="danger" dismissible onClose={() => setError("")} className="mt-3">
-          ⚠️ {error}
+          <i className="fas fa-exclamation-triangle me-2"></i>
+          {error}
         </Alert>
       )}
       
       {success && (
         <Alert variant="success" dismissible onClose={() => setSuccess("")} className="mt-3">
-          ✅ {success}
+          <i className="fas fa-check-circle me-2"></i>
+          {success}
         </Alert>
       )}
 
@@ -1169,32 +1463,34 @@ const Guild = observer(() => {
         className="fantasy-tabs mb-4"
         justify
       >
-        <Tab eventKey="general" title="🏰 Общее">
+        <Tab eventKey="general" title={
+          <>
+            <i className="fas fa-users me-2"></i>
+            Общее
+          </>
+        }>
           {renderGeneralTab()}
         </Tab>
         
-        <Tab 
-          eventKey="castles" 
-          title="🏯 Замки"
-          disabled={!guild.hasGuild}
-        >
-          {guild.hasGuild ? renderCastlesTab() : (
-            <Card className="fantasy-card">
-              <Card.Body className="text-center">
-                <p className="fantasy-text-muted">Вы не состоите в гильдии</p>
-              </Card.Body>
-            </Card>
-          )}
+        <Tab eventKey="castles" title={
+          <>
+            <i className="fas fa-castle me-2"></i>
+            Замки
+          </>
+        }>
+          {renderCastlesTab()}
         </Tab>
         
-        <Tab 
-          eventKey="settlement" 
-          title="🏘️ Поселение"
-          disabled={!guild.hasGuild}
-        >
-          {guild.hasGuild ? renderSettlementTab() : (
+        <Tab eventKey="castleStorage" title={
+          <>
+            <i className="fas fa-warehouse me-2"></i>
+            Хранилище замка
+          </>
+        }>
+          {guild.hasGuild ? <CastleStorage /> : (
             <Card className="fantasy-card">
               <Card.Body className="text-center">
+                <i className="fas fa-castle fa-3x text-muted mb-3"></i>
                 <p className="fantasy-text-muted">Вы не состоите в гильдии</p>
               </Card.Body>
             </Card>
@@ -1202,124 +1498,13 @@ const Guild = observer(() => {
         </Tab>
       </Tabs>
 
-      <Modal 
-        show={showCreateModal} 
-        onHide={() => setShowCreateModal(false)} 
-        centered
-        className="fantasy-modal create-guild-modal"
-        backdrop="static"
-      >
-        <Modal.Header closeButton className="fantasy-card-header fantasy-card-header-primary">
-          <Modal.Title className="fantasy-text-gold">Создание гильдии</Modal.Title>
-        </Modal.Header>
-        <Modal.Body className="fantasy-card" style={{ background: 'linear-gradient(135deg, var(--color-bg-light) 0%, var(--color-bg-light) 100%)' }}>
-          <Form>
-            <Form.Group className="mb-3">
-              <Form.Label className="fantasy-text-dark">Название гильдии</Form.Label>
-              <Form.Control
-                type="text"
-                value={guildName}
-                onChange={(e) => setGuildName(e.target.value)}
-                placeholder="Введите название гильдии"
-                autoFocus
-                className="fantasy-input"
-                maxLength={30}
-              />
-              <Form.Text className="text-muted">
-                Максимум 30 символов
-              </Form.Text>
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label className="fantasy-text-dark">Описание (необязательно)</Form.Label>
-              <Form.Control
-                as="textarea"
-                rows={3}
-                value={guildDescription}
-                onChange={(e) => setGuildDescription(e.target.value)}
-                placeholder="Опишите вашу гильдию..."
-                className="fantasy-input"
-                maxLength={200}
-              />
-              <Form.Text className="text-muted">
-                Максимум 200 символов
-              </Form.Text>
-            </Form.Group>
-          </Form>
-        </Modal.Body>
-        <Modal.Footer className="border-top border-secondary">
-          <Button 
-            variant="secondary" 
-            onClick={() => setShowCreateModal(false)}
-            className="fantasy-btn"
-          >
-            Отмена
-          </Button>
-          <Button 
-            variant="primary" 
-            onClick={handleCreateGuild}
-            className="fantasy-btn"
-            disabled={!guildName.trim()}
-          >
-            Создать гильдию
-          </Button>
-        </Modal.Footer>
-      </Modal>
-
-      <Modal 
-        show={showLeaveModal} 
-        onHide={() => setShowLeaveModal(false)} 
-        centered
-        className="fantasy-modal leave-guild-modal"
-        backdrop="static"
-      >
-        <Modal.Header closeButton className="fantasy-card-header fantasy-card-header-danger">
-          <Modal.Title className="fantasy-text-gold">Покинуть гильдию</Modal.Title>
-        </Modal.Header>
-        <Modal.Body className="fantasy-card" style={{ background: 'linear-gradient(135deg, var(--color-bg-light) 0%, var(--color-bg-light) 100%)' }}>
-          <p className="fantasy-text-dark">Вы уверены, что хотите покинуть гильдию <strong>"{guild.guildData?.name}"</strong>?</p>
-          {guild.guildData?.player_role === "leader" && (
-            <Alert variant="warning" className="mt-3">
-              ⚠️ Вы являетесь лидером гильдии! Если вы выйдете, гильдия будет распущена.
-            </Alert>
-          )}
-        </Modal.Body>
-        <Modal.Footer className="border-top border-secondary">
-          <Button 
-            variant="secondary" 
-            onClick={() => setShowLeaveModal(false)}
-            className="fantasy-btn"
-          >
-            Отмена
-          </Button>
-          <Button 
-            variant="danger" 
-            onClick={handleLeaveGuild}
-            className="fantasy-btn"
-          >
-            Покинуть гильдию
-          </Button>
-        </Modal.Footer>
-      </Modal>
-
+      {/* Модальные окна */}
+      {renderCreateModal}
+      {renderLeaveModal}
       {showOfficerModal && renderOfficerModal()}
       {showMemberDetailsModal && renderMemberDetailsModal()}
-
-      {/* Рендерим выпадающее меню вне дерева карточек */}
-      {openDropdownId && triggerRefs.current[openDropdownId] && guild.members.find(m => (m.id || m.name) === openDropdownId) && (
-        <GuildDropdownMenu
-          isOpen={true}
-          onClose={() => setOpenDropdownId(null)}
-          target={triggerRefs.current[openDropdownId]}
-          member={{
-            ...guild.members.find(m => (m.id || m.name) === openDropdownId),
-            isCurrentUserLeader: guild.guildData?.player_role === "leader",
-            isCurrentUserOfficer: guild.guildData?.player_role === "officer",
-            isTargetOfficer: guild.members.find(m => (m.id || m.name) === openDropdownId)?.role === "officer",
-            isTargetLeader: guild.members.find(m => (m.id || m.name) === openDropdownId)?.role === "leader"
-          }}
-          onMemberAction={handleMemberAction}
-        />
-      )}
+      {renderEditDescriptionModal}
+      {renderInviteModal}
     </Container>
   );
 });
