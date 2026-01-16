@@ -225,13 +225,13 @@ const Guild = observer(() => {
   // Словарь для перевода названий подземелий
   const dungeonTranslations = {
     "Dungeon_Stone": "🏔 Кристаллические горы",
-    "Dungeon_Ice": "❄ Ледяные горы", 
+    "Dungeon_Ice": "❄ Студёный престол", 
     "Dungeon_Electricity": "⚡ Грозовой перевал",
     "Dungeon_Light": "🌝 Цитадель света",
     "Dungeon_Death": "💀 Некрополь",
     "Dungeon_Fire": "🔥 Огненные озёра",
     "Dungeon_Dark": "🌚 Цитадель тьмы",
-    "Dungeon_Life": "🌿 Обитель жизни",
+    "Dungeon_Life": "🌿 Сердце Цветения",
     "Dungeon_Wind": "💨 Штормовой грот",
     "Dungeon_Sound": "🌀 Пещеры эха",
     "Dungeon_Power": "👑 Чертог власти"
@@ -703,7 +703,7 @@ const Guild = observer(() => {
               <Card.Header className="fantasy-card-header fantasy-card-header-primary">
                 <Row className="align-items-center">
                   <Col>
-                    <h4 className="fantasy-text-dark mb-0">{guildData.name}</h4>
+                    <h4 className="fantasy-text-gold mb-0">{guildData.name}</h4>
                   </Col>
                   <Col xs="auto">
                     {getRoleBadge(guildData.player_role)}
@@ -764,7 +764,7 @@ const Guild = observer(() => {
           <Col lg={4}>
             <Card className="fantasy-card h-100">
               <Card.Header className="fantasy-card-header fantasy-card-header-info">
-                <h5>📊 Статистика</h5>
+                <h5 className="fantasy-text-gold">📊 Статистика</h5>
               </Card.Header>
               <Card.Body>
                 <ListGroup variant="flush">
@@ -794,7 +794,7 @@ const Guild = observer(() => {
           <Col xs={12}>
             <Card className="fantasy-card">
               <Card.Header className="fantasy-card-header fantasy-card-header-success">
-                <h5>👥 Состав гильдии ({guildData.total_members || 0})</h5>
+                <h5 className="fantasy-text-gold">👥 Состав гильдии ({guildData.total_members || 0})</h5>
               </Card.Header>
               <Card.Body>
                 <Row>
@@ -844,7 +844,7 @@ const Guild = observer(() => {
                                 </div>
                                 <div className="member-info flex-grow-1">
                                   <div className="d-flex align-items-center">
-                                    <h6 className="mb-0 me-2">{member.name || "Без имени"}</h6>
+                                    <h6 className="fantasy-text-dark mb-1 mb-0 me-2">{member.name || "Без имени"}</h6>
                                     {getRoleBadge(member.role)}
                                   </div>
                                   <div className="member-details">

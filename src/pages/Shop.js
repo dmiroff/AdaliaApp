@@ -41,19 +41,6 @@ const Shop = () => {
                   <DonationTab />
                 </div>
               </Tab>
-              <Tab 
-                eventKey="event" 
-                title={
-                  <span>
-                    <i className="fas fa-snowflake me-2"></i>
-                    Зимняя Лавка Чудес
-                  </span>
-                }
-              >
-                <div className="mt-3">
-                  <EventShopTab />
-                </div>
-              </Tab>
             </Tabs>
           </div>
         </Col>
