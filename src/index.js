@@ -3,7 +3,8 @@ import ReactDOM from 'react-dom/client';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 import UserStore from './store/UserStore';
-import GuildStore from "./store/GuildStore"; // Добавляем новое хранилище
+import GuildStore from "./store/GuildStore";
+import SettlementStore from "./store/SettlementStore"; 
 import './utils/forceSplit';
 
 export const Context = createContext(null)
@@ -14,6 +15,7 @@ root.render(
     {
       user: new UserStore(),
       guild: new GuildStore(),
+      settlement: new SettlementStore(),
       // rating: new RatingStore(),
     }}>
     <React.StrictMode>

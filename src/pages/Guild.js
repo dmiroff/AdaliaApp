@@ -1,4 +1,4 @@
-// Guild.js - оптимизированная версия
+// Guild.js - оптимизированная версия с атрибутами и навыками в деталях
 import React, { useState, useContext, useEffect, useRef, useCallback, useMemo } from "react";
 import { 
   Container, 
@@ -14,7 +14,8 @@ import {
   ProgressBar,
   Modal,
   Form,
-  Alert
+  Alert,
+  Table
 } from "react-bootstrap";
 import { Context } from "../index";
 import { observer } from "mobx-react-lite";
@@ -30,6 +31,7 @@ import {
 import { dict_translator, attributes_dict } from "../utils/Helpers";
 import "./Guild.css";
 import CastleStorage from "../components/CastleStorage";
+import SettlementComponent from "../components/SettlementComponent";
 
 // Константы вынесены за компонент для предотвращения пересоздания
 const DUNGEON_TRANSLATIONS = {
@@ -50,6 +52,42 @@ const ROLE_BADGES = {
   leader: <Badge bg="danger" className="ms-1">Лидер</Badge>,
   officer: <Badge bg="warning" text="dark" className="ms-1">Офицер</Badge>,
   member: <Badge bg="secondary" className="ms-1">Участник</Badge>
+};
+
+// Функция для расчета модификатора атрибута
+const getModByAtt = (att, agi = false) => {
+  let current = 10;
+  let step = 1;
+  if (agi) {
+    step = 2;
+  }
+  let mod = 0;
+
+  if (att < 10) {
+    while (current - step >= att) {
+      current -= step;
+      step += 1;
+      mod--;
+    }
+    if (current - att !== 0) {
+      mod--;
+    }
+  } else {
+    while (current + step <= att) {
+      current += step;
+      step += 1;
+      mod++;
+    }
+  }
+
+  return mod < 0 ? `${mod}` : `+${mod}`;
+};
+
+// Функция для подготовки строки атрибута
+const prepareAttString = (att, att_inc, agi = false) => {
+  const total = att + att_inc;
+  const mod = getModByAtt(total, agi);
+  return `${total} (${mod}), ${att} + ${att_inc}`;
 };
 
 // Вспомогательные функции вынесены за компонент
@@ -229,6 +267,7 @@ const Guild = observer(() => {
   const [processingAction, setProcessingAction] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(null);
+  const [memberDetailsTab, setMemberDetailsTab] = useState("attributes");
 
   // Мемоизированные утилиты
   const translateAttribute = useCallback((attribute) => attributes_dict[attribute] || attribute, []);
@@ -245,36 +284,40 @@ const Guild = observer(() => {
   }, []);
 
   const fetchGuildData = useCallback(async () => {
-    guild.setLoading(true);
-    setIsRefreshing(true);
-    setError("");
-    try {
-      const result = await GetGuildData();
-      if (result && result.status === 200) {
-        guild.setGuildData(result.data);
-        if (result.data.members) {
-          const processedMembers = result.data.members.map(member => ({
-            ...member,
-            class_display: translateClass(member.class),
-            race_display: translateRace(member.race),
-            dungeons: member.dungeons ? member.dungeons.map(dungeon => ({
-              ...dungeon,
-              display_name: translateDungeon(dungeon.key) || dungeon.display_name
-            })) : []
-          }));
-          guild.setMembers(processedMembers);
-        }
-        setLastUpdated(new Date());
-      } else {
-        setError(result?.message || "Не удалось загрузить данные гильдии");
+      guild.setLoading(true);
+      setIsRefreshing(true);
+      setError("");
+      try {
+          const result = await GetGuildData();
+          if (result && result.status === 200) {
+              guild.setGuildData(result.data);
+              if (result.data.members) {
+                  const processedMembers = result.data.members.map(member => {
+                      return {
+                          ...member,
+                          // Данные уже структурированы на бэкенде
+                          // attributes и skills уже готовы к использованию
+                          class_display: translateClass(member.class),
+                          race_display: translateRace(member.race),
+                          dungeons: member.dungeons ? member.dungeons.map(dungeon => ({
+                              ...dungeon,
+                              display_name: translateDungeon(dungeon.key) || dungeon.display_name
+                          })) : []
+                      };
+                  });
+                  guild.setMembers(processedMembers);
+              }
+              setLastUpdated(new Date());
+          } else {
+              setError(result?.message || "Не удалось загрузить данные гильдии");
+          }
+      } catch (error) {
+          setError("Ошибка при загрузке данных гильдии");
+          console.error("Guild data fetch error:", error);
+      } finally {
+          guild.setLoading(false);
+          setIsRefreshing(false);
       }
-    } catch (error) {
-      setError("Ошибка при загрузке данных гильдии");
-      console.error("Guild data fetch error:", error);
-    } finally {
-      guild.setLoading(false);
-      setIsRefreshing(false);
-    }
   }, [guild, translateClass, translateRace, translateDungeon]);
 
   // Оптимизированные обработчики
@@ -433,6 +476,37 @@ const Guild = observer(() => {
     return `${Math.floor(diff / 86400)} д назад`;
   }, [lastUpdated]);
 
+  // Компонент для отображения прогресса подземелья
+  const DungeonProgressItem = React.memo(({ dungeon, translateDungeon }) => {
+    const dungeonName = dungeon.display_name || translateDungeon(dungeon.key) || dungeon.key;
+    const maxFloor = dungeon.max_floor || 1;
+    const currentFloor = dungeon.current_floor || 0;
+    const progressPercentage = maxFloor > 0 ? (currentFloor / maxFloor) * 100 : 0;
+    
+    return (
+      <div className="dungeon-list-item mb-2 p-2 border rounded">
+        <div className="d-flex justify-content-between align-items-center">
+          <span className="fantasy-text-dark">{dungeonName}</span>
+          <div className="text-end">
+            <div className="fantasy-text-dark">
+              {currentFloor}/{maxFloor}
+            </div>
+            <ProgressBar 
+              now={progressPercentage} 
+              variant={
+                progressPercentage >= 100 ? "success" : 
+                progressPercentage >= 50 ? "warning" : 
+                "info"
+              }
+              style={{ height: "4px", width: "100px" }}
+              className="mt-1"
+            />
+          </div>
+        </div>
+      </div>
+    );
+  });
+
   // Оптимизированные компоненты вкладок
   const renderGeneralTab = useCallback(() => {
     const guildData = guild.guildData;
@@ -518,6 +592,7 @@ const Guild = observer(() => {
                 <div className="mb-4">
                   <div className="d-flex justify-content-between align-items-start mb-2">
                     <h6 className="fantasy-text-dark mb-0">Описание гильдии:</h6>
+                    {/* Показываем кнопку редактирования только офицерам и лидеру */}
                     {(isLeader || isOfficer) && (
                       <Button 
                         variant="outline-info" 
@@ -655,15 +730,6 @@ const Guild = observer(() => {
                     <i className="fas fa-users me-2"></i>
                     Состав гильдии ({guildData.total_members || 0})
                   </h5>
-                  <Button 
-                    variant="outline-info" 
-                    size="sm"
-                    onClick={handleRefresh}
-                    disabled={isRefreshing}
-                    title="Обновить список"
-                  >
-                    <i className={`fas fa-sync-alt ${isRefreshing ? 'fa-spin' : ''}`}></i>
-                  </Button>
                 </div>
               </Card.Header>
               <Card.Body>
@@ -680,6 +746,7 @@ const Guild = observer(() => {
                     const canLeaderManage = isCurrentUserLeader && !isCurrentUser;
                     const canOfficerManage = isCurrentUserOfficer && member.role === "member" && !isCurrentUser;
                     const shouldShowActions = canLeaderManage || canOfficerManage;
+                    const canViewDetails = isCurrentUserLeader || isCurrentUserOfficer;
 
                     return (
                       <Col md={6} lg={4} key={memberId} className="mb-3">
@@ -709,17 +776,18 @@ const Guild = observer(() => {
                               </div>
                               
                               <div className="d-flex align-items-center gap-1">
-                                {/* Кнопка просмотра деталей - всегда видна */}
-                                <button
+                                {/* Кнопка просмотра деталей */}
+                                {canViewDetails && (<button
                                   className="btn btn-sm btn-outline-info"
                                   onClick={() => {
                                     setSelectedMember(member);
                                     setShowMemberDetailsModal(true);
+                                    setMemberDetailsTab("attributes");
                                   }}
                                   title="Просмотреть детали"
                                 >
                                   <i className="fas fa-chart-bar"></i>
-                                </button>
+                                </button>)}
                                 
                                 {/* Кнопка действий - только для тех, у кого есть права */}
                                 {shouldShowActions && (
@@ -1354,78 +1422,234 @@ const Guild = observer(() => {
       </Modal>
     );
   };
-
+  // Внутри renderMemberDetailsModal обновляем отображение атрибутов и навыков
   const renderMemberDetailsModal = () => {
-    if (!selectedMember) return null;
+      if (!selectedMember) return null;
 
-    return (
-      <Modal 
-        show={showMemberDetailsModal} 
-        onHide={() => setShowMemberDetailsModal(false)} 
-        size="lg" 
-        centered
-        className="fantasy-modal member-details-modal"
-        backdrop="static"
-      >
-        <Modal.Header closeButton className="fantasy-card-header fantasy-card-header-info">
-          <Modal.Title className="fantasy-text-gold">
-            <i className="fas fa-user-circle me-2"></i>
-            Детали участника
-          </Modal.Title>
-        </Modal.Header>
-        <Modal.Body className="fantasy-card">
-          <Row className="align-items-center mb-4">
-            <Col xs="auto">
-              <div className="member-details-avatar">
-                <div className={`avatar-circle-details ${selectedMember.is_online ? 'online' : 'offline'}`}>
-                  {getCharacterFallback(selectedMember.class)}
-                </div>
-              </div>
-            </Col>
-            <Col>
-              <h4 className="fantasy-text-dark mb-1">{selectedMember.name}</h4>
-              <div className="d-flex align-items-center flex-wrap gap-2">
-                <Badge bg="primary" className="fantasy-badge">
-                  Ур. {selectedMember.level}
-                </Badge>
-                <Badge bg="secondary" className="fantasy-badge">
-                  {selectedMember.class_display || translateClass(selectedMember.class)}
-                </Badge>
-                <Badge bg="info" className="fantasy-badge">
-                  {selectedMember.race_display || translateRace(selectedMember.race)}
-                </Badge>
-                <Badge 
-                  bg={selectedMember.role === 'leader' ? 'danger' : selectedMember.role === 'officer' ? 'warning' : 'secondary'}
-                  className="fantasy-badge"
-                >
-                  {selectedMember.role === 'leader' ? 'Лидер' : selectedMember.role === 'officer' ? 'Офицер' : 'Участник'}
-                </Badge>
-              </div>
-              <div className="mt-2">
-                <Badge bg={selectedMember.is_online ? 'success' : 'secondary'}>
-                  {selectedMember.is_online ? '🟢 Онлайн' : '⚫ Оффлайн'}
-                </Badge>
-                {!selectedMember.is_online && selectedMember.status_block_time && (
-                  <small className="fantasy-text-muted ms-2">
-                    ({formatOnlineStatus(selectedMember.status_block_time)})
-                  </small>
-                )}
-              </div>
-            </Col>
-          </Row>
-        </Modal.Body>
-        <Modal.Footer className="border-top border-secondary">
-          <Button 
-            variant="secondary" 
-            className="fantasy-btn"
-            onClick={() => setShowMemberDetailsModal(false)}
+      // Атрибуты и навыки уже структурированы на бэкенде
+      const attributes = selectedMember.attributes || {};
+      const skills = selectedMember.skills || {};
+      const dungeons = selectedMember.dungeons || [];
+
+      // Функция для получения цвета прогресс-бара навыков
+      const getSkillColor = (val) => {
+          if (val >= 80) return "danger";
+          if (val >= 60) return "warning";
+          if (val >= 40) return "success";
+          if (val >= 20) return "primary";
+          return "secondary";
+      };
+
+      // Маппинг для ключей атрибутов (на всякий случай, но данные уже структурированы)
+      const attributeKeys = [
+          'perception', 'strength', 'agility', 'constitution',
+          'intelligence', 'charisma', 'wisdom', 'luck'
+      ];
+
+      // Маппинг для ключей навыков
+      const skillKeys = [
+          'barter', 'intimidation', 'persuasion', 'sneak', 'observation',
+          'identification', 'knowledge', 'lockpicking', 'animal_training',
+          'athletics', 'calligraphy', 'fortitude', 'medicine', 'swords',
+          'knifes', 'axes', 'hammers', 'bows', 'staffs', 'spears',
+          'crossbows', 'throwing_weapon', 'shield'
+      ];
+
+      return (
+          <Modal 
+              show={showMemberDetailsModal} 
+              onHide={() => setShowMemberDetailsModal(false)} 
+              size="lg" 
+              centered
+              className="fantasy-modal member-details-modal"
+              backdrop="static"
           >
-            <i className="fas fa-times me-2"></i>
-            Закрыть
-          </Button>
-        </Modal.Footer>
-      </Modal>
-    );
+              <Modal.Header closeButton className="fantasy-card-header fantasy-card-header-info">
+                  <Modal.Title className="fantasy-text-gold">
+                      <i className="fas fa-user-circle me-2"></i>
+                      Детали участника
+                  </Modal.Title>
+              </Modal.Header>
+              <Modal.Body className="fantasy-card" style={{ maxHeight: '80vh', overflowY: 'auto' }}>
+                  {/* Основная информация */}
+                  <Row className="align-items-center mb-4">
+                      <Col xs="auto">
+                          <div className="member-details-avatar">
+                              <div className={`avatar-circle-details ${selectedMember.is_online ? 'online' : 'offline'}`}>
+                                  {getCharacterFallback(selectedMember.class)}
+                              </div>
+                          </div>
+                      </Col>
+                      <Col>
+                          <h4 className="fantasy-text-dark mb-1">{selectedMember.name}</h4>
+                          <div className="d-flex align-items-center flex-wrap gap-2">
+                              <Badge bg="primary" className="fantasy-badge">
+                                  Ур. {selectedMember.level || 1}
+                              </Badge>
+                              <Badge bg="secondary" className="fantasy-badge">
+                                  {selectedMember.class_display || translateClass(selectedMember.class)}
+                              </Badge>
+                              <Badge bg="info" className="fantasy-badge">
+                                  {selectedMember.race_display || translateRace(selectedMember.race)}
+                              </Badge>
+                              <Badge 
+                                  bg={selectedMember.role === 'leader' ? 'danger' : selectedMember.role === 'officer' ? 'warning' : 'secondary'}
+                                  className="fantasy-badge"
+                              >
+                                  {selectedMember.role === 'leader' ? 'Лидер' : selectedMember.role === 'officer' ? 'Офицер' : 'Участник'}
+                              </Badge>
+                          </div>
+                          <div className="mt-2">
+                              <Badge bg={selectedMember.is_online ? 'success' : 'secondary'}>
+                                  {selectedMember.is_online ? '🟢 Онлайн' : '⚫ Оффлайн'}
+                              </Badge>
+                              {!selectedMember.is_online && selectedMember.status_block_time && (
+                                  <small className="fantasy-text-muted ms-2">
+                                      ({formatOnlineStatus(selectedMember.status_block_time)})
+                                  </small>
+                              )}
+                          </div>
+                      </Col>
+                  </Row>
+
+                  {/* Вкладки для деталей */}
+                  <Tabs
+                      activeKey={memberDetailsTab}
+                      onSelect={(k) => setMemberDetailsTab(k)}
+                      className="fantasy-tabs mb-3"
+                      justify
+                  >
+                      <Tab eventKey="attributes" title={
+                          <>
+                              <i className="fas fa-chart-line me-1"></i>
+                              Атрибуты
+                          </>
+                      }>
+                          <div className="mt-3">
+                              <h5 className="fantasy-text-dark mb-3">
+                                  <i className="fas fa-chart-bar me-2"></i>
+                                  Основные атрибуты
+                              </h5>
+                              {Object.keys(attributes).length > 0 ? (
+                                  <div className="fantasy-attributes-grid">
+                                      {attributeKeys.map(key => {
+                                          const attr = attributes[key];
+                                          if (!attr) return null;
+                                          
+                                          return (
+                                              <div key={key} className="fantasy-attribute-item">
+                                                  <div className="attribute-content">
+                                                      <span className="fantasy-attribute-key">
+                                                          {attr.icon} {attr.name}
+                                                      </span>
+                                                      <Badge className="fantasy-badge fantasy-badge-muted">
+                                                          {attr.display_string || `${attr.total} (${attr.mod}), ${attr.base} + ${attr.increase}`}
+                                                      </Badge>
+                                                  </div>
+                                              </div>
+                                          );
+                                      })}
+                                  </div>
+                              ) : (
+                                  <Alert variant="info" className="fantasy-alert">
+                                      <i className="fas fa-info-circle me-2"></i>
+                                      Нет информации об атрибутах
+                                  </Alert>
+                              )}
+                          </div>
+                      </Tab>
+                      
+                      <Tab eventKey="skills" title={
+                          <>
+                              <i className="fas fa-tools me-1"></i>
+                              Навыки
+                          </>
+                      }>
+                          <div className="mt-3">
+                              <h5 className="fantasy-text-dark mb-3">
+                                  <i className="fas fa-cogs me-2"></i>
+                                  Навыки и умения
+                              </h5>
+                              {Object.keys(skills).length > 0 ? (
+                                  <div className="fantasy-attributes-grid">
+                                      {skillKeys.map(key => {
+                                          const skill = skills[key];
+                                          if (!skill) return null;
+                                          
+                                          return (
+                                              <div key={key} className="fantasy-attribute-item">
+                                                  <div className="attribute-content">
+                                                      <span className="fantasy-attribute-key">
+                                                          {skill.icon} {skill.name}
+                                                      </span>
+                                                      <div className="d-flex align-items-center" style={{ minWidth: '100px' }}>
+                                                          <Badge className="fantasy-badge fantasy-badge-muted me-2">
+                                                              {skill.value}
+                                                          </Badge>
+                                                          <ProgressBar
+                                                              now={skill.value}
+                                                              max={100}
+                                                              variant={getSkillColor(skill.value)}
+                                                              style={{ flexGrow: 1, height: '6px' }}
+                                                          />
+                                                      </div>
+                                                  </div>
+                                              </div>
+                                          );
+                                      })}
+                                  </div>
+                              ) : (
+                                  <Alert variant="info" className="fantasy-alert">
+                                      <i className="fas fa-info-circle me-2"></i>
+                                      Нет информации о навыках
+                                  </Alert>
+                              )}
+                          </div>
+                      </Tab>
+                      
+                      <Tab eventKey="dungeons" title={
+                          <>
+                              <i className="fas fa-dungeon me-1"></i>
+                              Подземелья
+                          </>
+                      }>
+                          <div className="mt-3">
+                              <h5 className="fantasy-text-dark mb-3">
+                                  <i className="fas fa-dungeon me-2"></i>
+                                  Прогресс в подземельях
+                              </h5>
+                              {dungeons.length > 0 ? (
+                                  <div className="dungeons-list">
+                                      {dungeons.map((dungeon) => (
+                                          <DungeonProgressItem 
+                                              key={dungeon.key}
+                                              dungeon={dungeon}
+                                              translateDungeon={translateDungeon}
+                                          />
+                                      ))}                    
+                                  </div>
+                              ) : (
+                                  <Alert variant="info" className="fantasy-alert">
+                                      <i className="fas fa-info-circle me-2"></i>
+                                      Нет информации о подземельях
+                                  </Alert>
+                              )}
+                          </div>
+                      </Tab>
+                  </Tabs>
+              </Modal.Body>
+              <Modal.Footer className="border-top border-secondary">
+                  <Button 
+                      variant="secondary" 
+                      className="fantasy-btn"
+                      onClick={() => setShowMemberDetailsModal(false)}
+                  >
+                      <i className="fas fa-times me-2"></i>
+                      Закрыть
+                  </Button>
+              </Modal.Footer>
+          </Modal>
+      );
   };
 
   if (guild.loading && !isRefreshing) {
@@ -1491,6 +1715,22 @@ const Guild = observer(() => {
             <Card className="fantasy-card">
               <Card.Body className="text-center">
                 <i className="fas fa-castle fa-3x text-muted mb-3"></i>
+                <p className="fantasy-text-muted">Вы не состоите в гильдии</p>
+              </Card.Body>
+            </Card>
+          )}
+        </Tab>
+
+        <Tab eventKey="settlements" title={
+          <>
+            <i className="fas fa-home me-2"></i>
+            Поселения
+          </>
+        }>
+          {guild.hasGuild ? <SettlementComponent /> : (
+            <Card className="fantasy-card">
+              <Card.Body className="text-center">
+                <i className="fas fa-home fa-3x text-muted mb-3"></i>
                 <p className="fantasy-text-muted">Вы не состоите в гильдии</p>
               </Card.Body>
             </Card>
