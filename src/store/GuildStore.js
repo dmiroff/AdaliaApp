@@ -1,20 +1,25 @@
-// GuildStore.js
 import { makeAutoObservable } from "mobx";
+import { GetGuildData } from "../http/guildService";
 
 export default class GuildStore {
     constructor() {
         this._guildData = null;
         this._members = [];
         this._selectedMember = null;
-        this._selectedCastle = null; // Новое поле для выбранного замка
+        this._selectedCastle = null;
         this._leaderboard = null;
         this._loading = false;
         this._error = null;
         this._lastUpdated = null;
+        this._isInitialized = false;
         makeAutoObservable(this);
     }
 
     setGuildData(guildData) {
+        // Нормализуем данные: если есть guild_id, добавляем его как id
+        if (guildData && guildData.guild_id) {
+            guildData.id = guildData.guild_id;
+        }
         this._guildData = guildData;
         this._lastUpdated = new Date().toISOString();
     }
@@ -27,7 +32,7 @@ export default class GuildStore {
         this._selectedMember = member;
     }
 
-    setSelectedCastle(castle) { // Новый setter
+    setSelectedCastle(castle) {
         this._selectedCastle = castle;
     }
 
@@ -43,6 +48,10 @@ export default class GuildStore {
         this._error = error;
     }
 
+    setIsInitialized(initialized) {
+        this._isInitialized = initialized;
+    }
+
     // Геттеры
     get guildData() {
         return this._guildData;
@@ -56,7 +65,7 @@ export default class GuildStore {
         return this._selectedMember;
     }
 
-    get selectedCastle() { // Новый геттер
+    get selectedCastle() {
         return this._selectedCastle;
     }
 
@@ -76,9 +85,13 @@ export default class GuildStore {
         return this._lastUpdated;
     }
 
+    get isInitialized() {
+        return this._isInitialized;
+    }
+
     // Проверить, есть ли данные гильдии
     get hasGuild() {
-        return !!this._guildData?.has_guild;
+        return !!this._guildData && this._guildData.has_guild !== false;
     }
 
     // Получить члена по ID
@@ -92,7 +105,7 @@ export default class GuildStore {
     }
 
     // Получить замок по ID
-    getCastleById(castleId) { // Новый метод
+    getCastleById(castleId) {
         if (!this._guildData?.castles) return null;
         return this._guildData.castles.find(castle => castle.id === castleId);
     }
@@ -114,20 +127,21 @@ export default class GuildStore {
 
     // Получить статистику гильдии
     get statistics() {
+        const members = this._members || [];
         return {
-            totalMembers: this._members.length,
+            totalMembers: members.length,
             onlineMembers: this.onlineMembers.length,
-            offlineMembers: this._members.length - this.onlineMembers.length,
-            averageLevel: this._members.length > 0 
-                ? Math.round(this._members.reduce((sum, m) => sum + m.level, 0) / this._members.length) 
+            offlineMembers: members.length - this.onlineMembers.length,
+            averageLevel: members.length > 0 
+                ? Math.round(members.reduce((sum, m) => sum + (m.level || 0), 0) / members.length) 
                 : 0,
-            totalStrength: this._members.reduce((sum, m) => sum + (m.strength || 0), 0),
-            totalAgility: this._members.reduce((sum, m) => sum + (m.agility || 0), 0)
+            totalStrength: members.reduce((sum, m) => sum + (m.strength || 0), 0),
+            totalAgility: members.reduce((sum, m) => sum + (m.agility || 0), 0)
         };
     }
 
     // Получить статистику по замкам
-    get castlesStatistics() { // Новый метод
+    get castlesStatistics() {
         if (!this._guildData?.castles) return null;
         
         const castles = this._guildData.castles;
@@ -137,10 +151,10 @@ export default class GuildStore {
             totalStorageUsed: castles.reduce((sum, c) => sum + (c.current_weight || 0), 0),
             totalStorageItems: castles.reduce((sum, c) => sum + (c.storage_items_count || 0), 0),
             totalWorkers: castles.reduce((sum, c) => {
-                const workers = c.workers_wood?.length || 0 + 
-                              c.workers_stone?.length || 0 + 
-                              c.workers_steel?.length || 0 + 
-                              c.workers_glass?.length || 0;
+                const workers = (c.workers_wood?.length || 0) + 
+                              (c.workers_stone?.length || 0) + 
+                              (c.workers_steel?.length || 0) + 
+                              (c.workers_glass?.length || 0);
                 return sum + workers;
             }, 0),
             castles: castles.map(castle => ({
@@ -198,9 +212,80 @@ export default class GuildStore {
         this._guildData = null;
         this._members = [];
         this._selectedMember = null;
-        this._selectedCastle = null; // Очищаем выбранный замок
+        this._selectedCastle = null;
         this._leaderboard = null;
         this._error = null;
         this._lastUpdated = null;
+        this._isInitialized = false;
+    }
+
+    async fetchGuildData() {
+        if (this._loading) {
+            console.log('⚠️ Загрузка уже выполняется');
+            return false;
+        }
+
+        this.setLoading(true);
+        this.setError(null);
+        
+        try {
+            console.log('🔄 Загрузка данных гильдии...');
+            const response = await GetGuildData();
+            console.log('📊 Ответ от сервера (гильдия):', response);
+            
+            if (response.status === 200) {
+                const guildData = response.data;
+                console.log('📋 Данные гильдии:', guildData);
+                
+                if (guildData) {
+                    // Нормализуем данные перед сохранением
+                    const normalizedData = { ...guildData };
+                    if (guildData.guild_id && !guildData.id) {
+                        normalizedData.id = guildData.guild_id;
+                    }
+                    
+                    this.setGuildData(normalizedData);
+                    
+                    // Если есть члены гильдии, устанавливаем их
+                    if (guildData.members && Array.isArray(guildData.members)) {
+                        this.setMembers(guildData.members);
+                    }
+                    
+                    console.log(`✅ Данные гильдии загружены: ${guildData.name || 'Без названия'}`);
+                    console.log(`📌 ID гильдии: ${normalizedData.id || 'нет'}`);
+                    console.log(`📌 guild_id: ${guildData.guild_id}`);
+                    console.log(`📌 has_guild: ${guildData.has_guild}`);
+                    
+                    this.setIsInitialized(true);
+                    
+                    // Возвращаем true только если есть гильдия
+                    return !!guildData.has_guild;
+                } else {
+                    console.warn('⚠️ Данные гильдии неполные или отсутствуют');
+                    this.setGuildData(null);
+                    this.setMembers([]);
+                    this.setIsInitialized(true);
+                    return false;
+                }
+            } else if (response.status === 404) {
+                console.log('ℹ️ У пользователя нет гильдии (404)');
+                this.setGuildData(null);
+                this.setMembers([]);
+                this.setIsInitialized(true);
+                return false;
+            } else {
+                console.error('❌ Ошибка при загрузке гильдии:', response.message);
+                this.setError(response.message || 'Ошибка загрузки данных гильдии');
+                this.setIsInitialized(true);
+                return false;
+            }
+        } catch (error) {
+            console.error('❌ Исключение при загрузке гильдии:', error);
+            this.setError(error.message || 'Произошла ошибка при загрузке данных гильдии');
+            this.setIsInitialized(true);
+            return false;
+        } finally {
+            this.setLoading(false);
+        }
     }
 }

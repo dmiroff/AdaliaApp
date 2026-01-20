@@ -1306,15 +1306,12 @@ const CastleStorage = observer(() => {
     const hasCastleAccess = activeCastle.allowed_to_enter || false;
     const isGuildMember = guild.guildData?.player_role !== null;
     
-    if (hasCastleAccess && isGuildMember) {
+    if (isGuildMember) {
       setHasAccess(true);
       setAccessReason("Доступ разрешен - вы являетесь членом гильдии");
-    } else if (!hasCastleAccess) {
-      setHasAccess(false);
-      setAccessReason("Доступ запрещен - вы не можете войти в этот замок");
     } else {
       setHasAccess(false);
-      setAccessReason("Доступ запрещен - вы не состоите в гильдии");
+      setAccessReason("Доступ запрещён - вы не состоите в гильдии");
     }
   }, [activeCastle, guild.guildData]);
 

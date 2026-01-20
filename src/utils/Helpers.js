@@ -318,3 +318,36 @@ export const abilities_descriptions = {
 export const attributes_dict = {"perception": "Восприятие", "strength": "Сила", "agility": "Ловкость",
 "constitution": "Выносливость", "intelligence": "Интеллект", "charisma": "Харизма",
 "wisdom": "Мудрость", "luck": "Удача"}
+
+export const RESOURCE_CODES = {
+    "112": { name: "Железная руда", icon: "fa-mountain" },
+    "114": { name: "Бревно", icon: "fa-tree" },
+    "115": { name: "Мешок угля", icon: "fa-coal" },
+    "116": { name: "Песчаник", icon: "fa-hill-rockslide" },
+    "117": { name: "Мешок песка", icon: "fa-filter" },
+    "118": { name: "Стекло", icon: "fa-wine-glass" },
+    "119": { name: "Доска", icon: "fa-border-all" },
+    "120": { name: "Сталь", icon: "fa-industry" },
+    "121": { name: "Каменный блок", icon: "fa-cube" },
+    "essence": { name: "Воплощение", icon: "fa-heart" },
+    "leather_t1": { name: "Кожа Т1", icon: "fa-leather" },
+    "leather_t2": { name: "Кожа Т2", icon: "fa-leather" },
+    "leather_t3": { name: "Кожа Т3", icon: "fa-leather" },
+};
+
+export const SETTLEMENT_TYPES = {
+    "death": "Смерть",
+    "fire": "Огонь",
+    "water": "Вода",
+    "earth": "Земля",
+    "air": "Воздух",
+    "lighting": "Молния"
+};
+
+export const BUILDING_ACTIONS = {
+    "build": "Построить/Улучшить",
+    "repair": "Ремонтировать",
+    "hire": "Нанять юнитов",
+    "ritual": "Провести ритуал",
+    "storage": "Управление складом"
+};

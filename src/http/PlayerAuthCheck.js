@@ -1,26 +1,43 @@
 import { SERVER_APP_API_URL } from "../utils/constants";
-import {$authHost} from '../http/index';
 
 const PlayerAuthCheck = async (playerId, token) => {
-  // Returns a boolean to indicate if a player is authorized
-
   try {
-    const response = await $authHost.post(SERVER_APP_API_URL + '/login', {
-      "player_id": playerId,
-      "token": token,
+    console.log(`🔐 Запрос аутентификации для игрока ID: ${playerId}`);
+    
+    // Создаем базовый URL для запроса
+    const apiUrl = SERVER_APP_API_URL;
+    
+    const response = await fetch(`${apiUrl}/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'skip_zrok_interstitial': 'true'
+      },
+      body: JSON.stringify({
+        "player_id": parseInt(playerId),
+        "token": token,
+      })
     });
 
-    if (response.status === 200 && response.data.access_token) {
-      localStorage.setItem("id", playerId)
-      localStorage.setItem("token", token)
-      localStorage.setItem("access_token", response.data.access_token)
-      return true; // Authorization successful
+    if (response.status === 200) {
+      const data = await response.json();
+      
+      if (data.access_token) {
+        // Сохраняем данные в localStorage
+        localStorage.setItem("id", playerId);
+        localStorage.setItem("token", token);
+        localStorage.setItem("access_token", data.access_token);
+        
+        console.log("✅ Токен сохранен в localStorage");
+        return true;
+      }
     } else {
-      return false; // Not authorized
+      console.error(`❌ Ошибка сервера: ${response.status}`);
+      return false;
     }
   } catch (error) {
-    console.error("Error checking player authorization:", error);
-    return false; // Authorization failed due to error
+    console.error("❌ Ошибка проверки авторизации:", error);
+    return false;
   }
 };
 

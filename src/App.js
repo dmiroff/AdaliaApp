@@ -2,13 +2,12 @@ import React from 'react';
 import { BrowserRouter } from 'react-router-dom';
 import AppRouter from './components/AppRouter';
 import NavBar from './components/NavBar';
-import Footer from './components/Footer'; // Импорт футера
-import { observer } from 'mobx-react-lite';
+import Footer from './components/Footer';
 import { Container } from 'react-bootstrap';
 import backgroundImage from './assets/Images/background.webp';
 import './App.css';
 
-const App = observer(() => {
+const App = () => {
   const appStyle = {
     backgroundImage: `url(${backgroundImage})`,
     backgroundSize: 'cover',
@@ -31,6 +30,6 @@ const App = observer(() => {
       </BrowserRouter>
     </div>
   );
-});
+};
 
 export default App;

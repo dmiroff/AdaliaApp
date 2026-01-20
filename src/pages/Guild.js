@@ -31,7 +31,7 @@ import {
 import { dict_translator, attributes_dict } from "../utils/Helpers";
 import "./Guild.css";
 import CastleStorage from "../components/CastleStorage";
-import SettlementComponent from "../components/SettlementComponent";
+import SettlementComponent from "../components/settlement_tabs/SettlementComponent";
 
 // Константы вынесены за компонент для предотвращения пересоздания
 const DUNGEON_TRANSLATIONS = {
