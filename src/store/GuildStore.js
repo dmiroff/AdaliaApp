@@ -251,11 +251,6 @@ export default class GuildStore {
                         this.setMembers(guildData.members);
                     }
                     
-                    console.log(`✅ Данные гильдии загружены: ${guildData.name || 'Без названия'}`);
-                    console.log(`📌 ID гильдии: ${normalizedData.id || 'нет'}`);
-                    console.log(`📌 guild_id: ${guildData.guild_id}`);
-                    console.log(`📌 has_guild: ${guildData.has_guild}`);
-                    
                     this.setIsInitialized(true);
                     
                     // Возвращаем true только если есть гильдия
@@ -268,7 +263,6 @@ export default class GuildStore {
                     return false;
                 }
             } else if (response.status === 404) {
-                console.log('ℹ️ У пользователя нет гильдии (404)');
                 this.setGuildData(null);
                 this.setMembers([]);
                 this.setIsInitialized(true);

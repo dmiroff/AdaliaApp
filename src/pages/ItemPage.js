@@ -41,7 +41,6 @@ const Item = () => {
         setLoading(true);
         const data = await GetItemById(num);
         if (isMounted) {
-          console.log(data.data);
           setItemData(data.data);
           setImageSrc(data.data.Image ? `/assets/Images/${data.data.Image.split("Images/")[1].replace(/\.(png|jpg|jpeg)$/, '.webp')}` : exampleImage);
         }

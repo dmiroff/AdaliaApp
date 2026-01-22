@@ -61,9 +61,7 @@ export const MassSellModal = ({ show, onClose, selectedItems, inventory, onSucce
     
     setLoading(true);
     try {
-      console.log('Начинаем массовую продажу...');
       const result = await MassSellItems(itemsToSubmit);
-      console.log('Массовая продажа успешна:', result);
       
       alert(result.message || 'Предметы успешно проданы!');
       
@@ -384,9 +382,7 @@ export const MassTransferModal = ({ show, onClose, selectedItems, inventory, onS
     
     setLoading(true);
     try {
-      console.log('Начинаем массовую передачу...');
       const result = await MassTransferItems(recipientName, itemsToSubmit);
-      console.log('Массовая передача успешна:', result);
       
       alert(result.message || 'Предметы успешно переданы!');
       

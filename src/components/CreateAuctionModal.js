@@ -32,7 +32,6 @@ const CreateAuctionModal = ({ show, onHide, onCreate, playerData, inventoryItems
       setSearchQuery("");
       setLoading(false);
       setFilteredItems(inventoryItems || []);
-      console.log("CreateAuctionModal opened with inventory items:", inventoryItems);
     }
   }, [show, inventoryItems]);
 

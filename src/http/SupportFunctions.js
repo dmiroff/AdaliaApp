@@ -1,15 +1,5 @@
-
-import axios from "axios";
+import apiClient from "./apiClient";
 import { SERVER_APP_API_URL } from "../utils/constants";
-
-// Create a custom axios instance with default headers
-const apiClient = axios.create({
-  baseURL: SERVER_APP_API_URL,
-  headers: {
-    'skip_zrok_interstitial': 'true',
-    'Authorization': `Bearer ${localStorage.getItem("access_token")}`
-  }
-});
 
 // Define and export the function
 export const WearDataById = async (itemId) => {
@@ -71,7 +61,6 @@ export const UnwearDataById = async (itemId) => {
 // Массовая передача предметов - ГОТОВАЯ ФУНКЦИЯ
 export const MassTransferItems = async (recipientName, items) => {
   try {
-    console.log('MassTransferItems called with:', { recipientName, items });
     
     const requestData = {
       recipient_name: recipientName,
@@ -81,10 +70,7 @@ export const MassTransferItems = async (recipientName, items) => {
       }))
     };
     
-    console.log('Request data:', requestData);
-    
     const response = await apiClient.post(`${SERVER_APP_API_URL}/inventory/mass-transfer`, requestData);
-    console.log('Response:', response.data);
     return response.data;
   } catch (error) {
     console.error('Mass transfer error details:', error);
@@ -96,7 +82,6 @@ export const MassTransferItems = async (recipientName, items) => {
 // Массовая продажа предметов - ГОТОВАЯ ФУНКЦИЯ
 export const MassSellItems = async (items) => {
   try {
-    console.log('MassSellItems called with items:', items);
     
     const requestData = {
       items: items.map(item => ({
@@ -105,10 +90,8 @@ export const MassSellItems = async (items) => {
       }))
     };
     
-    console.log('Request data:', requestData);
     
     const response = await apiClient.post(`${SERVER_APP_API_URL}/inventory/mass-sell`, requestData);
-    console.log('Response:', response.data);
     return response.data;
   } catch (error) {
     console.error('Mass sell error details:', error);
@@ -120,7 +103,6 @@ export const MassSellItems = async (items) => {
 // Массовое выбрасывание предметов - ГОТОВАЯ ФУНКЦИЯ
 export const MassDropItems = async (items) => {
   try {
-    console.log('MassDropItems called with items:', items);
     
     const requestData = {
       items: items.map(item => ({
@@ -129,10 +111,8 @@ export const MassDropItems = async (items) => {
       }))
     };
     
-    console.log('Request data:', requestData);
     
     const response = await apiClient.post(`${SERVER_APP_API_URL}/inventory/mass-drop`, requestData);
-    console.log('Response:', response.data);
     return response.data;
   } catch (error) {
     console.error('Mass drop error details:', error);

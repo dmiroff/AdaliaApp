@@ -1,13 +1,4 @@
-import axios from "axios";
-import { SERVER_APP_API_URL } from "../utils/constants";
-
-const apiClient = axios.create({
-  baseURL: SERVER_APP_API_URL,
-  headers: {
-    'skip_zrok_interstitial': 'true',
-    'Authorization': `Bearer ${localStorage.getItem("access_token")}`
-  }
-});
+import apiClient from "./apiClient";
 
 // Дебаунс для поиска (если нужно на фронтенде)
 let searchTimeout;
@@ -45,7 +36,6 @@ export const debouncedSearchItemByName = (itemName, delay = 500) => {
 export const fetchBuyRequests = async () => {
   try {
     const response = await apiClient.get(`/bulk-purchase/requests`);
-    console.log("Buy requests API response:", response.data);
     
     if (Array.isArray(response.data)) {
       return response.data;

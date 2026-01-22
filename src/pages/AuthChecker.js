@@ -1,10 +1,11 @@
 import React, { useEffect, useContext } from 'react';
-import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
-import PlayerAuthCheck from "../http/PlayerAuthCheck"; // Import PlayerAuthCheck
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Context } from '../index';
+import { refreshAccessToken, verifyToken } from '../http/PlayerAuthCheck';
 
 const AuthChecker = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user } = useContext(Context);
 
   useEffect(() => {

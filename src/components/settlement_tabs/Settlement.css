@@ -1,0 +1,169 @@
+/* SettlementOverview */
+.settlement-overview .fantasy-card {
+    border: 1px solid #2c3e50;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+.settlement-overview .fantasy-card-header {
+    background: linear-gradient(90deg, #3498db 0%, #2c3e50 100%);
+    border-bottom: 2px solid #3498db;
+    padding: 0.75rem 1.25rem;
+}
+
+.settlement-overview .fantasy-text-gold {
+    color: #f1c40f;
+    text-shadow: 0 0 10px rgba(241, 196, 15, 0.3);
+}
+
+.settlement-overview .fantasy-text-dark {
+    color: #ecf0f1;
+}
+
+.settlement-overview .fantasy-text-muted {
+    color: #95a5a6;
+}
+
+.settlement-overview .stat-item {
+    padding: 10px;
+}
+
+.settlement-overview .stat-value {
+    font-size: 2rem;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.settlement-overview .stat-label {
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.settlement-overview .info-item {
+    padding: 10px;
+    border-radius: 5px;
+    background: rgba(44, 62, 80, 0.5);
+    transition: all 0.3s ease;
+}
+
+.settlement-overview .info-item:hover {
+    background: rgba(52, 152, 219, 0.2);
+    transform: translateY(-2px);
+}
+
+.settlement-overview .refresh-btn {
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.settlement-overview .refresh-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* SettlementGarrison */
+.fantasy-tabs .nav-link {
+    color: #bdc3c7;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.fantasy-tabs .nav-link.active {
+    color: #f1c40f;
+    background: rgba(52, 152, 219, 0.2);
+    border-bottom: 3px solid #f1c40f;
+}
+
+.fantasy-tabs .nav-link:hover:not(.active) {
+    color: #ecf0f1;
+    background: rgba(52, 152, 219, 0.1);
+}
+
+/* Модальные окна */
+.fantasy-modal .modal-content {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    border: 2px solid #3498db;
+    border-radius: 10px;
+}
+
+.fantasy-modal .modal-header {
+    border-bottom: 2px solid #3498db;
+}
+
+.fantasy-modal .fantasy-card-header-primary {
+    background: linear-gradient(90deg, #3498db 0%, #2980b9 100%);
+}
+
+.fantasy-modal .fantasy-card-header-success {
+    background: linear-gradient(90deg, #27ae60 0%, #2ecc71 100%);
+}
+
+/* Кнопки уровней оснащения */
+.tier-btn {
+    min-width: 80px;
+    transition: all 0.3s ease;
+}
+
+.tier-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Ресурсы */
+.resource-item {
+    background: rgba(44, 62, 80, 0.5);
+    transition: all 0.3s ease;
+}
+
+.resource-item:hover {
+    background: rgba(52, 152, 219, 0.2);
+}
+
+/* Прогресс бары */
+.progress {
+    background-color: rgba(52, 152, 219, 0.2);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    border-radius: 10px;
+    transition: width 0.3s ease;
+}
+
+/* Бейджи */
+.badge {
+    font-weight: 500;
+    letter-spacing: 0.5px;
+}
+
+/* Карточки юнитов */
+.fantasy-card {
+    transition: all 0.3s ease;
+    border: 1px solid rgba(52, 152, 219, 0.3);
+}
+
+.fantasy-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+    border-color: #3498db;
+}
+
+.fantasy-card-header {
+    border-bottom: 1px solid rgba(52, 152, 219, 0.3);
+}
+
+.fantasy-btn {
+    border: 1px solid #3498db;
+    color: #3498db;
+    transition: all 0.3s ease;
+}
+
+.fantasy-btn:hover {
+    background: #3498db;
+    color: white;
+    transform: translateY(-2px);
+}

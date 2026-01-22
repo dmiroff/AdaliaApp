@@ -49,12 +49,10 @@ const AuctionTab = observer(() => {
         const playerDataResponse = await GetDataById();
         
         if (playerDataResponse && playerDataResponse.data) {
-          console.log("Player data loaded:", playerDataResponse.data);
           setPlayerData(playerDataResponse.data);
           
           // Защищенная установка инвентаря как в InventoryList
           const safeInventory = playerDataResponse.data.inventory_new || {};
-          console.log("Inventory data:", safeInventory);
           user.setPlayerInventory(safeInventory);
           setUserInventory(safeInventory);
           user.setPlayer(playerDataResponse.data);
@@ -79,9 +77,7 @@ const AuctionTab = observer(() => {
       if (!dataLoaded) return;
       
       try {
-        console.log("Loading auction lots...");
         const lots = await fetchAuctionLots();
-        console.log("Auction lots loaded:", lots);
         setAuctionLots(lots);
       } catch (error) {
         console.error("Error fetching auction lots:", error);
@@ -209,10 +205,8 @@ const AuctionTab = observer(() => {
 
   // ПРЕОБРАЗОВАНИЕ ИНВЕНТАРЯ В МАССИВ С ПОДРОБНОЙ ОТЛАДКОЙ
   const inventoryArray = React.useMemo(() => {
-    console.log("Converting userInventory to array:", userInventory);
     
     if (!userInventory || Object.keys(userInventory).length === 0) {
-        console.log("userInventory is empty");
         return [];
     }
 
@@ -230,7 +224,6 @@ const AuctionTab = observer(() => {
         ...(data || {}) // Защита от undefined data
     }));
 
-    console.log("Final inventoryArray (InventoryList method):", itemObjects);
     return itemObjects;
     }, [userInventory]);
 

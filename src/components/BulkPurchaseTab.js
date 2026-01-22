@@ -73,7 +73,6 @@ const BulkPurchaseTab = observer(() => {
     
     try {
       setLoading(true);
-      console.log("Loading player data...");
       const playerDataResponse = await GetDataById();
       
       if (playerDataResponse && playerDataResponse.data) {
@@ -84,7 +83,6 @@ const BulkPurchaseTab = observer(() => {
         user.setPlayer(playerDataResponse.data);
         setDataLoaded(true);
         hasLoadedPlayerData.current = true;
-        console.log("Player data loaded successfully");
       }
     } catch (error) {
       console.error("Error fetching player data:", error);
@@ -104,9 +102,7 @@ const BulkPurchaseTab = observer(() => {
     if (hasLoadedRequests.current && !forceRefresh) return;
     
     try {
-      console.log("Loading buy requests...");
       const requests = await fetchBuyRequests();
-      console.log(`Buy requests loaded: ${requests.length} items`);
       
       const safeRequests = Array.isArray(requests) ? requests : [];
       setBuyRequests(safeRequests);
@@ -128,9 +124,7 @@ const BulkPurchaseTab = observer(() => {
     if (hasLoadedStorage.current && !forceRefresh) return;
     
     try {
-      console.log("Loading storage data...");
       const storage = await getPlayerStorage();
-      console.log(`Storage data loaded: ${storage?.data?.items?.length || 0} items`);
       
       const safeStorage = Array.isArray(storage?.data?.items) ? storage.data.items : [];
       setStorageData(safeStorage);
@@ -172,7 +166,6 @@ const BulkPurchaseTab = observer(() => {
         user.setPlayerInventory(safeInventory);
         setUserInventory(safeInventory);
         user.setPlayer(playerDataResponse.data);
-        console.log("User data updated");
       }
     } catch (error) {
       console.error("Error updating user data:", error);

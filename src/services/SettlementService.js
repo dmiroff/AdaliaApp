@@ -17,7 +17,6 @@ const getAuthHeaders = () => {
 // Получить данные поселения
 export const getSettlementData = async (guildId) => {
   try {
-    console.log(`🔄 Запрос данных поселения для гильдии ${guildId}`);
     
     const headers = getAuthHeaders();
     if (!headers.Authorization) {
@@ -32,8 +31,6 @@ export const getSettlementData = async (guildId) => {
     const response = await apiClient.get(`/guild/${guildId}/settlement`, {
       headers
     });
-    
-    console.log(`✅ Данные поселения получены:`, response.data);
     
     return {
       status: response.status,
@@ -202,11 +199,211 @@ export const getBuildingRequirements = async (guildId, buildingKey, targetLevel)
   }
 };
 
+// Функция для найма юнитов
+export const hireUnit = async (guildId, buildingKey, quantity, tier, unitName, unitId = null) => {
+  try {
+    console.log(`🔄 Запрос найма юнитов для гильдии ${guildId}`);
+    
+    const requestData = {
+      buildingKey: buildingKey,
+      quantity: quantity,
+      tier: tier,
+      unitName: unitName
+    };
+    
+    // Добавляем unitId, если указан
+    if (unitId !== null) {
+      requestData.unitId = unitId;
+    }
+    
+    const response = await apiClient.post(
+      `/guild/${guildId}/settlement/hire-unit`,  // Исправлено: settlement (единственное число)
+      requestData,
+      {
+        headers: getAuthHeaders()
+      }
+    );
+    
+    return {
+      status: response.status,
+      data: response.data.data || response.data,
+      message: response.data.message || "Наем юнитов начат"
+    };
+  } catch (error) {
+    console.error("❌ Ошибка найма юнитов:", error);
+    
+    if (error.response?.status === 401) {
+      return {
+        status: 401,
+        message: "Требуется авторизация",
+        data: null
+      };
+    }
+    
+    if (error.response?.status === 404) {
+      return {
+        status: 404,
+        message: "Эндпоинт не найден. Проверьте URL и параметры запроса",
+        data: null
+      };
+    }
+    
+    return {
+      status: error.response?.status || 500,
+      message: error.response?.data?.message || error.response?.data?.detail || "Ошибка найма юнитов",
+      data: error.response?.data?.data || null
+    };
+  }
+};
+
+// Функция для взятия юнитов из гарнизона
+export const takeFromGarrison = async (guildId, unitNameWithTier, amount = 1) => {
+  try {
+    console.log(`🔄 Запрос взять юнитов из гарнизона: ${unitNameWithTier} x${amount}`);
+    
+    const response = await apiClient.post(
+      `/guild/${guildId}/settlement/take-from-garrison`,
+      { 
+        unit_name_with_tier: unitNameWithTier,
+        amount: amount
+      },
+      {
+        headers: getAuthHeaders()
+      }
+    );
+    
+    return {
+      status: response.status,
+      data: response.data.data || response.data,
+      message: response.data.message || "Юниты взяты из гарнизона"
+    };
+  } catch (error) {
+    console.error("❌ Ошибка взятия юнитов из гарнизона:", error);
+    
+    if (error.response?.status === 404) {
+      return {
+        status: 404,
+        message: "Эндпоинт не найден. Проверьте URL и параметры запроса",
+        data: null
+      };
+    }
+    
+    return {
+      status: error.response?.status || 500,
+      message: error.response?.data?.message || error.response?.data?.detail || "Ошибка взятия юнитов",
+      data: error.response?.data?.data || null
+    };
+  }
+};
+
+// Функция для перемещения юнита в гарнизон
+export const moveToGarrison = async (guildId, unitId, amount = 1) => {
+  try {
+    console.log(`🔄 Запрос перемещения юнита в гарнизон: ${unitId} x${amount}`);
+    
+    const response = await apiClient.post(
+      `/guild/${guildId}/settlement/move-to-garrison`,  // Уже правильный
+      { 
+        unit_id: unitId,
+        amount: amount
+      },
+      {
+        headers: getAuthHeaders()
+      }
+    );
+    
+    return {
+      status: response.status,
+      data: response.data.data || response.data,
+      message: response.data.message || "Юнит перемещен в гарнизон"
+    };
+  } catch (error) {
+    console.error("❌ Ошибка перемещения юнита в гарнизон:", error);
+    
+    return {
+      status: error.response?.status || 500,
+      message: error.response?.data?.message || error.response?.data?.detail || "Ошибка перемещения юнита",
+      data: error.response?.data?.data || null
+    };
+  }
+};
+
+// Добавить предметы в хранилище поселения
+export const addItemsToSettlementStorage = async (guildId, items) => {
+  try {
+    console.log(`🔄 Добавление предметов в хранилище гильдии ${guildId}`);
+    
+    const response = await apiClient.post(
+      `/guild/${guildId}/settlements/storage/add-items`,
+      { items: items },
+      {
+        headers: getAuthHeaders()
+      }
+    );
+    
+    return {
+      status: response.status,
+      data: response.data.data || response.data,
+      message: response.data.message || "Предметы добавлены в хранилище"
+    };
+  } catch (error) {
+    console.error("❌ Ошибка добавления предметов в хранилище:", error);
+    
+    return {
+      status: error.response?.status || 500,
+      message: error.response?.data?.message || error.response?.data?.detail || "Ошибка добавления предметов",
+      data: error.response?.data?.data || null
+    };
+  }
+};
+
+// Функция для получения данных гарнизона
+export const getGarrisonData = async (guildId) => {
+  try {
+    console.log(`🔄 Запрос данных гарнизона для гильдии ${guildId}`);
+    
+    const response = await apiClient.get(
+      `/guild/${guildId}/settlement/garrison`,
+      {
+        headers: getAuthHeaders()
+      }
+    );
+    
+    return {
+      status: response.status,
+      data: response.data.data || response.data,
+      message: response.data.message || "Данные гарнизона получены"
+    };
+  } catch (error) {
+    console.error("❌ Ошибка получения данных гарнизона:", error);
+    
+    if (error.response?.status === 404) {
+      return {
+        status: 404,
+        message: "Гарнизон не найден",
+        data: null
+      };
+    }
+    
+    return {
+      status: error.response?.status || 500,
+      message: error.response?.data?.message || error.response?.data?.detail || "Ошибка загрузки гарнизона",
+      data: error.response?.data?.data || null
+    };
+  }
+};
+
+// Обновите объект settlementService
 export const settlementService = {
   getSettlementData,
   getBuildingsData,
   constructBuilding,
   addConstructionResources,
   cancelConstruction,
-  getBuildingRequirements
+  getBuildingRequirements,
+  hireUnit,
+  addItemsToSettlementStorage,
+  takeFromGarrison,
+  moveToGarrison,
+  getGarrisonData
 };

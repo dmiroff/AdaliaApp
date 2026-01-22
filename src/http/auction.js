@@ -1,15 +1,4 @@
-// src/http/auction.js
-import axios from "axios";
-import { SERVER_APP_API_URL } from "../utils/constants";
-
-// Create a custom axios instance with default headers
-const apiClient = axios.create({
-  baseURL: SERVER_APP_API_URL,
-  headers: {
-    'skip_zrok_interstitial': 'true',
-    'Authorization': `Bearer ${localStorage.getItem("access_token")}`
-  }
-});
+import apiClient from "./apiClient";
 
 export const fetchAuctionLots = async () => {
   try {

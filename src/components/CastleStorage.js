@@ -18,14 +18,16 @@ import {
 import { Context } from "../index";
 import { observer } from "mobx-react-lite";
 import {
-  GetCastleStorage,
-  TransferToCastleStorage,
-  TransferFromCastleStorage
+  GetCastleStorage
 } from "../http/guildService";
 import GetDataById from "../http/GetData";
 import Fuse from "fuse.js";
 import { dict_translator } from "../utils/Helpers";
 import "./CastleStorage.css";
+import { 
+  MassTransferToCastleModal, 
+  MassTransferFromCastleModal 
+} from './CastleStorageModal';
 
 // Хук для дебаунса
 const useDebounce = (value, delay) => {
@@ -210,309 +212,6 @@ const CastleStorageItem = React.memo(({
     prevProps.isSelected === nextProps.isSelected &&
     prevProps.source === nextProps.source &&
     prevProps.onToggleSelect === nextProps.onToggleSelect
-  );
-});
-
-// Компонент массовой передачи в замок
-const MassTransferToCastleModal = observer(({ 
-  show, 
-  onClose, 
-  selectedItems, 
-  inventory, 
-  castleId, 
-  onSuccess 
-}) => {
-  const [itemsWithQuantity, setItemsWithQuantity] = useState([]);
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    const initialItems = Array.from(selectedItems).map(itemId => {
-      const item = inventory[itemId];
-      return {
-        itemId,
-        name: item?.name || '',
-        maxQuantity: item?.count || 1,
-        quantity: item?.count || 1,
-        value: item?.value || 0
-      };
-    });
-    setItemsWithQuantity(initialItems);
-  }, [selectedItems, inventory]);
-
-  const handleQuantityChange = useCallback((itemId, quantity) => {
-    setItemsWithQuantity(prev => prev.map(item => 
-      item.itemId === itemId 
-        ? { ...item, quantity: Math.min(Math.max(1, quantity), item.maxQuantity) }
-        : item
-    ));
-  }, []);
-
-  const handleSubmit = async () => {
-    const itemsToSubmit = itemsWithQuantity.map(item => ({
-      item_id: item.itemId,
-      quantity: item.quantity
-    }));
-    
-    setLoading(true);
-    try {
-      const result = await TransferToCastleStorage(castleId, itemsToSubmit);
-      if (result && result.status === 200) {
-        alert(result.message || 'Предметы успешно перенесены в замок!');
-        if (onSuccess) onSuccess();
-        onClose();
-      } else {
-        throw new Error(result?.message || 'Ошибка при переносе предметов');
-      }
-    } catch (error) {
-      console.error('Ошибка массового переноса в замок:', error);
-      alert(error.message || 'Ошибка при переносе предметов');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const totalCount = useMemo(() => {
-    return itemsWithQuantity.reduce((sum, item) => sum + item.quantity, 0);
-  }, [itemsWithQuantity]);
-
-  return (
-    <Modal 
-      show={show} 
-      onHide={onClose}
-      backdrop="static"
-      centered
-      className="fantasy-modal mass-operation-modal castle-storage-modal"
-    >
-      <Modal.Header closeButton className="fantasy-card-header fantasy-card-header-primary">
-        <Modal.Title className="d-flex align-items-center text-dark">
-          <i className="fas fa-upload me-2"></i>
-          Перенос предметов в замок
-        </Modal.Title>
-      </Modal.Header>
-      <Modal.Body>
-        <div className="alert alert-info mb-4 mass-modal-alert">
-          <i className="fas fa-info-circle me-2"></i>
-          <strong>Внимание:</strong> Вы переносите предметы в общее хранилище замка.
-          Любой участник гильдии может взять эти предметы обратно.
-        </div>
-        
-        <div className="mb-3">
-          <h6 className="mass-modal-title text-dark">
-            <i className="fas fa-edit me-2"></i>
-            Укажите количество для каждого предмета:
-          </h6>
-        </div>
-        
-        <div className="selected-items-list">
-          {itemsWithQuantity.map(item => (
-            <div key={item.itemId} className="item-quantity-row mb-3">
-              <div className="d-flex justify-content-between align-items-center mb-2">
-                <span className="item-name-mass text-dark">{item.name}</span>
-                <span className="item-available text-dark">
-                  доступно: {item.maxQuantity} шт
-                </span>
-              </div>
-              
-              <Form.Range
-                min="1"
-                max={item.maxQuantity}
-                value={item.quantity}
-                onChange={(e) => handleQuantityChange(item.itemId, parseInt(e.target.value))}
-                className="mass-quantity-slider flex-grow-1"
-                disabled={loading}
-              />
-              
-              <div className="d-flex justify-content-between mt-2">
-                <small className="text-dark">0</small>
-                <small className="text-dark">{item.quantity} из {item.maxQuantity}</small>
-                <small className="text-dark">{item.maxQuantity}</small>
-              </div>
-            </div>
-          ))}
-        </div>
-        
-        <div className="mass-total-info p-3">
-          <div className="row text-center">
-            <div className="col-12">
-              <div className="mb-2">
-                <div className="mass-total-label text-dark">Всего предметов к переносу:</div>
-                <div className="mass-total-value text-dark">{totalCount}</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </Modal.Body>
-      <Modal.Footer className="d-flex justify-content-between">
-        <Button 
-          variant="secondary" 
-          onClick={onClose}
-          disabled={loading}
-          className="fantasy-btn"
-        >
-          Отмена
-        </Button>
-        <Button 
-          variant="primary"
-          onClick={handleSubmit}
-          disabled={loading}
-          className="fantasy-btn"
-        >
-          {loading ? (
-            <>
-              <Spinner animation="border" size="sm" className="me-2" />
-              Перенос...
-            </>
-          ) : (
-            `Перенести ${totalCount} предметов`
-          )}
-        </Button>
-      </Modal.Footer>
-    </Modal>
-  );
-});
-
-// Компонент массового изъятия из замка
-const MassTransferFromCastleModal = observer(({ 
-  show, 
-  onClose, 
-  selectedItems, 
-  storageItems, 
-  castleId, 
-  onSuccess,
-  canTakeItems
-}) => {
-  const [itemsWithQuantity, setItemsWithQuantity] = useState([]);
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    const initialItems = Array.from(selectedItems).map(itemId => {
-      const item = storageItems.find(i => i.id === itemId);
-      return {
-        itemId,
-        name: item?.name || '',
-        maxQuantity: item?.count || 1,
-        quantity: item?.count || 1,
-        value: item?.value || 0
-      };
-    });
-    setItemsWithQuantity(initialItems);
-  }, [selectedItems, storageItems]);
-
-  const handleQuantityChange = useCallback((itemId, quantity) => {
-    setItemsWithQuantity(prev => prev.map(item => 
-      item.itemId === itemId 
-        ? { ...item, quantity: Math.min(Math.max(1, quantity), item.maxQuantity) }
-        : item
-    ));
-  }, []);
-
-  const handleSubmit = async () => {
-    if (!canTakeItems) {
-      alert("Только офицеры и лидер гильдии могут забирать предметы из замка!");
-      return;
-    }
-
-    const itemsToSubmit = itemsWithQuantity.map(item => ({
-      item_id: item.itemId,
-      quantity: item.quantity
-    }));
-    
-    setLoading(true);
-    try {
-      const result = await TransferFromCastleStorage(castleId, itemsToSubmit);
-      if (result && result.status === 200) {
-        alert(result.message || 'Предметы успешно перенесены в инвентарь!');
-        if (onSuccess) onSuccess();
-        onClose();
-      } else {
-        throw new Error(result?.message || 'Ошибка при изъятии предметов');
-      }
-    } catch (error) {
-      console.error('Ошибка массового изъятия из замка:', error);
-      alert(error.message || 'Ошибка при изъятии предметов');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const totalCount = useMemo(() => {
-    return itemsWithQuantity.reduce((sum, item) => sum + item.quantity, 0);
-  }, [itemsWithQuantity]);
-
-  return (
-    <Modal 
-      show={show} 
-      onHide={onClose}
-      backdrop="static"
-      centered
-      className="fantasy-modal mass-operation-modal castle-storage-modal"
-    >
-      <Modal.Header closeButton className="fantasy-card-header fantasy-card-header-warning">
-        <Modal.Title className="d-flex align-items-center text-dark">
-          <i className="fas fa-download me-2"></i>
-          Изъятие предметов из замка
-        </Modal.Title>
-      </Modal.Header>
-      <Modal.Body>
-        <div className="alert alert-warning mb-4 mass-modal-alert">
-          <i className="fas fa-exclamation-triangle me-2"></i>
-          <strong>Внимание:</strong> Только офицеры и лидер гильдии могут забирать предметы из хранилища замка.
-        </div>
-        
-        <div className="selected-items-list">
-          {itemsWithQuantity.map(item => (
-            <div key={item.itemId} className="item-quantity-row mb-3">
-              <div className="d-flex justify-content-between align-items-center mb-2">
-                <span className="item-name-mass text-dark">{item.name}</span>
-                <span className="item-available text-dark">
-                  доступно: {item.maxQuantity} шт
-                </span>
-              </div>
-              
-              <Form.Range
-                min="1"
-                max={item.maxQuantity}
-                value={item.quantity}
-                onChange={(e) => handleQuantityChange(item.itemId, parseInt(e.target.value))}
-                className="mass-quantity-slider flex-grow-1"
-                disabled={loading || !canTakeItems}
-              />
-              
-              <div className="d-flex justify-content-between mt-2">
-                <small className="text-dark">0</small>
-                <small className="text-dark">{item.quantity} из {item.maxQuantity}</small>
-                <small className="text-dark">{item.maxQuantity}</small>
-              </div>
-            </div>
-          ))}
-        </div>
-      </Modal.Body>
-      <Modal.Footer className="d-flex justify-content-between">
-        <Button 
-          variant="secondary" 
-          onClick={onClose}
-          disabled={loading}
-          className="fantasy-btn"
-        >
-          Отмена
-        </Button>
-        <Button 
-          variant="warning"
-          onClick={handleSubmit}
-          disabled={loading || !canTakeItems}
-          className="fantasy-btn"
-        >
-          {loading ? (
-            <>
-              <Spinner animation="border" size="sm" className="me-2" />
-              Изъятие...
-            </>
-          ) : (
-            `Изъять ${totalCount} предметов`
-          )}
-        </Button>
-      </Modal.Footer>
-    </Modal>
   );
 });
 
@@ -1706,7 +1405,7 @@ const CastleStorage = observer(() => {
         <Col lg={3}>
           <Card className="fantasy-card h-100">
             <Card.Header className="fantasy-card-header fantasy-card-header-primary">
-              <h5 className="text-gold">🏯 Выбор замка</h5>
+              <h5 className="fantasy-text-gold">🏯 Выбор замка</h5>
             </Card.Header>
             <Card.Body>
               <ListGroup variant="flush">
@@ -1774,9 +1473,9 @@ const CastleStorage = observer(() => {
           <Card className="fantasy-card h-100">
             <Card.Header className="fantasy-card-header fantasy-card-header-warning">
               <div className="d-flex justify-content-between align-items-center">
-                <h5 className="text-gold mb-0">
+                <h5 className="fantasy-text-gold mb-0">
                   📦 Хранилище замка: {activeCastle?.name || "Не выбран"}
-                  <small className="ms-2 text-gold">
+                  <small className="ms-2 fantasy-text-gold">
                     ({storageCapacity.current.toFixed(1)} / {storageCapacity.max} кг)
                   </small>
                 </h5>

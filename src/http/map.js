@@ -1,14 +1,4 @@
-// src/http/map.js
-import axios from "axios";
-import { SERVER_APP_API_URL } from "../utils/constants";
-
-const apiClient = axios.create({
-  baseURL: SERVER_APP_API_URL,
-  headers: {
-    'skip_zrok_interstitial': 'true',
-    'Authorization': `Bearer ${localStorage.getItem("access_token")}`
-  }
-});
+import apiClient from "./apiClient";
 
 export const travelToLocation = async (locationId) => {
   try {

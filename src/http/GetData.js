@@ -1,14 +1,4 @@
-import axios from "axios";
-import { SERVER_APP_API_URL } from "../utils/constants";
-
-// Create a custom axios instance with default headers
-const apiClient = axios.create({
-  baseURL: SERVER_APP_API_URL,
-  headers: {
-    'skip_zrok_interstitial': 'true',
-    'Authorization': `Bearer ${localStorage.getItem("access_token")}`
-  }
-});
+import apiClient from "./apiClient";
 
 // Define and export the function
 const GetDataById = async () => {
@@ -31,7 +21,6 @@ export const GetRating = async () => {
         "Authorization": `Bearer ${localStorage.getItem("access_token")}`}
     });
 
-    console.log(response.data)
     return response.status === 200 ? response.data : false;
   } catch (error) {
     console.error("Error fetching rating data:", error);
