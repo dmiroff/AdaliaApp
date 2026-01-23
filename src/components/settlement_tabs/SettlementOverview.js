@@ -172,12 +172,7 @@ const SettlementOverview = observer(({ settlementData, guildId, onRefresh, isLoa
                                     <div className="info-item p-3 border rounded">
                                         <div className="d-flex align-items-center mb-2">
                                             <i className="fas fa-home me-2 text-primary"></i>
-                                            <span className="fantasy-text-dark fw-bold">Тип поселения:</span>
-                                        </div>
-                                        <div className="text-center">
-                                            <Badge bg="primary" className="p-2 fs-6">
-                                                {settlementTypeName}
-                                            </Badge>
+                                            <span className="fantasy-text-dark fw-bold">Тип поселения: {settlementTypeName}</span>
                                         </div>
                                     </div>
                                 </Col>                                
@@ -185,26 +180,15 @@ const SettlementOverview = observer(({ settlementData, guildId, onRefresh, isLoa
                                     <div className="info-item p-3 border rounded">
                                         <div className="d-flex align-items-center mb-2">
                                             <i className="fas fa-users me-2 text-success"></i>
-                                            <span className="fantasy-text-dark fw-bold">Разных типов юнитов:</span>
-                                        </div>
-                                        <div className="text-center">
-                                            <Badge bg="success" className="p-2 fs-6">
-                                                {Object.keys(garrison).length}
-                                            </Badge>
+                                            <span className="fantasy-text-dark fw-bold">Разных типов юнитов: {Object.keys(garrison).length}</span>
                                         </div>
                                     </div>
                                 </Col>
-                                
                                 <Col md={3} sm={6}>
                                     <div className="info-item p-3 border rounded">
                                         <div className="d-flex align-items-center mb-2">
                                             <i className="fas fa-tools me-2 text-info"></i>
-                                            <span className="fantasy-text-dark fw-bold">ID гильдии:</span>
-                                        </div>
-                                        <div className="text-center">
-                                            <Badge bg="info" className="p-2 fs-6">
-                                                {guildId || 'Не указан'}
-                                            </Badge>
+                                            <span className="fantasy-text-dark fw-bold">ID гильдии: {guildId || 'Не указан'}</span>
                                         </div>
                                     </div>
                                 </Col>

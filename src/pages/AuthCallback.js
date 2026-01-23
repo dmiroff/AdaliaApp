@@ -10,67 +10,50 @@ const AuthCallback = () => {
     const { user } = useContext(Context);
 
     useEffect(() => {
+        
         const authenticate = async () => {
-            console.log(`🔐 Авторизация через путь: id=${id}, token=${token}`);
-            console.log(`🌐 Бэкенд URL: ${SERVER_APP_API_URL}`);
             
             if (!id || !token) {
-                console.error('❌ Неверные параметры авторизации');
-                navigate('/auth');
+                navigate('/login');
                 return;
             }
 
             try {
-                // Используем SERVER_APP_API_URL для запроса
+                
                 const response = await fetch(`${SERVER_APP_API_URL}/login`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'skip_zrok_interstitial': 'true'
                     },
                     body: JSON.stringify({
                         player_id: parseInt(id),
                         token: token,
                     }),
                 });
-
-                console.log(`📡 Статус ответа: ${response.status}`);
-                const data = await response.json();
-                console.log('📊 Ответ от бэкенда:', data);
-
-                if (response.status === 200 && data.access_token) {
-                    // Сохраняем токены
-                    localStorage.setItem('id', id);
-                    localStorage.setItem('token', token);
-                    localStorage.setItem('access_token', data.access_token);
-                    localStorage.setItem('token_timestamp', Date.now().toString());
+                
+                if (response.status === 200) {
+                    const data = await response.json();
                     
-                    // Сохраняем refresh_token, если он есть в ответе
-                    if (data.refresh_token) {
-                        localStorage.setItem('refresh_token', data.refresh_token);
+                    if (data.access_token) {
+                        // Сохраняем токены
+                        localStorage.setItem('id', id);
+                        localStorage.setItem('token', token);
+                        localStorage.setItem('access_token', data.access_token);
+                        localStorage.setItem('token_timestamp', Date.now().toString());
+                        
+                        // Обновляем состояние
+                        user.setIsAuth(true);
+                        user.setUser(parseInt(id));
+
+                        navigate('/inventory', { replace: true });
+                    } else {
+                        navigate('/login');
                     }
-                    
-                    // Обновляем состояние пользователя
-                    user.setIsAuth(true);
-                    user.setUser(parseInt(id));
-                    
-                    console.log('✅ Авторизация успешна, перенаправляем на /inventory');
-                    navigate('/inventory', { replace: true });
                 } else {
-                    console.error('❌ Ошибка авторизации:', data.message || data.detail);
-                    navigate('/login', { 
-                        state: { 
-                            error: data.message || data.detail || 'Ошибка авторизации' 
-                        } 
-                    });
+                    navigate('/login');
                 }
             } catch (error) {
-                console.error('❌ Ошибка сети:', error);
-                navigate('/login', { 
-                    state: { 
-                        error: 'Ошибка сети. Проверьте подключение.' 
-                    } 
-                });
+                navigate('/login');
             }
         };
 
