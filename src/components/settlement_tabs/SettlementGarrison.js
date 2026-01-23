@@ -224,9 +224,9 @@ const SettlementGarrison = observer(() => {
     // Получаем максимальный размер отряда
     const maxPartySize = useMemo(() => {
         if (playerData) {
-            const size = playerData.max_party_size || playerData.party_limit || playerData.max_party;
+            const size = playerData.max_party_size;
             
-            if (size !== undefined && size !== null && size !== 0) {
+            if (size !== undefined && size !== null) {
                 return size;
             }
         }
@@ -235,8 +235,8 @@ const SettlementGarrison = observer(() => {
             const savedPlayerData = localStorage.getItem('playerData');
             if (savedPlayerData) {
                 const parsedData = JSON.parse(savedPlayerData);
-                const size = parsedData.max_party_size || parsedData.party_limit || parsedData.max_party;
-                if (size !== undefined && size !== null && size !== 0) {
+                const size = parsedData.max_party_size;
+                if (size !== undefined && size !== null) {
                     return size;
                 }
             }
@@ -1151,9 +1151,6 @@ const SettlementGarrison = observer(() => {
                                 <div key={pet.id || index} className="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom">
                                     <div>
                                         <span className="fantasy-text-dark">{pet.name}: {pet.amount}</span>
-                                        <small className="text-muted ms-2">
-                                            (ID: {pet.fullId})
-                                        </small>
                                     </div>
                                     <div className="d-flex align-items-center">
                                         <small className="text-muted me-3">
