@@ -217,7 +217,7 @@ export const hireUnit = async (guildId, buildingKey, quantity, tier, unitName, u
     }
     
     const response = await apiClient.post(
-      `/guild/${guildId}/settlement/hire-unit`,  // Исправлено: settlement (единственное число)
+      `/guild/${guildId}/settlement/hire-unit`,
       requestData,
       {
         headers: getAuthHeaders()
@@ -302,7 +302,7 @@ export const moveToGarrison = async (guildId, unitId, amount = 1) => {
     console.log(`🔄 Запрос перемещения юнита в гарнизон: ${unitId} x${amount}`);
     
     const response = await apiClient.post(
-      `/guild/${guildId}/settlement/move-to-garrison`,  // Уже правильный
+      `/guild/${guildId}/settlement/move-to-garrison`,
       { 
         unit_id: unitId,
         amount: amount
@@ -393,6 +393,74 @@ export const getGarrisonData = async (guildId) => {
   }
 };
 
+// НОВЫЕ МЕТОДЫ ДЛЯ УПРАВЛЕНИЯ ЮНИТАМИ
+
+// Прогнать юнитов из отряда (удалить навсегда)
+export const dischargeFromParty = async (playerId, unitId, amount = 1) => {
+  try {
+    console.log(`🔄 Запрос прогона юнитов: playerId=${playerId}, unitId=${unitId}, amount=${amount}`);
+    
+    const response = await apiClient.post(
+      `/player/discharge-units`,
+      { 
+        player_id: playerId,
+        unit_id: unitId,
+        amount: amount
+      },
+      {
+        headers: getAuthHeaders()
+      }
+    );
+    
+    return {
+      status: response.status,
+      data: response.data.data || response.data,
+      message: response.data.message || "Юниты успешно прогнаны"
+    };
+  } catch (error) {
+    console.error("❌ Ошибка прогона юнитов:", error);
+    
+    return {
+      status: error.response?.status || 500,
+      message: error.response?.data?.message || error.response?.data?.detail || "Ошибка прогона юнитов",
+      data: error.response?.data?.data || null
+    };
+  }
+};
+
+// Поместить юнитов в гарнизон поселения
+export const storeToGarrison = async (guildId, playerId, unitId, amount = 1) => {
+  try {
+    console.log(`🔄 Запрос помещения юнитов в гарнизон: guildId=${guildId}, playerId=${playerId}, unitId=${unitId}, amount=${amount}`);
+    
+    const response = await apiClient.post(
+      `/guild/${guildId}/settlement/store-to-garrison`,
+      { 
+        player_id: playerId,
+        unit_id: unitId,
+        amount: amount
+      },
+      {
+        headers: getAuthHeaders()
+      }
+    );
+    
+    return {
+      status: response.status,
+      data: response.data.data || response.data,
+      message: response.data.message || "Юниты успешно помещены в гарнизон"
+    };
+  } catch (error) {
+    console.error("❌ Ошибка помещения юнитов в гарнизон:", error);
+    
+    return {
+      status: error.response?.status || 500,
+      message: error.response?.data?.message || error.response?.data?.detail || "Ошибка помещения юнитов в гарнизон",
+      data: error.response?.data?.data || null
+    };
+  }
+};
+
 // Обновите объект settlementService
 export const settlementService = {
   getSettlementData,
@@ -405,5 +473,7 @@ export const settlementService = {
   addItemsToSettlementStorage,
   takeFromGarrison,
   moveToGarrison,
-  getGarrisonData
+  getGarrisonData,
+  dischargeFromParty,  // Добавлен новый метод
+  storeToGarrison      // Добавлен новый метод
 };
