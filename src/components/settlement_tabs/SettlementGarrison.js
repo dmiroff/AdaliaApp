@@ -1197,14 +1197,6 @@ const SettlementGarrison = observer(() => {
                                 <i className="fas fa-shield-alt me-2"></i>
                                 Управление юнитами
                             </h5>
-                            <small className="fantasy-text-muted">
-                                Тип поселения: <Badge bg="primary">{SETTLEMENT_TYPE_NAMES[settlementType]}</Badge>
-                                <span className="ms-3">
-                                    Свободно в отряде: <Badge bg={remainingWeight > 0 ? "success" : "danger"}>
-                                        {remainingWeight}
-                                    </Badge>
-                                </span>
-                            </small>
                         </div>
                     </div>
                 </Card.Header>
