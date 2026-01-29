@@ -316,6 +316,36 @@ const getResourceIdForApi = (resourceId) => {
   return isNaN(numId) ? resourceId : numId;
 };
 
+// Функция для безопасного преобразования данных в строку
+const safeToString = (value) => {
+  if (value == null) return '';
+  
+  if (typeof value === 'object') {
+    // Если это объект ошибки Pydantic с полем msg
+    if (value.msg) {
+      return value.msg;
+    }
+    // Если это объект с полем message
+    else if (value.message) {
+      return value.message;
+    }
+    // Если это массив
+    else if (Array.isArray(value)) {
+      return value.map(item => safeToString(item)).join(', ');
+    }
+    // В противном случае преобразуем в JSON строку
+    else {
+      try {
+        return JSON.stringify(value);
+      } catch {
+        return String(value);
+      }
+    }
+  }
+  
+  return String(value);
+};
+
 const TakeResourceModal = ({ 
   show, 
   onClose, 
@@ -377,7 +407,7 @@ const TakeResourceModal = ({
     } catch (error) {
       setAlert({
         type: 'danger',
-        message: error.message || 'Ошибка при заборе ресурса'
+        message: safeToString(error.message || error || 'Ошибка при заборе ресурса')
       });
     }
   };
@@ -405,14 +435,14 @@ const TakeResourceModal = ({
         {alert && (
           <Alert variant={alert.type} className="mb-3">
             <i className={`fas fa-${alert.type === 'success' ? 'check-circle' : 'exclamation-circle'} me-2`}></i>
-            {alert.message}
+            {safeToString(alert.message)}
           </Alert>
         )}
 
         <div className="mb-4">
           <h6 className="fantasy-text-gold">
             <i className="fas fa-cube me-2"></i>
-            {resource.name}
+            {safeToString(resource.name)}
             {isLeather && (
               <Badge bg="danger" className="ms-2">
                 <i className="fas fa-exclamation-triangle me-1"></i>
@@ -425,10 +455,10 @@ const TakeResourceModal = ({
             Ресурс будет перемещен в ваш инвентарь.
             <br />
             <small>
-              ID ресурса: <Badge bg="info">{resource.id}</Badge>
+              ID ресурса: <Badge bg="info">{safeToString(resource.id)}</Badge>
               <br />
               Тип: <Badge bg={getResourceBadgeColor(resource.id)}>
-                {getResourceTypeDisplay(resource.id)}
+                {safeToString(getResourceTypeDisplay(resource.id))}
               </Badge>
               {isLeather && (
                 <>
@@ -447,7 +477,7 @@ const TakeResourceModal = ({
           <div className="d-flex justify-content-between align-items-center mb-2">
             <span className="fantasy-text-dark">Количество для забора</span>
             <span className="fantasy-text-muted">
-              доступно: {resource.amount} шт
+              доступно: {safeToString(resource.amount)} шт
             </span>
           </div>
 
@@ -542,8 +572,8 @@ const TakeResourceModal = ({
           <div className="mt-3">
             <div className="d-flex justify-content-between small fantasy-text-muted">
               <span>0</span>
-              <span>Забирается: {quantity} из {resource.amount}</span>
-              <span>{resource.amount}</span>
+              <span>Забирается: {quantity} из {safeToString(resource.amount)}</span>
+              <span>{safeToString(resource.amount)}</span>
             </div>
             <div className="progress" style={{ height: '6px' }}>
               <div 
@@ -654,7 +684,11 @@ const SettlementStorage = observer(() => {
   const [inventoryLoading, setInventoryLoading] = useState(true);
   
   const showNotification = (type, message) => {
-    setNotification({ show: true, type, message });
+    setNotification({ 
+      show: true, 
+      type, 
+      message: safeToString(message) 
+    });
     setTimeout(() => setNotification({ show: false, type: '', message: '' }), 5000);
   };
   
@@ -1057,7 +1091,7 @@ const SettlementStorage = observer(() => {
           dismissible
           onClose={() => setNotification({ show: false, type: '', message: '' })}
         >
-          {notification.message}
+          {safeToString(notification.message)}
         </Alert>
       )}
       
@@ -1080,7 +1114,7 @@ const SettlementStorage = observer(() => {
                 )}
                 {isOfficerOrLeader && (
                   <Badge bg={isLeader ? "danger" : "warning"} className="ms-2">
-                    {isLeader ? "Лидер гильдии" : "Офицер гильдии"}
+                    {safeToString(isLeader ? "Лидер гильдии" : "Офицер гильдии")}
                   </Badge>
                 )}
               </div>
@@ -1172,7 +1206,7 @@ const SettlementStorage = observer(() => {
                   {debugMode && (
                     <div className="mt-2">
                       <small className="text-muted d-block">
-                        Ресурсы: {getPlayerResourcesByType.construction.map(r => `${r.name}(${r.amount})`).join(', ') || 'нет'}
+                        Ресурсы: {getPlayerResourcesByType.construction.map(r => `${safeToString(r.name)}(${r.amount})`).join(', ') || 'нет'}
                       </small>
                     </div>
                   )}
@@ -1213,7 +1247,7 @@ const SettlementStorage = observer(() => {
                   {debugMode && (
                     <div className="mt-2">
                       <small className="text-muted d-block">
-                        Ресурсы: {[...getPlayerResourcesByType.hides, ...getPlayerResourcesByType.leatherTier].map(r => `${r.name}(${r.amount})`).join(', ') || 'нет'}
+                        Ресурсы: {[...getPlayerResourcesByType.hides, ...getPlayerResourcesByType.leatherTier].map(r => `${safeToString(r.name)}(${r.amount})`).join(', ') || 'нет'}
                       </small>
                     </div>
                   )}
@@ -1268,7 +1302,7 @@ const SettlementStorage = observer(() => {
           {!canTakeResources && (
             <Alert variant="warning" className="fantasy-alert mb-3">
               <i className="fas fa-exclamation-triangle me-2"></i>
-              Ваша роль: <Badge bg="secondary">{playerRole || 'участник'}</Badge>. 
+              Ваша роль: <Badge bg="secondary">{safeToString(playerRole || 'участник')}</Badge>. 
               Только офицеры и лидер гильдии могут забирать ресурсы со склада.
             </Alert>
           )}
@@ -1276,7 +1310,7 @@ const SettlementStorage = observer(() => {
           {isOfficerOrLeader && (
             <Alert variant="info" className="fantasy-alert mb-3">
               <i className="fas fa-info-circle me-2"></i>
-              Ваша роль: <Badge bg={isLeader ? "danger" : "warning"}>{isLeader ? "Лидер гильдии" : "Офицер гильдии"}</Badge>. 
+              Ваша роль: <Badge bg={isLeader ? "danger" : "warning"}>{safeToString(isLeader ? "Лидер гильдии" : "Офицер гильдии")}</Badge>. 
               Вы можете забирать ресурсы со склада.
             </Alert>
           )}
@@ -1321,7 +1355,7 @@ const SettlementStorage = observer(() => {
                           <tr key={resource.id} className="align-middle">
                             <td className="fantasy-text-dark">
                               <div>
-                                {resource.name}
+                                {safeToString(resource.name)}
                                 {isLeather && (
                                   <Badge bg="danger" className="ms-2" size="sm" title="Недоступно для забора">
                                     <i className="fas fa-ban me-1"></i>
@@ -1335,20 +1369,20 @@ const SettlementStorage = observer(() => {
                                   </Badge>
                                 )}
                               </div>
-                              <small className="fantasy-text-muted">ID: {resource.id}</small>
+                              <small className="fantasy-text-muted">ID: {safeToString(resource.id)}</small>
                             </td>
                             <td>
                               <Badge 
                                 bg={badgeColor}
                                 className="fantasy-badge p-2"
                               >
-                                {resource.type}
+                                {safeToString(resource.type)}
                               </Badge>
                             </td>
                             <td>
                               <div className="d-flex align-items-center">
                                 <Badge bg="secondary" className="fantasy-badge p-2 me-2">
-                                  {resource.amount.toLocaleString()}
+                                  {safeToString(resource.amount.toLocaleString())}
                                 </Badge>
                                 <div className="flex-grow-1">
                                   {isConstruction ? (
