@@ -183,6 +183,12 @@ const SettlementComponent = observer(() => {
                                 </Nav.Link>
                             </Nav.Item>
                             <Nav.Item>
+                                <Nav.Link eventKey="storage">
+                                    <i className="fas fa-warehouse me-2"></i>
+                                    Склад
+                                </Nav.Link>
+                            </Nav.Item>
+                            <Nav.Item>
                                 <Nav.Link eventKey="buildings">
                                     <i className="fas fa-building me-2"></i>
                                     Здания
@@ -209,12 +215,6 @@ const SettlementComponent = observer(() => {
                                 <Nav.Link eventKey="missions">
                                     <i className="fas fa-scroll me-2"></i>
                                     Миссии
-                                </Nav.Link>
-                            </Nav.Item>
-                            <Nav.Item>
-                                <Nav.Link eventKey="storage">
-                                    <i className="fas fa-warehouse me-2"></i>
-                                    Склад
                                 </Nav.Link>
                             </Nav.Item>
                             <Nav.Item>
