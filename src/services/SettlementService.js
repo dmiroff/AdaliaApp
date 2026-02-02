@@ -711,14 +711,399 @@ export const cancelConstruction = async (guildId, buildingKey) => {
   }
 };
 
-// Обновляем объект settlementService
+// ЭНДПОЙНТ: Получение активных баффов
+export const getActiveBuffs = async (guildId) => {
+  try {
+    // ПРОВЕРКА ТИПА ДАННЫХ
+    if (typeof guildId !== 'number' && typeof guildId !== 'string') {
+      console.error('❌ Ошибка: guildId должен быть числом или строкой, получен:', guildId);
+      return {
+        status: 400,
+        message: 'Неверный идентификатор гильдии',
+        data: null,
+        success: false
+      };
+    }
+    
+    const normalizedGuildId = String(guildId);
+    console.log(`🔄 Запрос активных баффов: guildId=${normalizedGuildId}`);
+    
+    const response = await apiClient.get(
+      `/guild/${normalizedGuildId}/settlement/buffs/active`,
+      {
+        headers: getAuthHeaders()
+      }
+    );
+    
+    return {
+      status: response.status,
+      data: response.data.data || response.data,
+      message: response.data.message || "Активные баффы получены",
+      success: response.status === 200
+    };
+  } catch (error) {
+    console.error("❌ Ошибка получения активных баффов:", error);
+    
+    return {
+      status: error.response?.status || 500,
+      message: extractErrorMessage(error),
+      data: null,
+      success: false
+    };
+  }
+};
+
+// ЭНДПОЙНТ: Получение информации для подношений
+export const getOfferingInfo = async (guildId) => {
+  try {
+    console.log(`🔄 Запрос информации для подношений: guildId=${guildId}`);
+    
+    const response = await apiClient.get(
+      `/guild/${guildId}/settlement/totem/offering-info`,
+      {
+        headers: getAuthHeaders()
+      }
+    );
+    
+    return {
+      status: response.status,
+      data: response.data.data || response.data,
+      message: response.data.message || "Информация для подношений получена",
+      success: response.status === 200
+    };
+  } catch (error) {
+    console.error("❌ Ошибка получения информации для подношений:", error);
+    
+    return {
+      status: error.response?.status || 500,
+      message: extractErrorMessage(error),
+      data: null,
+      success: false
+    };
+  }
+};
+
+// ЭНДПОЙНТ: Подношение всех доступных реагентов
+export const makeOfferingAll = async (guildId, playerId) => {
+  try {
+    console.log(`🔄 Запрос подношения всех реагентов: guildId=${guildId}, playerId=${playerId}`);
+    
+    const response = await apiClient.post(
+      `/guild/${guildId}/settlement/totem/offering-all`,
+      { 
+        player_id: playerId
+      },
+      {
+        headers: getAuthHeaders()
+      }
+    );
+    
+    return {
+      status: response.status,
+      data: response.data.data || response.data,
+      message: response.data.message || "Подношение всех реагентов выполнено",
+      success: response.status === 200 || response.status === 201
+    };
+  } catch (error) {
+    console.error("❌ Ошибка подношения всех реагентов:", error);
+    
+    if (error.response?.status === 403) {
+      return {
+        status: 403,
+        message: "У вас недостаточно прав для совершения подношения",
+        data: null,
+        success: false
+      };
+    }
+    
+    if (error.response?.status === 404) {
+      return {
+        status: 404,
+        message: "Тотем не построен или гильдия не найдена",
+        data: null,
+        success: false
+      };
+    }
+    
+    if (error.response?.status === 409) {
+      return {
+        status: 409,
+        message: "Достигнут лимит подношений на сегодня",
+        data: null,
+        success: false
+      };
+    }
+    
+    return {
+      status: error.response?.status || 500,
+      message: extractErrorMessage(error),
+      data: error.response?.data?.data || null,
+      success: false
+    };
+  }
+};
+
+// ЭНДПОЙНТ: Подношение по конкретному рецепту
+export const makeRecipeOffering = async (guildId, playerId, recipeLevel, quantity = 1) => {
+  try {
+    console.log(`🔄 Запрос подношения по рецепту: guildId=${guildId}, recipeLevel=${recipeLevel}, quantity=${quantity}`);
+    
+    const response = await apiClient.post(
+      `/guild/${guildId}/settlement/totem/offering-recipe`,
+      { 
+        player_id: playerId,
+        recipe_level: recipeLevel,
+        quantity: quantity
+      },
+      {
+        headers: getAuthHeaders()
+      }
+    );
+    
+    return {
+      status: response.status,
+      data: response.data.data || response.data,
+      message: response.data.message || "Подношение по рецепту выполнено",
+      success: response.status === 200 || response.status === 201
+    };
+  } catch (error) {
+    console.error("❌ Ошибка подношения по рецепту:", error);
+    
+    if (error.response?.status === 403) {
+      return {
+        status: 403,
+        message: "У вас недостаточно прав для совершения подношения",
+        data: null,
+        success: false
+      };
+    }
+    
+    if (error.response?.status === 404) {
+      return {
+        status: 404,
+        message: "Тотем не построен или гильдия не найдена",
+        data: null,
+        success: false
+      };
+    }
+    
+    if (error.response?.status === 409) {
+      return {
+        status: 409,
+        message: "Достигнут лимит подношений на сегодня",
+        data: null,
+        success: false
+      };
+    }
+    
+    if (error.response?.status === 400) {
+      return {
+        status: 400,
+        message: "Недостаточно ингредиентов или рецепт недоступен",
+        data: null,
+        success: false
+      };
+    }
+    
+    return {
+      status: error.response?.status || 500,
+      message: extractErrorMessage(error),
+      data: error.response?.data?.data || null,
+      success: false
+    };
+  }
+};
+
+// ЭНДПОЙНТ: Проведение ритуала (ОБНОВЛЕННЫЙ - исправлен URL)
+export const performRitual = async (guildId, playerId, ritualName, ritualAttribute, cost) => {
+  try {
+    // ДОБАВЬТЕ ЭТУ ПРОВЕРКУ
+    if (typeof guildId !== 'number' && typeof guildId !== 'string') {
+      console.error('❌ Ошибка: guildId должен быть числом или строкой, получен:', guildId);
+      return {
+        status: 400,
+        message: 'Неверный идентификатор гильдии',
+        data: null,
+        success: false
+      };
+    }
+    
+    // Также убедимся, что guildId преобразован в число или строку
+    const normalizedGuildId = String(guildId);
+    
+    console.log(`🔄 Запрос проведения ритуала: guildId=${normalizedGuildId}, ritualName=${ritualName}`);
+    
+    const response = await apiClient.post(
+      `/guild/${normalizedGuildId}/settlement/ritual/perform`,
+      { 
+        player_id: playerId,
+        ritual_name: ritualName,
+        ritual_attribute: ritualAttribute,
+        cost: cost
+      },
+      {
+        headers: getAuthHeaders()
+      }
+    );
+    
+    return {
+      status: response.status,
+      data: response.data.data || response.data,
+      message: response.data.message || "Ритуал успешно проведен",
+      success: response.status === 200 || response.status === 201
+    };
+  } catch (error) {
+    console.error("❌ Ошибка проведения ритуала:", error);
+    
+    // Проверяем специфические ошибки на основе бэкенда
+    if (error.response?.status === 403) {
+      return {
+        status: 403,
+        message: "У вас недостаточно прав для проведения ритуала",
+        data: null,
+        success: false
+      };
+    }
+    
+    if (error.response?.status === 400) {
+      return {
+        status: 400,
+        message: "Недостаточно ресурсов для ритуала",
+        data: null,
+        success: false
+      };
+    }
+    
+    if (error.response?.status === 404) {
+      return {
+        status: 404,
+        message: "Ритуальное место не построено или ритуал не найден",
+        data: null,
+        success: false
+      };
+    }
+    
+    if (error.response?.status === 409) {
+      return {
+        status: 409,
+        message: "Активное благословение уже действует",
+        data: null,
+        success: false
+      };
+    }
+    
+    return {
+      status: error.response?.status || 500,
+      message: extractErrorMessage(error),
+      data: error.response?.data?.data || null,
+      success: false
+    };
+  }
+};
+
+// ЭНДПОЙНТ: Удаление активного баффа (ОБНОВЛЕННЫЙ)
+export const removeBuff = async (guildId, playerId, buffId = null) => {
+  try {
+    console.log(`🔄 Запрос удаления баффа: guildId=${guildId}, buffId=${buffId}`);
+    
+    const response = await apiClient.post(
+      `/guild/${guildId}/settlement/buffs/remove`,
+      { 
+        player_id: playerId,
+        buff_id: buffId
+      },
+      {
+        headers: getAuthHeaders()
+      }
+    );
+    
+    return {
+      status: response.status,
+      data: response.data.data || response.data,
+      message: response.data.message || "Бафф успешно снят",
+      success: response.status === 200 || response.status === 201
+    };
+  } catch (error) {
+    console.error("❌ Ошибка удаления баффа:", error);
+    
+    if (error.response?.status === 403) {
+      return {
+        status: 403,
+        message: "Только лидер и офицеры могут снимать баффы",
+        data: null,
+        success: false
+      };
+    }
+    
+    if (error.response?.status === 404) {
+      return {
+        status: 404,
+        message: "Активный бафф не найден",
+        data: null,
+        success: false
+      };
+    }
+    
+    return {
+      status: error.response?.status || 500,
+      message: extractErrorMessage(error),
+      data: error.response?.data?.data || null,
+      success: false
+    };
+  }
+};
+
+// ЭНДПОЙНТ: Получение данных ритуалов и подношений (ОБНОВЛЕННЫЙ)
+export const getRitualsData = async (guildId) => {
+  try {
+    console.log(`🔄 Запрос данных ритуалов: guildId=${guildId}`);
+    
+    const response = await apiClient.get(
+      `/guild/${guildId}/settlement/rituals`,
+      {
+        headers: getAuthHeaders()
+      }
+    );
+    
+    return {
+      status: response.status,
+      data: response.data.data || response.data,
+      message: response.data.message || "Данные ритуалов получены",
+      success: response.status === 200
+    };
+  } catch (error) {
+    console.error("❌ Ошибка получения данных ритуалов:", error);
+    
+    return {
+      status: error.response?.status || 500,
+      message: extractErrorMessage(error),
+      data: error.response?.data?.data || null,
+      success: false
+    };
+  }
+};
+
+// Обновленный объект settlementService с новыми методами
 export const settlementService = {
   // Основные методы
   getSettlementData,
   getStorageData,
   getBuildingsData,
-
-  // Строительство - новые методы
+  getRitualsData,
+  
+  // Новые методы для подношений
+  getOfferingInfo,
+  makeOfferingAll,
+  makeRecipeOffering,
+  
+  // Методы для ритуалов
+  performRitual,
+  
+  // Методы для баффов
+  getActiveBuffs,
+  removeBuff,
+  
+  // Методы для строительства
   startConstruction,
   contributeToConstruction,
   startBuildingConstruction,

@@ -4057,3 +4057,91 @@ export const BUILDINGS_DICT = {
         },
     },
 }
+
+// Добавьте к существующим константам:
+
+// Ритуалы (уровень: {шанс: усиление})
+export const rituals = {
+    1: {0.7: 2, 0.3: 4},
+    2: {0.6: 3, 0.4: 5},
+    3: {0.5: 4, 0.5: 6},
+    4: {0.4: 5, 0.6: 7},
+    5: {0.3: 6, 0.7: 8}
+};
+
+// Награды тотема
+export const totem_rewards = {
+    1: {
+        user: { loot: ["scroll"], loot_chances: [100] },
+        guild: { loot: ["essence*100"], loot_chances: [100] }
+    },
+    2: {
+        user: { loot: ["scroll", "essence*50"], loot_chances: [50, 50] },
+        guild: { loot: ["essence*200"], loot_chances: [100] },
+        guild_leader: { loot: ["scroll"], loot_chances: [100] }
+    },
+    3: {
+        user: { loot: ["scroll", "essence*100"], loot_chances: [70, 30] },
+        guild: { loot: ["essence*300"], loot_chances: [100] },
+        random_guy: { loot: ["essence*150"], loot_chances: [100] }
+    },
+    4: {
+        user: { loot: ["scroll*2", "essence*200"], loot_chances: [40, 60] },
+        guild: { loot: ["essence*500"], loot_chances: [100] },
+        head_cultist: { loot: ["scroll"], loot_chances: [100] }
+    },
+    5: {
+        user: { loot: ["scroll*3", "essence*300"], loot_chances: [30, 70] },
+        guild: { loot: ["essence*1000"], loot_chances: [100] },
+        guild_leader: { loot: ["scroll*2"], loot_chances: [100] },
+        head_cultist: { loot: ["essence*500"], loot_chances: [100] }
+    }
+};
+
+// Специальные предметы для подношений
+export const special_items_dict = {
+    Death: {
+        1: { "item_id_1": 8, "item_id_2": 2 },
+        2: { "item_id_3": 8, "item_id_4": 2 },
+        3: { "item_id_5": 8, "item_id_6": 2 }
+    },
+    Fire: {
+        1: { "item_id_7": 8, "item_id_8": 2 },
+        2: { "item_id_9": 8, "item_id_10": 2 }
+    },
+    // Добавьте другие типы поселений
+};
+
+// Названия воплощений
+export const essence_names = {
+    1: "Смерти",
+    2: "Жизни",
+    3: "Огня",
+    4: "Воды",
+    5: "Земли",
+    6: "Воздуха",
+    7: "Света",
+    8: "Тьмы",
+    9: "Молнии"
+};
+
+// Перевод навыков
+export const skill_translator = {
+    herbalist: "Травник",
+    searcher: "Искатель",
+    resource: "Добытчик",
+    diversion: "Диверсант",
+    spy: "Разведчик",
+    assasin: "Убийца",
+    abbot: "Настоятель",
+    faith_touch: "Касание веры",
+    pray: "Молитва",
+    builder: "Строитель",
+    miser: "Скряга",
+    control: "Контроль Стихии",
+    overseer: "Надсмотрщик",
+    pragmatist: "Прагматик",
+    trainer: "Тренер",
+    death_ritual: "Ритуал Смерти",
+    more_material: "Больше трупов"
+};

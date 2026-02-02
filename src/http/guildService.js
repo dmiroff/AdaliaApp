@@ -182,9 +182,18 @@ export const verifyToken = async () => {
   }
 };
 
-// Получить полные данные гильдии (с деталями всех участников)
 export const GetGuildData = async () => {
   try {
+    // Проверим наличие токена перед запросом
+    const token = localStorage.getItem("access_token");
+    if (!token) {
+      return {
+        status: 401,
+        message: "Токен отсутствует. Пожалуйста, войдите снова.",
+        data: { has_guild: false }
+      };
+    }
+    
     const response = await apiClient.get(`/guild`);
     
     if (response.status === 200) {
@@ -203,19 +212,34 @@ export const GetGuildData = async () => {
   } catch (error) {
     console.error("Error fetching guild data:", error);
     
-    // Если это 401 ошибка, которую не удалось обработать
-    if (error.response?.status === 401) {
-      return {
-        status: 401,
-        message: "Сессия истекла. Пожалуйста, войдите снова.",
-        data: {}
-      };
+    // Более детальная обработка ошибок
+    if (error.response) {
+      switch (error.response.status) {
+        case 401:
+          return {
+            status: 401,
+            message: "Сессия истекла. Пожалуйста, войдите снова.",
+            data: { has_guild: false }
+          };
+        case 422:
+          return {
+            status: 422,
+            message: "Неверный токен. Пожалуйста, войдите снова.",
+            data: { has_guild: false }
+          };
+        default:
+          return {
+            status: error.response.status,
+            message: error.response.data?.message || "Ошибка сервера при загрузке данных гильдии",
+            data: error.response.data?.data || {}
+          };
+      }
     }
     
     return {
-      status: error.response?.status || 500,
-      message: error.response?.data?.message || "Ошибка сервера при загрузке данных гильдии",
-      data: error.response?.data?.data || {}
+      status: 500,
+      message: "Сетевая ошибка при загрузке данных гильдии",
+      data: {}
     };
   }
 };

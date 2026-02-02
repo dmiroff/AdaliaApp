@@ -814,13 +814,6 @@ const SettlementBuildings = observer(() => {
                     <Alert variant="info" className="fantasy-alert">
                         <i className="fas fa-info-circle me-2"></i>
                         <div>
-                            <strong>Новая система строительства:</strong>
-                            <ul className="mt-2 mb-0">
-                                <li><strong>Шаг 1:</strong> Любой участник может начать стройку (добавить в список)</li>
-                                <li><strong>Шаг 2:</strong> Участники постепенно добавляют ресурсы к стройке</li>
-                                <li><strong>Шаг 3:</strong> Когда все ресурсы собраны, можно начать строительство</li>
-                                <li><strong>Шаг 4:</strong> Только офицеры и глава могут отменять стройки</li>
-                            </ul>
                             <div className="mt-2">
                                 <small className="fantasy-text-muted">
                                     <i className="fas fa-tools me-1"></i>
