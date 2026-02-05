@@ -215,6 +215,34 @@ const CastleStorageItem = React.memo(({
   );
 });
 
+// Кастомный компонент Select для мобильных устройств
+const CustomSelect = ({ 
+  size = "sm", 
+  value, 
+  onChange, 
+  children, 
+  className = "",
+  disabled = false,
+  ...props 
+}) => {
+  return (
+    <div className={`custom-select-wrapper ${className}`}>
+      <select 
+        className={`form-select form-select-${size} mobile-friendly-select`}
+        value={value}
+        onChange={onChange}
+        disabled={disabled}
+        {...props}
+      >
+        {children}
+      </select>
+      <div className="select-arrow">
+        <i className="fas fa-chevron-down"></i>
+      </div>
+    </div>
+  );
+};
+
 // Компонент FilterCard для отображения одного фильтра
 const FilterCard = React.memo(({ 
   filter, 
@@ -248,11 +276,11 @@ const FilterCard = React.memo(({
       <div className="filter-controls">
         <Form.Group className="mb-2">
           <Form.Label size="sm" className="text-dark">Поле</Form.Label>
-          <Form.Select
+          <CustomSelect
             size="sm"
             value={filter.field}
             onChange={(e) => onUpdateFilter(index, "field", e.target.value)}
-            className="fantasy-select"
+            className="w-100"
           >
             <option value="">Выберите поле...</option>
             {filterFields.map(field => (
@@ -260,24 +288,24 @@ const FilterCard = React.memo(({
                 {field.name}
               </option>
             ))}
-          </Form.Select>
+          </CustomSelect>
         </Form.Group>
         
         {fieldConfig?.type === "number" && filter.field && (
           <Form.Group className="mb-2">
             <Form.Label size="sm" className="text-dark">Условие</Form.Label>
-            <Form.Select
+            <CustomSelect
               size="sm"
               value={filter.operator}
               onChange={(e) => onUpdateFilter(index, "operator", e.target.value)}
-              className="fantasy-select"
+              className="w-100"
             >
               {fieldConfig.operators.map(op => (
                 <option key={op.id} value={op.id}>
                   {op.name}
                 </option>
               ))}
-            </Form.Select>
+            </CustomSelect>
           </Form.Group>
         )}
         
@@ -286,11 +314,11 @@ const FilterCard = React.memo(({
             <Form.Label size="sm" className="text-dark">Значение</Form.Label>
             
             {fieldConfig?.type === "select" && (
-              <Form.Select
+              <CustomSelect
                 size="sm"
                 value={filter.value}
                 onChange={(e) => onUpdateFilter(index, "value", e.target.value)}
-                className="fantasy-select"
+                className="w-100"
               >
                 <option value="">Любое...</option>
                 {fieldConfig.options().map(opt => (
@@ -298,15 +326,15 @@ const FilterCard = React.memo(({
                     {opt.label}
                   </option>
                 ))}
-              </Form.Select>
+              </CustomSelect>
             )}
             
             {fieldConfig?.type === "boolean" && (
-              <Form.Select
+              <CustomSelect
                 size="sm"
                 value={filter.value}
                 onChange={(e) => onUpdateFilter(index, "value", e.target.value)}
-                className="fantasy-select"
+                className="w-100"
               >
                 <option value="">Любое...</option>
                 {fieldConfig.options.map(opt => (
@@ -314,7 +342,7 @@ const FilterCard = React.memo(({
                     {opt.label}
                   </option>
                 ))}
-              </Form.Select>
+              </CustomSelect>
             )}
             
             {fieldConfig?.type === "number" && (
@@ -326,7 +354,7 @@ const FilterCard = React.memo(({
                 placeholder="Введите число..."
                 min="0"
                 step="0.1"
-                className="fantasy-input"
+                className="w-100"
               />
             )}
           </Form.Group>
@@ -481,7 +509,7 @@ const ToCastleTab = React.memo(({
           
           <Row className="g-3">
             {inventoryFilters.map((filter, index) => (
-              <Col md={6} key={index}>
+              <Col xs={12} key={index}>
                 <FilterCard
                   filter={filter}
                   index={index}
@@ -568,7 +596,6 @@ const ToCastleTab = React.memo(({
     </div>
   );
 }, (prevProps, nextProps) => {
-  // Сравниваем только необходимые пропсы для перерисовки
   return (
     prevProps.filteredInventory.length === nextProps.filteredInventory.length &&
     prevProps.selectedInventoryItems.size === nextProps.selectedInventoryItems.size &&
@@ -721,7 +748,7 @@ const FromCastleTab = React.memo(({
           
           <Row className="g-3">
             {storageFilters.map((filter, index) => (
-              <Col md={6} key={index}>
+              <Col xs={12} key={index}>
                 <FilterCard
                   filter={filter}
                   index={index}

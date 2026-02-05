@@ -1082,46 +1082,413 @@ export const getRitualsData = async (guildId) => {
     };
   }
 };
+export const hireHero = async (guildId, heroName) => {
+  try {
+    console.log(`🔄 Запрос найма героя для гильдии ${guildId}: ${heroName}`);
+    
+    // Убедимся, что отправляем правильную структуру
+    const response = await apiClient.post(
+      `/guild/${guildId}/settlement/hire-hero`,
+      {
+        hero_name: heroName  // Изменено с heroName на hero_name для соответствия бекенду
+      },
+      {
+        headers: getAuthHeaders()
+      }
+    );
+    
+    return {
+      status: response.status,
+      data: response.data.data || response.data,
+      message: response.data.message || "Герой успешно призван"
+    };
+  } catch (error) {
+    console.error("❌ Ошибка найма героя:", error);
+    
+    // Обработка специфических ошибок
+    if (error.response?.status === 401) {
+      return {
+        status: 401,
+        message: "Требуется авторизация",
+        data: null
+      };
+    }
+    
+    if (error.response?.status === 403) {
+      return {
+        status: 403,
+        message: "У вас недостаточно прав для призыва героев",
+        data: null
+      };
+    }
+    
+    if (error.response?.status === 404) {
+      return {
+        status: 404,
+        message: "Герой не найден или недоступен",
+        data: null
+      };
+    }
+    
+    if (error.response?.status === 400) {
+      return {
+        status: 400,
+        message: "Недостаточно воплощений или отсутствует алтарь",
+        data: null
+      };
+    }
+    
+    if (error.response?.status === 409) {
+      return {
+        status: 409,
+        message: "Герой уже призван",
+        data: null
+      };
+    }
+    
+    if (error.response?.status === 422) {
+      return {
+        status: 422,
+        message: "Некорректные параметры запроса",
+        data: null
+      };
+    }
+    
+    return {
+      status: error.response?.status || 500,
+      message: extractErrorMessage(error),
+      data: error.response?.data?.data || null
+    };
+  }
+};
+// ========== МИССИИ: ДАНЖИ (ГЛАВНОЕ) ==========
 
-// Обновленный объект settlementService с новыми методами
+// 1. Отправить группу в случайный данж (через башню)
+export const startDungeonMission = async (settlementId, playerIds, towerLevel) => {
+  try {
+    console.log(`🔄 Отправка группы в данж: settlementId=${settlementId}, players=${playerIds.length}, towerLevel=${towerLevel}`);
+    
+    const response = await apiClient.post(
+      `/guild/${settlementId}/missions/dungeon/start`,
+      {
+        player_ids: playerIds,
+        tower_level: towerLevel
+      },
+      {
+        headers: getAuthHeaders()
+      }
+    );
+    
+    return {
+      status: response.status,
+      data: response.data.data || response.data,
+      message: response.data.message || "Группа отправлена в подземелье",
+      success: response.status === 200 || response.status === 201
+    };
+  } catch (error) {
+    console.error("❌ Ошибка отправки группы в данж:", error);
+    
+    if (error.response?.status === 400) {
+      return {
+        status: 400,
+        message: "Недостаточно игроков или лимит миссий исчерпан",
+        data: null,
+        success: false
+      };
+    }
+    
+    if (error.response?.status === 403) {
+      return {
+        status: 403,
+        message: "Разведывательная вышка не построена или недостаточный уровень",
+        data: null,
+        success: false
+      };
+    }
+    
+    return {
+      status: error.response?.status || 500,
+      message: extractErrorMessage(error),
+      data: null,
+      success: false
+    };
+  }
+};
+
+// 2. Получить активные группы (готовящиеся или в данже)
+export const getActiveDungeonGroups = async (guildId) => {
+  try {
+    console.log(`🔄 Запрос активных групп данжей: guildId=${guildId}`);
+    
+    const response = await apiClient.get(
+      `/guild/${guildId}/missions/dungeon/active`,
+      {
+        headers: getAuthHeaders()
+      }
+    );
+    
+    return {
+      status: response.status,
+      data: response.data.data || response.data,
+      message: response.data.message || "Активные группы получены",
+      success: response.status === 200
+    };
+  } catch (error) {
+    console.error("❌ Ошибка получения активных групп:", error);
+    
+    return {
+      status: error.response?.status || 500,
+      message: extractErrorMessage(error),
+      data: [],
+      success: false
+    };
+  }
+};
+
+// 3. Получить информацию о доступных миссиях (лимиты)
+export const getMissionLimits = async (guildId) => {
+  try {
+    console.log(`🔄 Запрос лимитов миссий: guildId=${guildId}`);
+    
+    const response = await apiClient.get(
+      `/guild/${guildId}/missions/limits`,
+      {
+        headers: getAuthHeaders()
+      }
+    );
+    
+    return {
+      status: response.status,
+      data: response.data.data || response.data,
+      message: response.data.message || "Лимиты миссий получены",
+      success: response.status === 200
+    };
+  } catch (error) {
+    console.error("❌ Ошибка получения лимитов миссий:", error);
+    
+    return {
+      status: error.response?.status || 500,
+      message: extractErrorMessage(error),
+      data: { used_today: 0, max_per_day: 0, available: 0 },
+      success: false
+    };
+  }
+};
+
+// 4. Отправить разведчика в регион
+export const sendScout = async (guildId, regionType, scoutType = 'standard') => {
+  try {
+    console.log(`🔄 Отправка разведчика: guildId=${guildId}, region=${regionType}, type=${scoutType}`);
+    
+    const response = await apiClient.post(
+      `/guild/${guildId}/missions/scout/send`,
+      {
+        region_type: regionType, // 'forest', 'steppe', 'mountains', 'coast'
+        scout_type: scoutType
+      },
+      {
+        headers: getAuthHeaders()
+      }
+    );
+    
+    return {
+      status: response.status,
+      data: response.data.data || response.data,
+      message: response.data.message || "Разведчик отправлен",
+      success: response.status === 200 || response.status === 201
+    };
+  } catch (error) {
+    console.error("❌ Ошибка отправки разведчика:", error);
+    
+    if (error.response?.status === 400) {
+      return {
+        status: 400,
+        message: "Нет доступных разведчиков или недопустимый регион",
+        data: null,
+        success: false
+      };
+    }
+    
+    return {
+      status: error.response?.status || 500,
+      message: extractErrorMessage(error),
+      data: null,
+      success: false
+    };
+  }
+};
+
+// 5. Отправить диверсанта/убийцу во вражеское поселение
+export const sendSpecialMission = async (guildId, targetSettlementId, missionType, units = []) => {
+  try {
+    console.log(`🔄 Спецмиссия: guildId=${guildId}, target=${targetSettlementId}, type=${missionType}`);
+    
+    const response = await apiClient.post(
+      `/guild/${guildId}/missions/special`,
+      {
+        target_settlement_id: targetSettlementId,
+        mission_type: missionType, // 'assassination', 'sabotage'
+        units: units
+      },
+      {
+        headers: getAuthHeaders()
+      }
+    );
+    
+    return {
+      status: response.status,
+      data: response.data.data || response.data,
+      message: response.data.message || "Спецмиссия начата",
+      success: response.status === 200 || response.status === 201
+    };
+  } catch (error) {
+    console.error("❌ Ошибка отправки спецмиссии:", error);
+    
+    if (error.response?.status === 404) {
+      return {
+        status: 404,
+        message: "Целевое поселение не найдено",
+        data: null,
+        success: false
+      };
+    }
+    
+    return {
+      status: error.response?.status || 500,
+      message: extractErrorMessage(error),
+      data: null,
+      success: false
+    };
+  }
+};
+
+// 6. Получить результаты разведки (обнаруженные поселения)
+export const getScoutResults = async (guildId) => {
+  try {
+    console.log(`🔄 Запрос результатов разведки: guildId=${guildId}`);
+    
+    const response = await apiClient.get(
+      `/guild/${guildId}/missions/scout/results`,
+      {
+        headers: getAuthHeaders()
+      }
+    );
+    
+    return {
+      status: response.status,
+      data: response.data.data || response.data,
+      message: response.data.message || "Результаты разведки получены",
+      success: response.status === 200
+    };
+  } catch (error) {
+    console.error("❌ Ошибка получения результатов разведки:", error);
+    
+    return {
+      status: error.response?.status || 500,
+      message: extractErrorMessage(error),
+      data: [],
+      success: false
+    };
+  }
+};
+
+// 7. Получить историю всех миссий
+export const getMissionsHistory = async (guildId, limit = 20) => {
+  try {
+    console.log(`🔄 Запрос истории миссий: guildId=${guildId}, limit=${limit}`);
+    
+    const response = await apiClient.get(
+      `/guild/${guildId}/missions/history`,
+      {
+        params: { limit },
+        headers: getAuthHeaders()
+      }
+    );
+    
+    return {
+      status: response.status,
+      data: response.data.data || response.data,
+      message: response.data.message || "История миссий получена",
+      success: response.status === 200
+    };
+  } catch (error) {
+    console.error("❌ Ошибка получения истории миссий:", error);
+    
+    return {
+      status: error.response?.status || 500,
+      message: extractErrorMessage(error),
+      data: [],
+      success: false
+    };
+  }
+};
+
+// 8. Получить членов гильдии (для формирования групп)
+export const getGuildMembers = async (guildId) => {
+  try {
+    console.log(`🔄 Запрос членов гильдии: guildId=${guildId}`);
+    
+    const response = await apiClient.get(
+      `/guild/${guildId}/members`,
+      {
+        headers: getAuthHeaders()
+      }
+    );
+    
+    return {
+      status: response.status,
+      data: response.data.data || response.data,
+      message: response.data.message || "Члены гильдии получены",
+      success: response.status === 200
+    };
+  } catch (error) {
+    console.error("❌ Ошибка получения членов гильдии:", error);
+    
+    return {
+      status: error.response?.status || 500,
+      message: extractErrorMessage(error),
+      data: [],
+      success: false
+    };
+  }
+};
+
+// Обновленный объект settlementService
 export const settlementService = {
-  // Основные методы
+  // НОВЫЕ МЕТОДЫ ДЛЯ МИССИЙ
+  startDungeonMission,
+  getActiveDungeonGroups,
+  getMissionLimits,
+  sendScout,
+  sendSpecialMission,
+  getScoutResults,
+  getMissionsHistory,
+  getGuildMembers,
+  
+  // СУЩЕСТВУЮЩИЕ МЕТОДЫ (оставляем все остальные)
   getSettlementData,
   getStorageData,
   getBuildingsData,
   getRitualsData,
-  
-  // Новые методы для подношений
   getOfferingInfo,
   makeOfferingAll,
   makeRecipeOffering,
-  
-  // Методы для ритуалов
   performRitual,
-  
-  // Методы для баффов
   getActiveBuffs,
   removeBuff,
-  
-  // Методы для строительства
   startConstruction,
   contributeToConstruction,
   startBuildingConstruction,
   cancelConstruction,
-
-  // Методы для юнитов
   hireUnit,
   takeFromGarrison,
   moveToGarrison,
   getGarrisonData,
   dischargeFromParty,
   storeToGarrison,
-  
-  // Методы для работы со складом
   addItemsToSettlementStorage,
   takeResource,
   storeAllResources,
-  
-  // Методы для ресурсов
-  getPlayerResources
+  getPlayerResources,
+  hireHero
 };

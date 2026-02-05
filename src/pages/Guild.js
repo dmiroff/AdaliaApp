@@ -1724,7 +1724,7 @@ const Guild = observer(() => {
         <Tab eventKey="settlements" title={
           <>
             <i className="fas fa-home me-2"></i>
-            Поселения
+            Поселение
           </>
         }>
           {guild.hasGuild ? <SettlementComponent /> : (

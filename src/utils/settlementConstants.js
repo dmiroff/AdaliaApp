@@ -4145,3 +4145,393 @@ export const skill_translator = {
     death_ritual: "Ритуал Смерти",
     more_material: "Больше трупов"
 };
+
+// Перевод названий навыков
+export const SKILL_TRANSLATOR = {
+    "herbalist": "Травник",
+    "searcher": "Искатель",
+    "resource": "Добытчик",
+    "diversion": "Диверсант",
+    "spy": "Разведчик",
+    "assasin": "Убийца",
+    "abbot": "Настоятель",
+    "faith_touch": "Касание веры",
+    "pray": "Молитва",
+    "builder": "Строитель",
+    "miser": "Скряга",
+    "control": "Контроль Стихии",
+    "overseer": "Надсмотрщик",
+    "pragmatist": "Прагматик",
+    "trainer": "Тренер",
+    "death_ritual": "Ритуал Смерти",
+    "more_material": "Больше трупов",
+};
+
+// Иконки для навыков
+export const SKILL_ICONS = {
+    "herbalist": "fas fa-leaf",
+    "searcher": "fas fa-search",
+    "resource": "fas fa-gem",
+    "diversion": "fas fa-bomb",
+    "spy": "fas fa-eye",
+    "assasin": "fas fa-skull-crossbones",
+    "abbot": "fas fa-pray",
+    "faith_touch": "fas fa-hands-praying",
+    "pray": "fas fa-church",
+    "builder": "fas fa-hammer",
+    "miser": "fas fa-coins",
+    "control": "fas fa-fire",
+    "overseer": "fas fa-user-tie",
+    "pragmatist": "fas fa-brain",
+    "trainer": "fas fa-dumbbell",
+    "death_ritual": "fas fa-skull",
+    "more_material": "fas fa-ghost",
+};
+
+const darkness_heroe_id = 214
+const  death_heroe_id = 215
+const  light1_heroe_id = 217
+const  light2_heroe_id = 218
+const  life_heroe_id = 216
+const  wind_heroe_id = 222
+const  sound1_heroe_id = 223
+const  sound2_heroe_id = 224
+const  fire1_heroe_id = 219
+const  fire2_heroe_id = 220
+const  fire3_heroe_id = 221
+const  ice_heroe_id = 227
+const  stone_heroe_id = 226
+const  lighting_heroe_id = 225
+
+export const HEROES_DICT = {
+    "Dark": {
+        1: {
+            "Тёмный гонец": {"essence": 100, "skills": {"assasin": 1, "diversion": 1, "spy": 1}},
+            "Шепчущий": {"essence": 100, "skills": {"searcher": 1, "herbalist": 1, "resource": 1}},
+        },
+        2: {
+            "Ассасин-новичок": {"essence": 200, "skills": {"assasin": 2, "diversion": 2, "spy": 1}},
+        },
+        3: {
+            "Тёмный жрец": {"essence": 300, "skills": {"abbot": 3, "faith_touch": 2, "pray": 1}},
+        },
+        4: {
+            "Разведчик теней": {"essence": 500, "skills": {"assasin": 3, "diversion": 2, "spy": 4}},
+        },
+        5: {
+            "Скрытный архитектор": {"essence": 750, "skills": {"builder": 4, "miser": 3, "control": 4}},
+        },
+        6: {
+            "Тёмный квартирмейстер": {"essence": 800, "skills": {"overseer": 6, "pragmatist": 4, "trainer": 3}},
+        },
+        7: {
+            "Тёмный рыцарь": {"essence": 600, "id": darkness_heroe_id},
+        },
+        8: {
+            "Мастер разведки": {"essence": 1000, "skills": {"assasin": 3, "diversion": 6, "spy": 8}},
+        },
+        9: {
+            "Главный сборщик": {"essence": 2000, "skills": {"searcher": 7, "herbalist": 3, "resource": 9}},
+        },
+        10: {
+            "Мастер-ассасин": {"essence": 1000, "skills": {"assasin": 10, "diversion": 6, "spy": 5}},
+        },
+    },
+    "Death": {
+        1: {
+            "Безмолвный вестник": {"essence": 100, "skills": {"assasin": 1, "diversion": 1, "spy": 1}},
+            "Трупоискатель": {"essence": 100, "skills": {"searcher": 1, "herbalist": 1, "resource": 1}},
+        },
+        2: {
+            "Ритуалист Смерти": {"essence": 250, "skills": {"abbot": 2, "more_material": 2, "death_ritual": 1}},
+        },
+        3: {
+            "Инженер Смерти": {"essence": 500, "skills": {"builder": 3, "miser": 2, "control": 2}},
+        },
+        4: {
+            "Некропроводник": {"essence": 600, "skills": {"abbot": 4, "faith_touch": 3, "pray": 2}},
+        },
+        5: {
+            "Архитектор Смерти": {"essence": 750, "skills": {"builder": 5, "miser": 3, "control": 3}},
+        },
+        6: {
+            "Квартирмейстер некрополя": {"essence": 800, "skills": {"overseer": 4, "pragmatist": 5, "trainer": 4}},
+        },
+        7: {
+            "Разведчик некрополя": {"essence": 1100, "skills": {"assasin": 5, "diversion": 5, "spy": 5}},
+        },
+        8: {
+            "Мастер трупов": {"essence": 1400, "skills": {"searcher": 6, "herbalist": 6, "resource": 5}},
+        },
+        9: {
+            "Погибель": {"essence": 1000, "id": death_heroe_id},
+        },
+        10: {
+                "Некромант": {"essence": 3500, "skills": {"abbot": 6, "more_material": 10, "death_ritual": 5}},
+        },
+    },
+    "Life": {
+        1: {
+            "Странник листа": {"essence": 100, "skills": {"assasin": 1, "diversion": 1, "spy": 1}},
+            "Травоискатель": {"essence": 100, "skills": {"searcher": 1, "herbalist": 1, "resource": 1}},
+        },
+        2: {
+            "Помощник собирателя": {"essence": 250, "skills": {"searcher": 1, "herbalist": 2, "resource": 2}},
+        },
+        3: {
+            "Жрец природы": {"essence": 300, "skills": {"abbot": 2, "faith_touch": 3, "pray": 2}},
+        },
+        4: {
+            "Разведчик лесов": {"essence": 500, "skills": {"assasin": 2, "diversion": 4, "spy": 3}},
+        },
+        5: {
+            "Зелёный инженер": {"essence": 750, "skills": {"builder": 4, "miser": 3, "control": 4}},
+        },
+        6: {
+            "Квартирмейстер Жизни": {"essence": 800, "skills": {"overseer": 4, "pragmatist": 4, "trainer": 5}},
+        },
+        7: {
+            "Мастер лука": {"essence": 600, "id": life_heroe_id},
+        },
+        8: {
+            "Травяной Мастер": {"essence": 1400, "skills": {"searcher": 6, "herbalist": 7, "resource": 4}},
+        },
+        9: {
+            "Наставник Жизни": {"essence": 2000, "skills": {"abbot": 9, "faith_touch": 5, "pray": 5}},
+        },
+        10: {
+            "Мастер-собиратель": {"essence": 3000, "skills": {"searcher": 6, "herbalist": 10, "resource": 5}},
+        },
+    },
+    "Light": {
+        1: {
+            "Светлый странник": {"essence": 100, "skills": {"assasin": 1, "diversion": 1, "spy": 1}},
+            "Идущий к Свету": {"essence": 100, "skills": {"searcher": 1, "herbalist": 1, "resource": 1}},
+        },
+        2: {
+            "Светоискатель": {"essence": 250, "skills": {"searcher": 2, "herbalist": 2, "resource": 1}},
+        },
+        3: {
+            "Малый проповедник": {"essence": 300, "skills": {"abbot": 3, "faith_touch": 2, "pray": 2}},
+        },
+        4: {
+            "Разведчик Света": {"essence": 500, "skills": {"assasin": 3, "diversion": 2, "spy": 4}},
+        },
+        5: {
+            "Светлый архитектор": {"essence": 750, "skills": {"builder": 4, "miser": 2, "control": 5}},
+        },
+        6: {
+            "Квартирмейстер Света": {"essence": 800, "skills": {"overseer": 5, "pragmatist": 4, "trainer": 4}},
+        },
+        7: {
+            "Рыцарь Света": {"essence": 600, "id": light1_heroe_id},
+        },
+        8: {
+            "Мастер проповедей": {"essence": 1200, "skills": {"abbot": 5, "faith_touch": 8, "pray": 4}},
+        },
+        9: {
+            "Каратель": {"essence": 1000, "id": light2_heroe_id},
+        },
+        10: {
+            "Высший жрец": {"essence": 3000, "skills": {"abbot": 10, "faith_touch": 6, "pray": 5}},
+        },
+    },
+    "Fire": {
+        1: {
+            "Странник Огня": {"essence": 100, "skills": {"assasin": 1, "diversion": 1, "spy": 1}},
+            "Искатель пепла": {"essence": 100, "skills": {"searcher": 1, "herbalist": 1, "resource": 1}},
+        },
+        2: {
+            "Малое пламя": {"essence": 200, "skills": {"assasin": 2, "diversion": 2, "spy": 1}},
+        },
+        3: {
+            "Жрец пламени": {"essence": 300, "skills": {"abbot": 2, "faith_touch": 2, "pray": 3}},
+        },
+        4: {
+            "Архитектор пепла": {"essence": 600, "skills": {"builder": 3, "miser": 4, "control": 2}},
+        },
+        5: {
+            "Вождь орков": {"essence": 300, "id": fire1_heroe_id},
+        },
+        6: {
+            "Мастер Огня": {"essence": 800, "skills": {"assasin": 1, "diversion": 6, "spy": 6}},
+        },
+        7: {
+            "Инфернальный голем": {"essence": 600, "id": fire2_heroe_id},
+        },
+        8: {
+            "Квартирмейстер пепла": {"essence": 1400, "skills": {"overseer": 8, "pragmatic": 2, "trainer": 7}},
+        },
+        9: {
+            "Горнило": {"essence": 2000, "skills": {"abbot": 7, "faith_touch": 7, "pray": 5}},
+        },
+        10: {
+            "Несущий Пламя": {"essence": 1500, "id": fire3_heroe_id},
+        },
+    },
+    "Wind": {
+        1: {
+            "Разведчик порыва": {"essence": 100, "skills": {"assasin": 1, "diversion": 1, "spy": 1}},
+            "Искатель Ветра": {"essence": 100, "skills": {"searcher": 1, "herbalist": 1, "resource": 1}},
+        },
+        2: {
+            "Юный искатель": {"essence": 250, "skills": {"searcher": 2, "herbalist": 1, "resource": 2}},
+        },
+        3: {
+            "Жрец Ветра": {"essence": 300, "skills": {"abbot": 3, "faith_touch": 1, "pray": 3}},
+        },
+        4: {
+            "Разведчик Шторма": {"essence": 500, "skills": {"assasin": 2, "diversion": 3, "spy": 4}},
+        },
+        5: {
+            "Архитектор вихрей": {"essence": 750, "skills": {"builder": 4, "miser": 3, "control": 4}},
+        },
+        6: {
+            "Квартирмейстер Ветра": {"essence": 800, "skills": {"overseer": 6, "pragmatist": 4, "trainer": 1}},
+        },
+        7: {
+            "Королевский грифон": {"essence": 600, "id": wind_heroe_id},
+        },
+        8: {
+            "Мастер разведки": {"essence": 1000, "skills": {"assasin": 8, "diversion": 3, "spy": 6}},
+        },
+        9: {
+            "Владыка Ветров": {"essence": 2000, "skills": {"abbot": 5, "faith_touch": 9, "pray": 5}},
+        },
+        10: {
+            "Странник Ветра": {"essence": 2000, "skills": {"assasin": 3, "diversion": 8, "spy": 10}},
+        },
+    },
+    "Sound": {
+        1: {
+            "Шептун": {"essence": 100, "skills": {"assasin": 1, "diversion": 1, "spy": 1}},
+            "Искатель Звука": {"essence": 100, "skills": {"searcher": 1, "herbalist": 1, "resource": 1}},
+        },
+        2: {
+            "Юный Собиратель": {"essence": 250, "skills": {"searcher": 2, "herbalist": 1, "resource": 1}},
+        },
+        3: {
+            "Жрец Звука": {"essence": 300, "skills": {"abbot": 2, "faith_touch": 3, "pray": 2}},
+        },
+        4: {
+            "Главный гоблин": {"essence": 200, "id": sound1_heroe_id},
+        },
+        5: {
+            "Инженер ритма": {"essence": 750, "skills": {"builder": 4, "miser": 3, "control": 4}},
+        },
+        6: {
+            "Квартирмейстер Звука": {"essence": 500, "skills": {"overseer": 6, "pragmatist": 4, "trainer": 3}},
+        },
+        7: {
+            "Верховный тритон": {"essence": 600, "id": sound2_heroe_id},
+        },
+        8: {
+            "Мастер вибраций": {"essence": 1000, "skills": {"assasin": 6, "diversion": 3, "spy": 8}},
+        },
+        9: {
+            "Церемониальный певун": {"essence": 2000, "skills": {"abbot": 8, "faith_touch": 6, "pray": 5}},
+        },
+        10: {
+            "Дирижёр": {"essence": 3000, "skills": {"overseer": 3, "pragmatist": 8, "trainer": 10}},
+        },
+    },
+    "Lighting": {
+        1: {
+            "Разведчик гроз": {"essence": 100, "skills": {"assasin": 1, "diversion": 1, "spy": 1}},
+            "Искатель гроз": {"essence": 100, "skills": {"searcher": 1, "herbalist": 1, "resource": 1}},
+        },
+        2: {
+            "Инженер Молнии": {"essence": 300, "skills": {"builder": 2, "miser": 1, "control": 2}},
+        },
+        3: {
+            "Жрец Молнии": {"essence": 300, "skills": {"abbot": 2, "faith_touch": 2, "pray": 3}},
+        },
+        4: {
+            "Грозовой разведчик": {"essence": 500, "skills": {"assasin": 3, "diversion": 3, "spy": 3}},
+        },
+        5: {
+            "Архитектор гроз": {"essence": 750, "skills": {"builder": 5, "miser": 3, "control": 3}},
+        },
+        6: {
+            "Квартирмейстер Молнии": {"essence": 800, "skills": {"overseer": 5, "pragmatist": 4, "trainer": 4}},
+        },
+        7: {
+            "Принцесса ракшасов": {"essence": 600, "id": lighting_heroe_id},
+        },
+        8: {
+            "Мастер Бури": {"essence": 1000, "skills": {"assasin": 6, "diversion": 5, "spy": 6}},
+        },
+        9: {
+            "Хранитель Молний": {"essence": 2000, "skills": {"abbot": 8, "faith_touch": 6, "pray": 5}},
+        },
+        10: {
+            "Искатель знаний": {"essence": 3000, "skills": {"searcher": 10, "herbalist": 6, "resource": 5}},
+        },
+    },
+    "Stone": {
+        1: {
+            "Каменный Странник": {"essence": 100, "skills": {"assasin": 1, "diversion": 1, "spy": 1}},
+            "Минералоискатель": {"essence": 100, "skills": {"searcher": 1, "herbalist": 1, "resource": 1}},
+        },
+        2: {
+            "Малый Камнетёс": {"essence": 300, "skills": {"builder": 2, "miser": 1, "control": 2}},
+        },
+        3: {
+            "Жрец Земли": {"essence": 300, "skills": {"abbot": 2, "faith_touch": 2, "pray": 3}},
+        },
+        4: {
+            "Разведчик глубин": {"essence": 500, "skills": {"assasin": 4, "diversion": 2, "spy": 3}},
+        },
+        5: {
+            "Инженер карьеров": {"essence": 750, "skills": {"builder": 2, "miser": 5, "control": 4}},
+        },
+        6: {
+            "Квартирмейстер Камня": {"essence": 800, "skills": {"overseer": 4, "pragmatist": 6, "trainer": 3}},
+        },
+        7: {
+            "Чемпион огров": {"essence": 600, "id": stone_heroe_id},
+        },
+        8: {
+            "Мастер пещер": {"essence": 1000, "skills": {"assasin": 3, "diversion": 8, "spy": 6}},
+        },
+        9: {
+            "Настоятель Глыб": {"essence": 2000, "skills": {"abbot": 7, "faith_touch": 7, "pray": 5}},
+        },
+        10: {
+            "Гончар": {"essence": 3300, "skills": {"builder": 10, "miser": 1, "control": 10}},
+        },
+    },
+    "Ice": {
+        1: {
+            "Ледяной разведчик": {"essence": 100, "skills": {"assasin": 1, "diversion": 1, "spy": 1}},
+            "Искатель Льда": {"essence": 100, "skills": {"searcher": 1, "herbalist": 1, "resource": 1}},
+        },
+        2: {
+            "Юный архитектор": {"essence": 300, "skills": {"builder": 2, "miser": 1, "control": 2}},
+        },
+        3: {
+            "Жрец Льда": {"essence": 300, "skills": {"abbot": 2, "faith_touch": 3, "pray": 2}},
+        },
+        4: {
+            "Разведчик морозов": {"essence": 500, "skills": {"assasin": 3, "diversion": 3, "spy": 3}},
+        },
+        5: {
+            "Снежный строитель": {"essence": 750, "skills": {"builder": 4, "miser": 5, "control": 2}},
+        },
+        6: {
+            "Вождь голиафов": {"essence": 500, "id": ice_heroe_id},
+        },
+        7: {
+            "Квартирмейстер холодов": {"essence": 900, "skills": {"overseer": 5, "pragmatist": 7, "trainer": 3}},
+        },
+        8: {
+            "Мастер морозных троп": {"essence": 1000, "skills": {"assasin": 6, "diversion": 3, "spy": 8}},
+        },
+        9: {
+            "Предвестник Льда": {"essence": 2000, "skills": {"abbot": 9, "faith_touch": 6, "pray": 4}},
+        },
+        10: {
+            "Скульптор": {"essence": 3500, "skills": {"builder": 10, "miser": 1, "control": 10}},
+        },
+    },
+}
