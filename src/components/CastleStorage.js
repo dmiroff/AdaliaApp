@@ -57,7 +57,8 @@ const CastleStorageItem = React.memo(({
   const [itemId, setItemId] = useState(null);
 
   useEffect(() => {
-    setItemId(item.id || item.itemId || item.key);
+    const id = item.id || item.itemId || item.key;
+    setItemId(String(id));
   }, [item]);
 
   const getRarityColor = useMemo(() => {
@@ -144,7 +145,10 @@ const CastleStorageItem = React.memo(({
 
       <div className="item-info">
         <div className="item-header">
-          <div className="item-name text-dark">{formatItemName()}</div>
+          <div className="item-name text-dark">
+            {formatItemName()}
+            <small className="text-muted ms-2">ID: {itemId}</small>
+          </div>
           <div className="item-value text-dark">
             {item.value ? `${item.value} 🌕` : ''}
           </div>
@@ -185,6 +189,13 @@ const CastleStorageItem = React.memo(({
           {source === "storage" && item.added_at && (
             <Badge bg="info" className="date-badge">
               {new Date(item.added_at).toLocaleDateString()}
+            </Badge>
+          )}
+          
+          {/* Бейдж для неопознанных предметов */}
+          {item.undefined === true && (
+            <Badge bg="danger" className="identified-badge">
+              Неопознанный
             </Badge>
           )}
         </div>
@@ -393,7 +404,7 @@ const ToCastleTab = React.memo(({
 }) => {
   const inventoryItemsForRender = useMemo(() => {
     return filteredInventory.map(([itemId, item]) => ({
-      id: itemId,
+      id: String(itemId),
       ...item
     }));
   }, [filteredInventory]);
@@ -626,7 +637,10 @@ const FromCastleTab = React.memo(({
   loading
 }) => {
   const storageItemsForRender = useMemo(() => {
-    return filteredStorage.map(item => item);
+    return filteredStorage.map(item => ({
+      ...item,
+      id: String(item.id)
+    }));
   }, [filteredStorage]);
 
   return (
@@ -863,6 +877,9 @@ const CastleStorage = observer(() => {
   const [hasAccess, setHasAccess] = useState(false);
   const [accessReason, setAccessReason] = useState("");
   const [storageCapacity, setStorageCapacity] = useState({ current: 0, max: 1000 });
+  
+  // Добавляем состояние для проверки события
+  const [isCastleEventActive, setIsCastleEventActive] = useState(false);
 
   // Состояния для фильтрации и поиска с дебаунсом
   const [searchQueryInventory, setSearchQueryInventory] = useState("");
@@ -916,7 +933,7 @@ const CastleStorage = observer(() => {
     return Array.from(addedBySet);
   }, [storageItems]);
 
-  // Оптимизированные filterFields
+  // Оптимизированные filterFields с исправленным полем "undefined"
   const filterFields = useMemo(() => {
     return [
       { 
@@ -962,7 +979,7 @@ const CastleStorage = observer(() => {
         ]
       },
       { 
-        id: "undefined", 
+        id: "undefined", // Исправлено на undefined, как на бэкенде
         name: "Распознан", 
         type: "boolean",
         options: [
@@ -1016,8 +1033,13 @@ const CastleStorage = observer(() => {
       if (result && result.data) {
         setPlayerData(result.data);
         setPlayerInventory(result.data.inventory_new || {});
+        
+        // Проверяем активное событие
+        const isEventActive = result.data.active_event === "Castle";
+        setIsCastleEventActive(isEventActive);
+        
         if (activeCastle) {
-          checkAccess(result.data);
+          checkAccess(result.data, isEventActive);
         }
       }
     } catch (error) {
@@ -1026,20 +1048,19 @@ const CastleStorage = observer(() => {
     }
   }, [activeCastle]);
 
-  const checkAccess = useCallback((playerData) => {
+  const checkAccess = useCallback((playerData, isEventActive) => {
     if (!activeCastle) return;
     
-    const hasCastleAccess = activeCastle.allowed_to_enter || false;
-    const isGuildMember = guild.guildData?.player_role !== null;
-    
-    if (isGuildMember) {
+    // ВАЖНО: Проверяем доступ только по событию "Castle"
+    // Согласно условию: если player_data.active_event != "Castle", пользоваться хранилищем нельзя
+    if (isEventActive) {
       setHasAccess(true);
-      setAccessReason("Доступ разрешен - вы являетесь членом гильдии");
+      setAccessReason("Доступ разрешен - вы находитесь в событии 'Замок'");
     } else {
       setHasAccess(false);
-      setAccessReason("Доступ запрещён - вы не состоите в гильдии");
+      setAccessReason("Доступ запрещён - вы не находитесь в событии 'Замок'. Текущее событие: " + (playerData.active_event || "не определено"));
     }
-  }, [activeCastle, guild.guildData]);
+  }, [activeCastle]);
 
   const fetchCastleStorage = useCallback(async (castleId) => {
     if (!castleId) return;
@@ -1079,7 +1100,7 @@ const CastleStorage = observer(() => {
     fetchPlayerData();
   }, [fetchPlayerData]);
 
-  // Оптимизированная функция фильтрации
+  // Оптимизированная функция фильтрации с исправленной обработкой поля "undefined"
   const applyFiltersToItems = useCallback((items, filters, isArray = false) => {
     return items.filter(itemData => {
       if (!isArray) {
@@ -1092,12 +1113,24 @@ const CastleStorage = observer(() => {
           
           let itemValue = item[filter.field];
           
-          if (filter.field === "corrupted") {
+          // Обработка специальных полей
+          if (filter.field === "undefined") {
+            // undefined = true -> неопознанный, false -> опознанный
+            // В бэкенде используется булево значение
+            itemValue = item.undefined || false; // Если undefined, считаем false (опознанный)
+            // Фильтр принимает строки "true"/"false", преобразуем
+            itemValue = String(itemValue);
+          } else if (filter.field === "corrupted") {
             itemValue = item.corrupted || false;
+          } else if (filter.field === "junk") {
+            itemValue = item.junk || false;
+          } else if (filter.field === "is_equippable") {
+            itemValue = item.is_equippable || false;
           }
           
           switch (fieldConfig.type) {
             case "boolean":
+              // Для undefined сравниваем строковые значения
               return String(itemValue) === filter.value;
               
             case "number":
@@ -1136,8 +1169,16 @@ const CastleStorage = observer(() => {
           
           let itemValue = item[filter.field];
           
-          if (filter.field === "corrupted") {
+          // Обработка специальных полей
+          if (filter.field === "undefined") {
+            itemValue = item.undefined || false;
+            itemValue = String(itemValue);
+          } else if (filter.field === "corrupted") {
             itemValue = item.corrupted || false;
+          } else if (filter.field === "junk") {
+            itemValue = item.junk || false;
+          } else if (filter.field === "is_equippable") {
+            itemValue = item.is_equippable || false;
           }
           
           switch (fieldConfig.type) {
@@ -1174,14 +1215,19 @@ const CastleStorage = observer(() => {
     });
   }, [filterFields]);
 
+  // Исправленная функция фильтрации для работы с отрицательными ID
   const filterItems = useCallback((items, query, filters, isArray = false) => {
     const hasActiveFilters = filters.some(f => f.field && f.value !== "");
     
     if (!hasActiveFilters && !query) {
-      return isArray ? items : Object.entries(items).filter(([key, item]) => item && typeof item === 'object');
+      return isArray ? items : Object.entries(items).filter(([key, item]) => 
+        item && typeof item === 'object' && key !== null && key !== undefined
+      );
     }
 
-    let filteredItems = isArray ? items : Object.entries(items).filter(([key, item]) => item && typeof item === 'object');
+    let filteredItems = isArray ? items : Object.entries(items).filter(([key, item]) => 
+      item && typeof item === 'object' && key !== null && key !== undefined
+    );
 
     if (hasActiveFilters) {
       filteredItems = applyFiltersToItems(filteredItems, filters, isArray);
@@ -1190,11 +1236,19 @@ const CastleStorage = observer(() => {
     if (query && filteredItems.length > 0) {
       try {
         const itemObjects = isArray 
-          ? filteredItems.map(item => ({ ...item }))
-          : filteredItems.map(([id, data]) => ({ id, ...(data || {}) }));
+          ? filteredItems.map(item => ({ 
+              ...item, 
+              id: String(item.id),
+              searchKey: `${item.name || ''} ${item.description || ''}`
+            }))
+          : filteredItems.map(([id, data]) => ({ 
+              id: String(id),
+              ...(data || {}),
+              searchKey: `${data?.name || ''} ${data?.description || ''}`
+            }));
         
         const fuse = new Fuse(itemObjects, {
-          keys: ["name", "description"],
+          keys: ["name", "description", "searchKey"],
           includeScore: true,
           threshold: 0.4,
           shouldSort: true,
@@ -1217,11 +1271,13 @@ const CastleStorage = observer(() => {
         const lowerQuery = query.toLowerCase();
         if (isArray) {
           filteredItems = filteredItems.filter(item => 
-            item.name && item.name.toLowerCase().includes(lowerQuery)
+            (item.name && item.name.toLowerCase().includes(lowerQuery)) ||
+            (item.description && item.description.toLowerCase().includes(lowerQuery))
           );
         } else {
           filteredItems = filteredItems.filter(([key, item]) => 
-            item.name && item.name.toLowerCase().includes(lowerQuery)
+            (item.name && item.name.toLowerCase().includes(lowerQuery)) ||
+            (item.description && item.description.toLowerCase().includes(lowerQuery))
           );
         }
       }
@@ -1319,7 +1375,11 @@ const CastleStorage = observer(() => {
     setSelectedInventoryItems(new Set());
     setSelectedStorageItems(new Set());
     fetchCastleStorage(castle.id);
-    if (playerData) checkAccess(playerData);
+    if (playerData) {
+      // Проверяем доступ с учетом события
+      const isEventActive = playerData.active_event === "Castle";
+      checkAccess(playerData, isEventActive);
+    }
   }, [fetchCastleStorage, playerData, checkAccess]);
 
   const toggleInventoryItem = useCallback((itemId) => {
@@ -1347,12 +1407,12 @@ const CastleStorage = observer(() => {
   }, []);
 
   const selectAllFilteredInventory = useCallback(() => {
-    const allIds = filteredInventory.map(([itemId]) => itemId);
+    const allIds = filteredInventory.map(([itemId]) => String(itemId));
     setSelectedInventoryItems(new Set(allIds));
   }, [filteredInventory]);
 
   const selectAllFilteredStorage = useCallback(() => {
-    const allIds = filteredStorage.map(item => item.id);
+    const allIds = filteredStorage.map(item => String(item.id));
     setSelectedStorageItems(new Set(allIds));
   }, [filteredStorage]);
 
@@ -1401,6 +1461,23 @@ const CastleStorage = observer(() => {
     return (storageCapacity.current / storageCapacity.max) * 100;
   }, [storageCapacity.current, storageCapacity.max]);
 
+  // Функция для отображения предупреждения о событии
+  const renderEventWarning = () => {
+    if (!isCastleEventActive && playerData) {
+      return (
+        <Alert variant="danger" className="mb-3">
+          <i className="fas fa-exclamation-triangle me-2"></i>
+          <strong>Доступ к хранилищу замка ограничен!</strong>
+          <div className="mt-1">
+            Для использования хранилища замка вы должны находиться в событии "Замок".
+            Текущее событие: <strong>{playerData.active_event || "не определено"}</strong>
+          </div>
+        </Alert>
+      );
+    }
+    return null;
+  };
+
   if (!guild.hasGuild || !guild.guildData?.castles || guild.guildData.castles.length === 0) {
     return (
       <Container className="castle-storage-container">
@@ -1427,6 +1504,9 @@ const CastleStorage = observer(() => {
           ⚠️ {error}
         </Alert>
       )}
+      
+      {/* Добавляем предупреждение о событии */}
+      {renderEventWarning()}
 
       <Row className="g-3">
         <Col lg={3}>
