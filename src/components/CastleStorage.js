@@ -52,8 +52,8 @@ const normalizeId = (id) => {
   return String(id);
 };
 
-// Оптимизированный компонент карточки предмета
-const CastleStorageItem = React.memo(({ 
+// Компонент карточки предмета
+const CastleStorageItem = ({ 
   item, 
   isSelected = false, 
   onToggleSelect = null,
@@ -63,12 +63,11 @@ const CastleStorageItem = React.memo(({
   const [itemId, setItemId] = useState("");
 
   useEffect(() => {
-    // Получаем ID из различных возможных полей
     const id = item.id || item.itemId || item.key;
     setItemId(normalizeId(id));
   }, [item]);
 
-  const getRarityColor = useMemo(() => {
+  const getRarityColor = () => {
     const name = item.name?.toLowerCase() || '';
     
     if (name.includes('(л)')) {
@@ -96,7 +95,7 @@ const CastleStorageItem = React.memo(({
         badge: 'secondary'
       };
     }
-  }, [item.name]);
+  };
 
   const formatItemName = () => {
     if (item.count > 1) {
@@ -112,9 +111,17 @@ const CastleStorageItem = React.memo(({
     }
   };
 
+  const handleCheckboxChange = (e) => {
+    e.stopPropagation();
+    if (onToggleSelect && itemId) {
+      onToggleSelect(itemId);
+    }
+  };
+
   const handleMenuToggle = (e) => {
     e.stopPropagation();
-    setShowMenu(!showMenu);
+    e.preventDefault();
+    setShowMenu(prev => !prev);
   };
 
   const getItemType = () => {
@@ -123,6 +130,8 @@ const CastleStorageItem = React.memo(({
     }
     return "Предмет";
   };
+
+  const rarityColor = getRarityColor();
 
   return (
     <div 
@@ -134,10 +143,7 @@ const CastleStorageItem = React.memo(({
         <input
           type="checkbox"
           checked={isSelected}
-          onChange={(e) => {
-            e.stopPropagation();
-            if (onToggleSelect && itemId) onToggleSelect(itemId);
-          }}
+          onChange={handleCheckboxChange}
           onClick={(e) => e.stopPropagation()}
         />
       </div>
@@ -185,12 +191,12 @@ const CastleStorageItem = React.memo(({
         )}
 
         <div className="item-badges">
-          {getRarityColor.name !== "обычная" && (
+          {rarityColor.name !== "обычная" && (
             <Badge 
-              bg={getRarityColor.badge}
+              bg={rarityColor.badge}
               className="rarity-badge"
             >
-              {getRarityColor.name}
+              {rarityColor.name}
             </Badge>
           )}
           
@@ -200,7 +206,6 @@ const CastleStorageItem = React.memo(({
             </Badge>
           )}
           
-          {/* Бейдж для неопознанных предметов */}
           {item.undefined === true && (
             <Badge bg="danger" className="identified-badge">
               Неопознанный
@@ -225,16 +230,9 @@ const CastleStorageItem = React.memo(({
       )}
     </div>
   );
-}, (prevProps, nextProps) => {
-  return (
-    prevProps.item.id === nextProps.item.id &&
-    prevProps.isSelected === nextProps.isSelected &&
-    prevProps.source === nextProps.source &&
-    prevProps.onToggleSelect === nextProps.onToggleSelect
-  );
-});
+};
 
-// Кастомный компонент Select для мобильных устройств
+// Кастомный компонент Select
 const CustomSelect = ({ 
   size = "sm", 
   value, 
@@ -244,12 +242,24 @@ const CustomSelect = ({
   disabled = false,
   ...props 
 }) => {
+  const handleChange = (e) => {
+    e.stopPropagation();
+    if (onChange) {
+      onChange(e);
+    }
+  };
+
+  const handleClick = (e) => {
+    e.stopPropagation();
+  };
+
   return (
     <div className={`custom-select-wrapper ${className}`}>
       <select 
         className={`form-select form-select-${size} mobile-friendly-select`}
         value={value}
-        onChange={onChange}
+        onChange={handleChange}
+        onClick={handleClick}
         disabled={disabled}
         {...props}
       >
@@ -263,7 +273,7 @@ const CustomSelect = ({
 };
 
 // Компонент FilterCard для отображения одного фильтра
-const FilterCard = React.memo(({ 
+const FilterCard = ({ 
   filter, 
   index, 
   filterFields, 
@@ -273,8 +283,38 @@ const FilterCard = React.memo(({
 }) => {
   const fieldConfig = filterFields.find(f => f.id === filter.field);
   
+  const handleFieldChange = (e) => {
+    e.stopPropagation();
+    onUpdateFilter(index, "field", e.target.value);
+  };
+
+  const handleOperatorChange = (e) => {
+    e.stopPropagation();
+    onUpdateFilter(index, "operator", e.target.value);
+  };
+
+  const handleValueChange = (e) => {
+    e.stopPropagation();
+    onUpdateFilter(index, "value", e.target.value);
+  };
+
+  const handleValueInputChange = (e) => {
+    e.stopPropagation();
+    onUpdateFilter(index, "value", e.target.value);
+  };
+
+  const handleRemoveFilter = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onRemoveFilter(index);
+  };
+
+  const handleFormClick = (e) => {
+    e.stopPropagation();
+  };
+
   return (
-    <div className="filter-card p-3 mb-3">
+    <div className="filter-card p-3 mb-3" onClick={handleFormClick}>
       <div className="d-flex justify-content-between align-items-center mb-2">
         <small className="text-dark">
           {source === "inventory" ? "Фильтр инвентаря" : "Фильтр хранилища"} {index + 1}
@@ -284,21 +324,22 @@ const FilterCard = React.memo(({
             variant="link"
             size="sm"
             className="text-danger p-0"
-            onClick={() => onRemoveFilter(index)}
+            onClick={handleRemoveFilter}
             title="Удалить фильтр"
+            type="button"
           >
             <i className="fas fa-times"></i>
           </Button>
         )}
       </div>
       
-      <div className="filter-controls">
+      <div className="filter-controls" onClick={handleFormClick}>
         <Form.Group className="mb-2">
           <Form.Label size="sm" className="text-dark">Поле</Form.Label>
           <CustomSelect
             size="sm"
             value={filter.field}
-            onChange={(e) => onUpdateFilter(index, "field", e.target.value)}
+            onChange={handleFieldChange}
             className="w-100"
           >
             <option value="">Выберите поле...</option>
@@ -316,7 +357,7 @@ const FilterCard = React.memo(({
             <CustomSelect
               size="sm"
               value={filter.operator}
-              onChange={(e) => onUpdateFilter(index, "operator", e.target.value)}
+              onChange={handleOperatorChange}
               className="w-100"
             >
               {fieldConfig.operators.map(op => (
@@ -336,7 +377,7 @@ const FilterCard = React.memo(({
               <CustomSelect
                 size="sm"
                 value={filter.value}
-                onChange={(e) => onUpdateFilter(index, "value", e.target.value)}
+                onChange={handleValueChange}
                 className="w-100"
               >
                 <option value="">Любое...</option>
@@ -352,7 +393,7 @@ const FilterCard = React.memo(({
               <CustomSelect
                 size="sm"
                 value={filter.value}
-                onChange={(e) => onUpdateFilter(index, "value", e.target.value)}
+                onChange={handleValueChange}
                 className="w-100"
               >
                 <option value="">Любое...</option>
@@ -369,7 +410,8 @@ const FilterCard = React.memo(({
                 type="number"
                 size="sm"
                 value={filter.value}
-                onChange={(e) => onUpdateFilter(index, "value", e.target.value)}
+                onChange={handleValueInputChange}
+                onClick={handleFormClick}
                 placeholder="Введите число..."
                 min="0"
                 step="0.1"
@@ -381,499 +423,7 @@ const FilterCard = React.memo(({
       </div>
     </div>
   );
-}, (prevProps, nextProps) => {
-  return (
-    prevProps.filter.field === nextProps.filter.field &&
-    prevProps.filter.operator === nextProps.filter.operator &&
-    prevProps.filter.value === nextProps.filter.value &&
-    prevProps.index === nextProps.index &&
-    prevProps.source === nextProps.source
-  );
-});
-
-// Компонент для вкладки "В замок"
-const ToCastleTab = React.memo(({
-  filteredInventory,
-  selectedInventoryItems,
-  toggleInventoryItem,
-  selectAllFilteredInventory,
-  clearAllSelections,
-  handleTransferToCastle,
-  searchQueryInventory,
-  setSearchQueryInventory,
-  activeInventoryFiltersCount,
-  inventoryFilters,
-  filterFields,
-  updateInventoryFilter,
-  removeInventoryFilter,
-  resetInventoryFilters,
-  playerInventory,
-  loading
-}) => {
-  const inventoryItemsForRender = useMemo(() => {
-    return filteredInventory.map(([key, item]) => {
-      // Используем normalizeId для ключа инвентаря
-      const normalizedId = normalizeId(key);
-      return {
-        id: normalizedId,
-        key: key,
-        ...item
-      };
-    });
-  }, [filteredInventory]);
-
-  return (
-    <div>
-      <div className="mb-4">
-        {selectedInventoryItems.size > 0 && (
-          <div className="mass-operations-panel mb-3 p-3">
-            <div className="d-flex flex-wrap align-items-center gap-2 mb-2">
-              <span className="badge selected-count-badge">
-                Выбрано: <strong>{selectedInventoryItems.size}</strong> предметов
-              </span>
-            </div>
-            
-            <div className="d-flex flex-wrap gap-2">
-              <Button
-                variant="primary"
-                size="sm"
-                onClick={handleTransferToCastle}
-                className="mass-action-btn"
-              >
-                <i className="fas fa-upload me-1"></i>
-                Перенести в замок ({selectedInventoryItems.size})
-              </Button>
-              <Button
-                variant="outline-secondary"
-                size="sm"
-                onClick={clearAllSelections}
-                className="mass-action-btn"
-              >
-                <i className="fas fa-times me-1"></i>
-                Очистить
-              </Button>
-              <Button
-                variant="outline-success"
-                size="sm"
-                onClick={selectAllFilteredInventory}
-                className="mass-action-btn"
-                disabled={filteredInventory.length === 0}
-              >
-                <i className="fas fa-check-double me-1"></i>
-                Выбрать всё ({filteredInventory.length})
-              </Button>
-            </div>
-          </div>
-        )}
-
-        <div className="mb-3">
-          <div className="fantasy-paper content-overlay bulk-purchase-tab">
-            <Form>
-              <div className="search-input-wrapper">
-                <i className="fas fa-search search-icon"></i>
-                <Form.Control
-                  type="text"
-                  value={searchQueryInventory}
-                  onChange={(e) => setSearchQueryInventory(e.target.value)}
-                  placeholder="Название или описание предмета..."
-                  className="inventory-search-input bulk-purchase"
-                />
-                {searchQueryInventory && (
-                  <Button
-                    variant="link"
-                    size="sm"
-                    className="clear-search-btn"
-                    onClick={() => setSearchQueryInventory('')}
-                    title="Очистить поиск"
-                  >
-                    <i className="fas fa-times"></i>
-                  </Button>
-                )}
-              </div>
-              <Form.Text className="text-dark">
-                Найдено: {filteredInventory.length} предметов
-                {activeInventoryFiltersCount > 0 && (
-                  <span className="ms-2">
-                    <i className="fas fa-filter text-info me-1"></i>
-                    Активных фильтров: {activeInventoryFiltersCount}
-                  </span>
-                )}
-              </Form.Text>
-            </Form>
-          </div>
-        </div>
-
-        <div className="custom-filters-container mb-3">
-          <div className="d-flex justify-content-between align-items-center mb-3">
-            <h6 className="text-dark mb-0">Фильтры предметов</h6>
-            <div className="d-flex gap-2">
-              <Button
-                variant="outline-success"
-                size="sm"
-                onClick={selectAllFilteredInventory}
-                className="fantasy-btn"
-                disabled={filteredInventory.length === 0}
-              >
-                <i className="fas fa-check-double me-1"></i>
-                Выбрать всё
-              </Button>
-              {activeInventoryFiltersCount > 0 && (
-                <Button
-                  variant="outline-secondary"
-                  size="sm"
-                  onClick={resetInventoryFilters}
-                  className="fantasy-btn"
-                >
-                  <i className="fas fa-times-circle me-1"></i>
-                  Сбросить все фильтры
-                </Button>
-              )}
-            </div>
-          </div>
-          
-          <Row className="g-3">
-            {inventoryFilters.map((filter, index) => (
-              <Col xs={12} key={index}>
-                <FilterCard
-                  filter={filter}
-                  index={index}
-                  filterFields={filterFields}
-                  onUpdateFilter={updateInventoryFilter}
-                  onRemoveFilter={removeInventoryFilter}
-                  source="inventory"
-                />
-              </Col>
-            ))}
-          </Row>
-          
-          {activeInventoryFiltersCount > 0 && (
-            <div className="active-filters-display mt-3 p-2">
-              <small className="text-dark d-flex align-items-center flex-wrap gap-1">
-                <i className="fas fa-filter"></i>
-                <span>Активные фильтры:</span>
-                {inventoryFilters.map((filter, index) => {
-                  if (!filter.field || filter.value === "") return null;
-                  
-                  const fieldConfig = filterFields.find(f => f.id === filter.field);
-                  let displayValue = filter.value;
-                  
-                  if (fieldConfig?.type === "boolean") {
-                    const option = fieldConfig.options.find(opt => opt.value === filter.value);
-                    displayValue = option ? option.label : filter.value;
-                  } else if (fieldConfig?.type === "select") {
-                    const options = fieldConfig.options();
-                    const option = options.find(opt => opt.value === filter.value);
-                    displayValue = option ? option.label : filter.value;
-                  } else if (fieldConfig?.type === "number") {
-                    const operatorName = fieldConfig.operators?.find(op => op.id === filter.operator)?.name || filter.operator;
-                    displayValue = `${operatorName} ${filter.value}`;
-                  }
-                  
-                  return (
-                    <Badge 
-                      key={index}
-                      bg="info"
-                      className="d-flex align-items-center gap-1 me-1 mb-1"
-                      style={{ fontSize: '0.75rem' }}
-                    >
-                      {fieldConfig?.name}: {displayValue}
-                      <Button
-                        variant="link"
-                        size="sm"
-                        className="text-white p-0"
-                        onClick={() => removeInventoryFilter(index)}
-                        style={{ minWidth: '16px', height: '16px' }}
-                      >
-                        <i className="fas fa-times" style={{ fontSize: '0.6rem' }}></i>
-                      </Button>
-                    </Badge>
-                  );
-                })}
-              </small>
-            </div>
-          )}
-        </div>
-        
-        <div className="inventory-items-grid">
-          {filteredInventory.length > 0 ? (
-            inventoryItemsForRender.map(item => (
-              <CastleStorageItem 
-                key={`inventory-${item.key}`}
-                item={item}
-                isSelected={selectedInventoryItems.has(item.id)}
-                onToggleSelect={toggleInventoryItem}
-                source="inventory"
-              />
-            ))
-          ) : (
-            <div className="text-center py-5">
-              <i className="fas fa-inbox fa-3x text-muted mb-3"></i>
-              <p className="text-dark">
-                {Object.keys(playerInventory).length > 0 
-                  ? "Предметы не найдены по вашему запросу" 
-                  : "Ваш инвентарь пуст"}
-              </p>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}, (prevProps, nextProps) => {
-  return (
-    prevProps.filteredInventory.length === nextProps.filteredInventory.length &&
-    prevProps.selectedInventoryItems.size === nextProps.selectedInventoryItems.size &&
-    prevProps.searchQueryInventory === nextProps.searchQueryInventory &&
-    prevProps.activeInventoryFiltersCount === nextProps.activeInventoryFiltersCount &&
-    prevProps.loading === nextProps.loading
-  );
-});
-
-// Компонент для вкладки "Из замка"
-const FromCastleTab = React.memo(({
-  filteredStorage,
-  selectedStorageItems,
-  toggleStorageItem,
-  selectAllFilteredStorage,
-  clearAllSelections,
-  handleTransferFromCastle,
-  searchQueryStorage,
-  setSearchQueryStorage,
-  activeStorageFiltersCount,
-  storageFilters,
-  filterFields,
-  updateStorageFilter,
-  removeStorageFilter,
-  resetStorageFilters,
-  storageItems,
-  canTakeItemsFromStorage,
-  loading
-}) => {
-  const storageItemsForRender = useMemo(() => {
-    return filteredStorage.map(item => {
-      const normalizedId = normalizeId(item.id);
-      return {
-        ...item,
-        id: normalizedId
-      };
-    });
-  }, [filteredStorage]);
-
-  return (
-    <div>
-      <div className="mb-4">
-        {!canTakeItemsFromStorage && (
-          <Alert variant="warning" className="mb-3">
-            <i className="fas fa-exclamation-triangle me-2"></i>
-            Только офицеры и лидер гильдии могут забирать предметы из хранилища замка
-          </Alert>
-        )}
-        
-        {selectedStorageItems.size > 0 && (
-          <div className="mass-operations-panel mb-3 p-3">
-            <div className="d-flex flex-wrap align-items-center gap-2 mb-2">
-              <span className="badge selected-count-badge">
-                Выбрано: <strong>{selectedStorageItems.size}</strong> предметов
-              </span>
-            </div>
-            
-            <div className="d-flex flex-wrap gap-2">
-              <Button
-                variant="warning"
-                size="sm"
-                onClick={handleTransferFromCastle}
-                disabled={!canTakeItemsFromStorage}
-                className="mass-action-btn"
-              >
-                <i className="fas fa-download me-1"></i>
-                Изъять в инвентарь ({selectedStorageItems.size})
-              </Button>
-              <Button
-                variant="outline-secondary"
-                size="sm"
-                onClick={clearAllSelections}
-                className="mass-action-btn"
-              >
-                <i className="fas fa-times me-1"></i>
-                Очистить
-              </Button>
-              <Button
-                variant="outline-success"
-                size="sm"
-                onClick={selectAllFilteredStorage}
-                className="mass-action-btn"
-                disabled={filteredStorage.length === 0 || !canTakeItemsFromStorage}
-              >
-                <i className="fas fa-check-double me-1"></i>
-                Выбрать всё ({filteredStorage.length})
-              </Button>
-            </div>
-          </div>
-        )}
-
-        <div className="mb-3">
-          <div className="fantasy-paper content-overlay bulk-purchase-tab">
-            <Form>
-              <div className="search-input-wrapper">
-                <i className="fas fa-search search-icon"></i>
-                <Form.Control
-                  type="text"
-                  value={searchQueryStorage}
-                  onChange={(e) => setSearchQueryStorage(e.target.value)}
-                  placeholder="Название или описание предмета..."
-                  className="inventory-search-input bulk-purchase"
-                />
-                {searchQueryStorage && (
-                  <Button
-                    variant="link"
-                    size="sm"
-                    className="clear-search-btn"
-                    onClick={() => setSearchQueryStorage('')}
-                    title="Очистить поиск"
-                  >
-                    <i className="fas fa-times"></i>
-                  </Button>
-                )}
-              </div>
-              <Form.Text className="text-dark">
-                Найдено: {filteredStorage.length} предметов
-                {activeStorageFiltersCount > 0 && (
-                  <span className="ms-2">
-                    <i className="fas fa-filter text-info me-1"></i>
-                    Активных фильтров: {activeStorageFiltersCount}
-                  </span>
-                )}
-              </Form.Text>
-            </Form>
-          </div>
-        </div>
-
-        <div className="custom-filters-container mb-3">
-          <div className="d-flex justify-content-between align-items-center mb-3">
-            <h6 className="text-dark mb-0">Фильтры хранилища</h6>
-            <div className="d-flex gap-2">
-              <Button
-                variant="outline-success"
-                size="sm"
-                onClick={selectAllFilteredStorage}
-                className="fantasy-btn"
-                disabled={filteredStorage.length === 0 || !canTakeItemsFromStorage}
-              >
-                <i className="fas fa-check-double me-1"></i>
-                Выбрать всё
-              </Button>
-              {activeStorageFiltersCount > 0 && (
-                <Button
-                  variant="outline-secondary"
-                  size="sm"
-                  onClick={resetStorageFilters}
-                  className="fantasy-btn"
-                >
-                  <i className="fas fa-times-circle me-1"></i>
-                  Сбросить все фильтры
-                </Button>
-              )}
-            </div>
-          </div>
-          
-          <Row className="g-3">
-            {storageFilters.map((filter, index) => (
-              <Col xs={12} key={index}>
-                <FilterCard
-                  filter={filter}
-                  index={index}
-                  filterFields={filterFields}
-                  onUpdateFilter={updateStorageFilter}
-                  onRemoveFilter={removeStorageFilter}
-                  source="storage"
-                />
-              </Col>
-            ))}
-          </Row>
-          
-          {activeStorageFiltersCount > 0 && (
-            <div className="active-filters-display mt-3 p-2">
-              <small className="text-dark d-flex align-items-center flex-wrap gap-1">
-                <i className="fas fa-filter"></i>
-                <span>Активные фильтры:</span>
-                {storageFilters.map((filter, index) => {
-                  if (!filter.field || filter.value === "") return null;
-                  
-                  const fieldConfig = filterFields.find(f => f.id === filter.field);
-                  let displayValue = filter.value;
-                  
-                  if (fieldConfig?.type === "boolean") {
-                    const option = fieldConfig.options.find(opt => opt.value === filter.value);
-                    displayValue = option ? option.label : filter.value;
-                  } else if (fieldConfig?.type === "select") {
-                    const options = fieldConfig.options();
-                    const option = options.find(opt => opt.value === filter.value);
-                    displayValue = option ? option.label : filter.value;
-                  } else if (fieldConfig?.type === "number") {
-                    const operatorName = fieldConfig.operators?.find(op => op.id === filter.operator)?.name || filter.operator;
-                    displayValue = `${operatorName} ${filter.value}`;
-                  }
-                  
-                  return (
-                    <Badge 
-                      key={index}
-                      bg="info"
-                      className="d-flex align-items-center gap-1 me-1 mb-1"
-                      style={{ fontSize: '0.75rem' }}
-                    >
-                      {fieldConfig?.name}: {displayValue}
-                      <Button
-                        variant="link"
-                        size="sm"
-                        className="text-white p-0"
-                        onClick={() => removeStorageFilter(index)}
-                        style={{ minWidth: '16px', height: '16px' }}
-                      >
-                        <i className="fas fa-times" style={{ fontSize: '0.6rem' }}></i>
-                      </Button>
-                    </Badge>
-                  );
-                })}
-              </small>
-            </div>
-          )}
-        </div>
-        
-        <div className="storage-items-grid">
-          {filteredStorage.length > 0 ? (
-            storageItemsForRender.map(item => (
-              <CastleStorageItem 
-                key={`storage-${item.id}`}
-                item={item}
-                isSelected={selectedStorageItems.has(item.id)}
-                onToggleSelect={toggleStorageItem}
-                source="storage"
-              />
-            ))
-          ) : (
-            <div className="text-center py-5">
-              <i className="fas fa-warehouse fa-3x text-muted mb-3"></i>
-              <p className="text-dark">
-                {storageItems.length > 0 
-                  ? "Предметы не найдены по вашему запросу" 
-                  : "Хранилище замка пусто"}
-              </p>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}, (prevProps, nextProps) => {
-  return (
-    prevProps.filteredStorage.length === nextProps.filteredStorage.length &&
-    prevProps.selectedStorageItems.size === nextProps.selectedStorageItems.size &&
-    prevProps.searchQueryStorage === nextProps.searchQueryStorage &&
-    prevProps.activeStorageFiltersCount === nextProps.activeStorageFiltersCount &&
-    prevProps.canTakeItemsFromStorage === nextProps.canTakeItemsFromStorage &&
-    prevProps.loading === nextProps.loading
-  );
-});
+};
 
 // Основной компонент хранилища замка
 const CastleStorage = observer(() => {
@@ -894,10 +444,9 @@ const CastleStorage = observer(() => {
   const [accessReason, setAccessReason] = useState("");
   const [storageCapacity, setStorageCapacity] = useState({ current: 0, max: 1000 });
   
-  // Добавляем состояние для проверки события
   const [isCastleEventActive, setIsCastleEventActive] = useState(false);
 
-  // Состояния для фильтрации и поиска с дебаунсом
+  // Состояния для фильтрации и поиска
   const [searchQueryInventory, setSearchQueryInventory] = useState("");
   const [searchQueryStorage, setSearchQueryStorage] = useState("");
   const debouncedInventorySearch = useDebounce(searchQueryInventory, 300);
@@ -913,7 +462,6 @@ const CastleStorage = observer(() => {
     { field: "", operator: "equals", value: "" }
   ]);
 
-  // Оптимизированные функции с useCallback
   const translateValue = useCallback((value) => {
     if (value === null || value === undefined) return "";
     const strValue = String(value).toLowerCase();
@@ -925,7 +473,6 @@ const CastleStorage = observer(() => {
     return translateValue(type);
   }, [translateValue]);
 
-  // Мемоизированные вычисления
   const uniqueTypes = useMemo(() => {
     const allItems = [];
     if (playerInventory) {
@@ -949,7 +496,6 @@ const CastleStorage = observer(() => {
     return Array.from(addedBySet);
   }, [storageItems]);
 
-  // Оптимизированные filterFields с исправленным полем "undefined"
   const filterFields = useMemo(() => {
     return [
       { 
@@ -995,12 +541,12 @@ const CastleStorage = observer(() => {
         ]
       },
       { 
-        id: "undefined", // Исправлено на undefined, как на бэкенде
+        id: "undefined",
         name: "Распознан", 
         type: "boolean",
         options: [
-          { value: "false", label: "Распознанный" },
-          { value: "true", label: "Нераспознанный" }
+          { value: "true", label: "Нераспознанный" },
+          { value: "false", label: "Распознанный" }
         ]
       },
       { 
@@ -1033,7 +579,6 @@ const CastleStorage = observer(() => {
     ];
   }, [uniqueTypes, uniqueAddedBy, getTranslatedType]);
 
-  // Эффекты для загрузки данных
   useEffect(() => {
     if (guild.selectedCastle) {
       setActiveCastle(guild.selectedCastle);
@@ -1050,7 +595,6 @@ const CastleStorage = observer(() => {
         setPlayerData(result.data);
         setPlayerInventory(result.data.inventory_new || {});
         
-        // Проверяем активное событие
         const isEventActive = result.data.active_event === "Castle";
         setIsCastleEventActive(isEventActive);
         
@@ -1067,7 +611,6 @@ const CastleStorage = observer(() => {
   const checkAccess = useCallback((playerData) => {
     if (!activeCastle) return;
     
-    // Проверяем активное событие - только "Castle" дает доступ
     const isEventActive = playerData?.active_event === "Castle";
     
     if (isEventActive) {
@@ -1090,24 +633,18 @@ const CastleStorage = observer(() => {
       if (result && result.status === 200) {
         const storageData = result.data;
         
-        // Преобразуем объект хранилища в массив
         let itemsArray = [];
         if (storageData?.items) {
-          // Проверяем тип - если это объект, преобразуем в массив
           if (typeof storageData.items === 'object' && !Array.isArray(storageData.items)) {
-            // Преобразуем объект в массив, сохраняя ID как строку
             itemsArray = Object.entries(storageData.items).map(([key, value]) => {
-              // Нормализуем ID
               const itemId = normalizeId(value.id || key);
               return {
                 id: itemId,
                 ...value,
-                // Убедимся, что undefined обрабатывается корректно
                 undefined: value.undefined === true || value.undefined === "true" ? true : false
               };
             });
           } else if (Array.isArray(storageData.items)) {
-            // Если уже массив, просто нормализуем ID
             itemsArray = storageData.items.map(item => ({
               ...item,
               id: normalizeId(item.id || item.key || item.itemId),
@@ -1122,11 +659,9 @@ const CastleStorage = observer(() => {
           max: storageData.storage_capacity || 1000
         });
         
-        // Проверяем доступ
         if (storageData.has_access !== undefined) {
           setHasAccess(storageData.has_access);
         } else {
-          // Проверяем доступ по событию Castle
           const isEventActive = playerData?.active_event === "Castle";
           setHasAccess(isEventActive);
         }
@@ -1134,7 +669,6 @@ const CastleStorage = observer(() => {
         if (storageData.message && !storageData.has_access) {
           setAccessReason(storageData.message);
         } else if (!hasAccess && playerData) {
-          // Если доступа нет, уточняем причину
           const isEventActive = playerData.active_event === "Castle";
           if (!isEventActive) {
             setAccessReason(`Доступ запрещён - вы не находитесь в событии 'Замок'. Текущее событие: ${playerData.active_event || "не определено"}`);
@@ -1161,7 +695,6 @@ const CastleStorage = observer(() => {
     fetchPlayerData();
   }, [fetchPlayerData]);
 
-  // Оптимизированная функция фильтрации с исправленной обработкой поля "undefined"
   const applyFiltersToItems = useCallback((items, filters, isArray = false) => {
     return items.filter(itemData => {
       if (!isArray) {
@@ -1174,11 +707,8 @@ const CastleStorage = observer(() => {
           
           let itemValue = item[filter.field];
           
-          // Обработка специальных полей
           if (filter.field === "undefined") {
-            // undefined = true -> неопознанный, false/null -> опознанный
             itemValue = item.undefined === true ? true : false;
-            // Преобразуем в строку для сравнения
             itemValue = String(itemValue);
           } else if (filter.field === "corrupted") {
             itemValue = item.corrupted || false;
@@ -1230,9 +760,7 @@ const CastleStorage = observer(() => {
           
           let itemValue = item[filter.field];
           
-          // Обработка специальных полей
           if (filter.field === "undefined") {
-            // undefined = true -> неопознанный, false/null -> опознанный
             itemValue = item.undefined === true ? true : false;
             itemValue = String(itemValue);
           } else if (filter.field === "corrupted") {
@@ -1279,7 +807,6 @@ const CastleStorage = observer(() => {
     });
   }, [filterFields]);
 
-  // Исправленная функция фильтрации для работы с отрицательными ID
   const filterItems = useCallback((items, query, filters, isArray = false) => {
     const hasActiveFilters = filters.some(f => f.field && f.value !== "");
     
@@ -1350,7 +877,6 @@ const CastleStorage = observer(() => {
     return filteredItems;
   }, [applyFiltersToItems]);
 
-  // Отфильтрованные предметы с дебаунсом
   const filteredInventory = useMemo(() => {
     return filterItems(playerInventory, debouncedInventorySearch, inventoryFilters, false);
   }, [playerInventory, debouncedInventorySearch, inventoryFilters, filterItems]);
@@ -1359,8 +885,7 @@ const CastleStorage = observer(() => {
     return filterItems(storageItems, debouncedStorageSearch, storageFilters, true);
   }, [storageItems, debouncedStorageSearch, storageFilters, filterItems]);
 
-  // Оптимизированные обработчики
-  const updateInventoryFilter = useCallback((index, field, value) => {
+  const updateInventoryFilter = (index, field, value) => {
     setInventoryFilters(prev => {
       const newFilters = [...prev];
       if (field === "field") {
@@ -1375,25 +900,25 @@ const CastleStorage = observer(() => {
       }
       return newFilters;
     });
-  }, [filterFields]);
+  };
 
-  const removeInventoryFilter = useCallback((index) => {
+  const removeInventoryFilter = (index) => {
     setInventoryFilters(prev => {
       const newFilters = [...prev];
       newFilters[index] = { field: "", operator: "equals", value: "" };
       return newFilters;
     });
-  }, []);
+  };
 
-  const resetInventoryFilters = useCallback(() => {
+  const resetInventoryFilters = () => {
     setInventoryFilters([
       { field: "", operator: "equals", value: "" },
       { field: "", operator: "equals", value: "" }
     ]);
     setSearchQueryInventory("");
-  }, []);
+  };
 
-  const updateStorageFilter = useCallback((index, field, value) => {
+  const updateStorageFilter = (index, field, value) => {
     setStorageFilters(prev => {
       const newFilters = [...prev];
       if (field === "field") {
@@ -1408,23 +933,23 @@ const CastleStorage = observer(() => {
       }
       return newFilters;
     });
-  }, [filterFields]);
+  };
 
-  const removeStorageFilter = useCallback((index) => {
+  const removeStorageFilter = (index) => {
     setStorageFilters(prev => {
       const newFilters = [...prev];
       newFilters[index] = { field: "", operator: "equals", value: "" };
       return newFilters;
     });
-  }, []);
+  };
 
-  const resetStorageFilters = useCallback(() => {
+  const resetStorageFilters = () => {
     setStorageFilters([
       { field: "", operator: "equals", value: "" },
       { field: "", operator: "equals", value: "" }
     ]);
     setSearchQueryStorage("");
-  }, []);
+  };
 
   const activeInventoryFiltersCount = useMemo(() => {
     return inventoryFilters.filter(f => f.field && f.value !== "").length;
@@ -1434,7 +959,7 @@ const CastleStorage = observer(() => {
     return storageFilters.filter(f => f.field && f.value !== "").length;
   }, [storageFilters]);
 
-  const handleCastleSelect = useCallback((castle) => {
+  const handleCastleSelect = (castle) => {
     setActiveCastle(castle);
     setSelectedInventoryItems(new Set());
     setSelectedStorageItems(new Set());
@@ -1442,9 +967,9 @@ const CastleStorage = observer(() => {
     if (playerData) {
       checkAccess(playerData);
     }
-  }, [fetchCastleStorage, playerData, checkAccess]);
+  };
 
-  const toggleInventoryItem = useCallback((itemId) => {
+  const toggleInventoryItem = (itemId) => {
     if (!itemId) return;
     
     setSelectedInventoryItems(prev => {
@@ -1456,9 +981,9 @@ const CastleStorage = observer(() => {
       }
       return newSet;
     });
-  }, []);
+  };
 
-  const toggleStorageItem = useCallback((itemId) => {
+  const toggleStorageItem = (itemId) => {
     if (!itemId) return;
     
     setSelectedStorageItems(prev => {
@@ -1470,32 +995,32 @@ const CastleStorage = observer(() => {
       }
       return newSet;
     });
-  }, []);
+  };
 
-  const selectAllFilteredInventory = useCallback(() => {
+  const selectAllFilteredInventory = () => {
     const allIds = filteredInventory.map(([key]) => normalizeId(key));
     setSelectedInventoryItems(new Set(allIds));
-  }, [filteredInventory]);
+  };
 
-  const selectAllFilteredStorage = useCallback(() => {
+  const selectAllFilteredStorage = () => {
     const allIds = filteredStorage.map(item => normalizeId(item.id));
     setSelectedStorageItems(new Set(allIds));
-  }, [filteredStorage]);
+  };
 
-  const clearAllSelections = useCallback(() => {
+  const clearAllSelections = () => {
     setSelectedInventoryItems(new Set());
     setSelectedStorageItems(new Set());
-  }, []);
+  };
 
-  const handleTransferToCastle = useCallback(() => {
+  const handleTransferToCastle = () => {
     if (selectedInventoryItems.size === 0) {
       alert("Выберите предметы для переноса в замок");
       return;
     }
     setShowTransferToCastle(true);
-  }, [selectedInventoryItems.size]);
+  };
 
-  const handleTransferFromCastle = useCallback(() => {
+  const handleTransferFromCastle = () => {
     if (selectedStorageItems.size === 0) {
       alert("Выберите предметы для изъятия из замка");
       return;
@@ -1510,24 +1035,26 @@ const CastleStorage = observer(() => {
     }
     
     setShowTransferFromCastle(true);
-  }, [selectedStorageItems.size, guild.guildData]);
+  };
 
-  const handleOperationSuccess = useCallback(() => {
+  const handleOperationSuccess = () => {
     fetchCastleStorage(activeCastle?.id);
     fetchPlayerData();
     clearAllSelections();
-  }, [activeCastle?.id, fetchCastleStorage, fetchPlayerData, clearAllSelections]);
+  };
 
-  const canTakeItemsFromStorage = useMemo(() => {
-    return guild.guildData?.player_role === 'leader' || 
-           guild.guildData?.player_role === 'officer';
-  }, [guild.guildData?.player_role]);
+  const canTakeItemsFromStorage = guild.guildData?.player_role === 'leader' || 
+                                  guild.guildData?.player_role === 'officer';
 
-  const capacityPercentage = useMemo(() => {
-    return (storageCapacity.current / storageCapacity.max) * 100;
-  }, [storageCapacity.current, storageCapacity.max]);
+  const capacityPercentage = (storageCapacity.current / storageCapacity.max) * 100;
 
-  // Функция для отображения предупреждения о событии
+  const handleRefresh = () => {
+    if (activeCastle?.id) {
+      fetchCastleStorage(activeCastle.id);
+    }
+    fetchPlayerData();
+  };
+
   const renderEventWarning = () => {
     if (!isCastleEventActive && playerData) {
       return (
@@ -1571,7 +1098,6 @@ const CastleStorage = observer(() => {
         </Alert>
       )}
       
-      {/* Добавляем предупреждение о событии */}
       {renderEventWarning()}
 
       <Row className="g-3">
@@ -1656,12 +1182,10 @@ const CastleStorage = observer(() => {
                   <Button
                     variant="outline-info"
                     size="sm"
-                    onClick={() => {
-                      fetchCastleStorage(activeCastle?.id);
-                      fetchPlayerData();
-                    }}
+                    onClick={handleRefresh}
                     disabled={loading}
                     className="fantasy-btn"
+                    type="button"
                   >
                     <i className="fas fa-sync"></i>
                   </Button>
@@ -1683,46 +1207,424 @@ const CastleStorage = observer(() => {
               ) : (
                 <Tabs defaultActiveKey="toCastle" className="mb-3 fantasy-tabs">
                   <Tab eventKey="toCastle" title="📤 В замок">
-                    <ToCastleTab
-                      filteredInventory={filteredInventory}
-                      selectedInventoryItems={selectedInventoryItems}
-                      toggleInventoryItem={toggleInventoryItem}
-                      selectAllFilteredInventory={selectAllFilteredInventory}
-                      clearAllSelections={clearAllSelections}
-                      handleTransferToCastle={handleTransferToCastle}
-                      searchQueryInventory={searchQueryInventory}
-                      setSearchQueryInventory={setSearchQueryInventory}
-                      activeInventoryFiltersCount={activeInventoryFiltersCount}
-                      inventoryFilters={inventoryFilters}
-                      filterFields={filterFields}
-                      updateInventoryFilter={updateInventoryFilter}
-                      removeInventoryFilter={removeInventoryFilter}
-                      resetInventoryFilters={resetInventoryFilters}
-                      playerInventory={playerInventory}
-                      loading={loading}
-                    />
+                    <div>
+                      <div className="mb-4">
+                        {selectedInventoryItems.size > 0 && (
+                          <div className="mass-operations-panel mb-3 p-3">
+                            <div className="d-flex flex-wrap align-items-center gap-2 mb-2">
+                              <span className="badge selected-count-badge">
+                                Выбрано: <strong>{selectedInventoryItems.size}</strong> предметов
+                              </span>
+                            </div>
+                            
+                            <div className="d-flex flex-wrap gap-2">
+                              <Button
+                                variant="primary"
+                                size="sm"
+                                onClick={handleTransferToCastle}
+                                className="mass-action-btn"
+                                type="button"
+                              >
+                                <i className="fas fa-upload me-1"></i>
+                                Перенести в замок ({selectedInventoryItems.size})
+                              </Button>
+                              <Button
+                                variant="outline-secondary"
+                                size="sm"
+                                onClick={clearAllSelections}
+                                className="mass-action-btn"
+                                type="button"
+                              >
+                                <i className="fas fa-times me-1"></i>
+                                Очистить
+                              </Button>
+                              <Button
+                                variant="outline-success"
+                                size="sm"
+                                onClick={selectAllFilteredInventory}
+                                className="mass-action-btn"
+                                disabled={filteredInventory.length === 0}
+                                type="button"
+                              >
+                                <i className="fas fa-check-double me-1"></i>
+                                Выбрать всё ({filteredInventory.length})
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="mb-3">
+                          <div className="fantasy-paper content-overlay bulk-purchase-tab">
+                            <Form>
+                              <div className="search-input-wrapper">
+                                <i className="fas fa-search search-icon"></i>
+                                <Form.Control
+                                  type="text"
+                                  value={searchQueryInventory}
+                                  onChange={(e) => setSearchQueryInventory(e.target.value)}
+                                  placeholder="Название или описание предмета..."
+                                  className="inventory-search-input bulk-purchase"
+                                />
+                                {searchQueryInventory && (
+                                  <Button
+                                    variant="link"
+                                    size="sm"
+                                    className="clear-search-btn"
+                                    onClick={() => setSearchQueryInventory('')}
+                                    title="Очистить поиск"
+                                    type="button"
+                                  >
+                                    <i className="fas fa-times"></i>
+                                  </Button>
+                                )}
+                              </div>
+                              <Form.Text className="text-dark">
+                                Найдено: {filteredInventory.length} предметов
+                                {activeInventoryFiltersCount > 0 && (
+                                  <span className="ms-2">
+                                    <i className="fas fa-filter text-info me-1"></i>
+                                    Активных фильтров: {activeInventoryFiltersCount}
+                                  </span>
+                                )}
+                              </Form.Text>
+                            </Form>
+                          </div>
+                        </div>
+
+                        <div className="custom-filters-container mb-3">
+                          <div className="d-flex justify-content-between align-items-center mb-3">
+                            <h6 className="text-dark mb-0">Фильтры предметов</h6>
+                            <div className="d-flex gap-2">
+                              <Button
+                                variant="outline-success"
+                                size="sm"
+                                onClick={selectAllFilteredInventory}
+                                className="fantasy-btn"
+                                disabled={filteredInventory.length === 0}
+                                type="button"
+                              >
+                                <i className="fas fa-check-double me-1"></i>
+                                Выбрать всё
+                              </Button>
+                              {activeInventoryFiltersCount > 0 && (
+                                <Button
+                                  variant="outline-secondary"
+                                  size="sm"
+                                  onClick={resetInventoryFilters}
+                                  className="fantasy-btn"
+                                  type="button"
+                                >
+                                  <i className="fas fa-times-circle me-1"></i>
+                                  Сбросить все фильтры
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                          
+                          <Row className="g-3">
+                            {inventoryFilters.map((filter, index) => (
+                              <Col xs={12} key={index}>
+                                <FilterCard
+                                  filter={filter}
+                                  index={index}
+                                  filterFields={filterFields}
+                                  onUpdateFilter={updateInventoryFilter}
+                                  onRemoveFilter={removeInventoryFilter}
+                                  source="inventory"
+                                />
+                              </Col>
+                            ))}
+                          </Row>
+                          
+                          {activeInventoryFiltersCount > 0 && (
+                            <div className="active-filters-display mt-3 p-2">
+                              <small className="text-dark d-flex align-items-center flex-wrap gap-1">
+                                <i className="fas fa-filter"></i>
+                                <span>Активные фильтры:</span>
+                                {inventoryFilters.map((filter, index) => {
+                                  if (!filter.field || filter.value === "") return null;
+                                  
+                                  const fieldConfig = filterFields.find(f => f.id === filter.field);
+                                  let displayValue = filter.value;
+                                  
+                                  if (fieldConfig?.type === "boolean") {
+                                    const option = fieldConfig.options.find(opt => opt.value === filter.value);
+                                    displayValue = option ? option.label : filter.value;
+                                  } else if (fieldConfig?.type === "select") {
+                                    const options = fieldConfig.options();
+                                    const option = options.find(opt => opt.value === filter.value);
+                                    displayValue = option ? option.label : filter.value;
+                                  } else if (fieldConfig?.type === "number") {
+                                    const operatorName = fieldConfig.operators?.find(op => op.id === filter.operator)?.name || filter.operator;
+                                    displayValue = `${operatorName} ${filter.value}`;
+                                  }
+                                  
+                                  return (
+                                    <Badge 
+                                      key={index}
+                                      bg="info"
+                                      className="d-flex align-items-center gap-1 me-1 mb-1"
+                                      style={{ fontSize: '0.75rem' }}
+                                    >
+                                      {fieldConfig?.name}: {displayValue}
+                                      <Button
+                                        variant="link"
+                                        size="sm"
+                                        className="text-white p-0"
+                                        onClick={() => removeInventoryFilter(index)}
+                                        style={{ minWidth: '16px', height: '16px' }}
+                                        type="button"
+                                      >
+                                        <i className="fas fa-times" style={{ fontSize: '0.6rem' }}></i>
+                                      </Button>
+                                    </Badge>
+                                  );
+                                })}
+                              </small>
+                            </div>
+                          )}
+                        </div>
+                        
+                        <div className="inventory-items-grid">
+                          {filteredInventory.length > 0 ? (
+                            filteredInventory.map(([key, item]) => {
+                              const normalizedId = normalizeId(key);
+                              return (
+                                <CastleStorageItem 
+                                  key={`inventory-${key}`}
+                                  item={{ id: normalizedId, key: key, ...item }}
+                                  isSelected={selectedInventoryItems.has(normalizedId)}
+                                  onToggleSelect={toggleInventoryItem}
+                                  source="inventory"
+                                />
+                              );
+                            })
+                          ) : (
+                            <div className="text-center py-5">
+                              <i className="fas fa-inbox fa-3x text-muted mb-3"></i>
+                              <p className="text-dark">
+                                {Object.keys(playerInventory).length > 0 
+                                  ? "Предметы не найдены по вашему запросу" 
+                                  : "Ваш инвентарь пуст"}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
                   </Tab>
 
                   <Tab eventKey="fromCastle" title="📥 Из замка">
-                    <FromCastleTab
-                      filteredStorage={filteredStorage}
-                      selectedStorageItems={selectedStorageItems}
-                      toggleStorageItem={toggleStorageItem}
-                      selectAllFilteredStorage={selectAllFilteredStorage}
-                      clearAllSelections={clearAllSelections}
-                      handleTransferFromCastle={handleTransferFromCastle}
-                      searchQueryStorage={searchQueryStorage}
-                      setSearchQueryStorage={setSearchQueryStorage}
-                      activeStorageFiltersCount={activeStorageFiltersCount}
-                      storageFilters={storageFilters}
-                      filterFields={filterFields}
-                      updateStorageFilter={updateStorageFilter}
-                      removeStorageFilter={removeStorageFilter}
-                      resetStorageFilters={resetStorageFilters}
-                      storageItems={storageItems}
-                      canTakeItemsFromStorage={canTakeItemsFromStorage}
-                      loading={loading}
-                    />
+                    <div>
+                      <div className="mb-4">
+                        {!canTakeItemsFromStorage && (
+                          <Alert variant="warning" className="mb-3">
+                            <i className="fas fa-exclamation-triangle me-2"></i>
+                            Только офицеры и лидер гильдии могут забирать предметы из хранилища замка
+                          </Alert>
+                        )}
+                        
+                        {selectedStorageItems.size > 0 && (
+                          <div className="mass-operations-panel mb-3 p-3">
+                            <div className="d-flex flex-wrap align-items-center gap-2 mb-2">
+                              <span className="badge selected-count-badge">
+                                Выбрано: <strong>{selectedStorageItems.size}</strong> предметов
+                              </span>
+                            </div>
+                            
+                            <div className="d-flex flex-wrap gap-2">
+                              <Button
+                                variant="warning"
+                                size="sm"
+                                onClick={handleTransferFromCastle}
+                                disabled={!canTakeItemsFromStorage}
+                                className="mass-action-btn"
+                                type="button"
+                              >
+                                <i className="fas fa-download me-1"></i>
+                                Изъять в инвентарь ({selectedStorageItems.size})
+                              </Button>
+                              <Button
+                                variant="outline-secondary"
+                                size="sm"
+                                onClick={clearAllSelections}
+                                className="mass-action-btn"
+                                type="button"
+                              >
+                                <i className="fas fa-times me-1"></i>
+                                Очистить
+                              </Button>
+                              <Button
+                                variant="outline-success"
+                                size="sm"
+                                onClick={selectAllFilteredStorage}
+                                className="mass-action-btn"
+                                disabled={filteredStorage.length === 0 || !canTakeItemsFromStorage}
+                                type="button"
+                              >
+                                <i className="fas fa-check-double me-1"></i>
+                                Выбрать всё ({filteredStorage.length})
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="mb-3">
+                          <div className="fantasy-paper content-overlay bulk-purchase-tab">
+                            <Form>
+                              <div className="search-input-wrapper">
+                                <i className="fas fa-search search-icon"></i>
+                                <Form.Control
+                                  type="text"
+                                  value={searchQueryStorage}
+                                  onChange={(e) => setSearchQueryStorage(e.target.value)}
+                                  placeholder="Название или описание предмета..."
+                                  className="inventory-search-input bulk-purchase"
+                                />
+                                {searchQueryStorage && (
+                                  <Button
+                                    variant="link"
+                                    size="sm"
+                                    className="clear-search-btn"
+                                    onClick={() => setSearchQueryStorage('')}
+                                    title="Очистить поиск"
+                                    type="button"
+                                  >
+                                    <i className="fas fa-times"></i>
+                                  </Button>
+                                )}
+                              </div>
+                              <Form.Text className="text-dark">
+                                Найдено: {filteredStorage.length} предметов
+                                {activeStorageFiltersCount > 0 && (
+                                  <span className="ms-2">
+                                    <i className="fas fa-filter text-info me-1"></i>
+                                    Активных фильтров: {activeStorageFiltersCount}
+                                  </span>
+                                )}
+                              </Form.Text>
+                            </Form>
+                          </div>
+                        </div>
+
+                        <div className="custom-filters-container mb-3">
+                          <div className="d-flex justify-content-between align-items-center mb-3">
+                            <h6 className="text-dark mb-0">Фильтры хранилища</h6>
+                            <div className="d-flex gap-2">
+                              <Button
+                                variant="outline-success"
+                                size="sm"
+                                onClick={selectAllFilteredStorage}
+                                className="fantasy-btn"
+                                disabled={filteredStorage.length === 0 || !canTakeItemsFromStorage}
+                                type="button"
+                              >
+                                <i className="fas fa-check-double me-1"></i>
+                                Выбрать всё
+                              </Button>
+                              {activeStorageFiltersCount > 0 && (
+                                <Button
+                                  variant="outline-secondary"
+                                  size="sm"
+                                  onClick={resetStorageFilters}
+                                  className="fantasy-btn"
+                                  type="button"
+                                >
+                                  <i className="fas fa-times-circle me-1"></i>
+                                  Сбросить все фильтры
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                          
+                          <Row className="g-3">
+                            {storageFilters.map((filter, index) => (
+                              <Col xs={12} key={index}>
+                                <FilterCard
+                                  filter={filter}
+                                  index={index}
+                                  filterFields={filterFields}
+                                  onUpdateFilter={updateStorageFilter}
+                                  onRemoveFilter={removeStorageFilter}
+                                  source="storage"
+                                />
+                              </Col>
+                            ))}
+                          </Row>
+                          
+                          {activeStorageFiltersCount > 0 && (
+                            <div className="active-filters-display mt-3 p-2">
+                              <small className="text-dark d-flex align-items-center flex-wrap gap-1">
+                                <i className="fas fa-filter"></i>
+                                <span>Активные фильтры:</span>
+                                {storageFilters.map((filter, index) => {
+                                  if (!filter.field || filter.value === "") return null;
+                                  
+                                  const fieldConfig = filterFields.find(f => f.id === filter.field);
+                                  let displayValue = filter.value;
+                                  
+                                  if (fieldConfig?.type === "boolean") {
+                                    const option = fieldConfig.options.find(opt => opt.value === filter.value);
+                                    displayValue = option ? option.label : filter.value;
+                                  } else if (fieldConfig?.type === "select") {
+                                    const options = fieldConfig.options();
+                                    const option = options.find(opt => opt.value === filter.value);
+                                    displayValue = option ? option.label : filter.value;
+                                  } else if (fieldConfig?.type === "number") {
+                                    const operatorName = fieldConfig.operators?.find(op => op.id === filter.operator)?.name || filter.operator;
+                                    displayValue = `${operatorName} ${filter.value}`;
+                                  }
+                                  
+                                  return (
+                                    <Badge 
+                                      key={index}
+                                      bg="info"
+                                      className="d-flex align-items-center gap-1 me-1 mb-1"
+                                      style={{ fontSize: '0.75rem' }}
+                                    >
+                                      {fieldConfig?.name}: {displayValue}
+                                      <Button
+                                        variant="link"
+                                        size="sm"
+                                        className="text-white p-0"
+                                        onClick={() => removeStorageFilter(index)}
+                                        style={{ minWidth: '16px', height: '16px' }}
+                                        type="button"
+                                      >
+                                        <i className="fas fa-times" style={{ fontSize: '0.6rem' }}></i>
+                                      </Button>
+                                    </Badge>
+                                  );
+                                })}
+                              </small>
+                            </div>
+                          )}
+                        </div>
+                        
+                        <div className="storage-items-grid">
+                          {filteredStorage.length > 0 ? (
+                            filteredStorage.map(item => (
+                              <CastleStorageItem 
+                                key={`storage-${item.id}`}
+                                item={item}
+                                isSelected={selectedStorageItems.has(item.id)}
+                                onToggleSelect={toggleStorageItem}
+                                source="storage"
+                              />
+                            ))
+                          ) : (
+                            <div className="text-center py-5">
+                              <i className="fas fa-warehouse fa-3x text-muted mb-3"></i>
+                              <p className="text-dark">
+                                {storageItems.length > 0 
+                                  ? "Предметы не найдены по вашему запросу" 
+                                  : "Хранилище замка пусто"}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
                   </Tab>
                 </Tabs>
               )}
@@ -1730,55 +1632,6 @@ const CastleStorage = observer(() => {
           </Card>
         </Col>
       </Row>
-
-      {/* Панель отладки для разработки */}
-      {process.env.NODE_ENV === 'development' && (
-        <Row className="mt-3">
-          <Col>
-            <Card className="debug-panel">
-              <Card.Header>
-                <h6>Отладочная информация</h6>
-              </Card.Header>
-              <Card.Body>
-                <div className="row">
-                  <div className="col-md-6">
-                    <h6>Хранилище ({storageItems.length} предметов):</h6>
-                    <div style={{ maxHeight: '200px', overflowY: 'auto', fontSize: '12px' }}>
-                      {storageItems.slice(0, 5).map(item => (
-                        <div key={item.id} className="mb-1">
-                          <strong>ID:</strong> {item.id}, <strong>Name:</strong> {item.name}, 
-                          <strong>Type:</strong> {item.type}, <strong>Undefined:</strong> {String(item.undefined)}
-                        </div>
-                      ))}
-                      {storageItems.length > 5 && <div>... и еще {storageItems.length - 5} предметов</div>}
-                    </div>
-                  </div>
-                  <div className="col-md-6">
-                    <h6>Инвентарь ({Object.keys(playerInventory).length} предметов):</h6>
-                    <div style={{ maxHeight: '200px', overflowY: 'auto', fontSize: '12px' }}>
-                      {Object.entries(playerInventory).slice(0, 5).map(([key, item]) => (
-                        <div key={key} className="mb-1">
-                          <strong>Key:</strong> {key}, <strong>ID:</strong> {item.id}, 
-                          <strong>Name:</strong> {item.name}, <strong>Type:</strong> {item.type}
-                        </div>
-                      ))}
-                      {Object.keys(playerInventory).length > 5 && <div>... и еще {Object.keys(playerInventory).length - 5} предметов</div>}
-                    </div>
-                  </div>
-                </div>
-                <div className="row mt-2">
-                  <div className="col-12">
-                    <p><strong>Активное событие:</strong> {playerData?.active_event || "не загружено"}</p>
-                    <p><strong>Доступ:</strong> {hasAccess ? "Есть" : "Нет"} - {accessReason}</p>
-                    <p><strong>Выбрано в инвентаре:</strong> {selectedInventoryItems.size}</p>
-                    <p><strong>Выбрано в хранилище:</strong> {selectedStorageItems.size}</p>
-                  </div>
-                </div>
-              </Card.Body>
-            </Card>
-          </Col>
-        </Row>
-      )}
 
       <MassTransferToCastleModal
         show={showTransferToCastle}
