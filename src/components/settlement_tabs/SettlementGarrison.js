@@ -111,6 +111,12 @@ const SettlementGarrison = observer(() => {
     const [dischargeLoading, setDischargeLoading] = useState(false);
     const [storeLoading, setStoreLoading] = useState(false);
 
+    // Отладочная информация
+    useEffect(() => {
+        console.log('=== SETTLEMENT GARRISON DEBUG ===');
+        console.log('Component mounted');
+    }, []);
+
     const showNotification = (type, message) => {
         setNotification({ show: true, type, message });
         setTimeout(() => setNotification({ show: false, type: '', message: '' }), 5000);
@@ -118,9 +124,19 @@ const SettlementGarrison = observer(() => {
 
     // Получаем данные игрока из контекста
     const playerData = useMemo(() => {
-        if (!user) return null;
+        if (!user) {
+            console.log('DEBUG: No user context');
+            return null;
+        }
         
         const data = toJS(user.user) || toJS(user.player) || toJS(user.currentUser);
+        
+        console.log('DEBUG: Player data from context:', {
+            hasId: !!data?.id,
+            hasUserId: !!data?.user_id,
+            maxPartySize: data?.max_party_size,
+            dataKeys: data ? Object.keys(data) : []
+        });
         
         return data;
     }, [user]);
@@ -130,18 +146,78 @@ const SettlementGarrison = observer(() => {
         if (!playerData) return null;
         
         // Пробуем получить ID из разных возможных полей
-        return playerData.id || playerData._id || playerData.user_id || playerData.player_id;
+        const id = playerData.id || playerData._id || playerData.user_id || playerData.player_id;
+        console.log('DEBUG: Player ID determined:', id);
+        return id;
+    }, [playerData]);
+
+    // Получаем максимальный размер отряда (ИСПРАВЛЕННАЯ ВЕРСИЯ)
+    const maxPartySize = useMemo(() => {
+        console.log('DEBUG: Getting maxPartySize...');
+        
+        let size = 55; // Значение по умолчанию
+        
+        if (playerData) {
+            // Проверяем разные варианты названий поля
+            const sizeFromData = 
+                playerData.max_party_size ?? 
+                playerData.maxPartySize ?? 
+                playerData.max_party ?? 
+                playerData.party_limit ??
+                playerData.partySize ??
+                55;
+            
+            console.log('DEBUG: maxPartySize from playerData:', sizeFromData);
+            
+            if (sizeFromData !== undefined && sizeFromData !== null) {
+                size = parseInt(sizeFromData);
+                console.log('DEBUG: Parsed maxPartySize:', size);
+            }
+        }
+        
+        // Проверяем localStorage
+        if (size === 55) {
+            try {
+                const savedPlayerData = localStorage.getItem('playerData');
+                if (savedPlayerData) {
+                    const parsedData = JSON.parse(savedPlayerData);
+                    const sizeFromStorage = 
+                        parsedData.max_party_size ?? 
+                        parsedData.maxPartySize ?? 
+                        parsedData.max_party ?? 
+                        parsedData.party_limit ??
+                        parsedData.partySize;
+                    
+                    if (sizeFromStorage !== undefined && sizeFromStorage !== null) {
+                        size = parseInt(sizeFromStorage) || 55;
+                        console.log('DEBUG: maxPartySize from localStorage:', size);
+                    }
+                }
+            } catch (e) {
+                console.error('Error reading max party size from localStorage:', e);
+            }
+        }
+        
+        console.log('DEBUG: Final maxPartySize:', size);
+        return size;
     }, [playerData]);
 
     // Загружаем данные игрока
     const loadPlayerData = useCallback(async (force = false) => {
         if (loadingPlayer && !force) return;
         
+        console.log('DEBUG: Loading player data...');
         setLoadingPlayer(true);
         try {
             const result = await GetDataById();
             
             if (result && result.data) {
+                console.log('DEBUG: Player data loaded:', {
+                    maxPartySize: result.data.max_party_size,
+                    hasPartyData: !!(result.data.pets || result.data.party),
+                    dataKeys: Object.keys(result.data)
+                });
+                
                 if (user?.setUser) {
                     user.setUser(result.data);
                 }
@@ -151,12 +227,14 @@ const SettlementGarrison = observer(() => {
                 
                 try {
                     localStorage.setItem('playerData', JSON.stringify(result.data));
+                    console.log('DEBUG: Saved to localStorage');
                 } catch (e) {
                     console.error('Error saving to localStorage:', e);
                 }
                 
                 const partyDataFromServer = result.data.pets || result.data.party || {};
                 if (Object.keys(partyDataFromServer).length > 0) {
+                    console.log('DEBUG: Party data loaded from server:', partyDataFromServer);
                     setPlayerPartyData(partyDataFromServer);
                 } else {
                     console.log('No party data in server response');
@@ -178,6 +256,10 @@ const SettlementGarrison = observer(() => {
                 const savedPlayerData = localStorage.getItem('playerData');
                 if (savedPlayerData) {
                     const parsedData = JSON.parse(savedPlayerData);
+                    console.log('DEBUG: Player data from localStorage:', {
+                        maxPartySize: parsedData.max_party_size,
+                        hasPartyData: !!(parsedData.pets || parsedData.party)
+                    });
                     const partyFromStorage = parsedData.pets || parsedData.party || {};
                     if (Object.keys(partyFromStorage).length > 0) {
                         setPlayerPartyData(partyFromStorage);
@@ -195,13 +277,16 @@ const SettlementGarrison = observer(() => {
 
     // Получаем данные отряда
     const partyData = useMemo(() => {
+        console.log('DEBUG: Getting party data...');
         
         if (playerPartyData && Object.keys(playerPartyData).length > 0) {
+            console.log('DEBUG: Using playerPartyData:', playerPartyData);
             return playerPartyData;
         }
         
         if (playerData && (playerData.pets || playerData.party)) {
             const party = playerData.pets || playerData.party || {};
+            console.log('DEBUG: Using party from playerData:', party);
             return party;
         }
         
@@ -211,6 +296,7 @@ const SettlementGarrison = observer(() => {
                 const parsedData = JSON.parse(savedPlayerData);
                 const party = parsedData.pets || parsedData.party || {};
                 if (Object.keys(party).length > 0) {
+                    console.log('DEBUG: Using party from localStorage:', party);
                     return party;
                 }
             }
@@ -218,34 +304,9 @@ const SettlementGarrison = observer(() => {
             console.error('Error reading party data from localStorage:', e);
         }
         
+        console.log('DEBUG: No party data found');
         return {};
     }, [playerData, playerPartyData]);
-
-    // Получаем максимальный размер отряда
-    const maxPartySize = useMemo(() => {
-        if (playerData) {
-            const size = playerData.max_party_size;
-            
-            if (size !== undefined && size !== null) {
-                return size;
-            }
-        }
-        
-        try {
-            const savedPlayerData = localStorage.getItem('playerData');
-            if (savedPlayerData) {
-                const parsedData = JSON.parse(savedPlayerData);
-                const size = parsedData.max_party_size;
-                if (size !== undefined && size !== null) {
-                    return size;
-                }
-            }
-        } catch (e) {
-            console.error('Error reading max party size from localStorage:', e);
-        }
-        
-        return 1;
-    }, [playerData]);
 
     // Получаем данные поселения
     const settlementData = useMemo(() => {
@@ -357,89 +418,95 @@ const SettlementGarrison = observer(() => {
         }
     }, [buildingsData]);
 
-    // Получаем вес юнита (обновленная версия для работы с полным ID)
+    // Получаем вес юнита (УПРОЩЕННАЯ ВЕРСИЯ ДЛЯ ОТЛАДКИ)
     const getUnitWeight = useCallback((unitId) => {
-        if (!unitId) return 1;
+        console.log('DEBUG: getUnitWeight called with:', unitId);
         
-        // Парсим ID для получения базового ID
-        const parsed = parseUnitId(unitId);
-        const baseUnitId = parsed.baseId;
-        
-        const unitIdStr = baseUnitId.toString();
-        if (UNIT_WEIGHTS[unitIdStr] !== undefined) {
-            return UNIT_WEIGHTS[unitIdStr];
+        if (!unitId && unitId !== 0) {
+            console.log('DEBUG: unitId is undefined/null, returning 1');
+            return 1;
         }
-        if (typeof baseUnitId === 'number') {
-            const numKey = baseUnitId < 0 ? `-${Math.abs(baseUnitId)}` : baseUnitId.toString();
-            if (UNIT_WEIGHTS[numKey] !== undefined) {
-                return UNIT_WEIGHTS[numKey];
+        
+        // Если ID это число или строка с числом
+        const idNum = parseInt(unitId);
+        if (!isNaN(idNum)) {
+            const unitIdStr = Math.abs(idNum).toString();
+            
+            // Пробуем найти вес
+            if (UNIT_WEIGHTS[unitIdStr] !== undefined) {
+                const weight = UNIT_WEIGHTS[unitIdStr];
+                console.log('DEBUG: Found weight in UNIT_WEIGHTS:', weight);
+                return weight;
+            }
+            
+            // Проверяем отрицательные ID
+            if (idNum < 0) {
+                const negativeKey = `-${Math.abs(idNum)}`;
+                if (UNIT_WEIGHTS[negativeKey] !== undefined) {
+                    const weight = UNIT_WEIGHTS[negativeKey];
+                    console.log('DEBUG: Found weight for negative ID:', weight);
+                    return weight;
+                }
             }
         }
-        return 1;
+        
+        console.log('DEBUG: Weight not found, returning 1');
+        return 1; // По умолчанию вес 1
     }, []);
 
-    // Рассчитываем текущий вес отряда
-    const currentPartyWeight = useMemo(() => {
+    // Рассчитываем текущее количество юнитов в отряде (ПРОСТАЯ ВЕРСИЯ)
+    const currentPartyCount = useMemo(() => {
+        console.log('DEBUG: Calculating currentPartyCount...');
         
-        if (!partyData || typeof partyData !== 'object') {
+        if (!partyData || typeof partyData !== 'object' || Object.keys(partyData).length === 0) {
+            console.log('DEBUG: No party data, returning 0');
             return 0;
         }
         
-        if (Object.keys(partyData).length === 0) {
-            return 0;
-        }
-        
-        let totalWeight = 0;
+        let totalCount = 0;
         
         if (Array.isArray(partyData)) {
             partyData.forEach((pet, index) => {
                 if (!pet || typeof pet !== 'object') return;
                 
-                const unitId = pet.pet_id || pet.id || index;
-                const weight = getUnitWeight(unitId);
                 const amount = parseInt(pet.amount) || parseInt(pet.count) || 0;
-                totalWeight += amount * weight;
+                totalCount += amount;
+                console.log('DEBUG: Array item count:', { index, amount, totalCount });
             });
         } else {
             Object.entries(partyData).forEach(([key, pet]) => {
-                if (!pet || typeof pet !== 'object') {
-                    const unitId = key;
-                    const weight = getUnitWeight(unitId);
-                    const amount = parseInt(pet) || 0;
-                    totalWeight += amount * weight;
-                    return;
+                if (typeof pet === 'number') {
+                    totalCount += pet;
+                    console.log('DEBUG: Object number item count:', { key, pet, totalCount });
+                } else if (pet && typeof pet === 'object') {
+                    const amount = parseInt(pet.amount) || parseInt(pet.count) || 0;
+                    totalCount += amount;
+                    console.log('DEBUG: Object object item count:', { key, amount, totalCount });
                 }
-                
-                let unitId;
-                if (pet.pet_id !== undefined) {
-                    unitId = pet.pet_id;
-                } else if (pet.id !== undefined) {
-                    unitId = pet.id;
-                } else if (!isNaN(parseInt(key))) {
-                    unitId = parseInt(key);
-                } else {
-                    return;
-                }
-                
-                const weight = getUnitWeight(unitId);
-                const amount = parseInt(pet.amount) || parseInt(pet.count) || 0;
-                totalWeight += amount * weight;
             });
         }
         
-        return totalWeight;
-    }, [partyData, getUnitWeight]);
+        console.log('DEBUG: Total party count:', totalCount);
+        return totalCount;
+    }, [partyData]);
 
-    // Оставшийся вес в отряде
-    const remainingWeight = useMemo(() => {
-        const remaining = maxPartySize - currentPartyWeight;
+    // Оставшееся количество мест в отряде
+    const remainingSlots = useMemo(() => {
+        const remaining = maxPartySize - currentPartyCount;
+        console.log('DEBUG: Remaining slots calculation:', {
+            maxPartySize,
+            currentPartyCount,
+            remaining
+        });
         return Math.max(0, remaining);
-    }, [maxPartySize, currentPartyWeight]);
+    }, [maxPartySize, currentPartyCount]);
 
     // Список спутников для отображения (обновленный)
     const partyList = useMemo(() => {
+        console.log('DEBUG: Creating party list...');
         
         if (!partyData || typeof partyData !== 'object' || Object.keys(partyData).length === 0) {
+            console.log('DEBUG: No party data for list');
             return [];
         }
         
@@ -531,8 +598,16 @@ const SettlementGarrison = observer(() => {
             });
         }
 
+        console.log('DEBUG: Party list created:', list);
         return list;
     }, [partyData, getUnitWeight]);
+
+    // Рассчитываем текущий вес отряда (для отображения)
+    const currentPartyWeight = useMemo(() => {
+        const weight = partyList.reduce((sum, pet) => sum + (pet.totalWeight || 0), 0);
+        console.log('DEBUG: Current party weight:', weight);
+        return weight;
+    }, [partyList]);
 
     // Проверяем доступные уровни оснащения
     const checkAvailableTiers = useCallback((buildingTier) => {
@@ -588,36 +663,43 @@ const SettlementGarrison = observer(() => {
         return { available: true };
     }, [currentEssence, currentResources]);
 
-    // Проверяем, хватает ли места в отряде для взятия юнитов
+    // Проверяем, хватает ли места в отряде для взятия юнитов (УПРОЩЕННАЯ ВЕРСИЯ)
     const checkPartySpaceForTake = useCallback((unitId, quantity) => {
-        if (remainingWeight <= 0) {
+        console.log('=== CHECK PARTY SPACE DEBUG ===');
+        console.log('Input:', { unitId, quantity, remainingSlots, currentPartyCount, maxPartySize });
+        
+        if (remainingSlots <= 0) {
+            console.log('DEBUG: No space left - remainingSlots is 0');
             return { 
                 available: false, 
                 message: 'В отряде нет свободного места' 
             };
         }
         
-        const unitWeight = getUnitWeight(unitId);
-        const requiredWeight = unitWeight * quantity;
-        
-        if (requiredWeight > remainingWeight) {
+        // Проверяем, хватит ли места
+        if (quantity > remainingSlots) {
+            console.log('DEBUG: Not enough space, free slots:', remainingSlots);
             return { 
                 available: false, 
-                message: `Недостаточно места. Требуется: ${requiredWeight}, доступно: ${remainingWeight}` 
+                message: `Недостаточно места. Можно взять максимум ${remainingSlots} юнит(ов)` 
             };
         }
         
+        console.log('DEBUG: Space check passed');
         return { available: true };
-    }, [remainingWeight, getUnitWeight]);
+    }, [remainingSlots, currentPartyCount, maxPartySize]);
 
     // Функция для принудительного обновления данных
     const refreshAllData = async () => {
+        console.log('DEBUG: Refreshing all data...');
         try {
             if (settlement && settlement.fetchData) {
                 await settlement.fetchData();
+                console.log('DEBUG: Settlement data refreshed');
             }
             
             await loadPlayerData(true);
+            console.log('DEBUG: Player data refreshed');
             
             showNotification('info', 'Данные обновлены');
         } catch (error) {
@@ -628,9 +710,16 @@ const SettlementGarrison = observer(() => {
 
     // Обновляем partyData при изменении данных игрока
     useEffect(() => {
+        console.log('DEBUG: Player data changed:', {
+            hasPets: !!(playerData?.pets),
+            hasParty: !!(playerData?.party),
+            maxPartySize: playerData?.max_party_size
+        });
+        
         if (playerData && (playerData.pets || playerData.party)) {
             const newPartyData = playerData.pets || playerData.party || {};
             if (Object.keys(newPartyData).length > 0) {
+                console.log('DEBUG: Setting new player party data');
                 setPlayerPartyData(newPartyData);
             }
         }
@@ -643,6 +732,7 @@ const SettlementGarrison = observer(() => {
             try {
                 if (settlement && settlement.fetchData) {
                     await settlement.fetchData();
+                    console.log('DEBUG: Settlement data loaded');
                 }
             } catch (error) {
                 console.error('Error loading settlement data:', error);
@@ -766,8 +856,10 @@ const SettlementGarrison = observer(() => {
     const handleTakeUnit = async () => {
         if (!selectedUnit) return;
 
-        const unitId = UNIT_NAME_TO_ID[selectedUnit.name];
-        const spaceCheck = checkPartySpaceForTake(unitId, quantity);
+        console.log('DEBUG: handleTakeUnit called:', selectedUnit);
+
+        // Используем упрощенную проверку места
+        const spaceCheck = checkPartySpaceForTake(null, quantity);
         if (!spaceCheck.available) {
             showNotification('error', spaceCheck.message);
             return;
@@ -776,6 +868,13 @@ const SettlementGarrison = observer(() => {
         const unitNameWithTier = selectedUnit.tier > 0 
             ? `${selectedUnit.name} T${selectedUnit.tier}`
             : selectedUnit.name;
+
+        console.log('DEBUG: Taking unit:', {
+            unitNameWithTier,
+            quantity,
+            guildId,
+            selectedUnit
+        });
 
         try {
             if (!guildId) {
@@ -876,8 +975,11 @@ const SettlementGarrison = observer(() => {
     };
 
     const handleOpenTakeModal = (unit) => {
-        const unitId = UNIT_NAME_TO_ID[unit.nameWithoutTier];
-        const spaceCheck = checkPartySpaceForTake(unitId, 1);
+        console.log('DEBUG: Opening take modal for unit:', unit);
+        
+        // Упрощенная проверка - используем количество мест, а не вес
+        const spaceCheck = checkPartySpaceForTake(null, 1);
+        console.log('DEBUG: Space check result:', spaceCheck);
         
         if (!spaceCheck.available) {
             showNotification('warning', spaceCheck.message);
@@ -890,7 +992,7 @@ const SettlementGarrison = observer(() => {
             originalName: unit.originalName,
             tier: unit.tier,
             amount: unit.amount,
-            unitId: unitId
+            unitId: unit.id // Используем ID из garrisonData
         });
         setQuantity(1);
         setShowTakeModal(true);
@@ -914,7 +1016,7 @@ const SettlementGarrison = observer(() => {
         }
 
         // Проверяем, можно ли взять хотя бы одного юнита
-        const canTake = remainingWeight > 0;
+        const canTake = remainingSlots > 0;
 
         return (
             <Col md={6} lg={4} key={unitId}>
@@ -1053,17 +1155,21 @@ const SettlementGarrison = observer(() => {
     const hireCost = selectedHireUnit ? calculateHireCost(selectedHireUnit, selectedTier, hireQuantity) : { essence: 0, resources: {} };
     const resourceCheck = selectedHireUnit ? checkResourcesAvailability(hireCost) : { available: true };
 
-    // Рассчитываем вес для взятия юнитов
+    // Рассчитываем вес для взятия юнитов (для отображения)
     const takeUnitWeight = useMemo(() => {
         if (!selectedUnit?.unitId) return 0;
         return getUnitWeight(selectedUnit.unitId) * quantity;
     }, [selectedUnit, quantity, getUnitWeight]);
 
-    // Проверяем, можно ли взять выбранное количество
+    // Проверяем, можно ли взять выбранное количество (УПРОЩЕННАЯ ВЕРСИЯ)
     const canTakeSelectedUnits = useMemo(() => {
-        if (!selectedUnit?.unitId) return false;
-        return takeUnitWeight <= remainingWeight;
-    }, [selectedUnit, takeUnitWeight, remainingWeight]);
+        console.log('DEBUG: canTakeSelectedUnits check:', {
+            quantity,
+            remainingSlots,
+            canTake: quantity <= remainingSlots
+        });
+        return quantity <= remainingSlots;
+    }, [quantity, remainingSlots]);
 
     if (isLoading) {
         return (
@@ -1113,14 +1219,18 @@ const SettlementGarrison = observer(() => {
                                 Спутники
                             </h5>
                             <div className="fantasy-text-muted mt-1">
-                                Лимит спутников: <Badge bg={remainingWeight > 0 ? "success" : "danger"}>
-                                    {currentPartyWeight}/{maxPartySize}
+                                Размер отряда: <Badge bg={remainingSlots > 0 ? "success" : "danger"}>
+                                    {currentPartyCount}/{maxPartySize}
                                 </Badge>
-                                {remainingWeight > 0 && (
+                                {remainingSlots > 0 && (
                                     <span className="ms-2 text-success">
-                                        <small>(Свободно: {remainingWeight})</small>
+                                        <small>(Свободно: {remainingSlots})</small>
                                     </span>
                                 )}
+                                <br />
+                                <small className="text-muted">
+                                    Вес отряда: {currentPartyWeight}
+                                </small>
                             </div>
                         </div>
                         <div>
@@ -1129,6 +1239,7 @@ const SettlementGarrison = observer(() => {
                                 size="sm"
                                 onClick={refreshAllData}
                                 disabled={loadingPlayer}
+                                className="me-2"
                             >
                                 {loadingPlayer ? (
                                     <Spinner animation="border" size="sm" />
@@ -1138,6 +1249,23 @@ const SettlementGarrison = observer(() => {
                                         Обновить
                                     </>
                                 )}
+                            </Button>
+                            <Button 
+                                variant="outline-info" 
+                                size="sm"
+                                onClick={() => {
+                                    console.log('=== DEBUG INFO ===');
+                                    console.log('currentPartyCount:', currentPartyCount);
+                                    console.log('maxPartySize:', maxPartySize);
+                                    console.log('remainingSlots:', remainingSlots);
+                                    console.log('partyList:', partyList);
+                                    console.log('playerData:', playerData);
+                                    console.log('==================');
+                                    showNotification('info', 'Отладочная информация в консоли');
+                                }}
+                                title="Показать отладочную информацию"
+                            >
+                                <i className="fas fa-bug"></i>
                             </Button>
                         </div>
                     </div>
@@ -1243,7 +1371,7 @@ const SettlementGarrison = observer(() => {
                                         <Col md={3}>
                                             <Card className="fantasy-card h-100">
                                                 <Card.Body className="text-center">
-                                                    <div className="fantasy-text-dark fs-4 fw-bold">{remainingWeight}</div>
+                                                    <div className="fantasy-text-dark fs-4 fw-bold">{remainingSlots}</div>
                                                     <div className="fantasy-text-muted">Свободно в отряде</div>
                                                 </Card.Body>
                                             </Card>
@@ -1279,8 +1407,8 @@ const SettlementGarrison = observer(() => {
                                     Здесь можно нанимать юнитов из построенных зданий. 
                                     <strong> Уровни оснащения (T1-T3) доступны только если уровень кузницы ({smithLevel}) ≥ уровню здания.</strong>
                                     <div className="mt-2">
-                                        <i className="fas fa-weight-hanging me-1"></i>
-                                        <strong>Вес отряда:</strong> {currentPartyWeight}/{maxPartySize} (свободно: {remainingWeight})
+                                        <i className="fas fa-users me-1"></i>
+                                        <strong>Место в отряде:</strong> {currentPartyCount}/{maxPartySize} (свободно: {remainingSlots})
                                     </div>
                                 </Alert>
 
@@ -1316,9 +1444,9 @@ const SettlementGarrison = observer(() => {
                                         <Card className="fantasy-card h-100">
                                             <Card.Body className="text-center">
                                                 <div className="fantasy-text-dark fs-4 fw-bold">
-                                                    {remainingWeight}
+                                                    {remainingSlots}
                                                 </div>
-                                                <div className="fantasy-text-muted">Место в отряде</div>
+                                                <div className="fantasy-text-muted">Свободных мест</div>
                                             </Card.Body>
                                         </Card>
                                     </Col>
@@ -1370,7 +1498,7 @@ const SettlementGarrison = observer(() => {
                                     Юниты будут добавлены в ваш отряд и доступны для использования в боях.
                                     <br />
                                     <small>
-                                        Вес за штуку: <Badge bg="info">{getUnitWeight(selectedUnit.unitId)}</Badge>
+                                        Доступно: {selectedUnit.amount} шт.
                                     </small>
                                 </div>
                             </div>
@@ -1481,9 +1609,9 @@ const SettlementGarrison = observer(() => {
                                 <div className="row text-center">
                                     <div className="col-6">
                                         <div className="mb-2">
-                                            <div className="mass-total-label">Общий вес:</div>
+                                            <div className="mass-total-label">Будет занято мест:</div>
                                             <div className="mass-total-value">
-                                                {takeUnitWeight} / {remainingWeight + takeUnitWeight}
+                                                {quantity} / {currentPartyCount + quantity}
                                                 <span className="ms-2 text-muted">
                                                     (макс: {maxPartySize})
                                                 </span>
@@ -1504,7 +1632,7 @@ const SettlementGarrison = observer(() => {
                             {!canTakeSelectedUnits && (
                                 <Alert variant="danger" className="mt-3">
                                     <i className="fas fa-exclamation-triangle me-2"></i>
-                                    Недостаточно места в отряде! Требуется: {takeUnitWeight}, доступно: {remainingWeight}
+                                    Недостаточно места в отряде! Требуется: {quantity} мест, доступно: {remainingSlots}
                                 </Alert>
                             )}
                         </>
@@ -1840,19 +1968,6 @@ const SettlementGarrison = observer(() => {
                                         Вес за штуку: <Badge bg="info">{selectedPartyUnit.weightPerUnit}</Badge>
                                     </small>
                                 </div>
-                                
-                                {/* Отладочная информация */}
-                                <div className="mb-2">
-                                    <small className="text-muted">
-                                        <i className="fas fa-id-card me-1"></i>
-                                        Player ID: {playerId}
-                                    </small>
-                                    <br />
-                                    <small className="text-muted">
-                                        <i className="fas fa-hashtag me-1"></i>
-                                        Unit ID: {selectedPartyUnit.fullId}
-                                    </small>
-                                </div>
                             </div>
 
                             <div className="item-quantity-row mb-4">
@@ -1963,9 +2078,9 @@ const SettlementGarrison = observer(() => {
                                 <div className="row text-center">
                                     <div className="col-6">
                                         <div className="mb-2">
-                                            <div className="mass-total-label">Освободится веса:</div>
+                                            <div className="mass-total-label">Освободится мест:</div>
                                             <div className="mass-total-value">
-                                                {selectedPartyUnit.weightPerUnit * dischargeQuantity}
+                                                {dischargeQuantity}
                                             </div>
                                         </div>
                                     </div>
@@ -2046,24 +2161,6 @@ const SettlementGarrison = observer(() => {
                                     <br />
                                     <small>
                                         Вес за штуку: <Badge bg="info">{selectedPartyUnit.weightPerUnit}</Badge>
-                                    </small>
-                                </div>
-                                
-                                {/* Отладочная информация */}
-                                <div className="mb-2">
-                                    <small className="text-muted">
-                                        <i className="fas fa-id-card me-1"></i>
-                                        Player ID: {playerId}
-                                    </small>
-                                    <br />
-                                    <small className="text-muted">
-                                        <i className="fas fa-hashtag me-1"></i>
-                                        Unit ID: {selectedPartyUnit.fullId}
-                                    </small>
-                                    <br />
-                                    <small className="text-muted">
-                                        <i className="fas fa-flag me-1"></i>
-                                        Guild ID: {guildId}
                                     </small>
                                 </div>
                             </div>
@@ -2176,9 +2273,9 @@ const SettlementGarrison = observer(() => {
                                 <div className="row text-center">
                                     <div className="col-6">
                                         <div className="mb-2">
-                                            <div className="mass-total-label">Освободится веса:</div>
+                                            <div className="mass-total-label">Освободится мест:</div>
                                             <div className="mass-total-value">
-                                                {selectedPartyUnit.weightPerUnit * storeQuantity}
+                                                {storeQuantity}
                                             </div>
                                         </div>
                                     </div>

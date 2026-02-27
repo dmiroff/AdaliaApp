@@ -1,0 +1,237 @@
+/* SettlementMissions.css */
+.settlement-missions-container {
+  max-width: 100%;
+  padding-left: 10px;
+  padding-right: 10px;
+}
+
+/* Улучшенные табы */
+.fantasy-nav {
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.fantasy-nav::-webkit-scrollbar {
+  display: none;
+}
+
+.fantasy-nav-link {
+  white-space: nowrap;
+  padding: 10px 12px;
+  font-size: 14px;
+  min-width: 120px;
+  text-align: center;
+}
+
+/* Карточки регионов и агентов */
+.region-card, .agent-type-card {
+  transition: all 0.3s;
+  border: 2px solid transparent;
+  min-height: 180px;
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+}
+
+.region-card:hover, .agent-type-card:hover {
+  border-color: #fbbf24;
+  transform: translateY(-2px);
+}
+
+.selected-region, .selected-agent {
+  border-color: #4299e1 !important;
+  background-color: rgba(66, 153, 225, 0.1);
+}
+
+.region-card .card-body, .agent-type-card .card-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+/* Список членов гильдии */
+.members-list {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.member-item {
+  padding: 12px 15px;
+  border: 1px solid #444;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: #2d3748;
+}
+
+.member-item:hover {
+  background: #4a5568;
+  border-color: #fbbf24;
+}
+
+.member-item.selected {
+  background: #2c5282;
+  border-color: #4299e1;
+}
+
+.member-item.in-dungeon {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: #4a1c1c;
+}
+
+.selected-players {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 15px;
+}
+
+/* Прогресс-бары */
+.fantasy-table th {
+  background-color: #2d3748;
+  color: #cbd5e0;
+  border-color: #4a5568;
+}
+
+.fantasy-table td {
+  border-color: #4a5568;
+  vertical-align: middle;
+}
+
+.fantasy-table tr:hover {
+  background-color: #2d3748;
+}
+
+/* Адаптивные кнопки */
+.fantasy-btn {
+  padding: 12px 20px;
+  font-size: 16px;
+  border-radius: 10px;
+  transition: all 0.2s;
+}
+
+/* Мобильная оптимизация */
+@media (max-width: 768px) {
+  .settlement-missions-container {
+    padding-left: 5px;
+    padding-right: 5px;
+  }
+  
+  .fantasy-nav-link {
+    min-width: 110px;
+    padding: 8px 10px;
+    font-size: 13px;
+  }
+  
+  .region-card, .agent-type-card {
+    min-height: 160px;
+  }
+  
+  .fantasy-btn {
+    padding: 10px 16px;
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .fantasy-nav-link {
+    min-width: 100px;
+    font-size: 12px;
+  }
+  
+  .region-card, .agent-type-card {
+    min-height: 140px;
+  }
+  
+  h5, h6 {
+    font-size: 1.1rem;
+  }
+}
+
+/* Анимации */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.settlement-missions-container > * {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Иконки */
+.region-icon {
+  font-size: 2.5rem;
+  margin-bottom: 10px;
+  display: inline-block;
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+/* Бейджи */
+.fantasy-badge {
+  font-size: 0.85rem;
+  padding: 0.25em 0.6em;
+  border-radius: 6px;
+}
+
+
+.dungeon-card {
+  cursor: pointer;
+  transition: all 0.3s;
+  border: 2px solid transparent;
+}
+
+.dungeon-card:hover {
+  border-color: #fbbf24;
+  transform: translateY(-2px);
+}
+
+.selected-dungeon {
+  border-color: #4299e1 !important;
+  background-color: rgba(66, 153, 225, 0.1);
+}
+
+.dungeon-select {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.dungeon-item {
+  padding: 12px 15px;
+  border: 1px solid #444;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: #2d3748;
+}
+
+.dungeon-item:hover {
+  background: #4a5568;
+  border-color: #fbbf24;
+}
+
+.dungeon-item.selected {
+  background: #2c5282;
+  border-color: #4299e1;
+}
+
+.fantasy-list-item {
+  background-color: #2d3748;
+  border-color: #4a5568;
+  padding: 15px;
+}
+
+.fantasy-list-item:hover {
+  background-color: #4a5568;
+}

@@ -700,7 +700,6 @@ const SettlementStorage = observer(() => {
         setPlayerData(response.data);
         const inventory = response.data.inventory_new || {};
         setPlayerInventory(inventory);
-        console.log('Инвентарь загружен:', inventory);
       }
     } catch (error) {
       console.error('Error fetching inventory:', error);
@@ -767,7 +766,6 @@ const SettlementStorage = observer(() => {
   }, []);
   
   const getPlayerResourcesByType = useMemo(() => {
-    console.log('Начинаем обработку инвентаря:', playerInventory);
     
     if (!playerInventory || typeof playerInventory !== 'object' || Object.keys(playerInventory).length === 0) {
       console.log('Инвентарь пуст или не является объектом');
@@ -826,27 +824,16 @@ const SettlementStorage = observer(() => {
             inventoryId: key,
             rawData: value
           });
-          
-          console.log('Добавлен ресурс:', id, getResourceName(id), numAmount, getResourceTypeDisplay(id));
         }
       } catch (error) {
         console.error('Ошибка обработки ресурса:', key, value, error);
       }
     });
     
-    console.log('Все обработанные ресурсы:', resources);
-    
     const construction = resources.filter(r => r.type === 'Стройматериал');
     const hides = resources.filter(r => r.type === 'Шкура');
     const leatherTier = resources.filter(r => r.type === 'Кожа');
     const other = resources.filter(r => !['Стройматериал', 'Шкура', 'Кожа'].includes(r.type));
-    
-    console.log('Категоризированные ресурсы:', {
-      construction: construction.length,
-      hides: hides.length,
-      leatherTier: leatherTier.length,
-      other: other.length
-    });
     
     return { construction, hides, leatherTier, other, all: resources };
   }, [playerInventory]);

@@ -2723,3 +2723,7 @@ footer {
 .guild-container .dropdown-menu {
   z-index: 1000 !important;
 }
+
+.modal-title.fantasy-text-black {
+  color: #000 !important; /* или color: black; */
+}
