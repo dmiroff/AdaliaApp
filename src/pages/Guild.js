@@ -347,6 +347,12 @@ const Guild = observer(() => {
   }, [guildName, guildDescription, fetchGuildData]);
 
   const handleLeaveGuild = useCallback(async () => {
+    // Проверяем, состоит ли пользователь в гильдии
+    if (!guild.guildData?.has_guild) {
+      setError("Вы не состоите в гильдии");
+      return;
+    }
+
     setProcessingAction(true);
     setError("");
     const result = await LeaveGuild();
@@ -362,6 +368,12 @@ const Guild = observer(() => {
   }, [guild, fetchGuildData]);
 
   const handleMemberAction = useCallback(async (action, playerName) => {
+    // Проверяем, состоит ли пользователь в гильдии
+    if (!guild.guildData?.has_guild) {
+      setError("Вы не состоите в гильдии");
+      return;
+    }
+
     setProcessingAction(true);
     setError("");
     setSuccess("");
@@ -381,9 +393,15 @@ const Guild = observer(() => {
     } finally {
       setProcessingAction(false);
     }
-  }, [fetchGuildData]);
+  }, [guild.guildData, fetchGuildData]);
 
   const handleRequestAction = useCallback(async (action, applicantName) => {
+    // Проверяем, состоит ли пользователь в гильдии
+    if (!guild.guildData?.has_guild) {
+      setError("Вы не состоите в гильдии");
+      return;
+    }
+
     setProcessingAction(true);
     setError("");
     setSuccess("");
@@ -401,9 +419,15 @@ const Guild = observer(() => {
     } finally {
       setProcessingAction(false);
     }
-  }, [fetchGuildData]);
+  }, [guild.guildData, fetchGuildData]);
 
   const handleUpdateDescription = useCallback(async () => {
+    // Проверяем, состоит ли пользователь в гильдии
+    if (!guild.guildData?.has_guild) {
+      setError("Вы не состоите в гильдии");
+      return;
+    }
+
     setProcessingAction(true);
     setError("");
     
@@ -421,9 +445,15 @@ const Guild = observer(() => {
     } finally {
       setProcessingAction(false);
     }
-  }, [editDescription, fetchGuildData]);
+  }, [editDescription, guild.guildData, fetchGuildData]);
 
   const handleInvitePlayer = useCallback(async () => {
+    // Проверяем, состоит ли пользователь в гильдии
+    if (!guild.guildData?.has_guild) {
+      setError("Вы не состоите в гильдии");
+      return;
+    }
+
     if (!invitePlayerName.trim()) {
       setError("Введите имя игрока");
       return;
@@ -446,7 +476,7 @@ const Guild = observer(() => {
     } finally {
       setProcessingAction(false);
     }
-  }, [invitePlayerName]);
+  }, [invitePlayerName, guild.guildData]);
 
   // Оптимизированные функции форматирования
   const formatOnlineStatus = useCallback((statusBlockTime) => {
@@ -1422,6 +1452,7 @@ const Guild = observer(() => {
       </Modal>
     );
   };
+  
   // Внутри renderMemberDetailsModal обновляем отображение атрибутов и навыков
   const renderMemberDetailsModal = () => {
       if (!selectedMember) return null;

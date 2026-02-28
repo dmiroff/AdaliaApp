@@ -72,6 +72,16 @@ const SettlementMissions = observer(() => {
   const [agentMissionType, setAgentMissionType] = useState('scout');
   const [notification, setNotification] = useState({ show: false, type: '', message: '' });
 
+  // ========== ПРОВЕРКА НАЛИЧИЯ ГИЛЬДИИ ==========
+  const hasGuild = useMemo(() => guild.guildData?.has_guild || false, [guild.guildData]);
+  
+  // ========== ID ГИЛЬДИИ (МОЖЕТ БЫТЬ 0) ==========
+  const guildId = useMemo(() => {
+    if (guild.guildData?.id !== undefined) return guild.guildData.id;
+    if (settlementData?._settlementData?.guild_id !== undefined) return settlementData._settlementData.guild_id;
+    return undefined;
+  }, [guild.guildData, settlementData]);
+
   // ========== АВТОМАТИЧЕСКОЕ ОБНОВЛЕНИЕ targetType ==========
   useEffect(() => {
     if (agentMissionType === 'scout') {
@@ -84,7 +94,6 @@ const SettlementMissions = observer(() => {
 
   // ========== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ==========
   const getSettlementTypeIcon = (type) => {
-    // <-- NEW TRANSLATIONS: добавлены иконки для новых типов
     const icons = {
       'Light': 'fa-sun',
       'Dark': 'fa-moon',
@@ -106,7 +115,6 @@ const SettlementMissions = observer(() => {
     const data = settlement.info || settlement;
     if (data.name && data.name !== 'Unknown') return data.name;
     
-    // <-- NEW TRANSLATIONS: расширенный словарь типов
     const typeNames = {
       'Light': 'Света',
       'Dark': 'Тьмы',
@@ -178,12 +186,6 @@ const SettlementMissions = observer(() => {
     });
   }, [availableHeroes, agentMissionType]);
 
-  const guildId = useMemo(() => {
-    if (guild.guildData?.id) return guild.guildData.id;
-    if (settlementData?._settlementData?.guild_id) return settlementData._settlementData.guild_id;
-    return null;
-  }, [guild.guildData, settlementData]);
-
   const playerRole = useMemo(() => {
     if (guild.guildData && guild.guildData.player_role) {
       return guild.guildData.player_role;
@@ -245,11 +247,17 @@ const SettlementMissions = observer(() => {
 
   // ========== ЗАГРУЗКА ДАННЫХ ==========
   const loadMissionData = useCallback(async () => {
-    if (!guildId || !hasTower) {
-      console.log('Cannot load mission data:', { guildId, hasTower });
+    // Проверяем наличие гильдии и башни
+    if (!hasGuild || !hasTower) {
+      console.log('Cannot load mission data:', { hasGuild, hasTower });
       return;
     }
-    
+    // guildId может быть 0, но должен быть определён
+    if (guildId === undefined) {
+      console.error('guildId is undefined despite hasGuild=true');
+      return;
+    }
+
     try {
       const methods = [
         { method: 'getMissionLimits', call: () => SettlementMissionsService.getMissionLimits(guildId, towerLevel), setter: setMissionLimits },
@@ -293,7 +301,7 @@ const SettlementMissions = observer(() => {
       console.error("Ошибка загрузки данных миссий:", error);
       showNotification('error', 'Ошибка загрузки данных миссий');
     }
-  }, [guildId, hasTower, towerLevel, showNotification, selectedDungeon]);
+  }, [guildId, hasGuild, hasTower, towerLevel, showNotification, selectedDungeon, availableDungeons.length]);
 
   const refreshAllData = useCallback(async () => {
     setRefreshing(true);
@@ -313,18 +321,25 @@ const SettlementMissions = observer(() => {
   }, [loadMissionData, showNotification, guild]);
 
   useEffect(() => {
-    if (guildId && hasTower) {
+    if (hasGuild && hasTower) {
       loadMissionData();
     }
-  }, [guildId, hasTower, loadMissionData]);
+  }, [hasGuild, hasTower, loadMissionData]);
 
   // ========== ОБРАБОТЧИКИ ==========
   const handleStartDungeon = async () => {
+    if (!hasGuild) {
+      showNotification('error', 'Вы не состоите в гильдии');
+      return;
+    }
+    if (guildId === undefined) {
+      showNotification('error', 'Ошибка идентификатора гильдии');
+      return;
+    }
     if (selectedPlayers.length === 0) {
         showNotification('warning', 'Выберите хотя бы одного игрока');
         return;
     }
-
     if (missionLimits?.available <= 0) {
         showNotification('warning', 'Нет доступных миссий на сегодня');
         return;
@@ -370,16 +385,22 @@ const SettlementMissions = observer(() => {
   };
 
   const handleSendAgent = async () => {
+    if (!hasGuild) {
+      showNotification('error', 'Вы не состоите в гильдии');
+      return;
+    }
+    if (guildId === undefined) {
+      showNotification('error', 'Ошибка идентификатора гильдии');
+      return;
+    }
     if (!selectedHero) {
       showNotification('warning', 'Выберите героя для отправки');
       return;
     }
-
     if (!selectedRegion) {
       showNotification('warning', 'Выберите цель для миссии');
       return;
     }
-
     if (selectedRegion === currentSettlementId) {
       showNotification('error', 'Нельзя отправить миссию на своё поселение');
       return;
@@ -443,6 +464,14 @@ const SettlementMissions = observer(() => {
   };
 
   const handleCompleteAgentMission = async (missionId) => {
+    if (!hasGuild) {
+      showNotification('error', 'Вы не состоите в гильдии');
+      return;
+    }
+    if (guildId === undefined) {
+      showNotification('error', 'Ошибка идентификатора гильдии');
+      return;
+    }
     try {
       if (typeof SettlementMissionsService.completeHeroMission !== 'function') {
         showNotification('error', 'Функция завершения миссии временно недоступна');
@@ -467,6 +496,14 @@ const SettlementMissions = observer(() => {
   };
 
   const handleAbandonDungeon = async (dungeonRunId) => {
+    if (!hasGuild) {
+      showNotification('error', 'Вы не состоите в гильдии');
+      return;
+    }
+    if (guildId === undefined) {
+      showNotification('error', 'Ошибка идентификатора гильдии');
+      return;
+    }
     if (!window.confirm('Вы уверены, что хотите отменить это подземелье?\nИгроки не получат награды.')) {
       return;
     }
@@ -532,7 +569,7 @@ const SettlementMissions = observer(() => {
   };
 
   // ========== РЕНДЕР ==========
-  if (!guild.guildData?.has_guild) {
+  if (!hasGuild) {
     return (
       <Container>
         <Card className="fantasy-card">

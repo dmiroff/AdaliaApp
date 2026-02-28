@@ -746,7 +746,8 @@ const SettlementStorage = observer(() => {
   const refreshAllData = async () => {
     setRefreshing(true);
     try {
-      if (settlement.fetchSettlementData && guildId) {
+      // Проверяем, что есть данные гильдии и ID определён (даже если 0)
+      if (settlement.fetchSettlementData && hasGuildData && guildId !== undefined) {
         await settlement.fetchSettlementData(guildId);
       }
       
@@ -907,10 +908,15 @@ const SettlementStorage = observer(() => {
   };
   
   const handleTakeResource = async (resourceId, quantity) => {
-    if (!guildId || !playerId) {
-      showNotification('error', 'Не удалось определить ID гильдии или игрока');
+    if (!hasGuildData) {
+      showNotification('error', 'Вы не состоите в гильдии');
       return;
     }
+    if (!playerId) {
+      showNotification('error', 'Не удалось определить ID игрока');
+      return;
+    }
+    // guildId может быть 0
     
     setTakeLoading(true);
     try {
@@ -945,8 +951,12 @@ const SettlementStorage = observer(() => {
   };
   
   const handleStoreAllConstruction = async () => {
-    if (!guildId || !playerId) {
-      showNotification('error', 'Не удалось определить ID гильдии или игрока');
+    if (!hasGuildData) {
+      showNotification('error', 'Вы не состоите в гильдии');
+      return;
+    }
+    if (!playerId) {
+      showNotification('error', 'Не удалось определить ID игрока');
       return;
     }
     
@@ -976,8 +986,12 @@ const SettlementStorage = observer(() => {
   };
   
   const handleStoreAllHides = async () => {
-    if (!guildId || !playerId) {
-      showNotification('error', 'Не удалось определить ID гильдии или игрока');
+    if (!hasGuildData) {
+      showNotification('error', 'Вы не состоите в гильдии');
+      return;
+    }
+    if (!playerId) {
+      showNotification('error', 'Не удалось определить ID игрока');
       return;
     }
     
