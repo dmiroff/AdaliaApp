@@ -1,9 +1,11 @@
-import React, { useState, useContext, useEffect } from 'react';
+import React, { useState, useContext, useEffect, useRef } from 'react';
 import { observer } from "mobx-react-lite";
 import { Row, Col, Card, Button, Badge, Alert, Modal, Spinner, Form } from "react-bootstrap";
 import { Context } from "../index";
 import GetDataById from "../http/GetData";
 import { premiumPurchase } from "../http/premiumApi";
+import axios from 'axios';
+import { SERVER_APP_API_URL } from '../utils/constants';
 
 const DonationTab = observer(() => {
   const { user } = useContext(Context);
@@ -14,26 +16,35 @@ const DonationTab = observer(() => {
   const [playerData, setPlayerData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [delay, setDelay] = useState(false);
-  const [quantity, setQuantity] = useState(1); // Добавляем состояние для количества
+  const [quantity, setQuantity] = useState(1);
 
-  // Загрузка данных игрока
+  // Состояния для Robokassa
+  const [showTopUpModal, setShowTopUpModal] = useState(false);
+  const [topUpAmount, setTopUpAmount] = useState(100);
+  const [processingTopUp, setProcessingTopUp] = useState(false);
+  const [checkingPayment, setCheckingPayment] = useState(false);
+  const paymentChecked = useRef(false); // Чтобы не проверять платеж повторно
+
+  // Функция загрузки данных игрока (вынесена для повторного вызова)
+  const fetchPlayer = async () => {
+    try {
+      const playerDataResponse = await GetDataById();
+      setPlayerData(playerDataResponse.data);
+      user.setPlayer(playerDataResponse.data);
+      setLoading(false);
+    } catch (err) {
+      console.error("Ошибка загрузки данных игрока:", err);
+      setError("Не удалось загрузить данные игрока");
+      setLoading(false);
+    }
+  };
+
+  // Загрузка данных при монтировании
   useEffect(() => {
-    const fetchPlayer = async () => {
-      try {
-        const playerDataResponse = await GetDataById();
-        setPlayerData(playerDataResponse.data);
-        user.setPlayer(playerDataResponse.data);
-        setLoading(false);
-      } catch (err) {
-        console.error("Ошибка загрузки данных игрока:", err);
-        setError("Не удалось загрузить данные игрока");
-        setLoading(false);
-      }
-    };
-
     fetchPlayer();
   }, [user]);
 
+  // Искусственная задержка для анимации
   useEffect(() => {
     if (playerData) {
       setTimeout(() => {
@@ -41,6 +52,47 @@ const DonationTab = observer(() => {
       }, 1000);
     }
   }, [playerData]);
+
+  // Проверка возврата с Robokassa (при наличии InvId в URL)
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const invId = urlParams.get('InvId');
+
+    if (invId && !paymentChecked.current) {
+      paymentChecked.current = true;
+      setCheckingPayment(true);
+
+      const checkPaymentStatus = async () => {
+        try {
+          const token = localStorage.getItem('access_token');
+          const response = await axios.get(`${SERVER_APP_API_URL}/payment/status/${invId}`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+
+          if (response.data.status === 'success') {
+            setSuccess(`Баланс пополнен на ${response.data.amount} 💎!`);
+            // Обновляем данные игрока
+            await fetchPlayer();
+            if (user.updatePlayerData) user.updatePlayerData();
+          } else if (response.data.status === 'failed') {
+            setError('Платёж не прошёл. Попробуйте снова.');
+          } else {
+            // Статус pending – возможно, ещё обрабатывается
+            // Можно подождать или показать информационное сообщение
+          }
+        } catch (err) {
+          console.error('Ошибка проверки статуса платежа:', err);
+          setError('Не удалось проверить статус платежа');
+        } finally {
+          setCheckingPayment(false);
+          // Очищаем параметры из URL
+          window.history.replaceState({}, document.title, window.location.pathname);
+        }
+      };
+
+      checkPaymentStatus();
+    }
+  }, []); // Пустой массив зависимостей – выполнится только один раз при монтировании
 
   // Список донатных товаров
   const donationProducts = [
@@ -95,20 +147,29 @@ const DonationTab = observer(() => {
       features: ["Сброс всех характеристик предмета"],
       purchased: false,
       type: "consumable",
-      maxQuantity: 100 // Максимальное количество для покупки
+      maxQuantity: 100
+    },
+    {
+      id: 6,
+      name: "👁️ Глаз добытчика",
+      description: "Автоматический сбор тайников и разделка",
+      price: 300,
+      currency: "💎",
+      features: ["Автоматический сбор тайников и разделка"],
+      purchased: false,
+      type: "permanent"
     }
   ];
 
   const handlePurchaseClick = (product) => {
     setSelectedProduct(product);
-    setQuantity(1); // Сбрасываем количество при выборе нового товара
+    setQuantity(1);
     setShowConfirmModal(true);
     setError("");
   };
 
   const handleConfirmPurchase = async () => {
     try {
-      // Для consumable товаров передаем количество, для остальных - только ID и duration
       const result = await premiumPurchase(
         selectedProduct.id,
         selectedProduct.type === "premium" ? selectedProduct.duration_days : null,
@@ -121,12 +182,8 @@ const DonationTab = observer(() => {
           : `Покупка "${selectedProduct.name}" успешна!`;
         setSuccess(message);
         
-        // Обновляем данные пользователя через контекст
-        if (user.updatePlayerData) {
-          user.updatePlayerData();
-        }
+        if (user.updatePlayerData) user.updatePlayerData();
         
-        // Перезагружаем данные игрока
         const playerDataResponse = await GetDataById();
         setPlayerData(playerDataResponse.data);
         user.setPlayer(playerDataResponse.data);
@@ -157,14 +214,41 @@ const DonationTab = observer(() => {
     }
   };
 
-  // Рассчитываем общую стоимость с учетом количества
   const calculateTotalPrice = () => {
     if (!selectedProduct) return 0;
     return selectedProduct.price * quantity;
   };
 
-  // Проверяем активен ли премиум статус
   const isPremiumActive = playerData?.premium_active || false;
+
+  // Обработчик пополнения через Robokassa
+  const handleTopUp = async () => {
+    setProcessingTopUp(true);
+    setError("");
+
+    try {
+      const token = localStorage.getItem('access_token');
+      const response = await axios.post(
+        `${SERVER_APP_API_URL}/payment/create`,
+        {
+          amount: topUpAmount,
+          return_url: window.location.href
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+
+      // Перенаправляем на страницу оплаты Robokassa
+      window.location.href = response.data.payment_url;
+    } catch (err) {
+      console.error('Ошибка создания платежа:', err);
+      setError(err.response?.data?.detail || 'Не удалось создать платёж');
+    } finally {
+      setProcessingTopUp(false);
+      setShowTopUpModal(false);
+    }
+  };
 
   if (!delay) {
     return (
@@ -179,12 +263,14 @@ const DonationTab = observer(() => {
     );
   }
 
-  if (loading) {
+  if (loading || checkingPayment) {
     return (
       <div className="d-flex justify-content-center align-items-center min-vh-50">
         <div className="text-center">
           <Spinner animation="border" variant="secondary" />
-          <p className="mt-2 text-muted">Загрузка...</p>
+          <p className="mt-2 text-muted">
+            {checkingPayment ? 'Проверка платежа...' : 'Загрузка...'}
+          </p>
         </div>
       </div>
     );
@@ -196,8 +282,7 @@ const DonationTab = observer(() => {
       {success && (
         <Alert variant="success" className="fantasy-alert">
           <div className="text-center">
-            <h5>🎉 Покупка успешна!</h5>
-            <p className="mb-0">{success}</p>
+            <h5>🎉 {success}</h5>
           </div>
         </Alert>
       )}
@@ -219,7 +304,7 @@ const DonationTab = observer(() => {
         </p>
       </div>
 
-      {/* Баланс далеонов */}
+      {/* Баланс далеонов и кнопка пополнения */}
       <Card className="fantasy-card mb-4">
         <Card.Body className="text-center">
           <h5 className="fantasy-text-primary">Ваш баланс</h5>
@@ -231,6 +316,14 @@ const DonationTab = observer(() => {
               ⭐ Пожинатель активен
             </Badge>
           )}
+          <Button
+            variant="outline-warning"
+            className="mt-3 fantasy-btn-gold"
+            onClick={() => setShowTopUpModal(true)}
+            disabled={processingTopUp}
+          >
+            {processingTopUp ? <Spinner size="sm" /> : '💰 Пополнить баланс'}
+          </Button>
         </Card.Body>
       </Card>
 
@@ -262,7 +355,6 @@ const DonationTab = observer(() => {
                     {product.description}
                   </Card.Text>
 
-                  {/* Список особенностей */}
                   <ul className="fantasy-feature-list">
                     {product.features.map((feature, index) => (
                       <li key={index} className="fantasy-text-muted">
@@ -271,7 +363,6 @@ const DonationTab = observer(() => {
                     ))}
                   </ul>
 
-                  {/* Цена и кнопка */}
                   <div className="mt-auto">
                     <div className="text-center mb-3">
                       <span className="fantasy-text-dark fs-3 fw-bold">
@@ -312,13 +403,14 @@ const DonationTab = observer(() => {
         })}
       </Row>
 
-      {/* Модальное окно подтверждения покупки */}
+      {/* Модальное окно подтверждения покупки (товары) */}
       <Modal 
         show={showConfirmModal} 
         onHide={() => setShowConfirmModal(false)}
         centered
         className="fantasy-modal"
       >
+        {/* ... (оставляем без изменений, как было) */}
         <Modal.Header closeButton className="fantasy-card-header fantasy-card-header-primary">
           <Modal.Title className="fantasy-text-gold">Подтверждение покупки</Modal.Title>
         </Modal.Header>
@@ -328,7 +420,6 @@ const DonationTab = observer(() => {
               <h4 className="fantasy-text-primary mb-3">{selectedProduct.name}</h4>
               <p className="fantasy-text-dark">{selectedProduct.description}</p>
               
-              {/* Поле выбора количества для consumable товаров */}
               {selectedProduct.type === "consumable" && (
                 <div className="my-4">
                   <Form.Label className="fantasy-text-dark">Количество:</Form.Label>
@@ -409,6 +500,56 @@ const DonationTab = observer(() => {
               ? `Купить ${quantity} шт.`
               : 'Подтвердить покупку'
             }
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Модальное окно пополнения баланса */}
+      <Modal 
+        show={showTopUpModal} 
+        onHide={() => setShowTopUpModal(false)}
+        centered
+        className="fantasy-modal"
+      >
+        <Modal.Header closeButton className="fantasy-card-header fantasy-card-header-primary">
+          <Modal.Title className="fantasy-text-gold">Пополнение баланса</Modal.Title>
+        </Modal.Header>
+        <Modal.Body className="fantasy-modal-body">
+          <Form.Group>
+            <Form.Label className="fantasy-text-dark">Сумма пополнения (в далеонах)</Form.Label>
+            <Form.Control
+              type="number"
+              value={topUpAmount}
+              onChange={(e) => setTopUpAmount(parseInt(e.target.value) || 0)}
+              min={10}
+              step={10}
+              className="text-center"
+            />
+            <Form.Text className="fantasy-text-muted">
+              1 💎 = 1 рубль
+            </Form.Text>
+          </Form.Group>
+          <Alert variant="info" className="mt-3 fantasy-alert">
+            <small>
+              Вы будете перенаправлены на страницу оплаты Robokassa. 
+              После успешной оплаты баланс обновится автоматически.
+            </small>
+          </Alert>
+        </Modal.Body>
+        <Modal.Footer className="fantasy-modal-footer">
+          <Button 
+            className="fantasy-btn fantasy-btn-secondary"
+            onClick={() => setShowTopUpModal(false)}
+            disabled={processingTopUp}
+          >
+            Отмена
+          </Button>
+          <Button 
+            className="fantasy-btn fantasy-btn-gold"
+            onClick={handleTopUp}
+            disabled={processingTopUp || topUpAmount < 10}
+          >
+            {processingTopUp ? <Spinner size="sm" /> : 'Перейти к оплате'}
           </Button>
         </Modal.Footer>
       </Modal>
