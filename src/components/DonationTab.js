@@ -3,9 +3,11 @@ import { observer } from "mobx-react-lite";
 import { Row, Col, Card, Button, Badge, Alert, Modal, Spinner, Form } from "react-bootstrap";
 import { Context } from "../index";
 import GetDataById from "../http/GetData";
-import { premiumPurchase } from "../http/premiumApi";
-import axios from 'axios';
-import { SERVER_APP_API_URL } from '../utils/constants';
+import { 
+  premiumPurchase, 
+  createPayment, 
+  checkPaymentStatus 
+} from "../http/premiumApi";
 
 const DonationTab = observer(() => {
   const { user } = useContext(Context);
@@ -62,19 +64,16 @@ const DonationTab = observer(() => {
       paymentChecked.current = true;
       setCheckingPayment(true);
 
-      const checkPaymentStatus = async () => {
+      const verifyPayment = async () => {
         try {
-          const token = localStorage.getItem('access_token');
-          const response = await axios.get(`${SERVER_APP_API_URL}/payment/status/${invId}`, {
-            headers: { Authorization: `Bearer ${token}` }
-          });
+          const data = await checkPaymentStatus(invId);
 
-          if (response.data.status === 'success') {
-            setSuccess(`Баланс пополнен на ${response.data.amount} 💎!`);
+          if (data.status === 'success') {
+            setSuccess(`Баланс пополнен на ${data.amount} 💎!`);
             // Обновляем данные игрока
             await fetchPlayer();
             if (user.updatePlayerData) user.updatePlayerData();
-          } else if (response.data.status === 'failed') {
+          } else if (data.status === 'failed') {
             setError('Платёж не прошёл. Попробуйте снова.');
           } else {
             // Статус pending – возможно, ещё обрабатывается
@@ -90,7 +89,7 @@ const DonationTab = observer(() => {
         }
       };
 
-      checkPaymentStatus();
+      verifyPayment();
     }
   }, []); // Пустой массив зависимостей – выполнится только один раз при монтировании
 
@@ -227,20 +226,9 @@ const DonationTab = observer(() => {
     setError("");
 
     try {
-      const token = localStorage.getItem('access_token');
-      const response = await axios.post(
-        `${SERVER_APP_API_URL}/payment/create`,
-        {
-          amount: topUpAmount,
-          return_url: window.location.href
-        },
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
-      );
-
+      const data = await createPayment(topUpAmount, window.location.href);
       // Перенаправляем на страницу оплаты Robokassa
-      window.location.href = response.data.payment_url;
+      window.location.href = data.payment_url;
     } catch (err) {
       console.error('Ошибка создания платежа:', err);
       setError(err.response?.data?.detail || 'Не удалось создать платёж');
@@ -410,7 +398,6 @@ const DonationTab = observer(() => {
         centered
         className="fantasy-modal"
       >
-        {/* ... (оставляем без изменений, как было) */}
         <Modal.Header closeButton className="fantasy-card-header fantasy-card-header-primary">
           <Modal.Title className="fantasy-text-gold">Подтверждение покупки</Modal.Title>
         </Modal.Header>

@@ -77,3 +77,38 @@ export const getPremiumProducts = async () => {
     throw error;
   }
 };
+
+// НОВЫЕ МЕТОДЫ ДЛЯ РАБОТЫ С ПЛАТЕЖАМИ
+/**
+ * Создание платежа через Robokassa
+ * @param {number} amount - сумма пополнения в далеонах (рублях)
+ * @param {string} returnUrl - URL для возврата после оплаты
+ * @returns {Promise<{payment_url: string}>}
+ */
+export const createPayment = async (amount, returnUrl) => {
+  try {
+    const response = await apiClient.post('/payment/create', {
+      amount,
+      return_url: returnUrl
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error creating payment:", error);
+    throw error;
+  }
+};
+
+/**
+ * Проверка статуса платежа по InvId
+ * @param {string|number} invId - идентификатор платежа
+ * @returns {Promise<{status: string, amount?: number}>}
+ */
+export const checkPaymentStatus = async (invId) => {
+  try {
+    const response = await apiClient.get(`/payment/status/${invId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error checking payment status:", error);
+    throw error;
+  }
+};
