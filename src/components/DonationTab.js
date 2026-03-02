@@ -8,7 +8,6 @@ import {
   createPayment, 
   checkPaymentStatus 
 } from "../http/premiumApi";
-import { SERVER_APP_API_URL } from "../utils/constants"; // Импортируем базовый URL бэкенда
 
 const DonationTab = observer(() => {
   const { user } = useContext(Context);
@@ -26,9 +25,13 @@ const DonationTab = observer(() => {
   const [topUpAmount, setTopUpAmount] = useState(100);
   const [processingTopUp, setProcessingTopUp] = useState(false);
   const [checkingPayment, setCheckingPayment] = useState(false);
-  const paymentChecked = useRef(false);
+  const paymentChecked = useRef(false); // Чтобы не проверять платеж повторно
 
-  // Функция загрузки данных игрока
+  // Публичный URL бэкенда для ResultURL (из .env)
+  const publicApiUrl = process.env.REACT_APP_PUBLIC_API_URL; 
+  // Пример: REACT_APP_PUBLIC_API_URL=https://abc123.ngrok.io
+
+  // Функция загрузки данных игрока (вынесена для повторного вызова)
   const fetchPlayer = async () => {
     try {
       const playerDataResponse = await GetDataById();
@@ -42,10 +45,12 @@ const DonationTab = observer(() => {
     }
   };
 
+  // Загрузка данных при монтировании
   useEffect(() => {
     fetchPlayer();
   }, [user]);
 
+  // Искусственная задержка для анимации
   useEffect(() => {
     if (playerData) {
       setTimeout(() => {
@@ -69,25 +74,30 @@ const DonationTab = observer(() => {
 
           if (data.status === 'success') {
             setSuccess(`Баланс пополнен на ${data.amount} 💎!`);
+            // Обновляем данные игрока
             await fetchPlayer();
             if (user.updatePlayerData) user.updatePlayerData();
           } else if (data.status === 'failed') {
             setError('Платёж не прошёл. Попробуйте снова.');
+          } else {
+            // Статус pending – возможно, ещё обрабатывается
+            // Можно подождать или показать информационное сообщение
           }
         } catch (err) {
           console.error('Ошибка проверки статуса платежа:', err);
           setError('Не удалось проверить статус платежа');
         } finally {
           setCheckingPayment(false);
+          // Очищаем параметры из URL
           window.history.replaceState({}, document.title, window.location.pathname);
         }
       };
 
       verifyPayment();
     }
-  }, []);
+  }, []); // Пустой массив зависимостей – выполнится только один раз при монтировании
 
-  // Список донатных товаров (без изменений)
+  // Список донатных товаров
   const donationProducts = [
     {
       id: 1,
@@ -216,18 +226,23 @@ const DonationTab = observer(() => {
 
   // Обработчик пополнения через Robokassa
   const handleTopUp = async () => {
+    // Проверяем, что публичный URL задан
+    if (!publicApiUrl) {
+      setError("Ошибка конфигурации: не указан публичный URL бэкенда (REACT_APP_PUBLIC_API_URL)");
+      return;
+    }
+
     setProcessingTopUp(true);
     setError("");
 
     try {
-      // return_url – текущая страница фронтенда
+      // return_url – текущая страница (фронтенд), куда вернётся пользователь
       const returnUrl = window.location.origin + window.location.pathname;
       // result_url – публичный URL бэкенда + путь для уведомлений
-      // Убираем возможный завершающий слеш и добавляем /api/payment/result
-      const baseUrl = SERVER_APP_API_URL.replace(/\/$/, '');
-      const resultUrl = `${baseUrl}/payment/result`; // SERVER_APP_API_URL уже содержит /api, поэтому /payment/result
+      const resultUrl = `${publicApiUrl}/api/payment/result`;
 
       const data = await createPayment(topUpAmount, returnUrl, resultUrl);
+      // Перенаправляем на страницу оплаты Robokassa
       window.location.href = data.payment_url;
     } catch (err) {
       console.error('Ошибка создания платежа:', err);
