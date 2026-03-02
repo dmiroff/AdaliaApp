@@ -85,17 +85,13 @@ export const getPremiumProducts = async () => {
  * @param {string} returnUrl - URL для возврата после оплаты
  * @returns {Promise<{payment_url: string}>}
  */
-export const createPayment = async (amount, returnUrl) => {
-  try {
-    const response = await apiClient.post('/payment/create', {
-      amount,
-      return_url: returnUrl
-    });
-    return response.data;
-  } catch (error) {
-    console.error("Error creating payment:", error);
-    throw error;
-  }
+ export const createPayment = async (amount, returnUrl, resultUrl) => {
+  const { data } = await $authHost.post('api/payment/create', {
+    amount,
+    return_url: returnUrl,
+    result_url: resultUrl,
+  });
+  return data;
 };
 
 /**

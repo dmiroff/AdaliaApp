@@ -10,16 +10,13 @@ const AuthCallback = () => {
     const { user } = useContext(Context);
 
     useEffect(() => {
-        
         const authenticate = async () => {
-            
             if (!id || !token) {
-                navigate('/login');
+                navigate('/notauth'); // было /login
                 return;
             }
 
             try {
-                
                 const response = await fetch(`${SERVER_APP_API_URL}/login`, {
                     method: 'POST',
                     headers: {
@@ -47,13 +44,13 @@ const AuthCallback = () => {
 
                         navigate('/inventory', { replace: true });
                     } else {
-                        navigate('/login');
+                        navigate('/notauth'); // было /login
                     }
                 } else {
-                    navigate('/login');
+                    navigate('/notauth'); // было /login
                 }
             } catch (error) {
-                navigate('/login');
+                navigate('/notauth'); // было /login
             }
         };
 

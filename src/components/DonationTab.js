@@ -8,6 +8,7 @@ import {
   createPayment, 
   checkPaymentStatus 
 } from "../http/premiumApi";
+import { SERVER_APP_API_URL } from "../utils/constants"; // Импортируем базовый URL бэкенда
 
 const DonationTab = observer(() => {
   const { user } = useContext(Context);
@@ -25,9 +26,9 @@ const DonationTab = observer(() => {
   const [topUpAmount, setTopUpAmount] = useState(100);
   const [processingTopUp, setProcessingTopUp] = useState(false);
   const [checkingPayment, setCheckingPayment] = useState(false);
-  const paymentChecked = useRef(false); // Чтобы не проверять платеж повторно
+  const paymentChecked = useRef(false);
 
-  // Функция загрузки данных игрока (вынесена для повторного вызова)
+  // Функция загрузки данных игрока
   const fetchPlayer = async () => {
     try {
       const playerDataResponse = await GetDataById();
@@ -41,12 +42,10 @@ const DonationTab = observer(() => {
     }
   };
 
-  // Загрузка данных при монтировании
   useEffect(() => {
     fetchPlayer();
   }, [user]);
 
-  // Искусственная задержка для анимации
   useEffect(() => {
     if (playerData) {
       setTimeout(() => {
@@ -70,30 +69,25 @@ const DonationTab = observer(() => {
 
           if (data.status === 'success') {
             setSuccess(`Баланс пополнен на ${data.amount} 💎!`);
-            // Обновляем данные игрока
             await fetchPlayer();
             if (user.updatePlayerData) user.updatePlayerData();
           } else if (data.status === 'failed') {
             setError('Платёж не прошёл. Попробуйте снова.');
-          } else {
-            // Статус pending – возможно, ещё обрабатывается
-            // Можно подождать или показать информационное сообщение
           }
         } catch (err) {
           console.error('Ошибка проверки статуса платежа:', err);
           setError('Не удалось проверить статус платежа');
         } finally {
           setCheckingPayment(false);
-          // Очищаем параметры из URL
           window.history.replaceState({}, document.title, window.location.pathname);
         }
       };
 
       verifyPayment();
     }
-  }, []); // Пустой массив зависимостей – выполнится только один раз при монтировании
+  }, []);
 
-  // Список донатных товаров
+  // Список донатных товаров (без изменений)
   const donationProducts = [
     {
       id: 1,
@@ -226,8 +220,14 @@ const DonationTab = observer(() => {
     setError("");
 
     try {
-      const data = await createPayment(topUpAmount, window.location.href);
-      // Перенаправляем на страницу оплаты Robokassa
+      // return_url – текущая страница фронтенда
+      const returnUrl = window.location.origin + window.location.pathname;
+      // result_url – публичный URL бэкенда + путь для уведомлений
+      // Убираем возможный завершающий слеш и добавляем /api/payment/result
+      const baseUrl = SERVER_APP_API_URL.replace(/\/$/, '');
+      const resultUrl = `${baseUrl}/payment/result`; // SERVER_APP_API_URL уже содержит /api, поэтому /payment/result
+
+      const data = await createPayment(topUpAmount, returnUrl, resultUrl);
       window.location.href = data.payment_url;
     } catch (err) {
       console.error('Ошибка создания платежа:', err);

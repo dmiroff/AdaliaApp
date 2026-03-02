@@ -34,8 +34,6 @@ const AppRouter = observer(() => {
         setIsChecking(true);
         
         try {
-            
-            // Проверяем, находится ли пользователь на пути авторизации
             const isAuthPath = location.pathname.startsWith('/auth/');
             
             if (isAuthPath) {
@@ -44,22 +42,19 @@ const AppRouter = observer(() => {
                 return;
             }
             
-            // Проверяем наличие токенов в localStorage
             const accessToken = localStorage.getItem('access_token');
             const userId = localStorage.getItem('id');
             
-            // Если нет access_token или user_id, значит пользователь не авторизован
             if (!accessToken || !userId) {
                 user.setIsAuth(false);
                 
-                // Если пользователь не на публичной странице, перенаправляем на логин
-                const isPublicRoute = location.pathname === '/login' || 
+                const isPublicRoute = location.pathname === '/notauth' || // заменили /login на /notauth
                                      location.pathname === '/auth' ||
                                      location.pathname === '/terms-and-privacy' ||
                                      location.pathname === '/';
                 
                 if (!isPublicRoute) {
-                    navigate('/login');
+                    navigate('/notauth'); // было /login
                 }
                 
                 setIsChecking(false);
@@ -67,8 +62,6 @@ const AppRouter = observer(() => {
                 return;
             }
             
-            
-            // Проверяем валидность access token
             const verifyResult = await verifyToken(accessToken);
             
             if (verifyResult.valid) {
@@ -77,14 +70,14 @@ const AppRouter = observer(() => {
             } else {
                 clearAuthData();
                 user.setIsAuth(false);
-                navigate('/login');
+                navigate('/notauth'); // было /login
             }
         } catch (error) {
             user.setIsAuth(false);
             
-            if (location.pathname !== '/login' && 
+            if (location.pathname !== '/notauth' && // заменили /login
                 !location.pathname.startsWith('/auth/')) {
-                navigate('/login');
+                navigate('/notauth');
             }
         } finally {
             setIsChecking(false);
