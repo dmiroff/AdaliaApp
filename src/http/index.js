@@ -1,7 +1,8 @@
 import axios from "axios";
+import { REACT_APP_API_URL } from "../utils/constants";
 
 const $host = axios.create({
-    baseURL: process.env.REACT_APP_API_URL,
+    baseURL: REACT_APP_API_URL,
     headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
@@ -9,7 +10,7 @@ const $host = axios.create({
 });
 
 const $authHost = axios.create({
-    baseURL: process.env.REACT_APP_API_URL,
+    baseURL: REACT_APP_API_URL,
     headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
