@@ -1,5 +1,4 @@
 import apiClient from "./apiClient";
-import {$authHost} from '../http/index';
 
 export const premiumPurchase = async (productId, durationDays = null, quantity = 1) => {
   try {
@@ -87,7 +86,7 @@ export const getPremiumProducts = async () => {
  * @returns {Promise<{payment_url: string}>}
  */
  export const createPayment = async (amount, returnUrl, resultUrl) => {
-  const { data } = await $authHost.post('/payment/create', {
+  const { data } = await apiClient.post('/payment/create', {
     amount,
     return_url: returnUrl,
     result_url: resultUrl,
