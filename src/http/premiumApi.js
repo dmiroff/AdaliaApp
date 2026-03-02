@@ -87,7 +87,7 @@ export const getPremiumProducts = async () => {
  * @returns {Promise<{payment_url: string}>}
  */
  export const createPayment = async (amount, returnUrl, resultUrl) => {
-  const { data } = await $authHost.post('api/payment/create', {
+  const { data } = await $authHost.post('payment/create', {
     amount,
     return_url: returnUrl,
     result_url: resultUrl,
