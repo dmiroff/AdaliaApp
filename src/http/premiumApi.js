@@ -1,5 +1,13 @@
 import apiClient from "./apiClient";
 
+const $authHost = axios.create({
+  baseURL: process.env.REACT_APP_API_URL,
+  headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+  },
+});
+
 export const premiumPurchase = async (productId, durationDays = null, quantity = 1) => {
   try {
     const requestData = {
