@@ -32,13 +32,11 @@ const AuthCallback = () => {
                     const data = await response.json();
                     
                     if (data.access_token) {
-                        // Сохраняем токены
                         localStorage.setItem('id', id);
                         localStorage.setItem('token', token);
                         localStorage.setItem('access_token', data.access_token);
                         localStorage.setItem('token_timestamp', Date.now().toString());
                         
-                        // Обновляем состояние
                         user.setIsAuth(true);
                         user.setUser(parseInt(id));
 

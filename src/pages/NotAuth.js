@@ -192,18 +192,6 @@ const NotAuth = () => {
               </Button>
             </Form>
             
-            <div className="mt-4 text-center">
-              <p className="fantasy-text-muted mb-2">
-                Нет аккаунта?
-              </p>
-              <Button 
-                variant="outline-secondary" 
-                className="fantasy-btn"
-                onClick={() => setShowRegister(true)}
-              >
-                Зарегистрироваться
-              </Button>
-            </div>
           </Card.Body>
         </Card>
       ) : (
