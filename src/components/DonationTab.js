@@ -149,7 +149,7 @@ const DonationTab = observer(() => {
       price: 300,
       currency: "💎",
       features: ["Автоматический сбор тайников и разделка"],
-      purchased: false,
+      purchased: playerData?.upgrades?.includes("Глаз добытчика") || false,,
       type: "permanent"
     }
   ];
