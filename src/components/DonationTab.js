@@ -5,10 +5,9 @@ import { Context } from "../index";
 import GetDataById from "../http/GetData";
 import { 
   premiumPurchase, 
-  createPayment, 
+  createPaymentOrder,
   checkPaymentStatus 
 } from "../http/premiumApi";
-// Импорт SERVER_APP_API_URL больше не нужен, так как result_url убран
 
 const DonationTab = observer(() => {
   const { user } = useContext(Context);
@@ -21,13 +20,11 @@ const DonationTab = observer(() => {
   const [delay, setDelay] = useState(false);
   const [quantity, setQuantity] = useState(1);
 
-  // Состояния для пополнения через Т-Кассу
+  // Состояния для пополнения
   const [showTopUpModal, setShowTopUpModal] = useState(false);
   const [topUpAmount, setTopUpAmount] = useState(100);
   const [processingTopUp, setProcessingTopUp] = useState(false);
   const [checkingPayment, setCheckingPayment] = useState(false);
-
-  // Для отслеживания платежа после возврата
   const [pendingPaymentId, setPendingPaymentId] = useState(null);
   const paymentChecked = useRef(false);
 
@@ -57,9 +54,18 @@ const DonationTab = observer(() => {
     }
   }, [playerData]);
 
-  // Проверка статуса платежа после возврата с оплаты
+  // Подгружаем скрипт виджета Т-Банка, если его ещё нет
   useEffect(() => {
-    // Смотрим, есть ли сохранённый ID платежа в sessionStorage
+    if (!document.querySelector('script[src*="tinkoff_v2.js"]')) {
+      const script = document.createElement('script');
+      script.src = 'https://securepay.tinkoff.ru/html/payForm/js/tinkoff_v2.js';
+      script.async = true;
+      document.body.appendChild(script);
+    }
+  }, []);
+
+  // Проверка статуса платежа после возврата с оплаты (по сохранённому order_id)
+  useEffect(() => {
     const storedPaymentId = sessionStorage.getItem('pendingPaymentId');
     if (storedPaymentId && !paymentChecked.current) {
       paymentChecked.current = true;
@@ -94,7 +100,7 @@ const DonationTab = observer(() => {
     }
   }, [pendingPaymentId, fetchPlayer, user]);
 
-  // Список донатных товаров (без изменений)
+  // Список донатных товаров (полная версия)
   const donationProducts = [
     {
       id: 1,
@@ -221,31 +227,60 @@ const DonationTab = observer(() => {
 
   const isPremiumActive = playerData?.premium_active || false;
 
-  // Обработчик пополнения через Т-Кассу
+  // Обработчик пополнения через форму Т-Банка
   const handleTopUp = async () => {
     setProcessingTopUp(true);
     setError("");
 
     try {
       const returnUrl = window.location.origin + window.location.pathname;
-      
-      // Вызываем API создание платежа (без result_url)
-      const data = await createPayment(topUpAmount, returnUrl);
-      
-      // Сохраняем payment_id в sessionStorage для проверки после возврата
-      sessionStorage.setItem('pendingPaymentId', data.payment_id);
-      
-      // Перенаправляем пользователя на страницу оплаты Т-Кассы
-      window.location.href = data.payment_url;
+      // 1. Создаём заказ на бэкенде
+      const orderData = await createPaymentOrder(topUpAmount, returnUrl);
+
+      // 2. Сохраняем order_id для проверки после возврата
+      sessionStorage.setItem('pendingPaymentId', orderData.order_id);
+
+      // 3. Создаём и отправляем форму Т-Банка
+      const form = document.createElement('form');
+      form.name = 'TinkoffPayForm';
+      form.method = 'POST';
+      form.action = 'https://securepay.tinkoff.ru/new/';  // тестовый/боевой URL
+      form.target = '_blank';  // открыть в новом окне (можно заменить на _self)
+
+      const params = {
+        terminalkey: orderData.terminal_key,
+        amount: orderData.amount,           // сумма в рублях
+        order: orderData.order_id,           // наш order_id
+        description: orderData.description,
+        // Если нужно передать свои success/fail URL, добавьте:
+        // successURL: returnUrl,
+        // failURL: returnUrl,
+      };
+
+      Object.keys(params).forEach(key => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = key;
+        input.value = params[key];
+        form.appendChild(input);
+      });
+
+      document.body.appendChild(form);
+
+      // Используем функцию pay из скрипта виджета, если она уже загружена
+      if (window.pay) {
+        window.pay(form);
+      } else {
+        form.submit();
+      }
+
+      // Модалку не закрываем – после редиректа она закроется сама
     } catch (err) {
       console.error('Ошибка создания платежа:', err);
       setError(err.response?.data?.detail || 'Не удалось создать платёж');
       setProcessingTopUp(false);
       setShowTopUpModal(false);
     }
-    // Обратите внимание: setProcessingTopUp(false) не вызывается здесь, 
-    // потому что после редиректа компонент размонтируется.
-    // Если редирект не произойдёт (ошибка), то сброс произойдёт в catch.
   };
 
   if (!delay) {
@@ -325,7 +360,7 @@ const DonationTab = observer(() => {
         </Card.Body>
       </Card>
 
-      {/* Список товаров (без изменений) */}
+      {/* Список товаров */}
       <Row>
         {donationProducts.map((product) => {
           const isPurchased = product.type === "permanent" ? product.purchased : false;
@@ -501,7 +536,7 @@ const DonationTab = observer(() => {
         </Modal.Footer>
       </Modal>
 
-      {/* Модальное окно пополнения баланса (адаптировано под Т-Кассу) */}
+      {/* Модальное окно пополнения баланса */}
       <Modal 
         show={showTopUpModal} 
         onHide={() => setShowTopUpModal(false)}

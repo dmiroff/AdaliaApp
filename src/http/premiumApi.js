@@ -78,27 +78,26 @@ export const getPremiumProducts = async () => {
 };
 
 // ==============================================
-// МЕТОДЫ ДЛЯ РАБОТЫ С ПЛАТЕЖАМИ (Т-Касса)
+// МЕТОДЫ ДЛЯ РАБОТЫ С ПЛАТЕЖАМИ (Т-Банк, форма)
 // ==============================================
 
 /**
- * Создание платежа через Т-Кассу (Тинькофф эквайринг)
+ * Создание заказа перед оплатой через форму Т-Банка
  * @param {number} amount - сумма пополнения в далеонах (рублях)
  * @param {string} returnUrl - URL для возврата после оплаты (страница магазина)
- * @returns {Promise<{payment_url: string, payment_id: string}>}
+ * @returns {Promise<{order_id: string, terminal_key: string, amount: number, description: string}>}
  */
-export const createPayment = async (amount, returnUrl) => {
+export const createPaymentOrder = async (amount, returnUrl) => {
   const { data } = await apiClient.post('/payment/create', {
     amount,
     return_url: returnUrl,
-    // result_url больше не требуется, уведомления приходят на настроенный webhook
   });
   return data;
 };
 
 /**
- * Проверка статуса платежа по его идентификатору
- * @param {string} paymentId - идентификатор платежа, полученный при создании
+ * Проверка статуса платежа по его идентификатору (order_id)
+ * @param {string} paymentId - идентификатор платежа (order_id)
  * @returns {Promise<{status: string, amount?: number}>}
  */
 export const checkPaymentStatus = async (paymentId) => {
