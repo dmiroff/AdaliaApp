@@ -5,19 +5,18 @@ export const premiumPurchase = async (productId, durationDays = null, quantity =
     const requestData = {
       product_id: productId,
       ...(durationDays && { duration_days: durationDays }),
-      ...(quantity && quantity > 1 && { quantity: quantity }) // Добавляем количество только если больше 1
+      ...(quantity && quantity > 1 && { quantity: quantity })
     };
 
     const response = await apiClient.post(`/premium-purchase`, requestData);
     return response.data;
   } catch (error) {
     console.error("Error processing premium purchase:", error);
-    
-    // Более детальная обработка ошибок
+
     if (error.response) {
       const status = error.response.status;
       const detail = error.response.data?.detail || "Неизвестная ошибка";
-      
+
       switch (status) {
         case 400:
           if (detail.includes("Недостаточно")) {
@@ -78,30 +77,33 @@ export const getPremiumProducts = async () => {
   }
 };
 
-// НОВЫЕ МЕТОДЫ ДЛЯ РАБОТЫ С ПЛАТЕЖАМИ
+// ==============================================
+// МЕТОДЫ ДЛЯ РАБОТЫ С ПЛАТЕЖАМИ (Т-Касса)
+// ==============================================
+
 /**
- * Создание платежа через Robokassa
+ * Создание платежа через Т-Кассу (Тинькофф эквайринг)
  * @param {number} amount - сумма пополнения в далеонах (рублях)
- * @param {string} returnUrl - URL для возврата после оплаты
- * @returns {Promise<{payment_url: string}>}
+ * @param {string} returnUrl - URL для возврата после оплаты (страница магазина)
+ * @returns {Promise<{payment_url: string, payment_id: string}>}
  */
- export const createPayment = async (amount, returnUrl, resultUrl) => {
+export const createPayment = async (amount, returnUrl) => {
   const { data } = await apiClient.post('/payment/create', {
     amount,
     return_url: returnUrl,
-    result_url: resultUrl,
+    // result_url больше не требуется, уведомления приходят на настроенный webhook
   });
   return data;
 };
 
 /**
- * Проверка статуса платежа по InvId
- * @param {string|number} invId - идентификатор платежа
+ * Проверка статуса платежа по его идентификатору
+ * @param {string} paymentId - идентификатор платежа, полученный при создании
  * @returns {Promise<{status: string, amount?: number}>}
  */
-export const checkPaymentStatus = async (invId) => {
+export const checkPaymentStatus = async (paymentId) => {
   try {
-    const response = await apiClient.get(`/payment/status/${invId}`);
+    const response = await apiClient.get(`/payment/status/${paymentId}`);
     return response.data;
   } catch (error) {
     console.error("Error checking payment status:", error);

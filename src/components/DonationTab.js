@@ -8,7 +8,7 @@ import {
   createPayment, 
   checkPaymentStatus 
 } from "../http/premiumApi";
-import { SERVER_APP_API_URL } from "../utils/constants"; // Импортируем базовый URL бэкенда
+// Импорт SERVER_APP_API_URL больше не нужен, так как result_url убран
 
 const DonationTab = observer(() => {
   const { user } = useContext(Context);
@@ -21,11 +21,14 @@ const DonationTab = observer(() => {
   const [delay, setDelay] = useState(false);
   const [quantity, setQuantity] = useState(1);
 
-  // Состояния для Robokassa
+  // Состояния для пополнения через Т-Кассу
   const [showTopUpModal, setShowTopUpModal] = useState(false);
   const [topUpAmount, setTopUpAmount] = useState(100);
   const [processingTopUp, setProcessingTopUp] = useState(false);
   const [checkingPayment, setCheckingPayment] = useState(false);
+
+  // Для отслеживания платежа после возврата
+  const [pendingPaymentId, setPendingPaymentId] = useState(null);
   const paymentChecked = useRef(false);
 
   // Функция загрузки данных игрока
@@ -54,38 +57,42 @@ const DonationTab = observer(() => {
     }
   }, [playerData]);
 
-  // Проверка возврата с Robokassa (при наличии InvId в URL)
+  // Проверка статуса платежа после возврата с оплаты
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const invId = urlParams.get('InvId');
-
-    if (invId && !paymentChecked.current) {
+    // Смотрим, есть ли сохранённый ID платежа в sessionStorage
+    const storedPaymentId = sessionStorage.getItem('pendingPaymentId');
+    if (storedPaymentId && !paymentChecked.current) {
       paymentChecked.current = true;
-      setCheckingPayment(true);
+      setPendingPaymentId(storedPaymentId);
+      sessionStorage.removeItem('pendingPaymentId');
+    }
+  }, []);
 
+  useEffect(() => {
+    if (pendingPaymentId) {
       const verifyPayment = async () => {
+        setCheckingPayment(true);
         try {
-          const data = await checkPaymentStatus(invId);
-
+          const data = await checkPaymentStatus(pendingPaymentId);
           if (data.status === 'success') {
             setSuccess(`Баланс пополнен на ${data.amount} 💎!`);
             await fetchPlayer();
             if (user.updatePlayerData) user.updatePlayerData();
-          } else if (data.status === 'failed') {
+          } else if (data.status === 'failed' || data.status === 'rejected') {
             setError('Платёж не прошёл. Попробуйте снова.');
           }
+          // Для статуса 'pending' ничего не показываем, ждём webhook
         } catch (err) {
           console.error('Ошибка проверки статуса платежа:', err);
           setError('Не удалось проверить статус платежа');
         } finally {
           setCheckingPayment(false);
-          window.history.replaceState({}, document.title, window.location.pathname);
+          setPendingPaymentId(null);
         }
       };
-
       verifyPayment();
     }
-  }, []);
+  }, [pendingPaymentId, fetchPlayer, user]);
 
   // Список донатных товаров (без изменений)
   const donationProducts = [
@@ -149,7 +156,7 @@ const DonationTab = observer(() => {
       price: 300,
       currency: "💎",
       features: ["Автоматический сбор тайников и разделка"],
-      purchased: playerData?.upgrades?.includes("Глаз добытчика") || false,,
+      purchased: playerData?.upgrades?.includes("Глаз добытчика") || false,
       type: "permanent"
     }
   ];
@@ -214,28 +221,31 @@ const DonationTab = observer(() => {
 
   const isPremiumActive = playerData?.premium_active || false;
 
-  // Обработчик пополнения через Robokassa
+  // Обработчик пополнения через Т-Кассу
   const handleTopUp = async () => {
     setProcessingTopUp(true);
     setError("");
 
     try {
-      // return_url – текущая страница фронтенда
       const returnUrl = window.location.origin + window.location.pathname;
-      // result_url – публичный URL бэкенда + путь для уведомлений
-      // Убираем возможный завершающий слеш и добавляем /api/payment/result
-      const baseUrl = SERVER_APP_API_URL.replace(/\/$/, '');
-      const resultUrl = `${baseUrl}/payment/result`; // SERVER_APP_API_URL уже содержит /api, поэтому /payment/result
-
-      const data = await createPayment(topUpAmount, returnUrl, resultUrl);
+      
+      // Вызываем API создание платежа (без result_url)
+      const data = await createPayment(topUpAmount, returnUrl);
+      
+      // Сохраняем payment_id в sessionStorage для проверки после возврата
+      sessionStorage.setItem('pendingPaymentId', data.payment_id);
+      
+      // Перенаправляем пользователя на страницу оплаты Т-Кассы
       window.location.href = data.payment_url;
     } catch (err) {
       console.error('Ошибка создания платежа:', err);
       setError(err.response?.data?.detail || 'Не удалось создать платёж');
-    } finally {
       setProcessingTopUp(false);
       setShowTopUpModal(false);
     }
+    // Обратите внимание: setProcessingTopUp(false) не вызывается здесь, 
+    // потому что после редиректа компонент размонтируется.
+    // Если редирект не произойдёт (ошибка), то сброс произойдёт в catch.
   };
 
   if (!delay) {
@@ -315,7 +325,7 @@ const DonationTab = observer(() => {
         </Card.Body>
       </Card>
 
-      {/* Список товаров */}
+      {/* Список товаров (без изменений) */}
       <Row>
         {donationProducts.map((product) => {
           const isPurchased = product.type === "permanent" ? product.purchased : false;
@@ -491,7 +501,7 @@ const DonationTab = observer(() => {
         </Modal.Footer>
       </Modal>
 
-      {/* Модальное окно пополнения баланса */}
+      {/* Модальное окно пополнения баланса (адаптировано под Т-Кассу) */}
       <Modal 
         show={showTopUpModal} 
         onHide={() => setShowTopUpModal(false)}
@@ -518,7 +528,7 @@ const DonationTab = observer(() => {
           </Form.Group>
           <Alert variant="info" className="mt-3 fantasy-alert">
             <small>
-              Вы будете перенаправлены на страницу оплаты Robokassa. 
+              Вы будете перенаправлены на защищённую страницу оплаты банковской картой.
               После успешной оплаты баланс обновится автоматически.
             </small>
           </Alert>
