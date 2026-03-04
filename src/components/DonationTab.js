@@ -248,7 +248,7 @@ const DonationTab = observer(() => {
       const receipt = {
         Email: email,
         // Phone: phone, // можно добавить, если требуется`
-        Taxation: 'УСН', // выберите вашу систему налогообложения
+        taxation: 'УСН', // выберите вашу систему налогообложения
         Items: [
           {
             Name: 'Пополнение игрового баланса',
