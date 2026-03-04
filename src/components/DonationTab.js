@@ -227,34 +227,54 @@ const DonationTab = observer(() => {
 
   const isPremiumActive = playerData?.premium_active || false;
 
-  // Обработчик пополнения через форму Т-Банка
+  // Обработчик пополнения через форму Т-Банка с передачей Receipt и success/fail URL
   const handleTopUp = async () => {
     setProcessingTopUp(true);
     setError("");
 
     try {
-      const returnUrl = window.location.origin + window.location.pathname;
+      const returnUrl = window.location.origin + window.location.pathname; // страница магазина
       // 1. Создаём заказ на бэкенде
       const orderData = await createPaymentOrder(topUpAmount, returnUrl);
 
       // 2. Сохраняем order_id для проверки после возврата
       sessionStorage.setItem('pendingPaymentId', orderData.order_id);
 
-      // 3. Создаём и отправляем форму Т-Банка
+      // 3. Подготовим объект чека (Receipt) согласно 54-ФЗ
+      //    Используем email пользователя, если он доступен (например, из user.email)
+      const email = user.email || 'test@example.com'; // замените на реальный источник
+      const phone = user.phone || ''; // если есть
+
+      const receipt = {
+        Email: email,
+        // Phone: phone, // можно добавить, если требуется`
+        Taxation: 'УСН', // выберите вашу систему налогообложения
+        Items: [
+          {
+            Name: 'Пополнение игрового баланса',
+            Price: orderData.amount * 100, // в копейках
+            Quantity: 1,
+            Amount: orderData.amount * 100,
+            Tax: 'none' // ставка НДС (может быть 'vat0', 'vat10', 'vat20' или 'none')
+          }
+        ]
+      };
+
+      // 4. Создаём и отправляем форму Т-Банка
       const form = document.createElement('form');
       form.name = 'TinkoffPayForm';
       form.method = 'POST';
-      form.action = 'https://securepay.tinkoff.ru/new/';  // тестовый/боевой URL
-      form.target = '_blank';  // открыть в новом окне (можно заменить на _self)
+      form.action = 'https://securepay.tinkoff.ru/new/'; // единый URL для теста и боя
+      form.target = '_blank'; // открыть в новом окне (можно '_self' для текущего)
 
       const params = {
         terminalkey: orderData.terminal_key,
-        amount: orderData.amount,           // сумма в рублях
-        order: orderData.order_id,           // наш order_id
+        amount: orderData.amount,           // сумма в рублях (целое число)
+        order: orderData.order_id,
         description: orderData.description,
-        // Если нужно передать свои success/fail URL, добавьте:
-        // successURL: returnUrl,
-        // failURL: returnUrl,
+        successURL: returnUrl,
+        failURL: returnUrl,
+        receipt: JSON.stringify(receipt)
       };
 
       Object.keys(params).forEach(key => {
@@ -267,7 +287,7 @@ const DonationTab = observer(() => {
 
       document.body.appendChild(form);
 
-      // Используем функцию pay из скрипта виджета, если она уже загружена
+      // Используем функцию pay из скрипта виджета, если она доступна
       if (window.pay) {
         window.pay(form);
       } else {
@@ -536,7 +556,7 @@ const DonationTab = observer(() => {
         </Modal.Footer>
       </Modal>
 
-      {/* Модальное окно пополнения баланса */}
+      {/* Модальное окно пополнения баланса (обновлено) */}
       <Modal 
         show={showTopUpModal} 
         onHide={() => setShowTopUpModal(false)}
