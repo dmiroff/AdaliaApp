@@ -227,7 +227,7 @@ const DonationTab = observer(() => {
 
   const isPremiumActive = playerData?.premium_active || false;
 
-  // Обработчик пополнения через форму Т-Банка с передачей Receipt и success/fail URL
+  // Обработчик пополнения через форму Т-Банка
   const handleTopUp = async () => {
     setProcessingTopUp(true);
     setError("");
@@ -235,31 +235,8 @@ const DonationTab = observer(() => {
     try {
       const returnUrl = window.location.origin + window.location.pathname;
       const orderData = await createPaymentOrder(topUpAmount, returnUrl);
+  
       sessionStorage.setItem('pendingPaymentId', orderData.order_id);
-  
-      // Получаем email – если его нет, для теста используем заглушку
-      const email = user.email || 'test@example.com';
-      if (!email) {
-        throw new Error('Email пользователя не указан');
-      }
-  
-      const receipt = {
-        Email: email,
-        taxation: 'usn_income',    // ← изменили на нижний регистр
-        Items: [
-          {
-            Name: 'Пополнение игрового баланса',
-            Price: orderData.amount * 100,
-            Quantity: 1,
-            Amount: orderData.amount * 100,
-            Tax: 'none'
-          }
-        ]
-      };
-  
-      // Отладка: смотрим, что получилось
-      const receiptJson = JSON.stringify(receipt);
-      console.log('Receipt JSON:', receiptJson);
   
       const form = document.createElement('form');
       form.name = 'TinkoffPayForm';
@@ -274,7 +251,7 @@ const DonationTab = observer(() => {
         description: orderData.description,
         successURL: returnUrl,
         failURL: returnUrl,
-        receipt: receiptJson
+        receipt: orderData.receipt        // ← используем готовый receipt от бэкенда
       };
   
       Object.keys(params).forEach(key => {
@@ -286,6 +263,7 @@ const DonationTab = observer(() => {
       });
   
       document.body.appendChild(form);
+  
       if (window.pay) {
         window.pay(form);
       } else {
@@ -552,7 +530,7 @@ const DonationTab = observer(() => {
         </Modal.Footer>
       </Modal>
 
-      {/* Модальное окно пополнения баланса (обновлено) */}
+      {/* Модальное окно пополнения баланса */}
       <Modal 
         show={showTopUpModal} 
         onHide={() => setShowTopUpModal(false)}
