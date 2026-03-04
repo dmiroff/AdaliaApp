@@ -235,48 +235,17 @@ const DonationTab = observer(() => {
       const returnUrl = window.location.origin + window.location.pathname;
   
       // Получаем контактные данные пользователя из контекста (если они там есть)
-      // Предположим, что user содержит email и phone (загружены ранее)
       const email = user.email || '';      // если нет, передаём пустую строку
       const phone = user.phone || '';      // если нет, передаём пустую строку
   
-      // Создаём заказ на бэкенде, передавая email и phone
+      // Создаём заказ на бэкенде
       const orderData = await createPaymentOrder(topUpAmount, returnUrl, email, phone);
   
       // Сохраняем order_id для проверки после возврата
       sessionStorage.setItem('pendingPaymentId', orderData.order_id);
   
-      // Создаём форму и отправляем её
-      const form = document.createElement('form');
-      form.name = 'TinkoffPayForm';
-      form.method = 'POST';
-      form.action = 'https://securepay.tinkoff.ru/new/';
-      form.target = '_blank';
-  
-      const params = {
-        terminalkey: orderData.terminal_key,
-        amount: orderData.amount,
-        order: orderData.order_id,
-        description: orderData.description,
-        successURL: returnUrl,
-        failURL: returnUrl,
-        receipt: orderData.receipt   // готовый receipt от бэкенда
-      };
-  
-      Object.keys(params).forEach(key => {
-        const input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = key;
-        input.value = params[key];
-        form.appendChild(input);
-      });
-  
-      document.body.appendChild(form);
-  
-      if (window.pay) {
-        window.pay(form);
-      } else {
-        form.submit();
-      }
+      // Перенаправляем пользователя на страницу оплаты Т-Кассы
+      window.location.href = orderData.payment_url;
     } catch (err) {
       console.error('Ошибка создания платежа:', err);
       setError(err.response?.data?.detail || 'Не удалось создать платёж');
