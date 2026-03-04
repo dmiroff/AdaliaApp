@@ -231,52 +231,52 @@ const DonationTab = observer(() => {
   const handleTopUp = async () => {
     setProcessingTopUp(true);
     setError("");
-
+  
     try {
-      const returnUrl = window.location.origin + window.location.pathname; // страница магазина
-      // 1. Создаём заказ на бэкенде
+      const returnUrl = window.location.origin + window.location.pathname;
       const orderData = await createPaymentOrder(topUpAmount, returnUrl);
-
-      // 2. Сохраняем order_id для проверки после возврата
       sessionStorage.setItem('pendingPaymentId', orderData.order_id);
-
-      // 3. Подготовим объект чека (Receipt) согласно 54-ФЗ
-      //    Используем email пользователя, если он доступен (например, из user.email)
-      const email = user.email || 'test@example.com'; // замените на реальный источник
-      const phone = user.phone || ''; // если есть
-
+  
+      // Получаем email – если его нет, для теста используем заглушку
+      const email = user.email || 'test@example.com';
+      if (!email) {
+        throw new Error('Email пользователя не указан');
+      }
+  
       const receipt = {
         Email: email,
-        // Phone: phone, // можно добавить, если требуется`
-        taxation: 'УСН', // выберите вашу систему налогообложения
+        taxation: 'usn_income',    // ← изменили на нижний регистр
         Items: [
           {
             Name: 'Пополнение игрового баланса',
-            Price: orderData.amount * 100, // в копейках
+            Price: orderData.amount * 100,
             Quantity: 1,
             Amount: orderData.amount * 100,
-            Tax: 'none' // ставка НДС (может быть 'vat0', 'vat10', 'vat20' или 'none')
+            Tax: 'none'
           }
         ]
       };
-
-      // 4. Создаём и отправляем форму Т-Банка
+  
+      // Отладка: смотрим, что получилось
+      const receiptJson = JSON.stringify(receipt);
+      console.log('Receipt JSON:', receiptJson);
+  
       const form = document.createElement('form');
       form.name = 'TinkoffPayForm';
       form.method = 'POST';
-      form.action = 'https://securepay.tinkoff.ru/new/'; // единый URL для теста и боя
-      form.target = '_blank'; // открыть в новом окне (можно '_self' для текущего)
-
+      form.action = 'https://securepay.tinkoff.ru/new/';
+      form.target = '_blank';
+  
       const params = {
         terminalkey: orderData.terminal_key,
-        amount: orderData.amount,           // сумма в рублях (целое число)
+        amount: orderData.amount,
         order: orderData.order_id,
         description: orderData.description,
         successURL: returnUrl,
         failURL: returnUrl,
-        receipt: JSON.stringify(receipt)
+        receipt: receiptJson
       };
-
+  
       Object.keys(params).forEach(key => {
         const input = document.createElement('input');
         input.type = 'hidden';
@@ -284,17 +284,13 @@ const DonationTab = observer(() => {
         input.value = params[key];
         form.appendChild(input);
       });
-
+  
       document.body.appendChild(form);
-
-      // Используем функцию pay из скрипта виджета, если она доступна
       if (window.pay) {
         window.pay(form);
       } else {
         form.submit();
       }
-
-      // Модалку не закрываем – после редиректа она закроется сама
     } catch (err) {
       console.error('Ошибка создания платежа:', err);
       setError(err.response?.data?.detail || 'Не удалось создать платёж');
