@@ -1,4 +1,4 @@
-import React, { useState, useContext, useEffect, useRef } from 'react';
+import React, { useState, useContext, useEffect, useRef, useCallback } from 'react';
 import { observer } from "mobx-react-lite";
 import { Row, Col, Card, Button, Badge, Alert, Modal, Spinner, Form } from "react-bootstrap";
 import { Context } from "../index";
@@ -28,8 +28,8 @@ const DonationTab = observer(() => {
   const [pendingPaymentId, setPendingPaymentId] = useState(null);
   const paymentChecked = useRef(false);
 
-  // Функция загрузки данных игрока
-  const fetchPlayer = async () => {
+  // Загрузка данных игрока
+  const fetchPlayer = useCallback(async () => {
     try {
       const playerDataResponse = await GetDataById();
       setPlayerData(playerDataResponse.data);
@@ -40,11 +40,11 @@ const DonationTab = observer(() => {
       setError("Не удалось загрузить данные игрока");
       setLoading(false);
     }
-  };
+  }, [user]);
 
   useEffect(() => {
     fetchPlayer();
-  }, [user]);
+  }, [fetchPlayer]);
 
   useEffect(() => {
     if (playerData) {
@@ -54,7 +54,7 @@ const DonationTab = observer(() => {
     }
   }, [playerData]);
 
-  // Подгружаем скрипт виджета Т-Банка, если его ещё нет
+  // Подгружаем скрипт виджета Т-Банка (если нужен, но теперь мы используем редирект)
   useEffect(() => {
     if (!document.querySelector('script[src*="tinkoff_v2.js"]')) {
       const script = document.createElement('script');
@@ -84,7 +84,7 @@ const DonationTab = observer(() => {
             setSuccess(`Баланс пополнен на ${data.amount} 💎!`);
             await fetchPlayer();
             if (user.updatePlayerData) user.updatePlayerData();
-          } else if (data.status === 'failed' || data.status === 'rejected') {
+          } else if (data.status === 'failed' || data.status === 'cancelled') {
             setError('Платёж не прошёл. Попробуйте снова.');
           }
           // Для статуса 'pending' ничего не показываем, ждём webhook
@@ -233,12 +233,11 @@ const DonationTab = observer(() => {
   
     try {
       const returnUrl = window.location.origin + window.location.pathname;
-  
       // Получаем контактные данные пользователя из контекста (если они там есть)
-      const email = user.email || '';      // если нет, передаём пустую строку
-      const phone = user.phone || '';      // если нет, передаём пустую строку
+      const email = user.email || '';
+      const phone = user.phone || '';
   
-      // Создаём заказ на бэкенде
+      // Создаём заказ на бэкенде, передавая email и phone
       const orderData = await createPaymentOrder(topUpAmount, returnUrl, email, phone);
   
       // Сохраняем order_id для проверки после возврата

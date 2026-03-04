@@ -79,7 +79,7 @@ export const getPremiumProducts = async () => {
 
 
 /**
- * Создание заказа перед оплатой через Т-Кассу (метод Init)
+ * Создание заказа перед оплатой через Т-Кассу
  * @param {number} amount - сумма пополнения в далеонах (рублях)
  * @param {string} returnUrl - URL для возврата после оплаты (страница магазина)
  * @param {string} email - email пользователя (обязателен для чека)
@@ -93,7 +93,7 @@ export const getPremiumProducts = async () => {
     email,
     phone
   });
-  return data; // содержит { order_id, payment_url }
+  return data;
 };
 
 /**
