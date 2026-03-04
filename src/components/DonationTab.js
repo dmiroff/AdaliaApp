@@ -227,17 +227,25 @@ const DonationTab = observer(() => {
 
   const isPremiumActive = playerData?.premium_active || false;
 
-  // Обработчик пополнения через форму Т-Банка
   const handleTopUp = async () => {
     setProcessingTopUp(true);
     setError("");
   
     try {
       const returnUrl = window.location.origin + window.location.pathname;
-      const orderData = await createPaymentOrder(topUpAmount, returnUrl);
   
+      // Получаем контактные данные пользователя из контекста (если они там есть)
+      // Предположим, что user содержит email и phone (загружены ранее)
+      const email = user.email || '';      // если нет, передаём пустую строку
+      const phone = user.phone || '';      // если нет, передаём пустую строку
+  
+      // Создаём заказ на бэкенде, передавая email и phone
+      const orderData = await createPaymentOrder(topUpAmount, returnUrl, email, phone);
+  
+      // Сохраняем order_id для проверки после возврата
       sessionStorage.setItem('pendingPaymentId', orderData.order_id);
   
+      // Создаём форму и отправляем её
       const form = document.createElement('form');
       form.name = 'TinkoffPayForm';
       form.method = 'POST';
@@ -251,7 +259,7 @@ const DonationTab = observer(() => {
         description: orderData.description,
         successURL: returnUrl,
         failURL: returnUrl,
-        receipt: orderData.receipt        // ← используем готовый receipt от бэкенда
+        receipt: orderData.receipt   // готовый receipt от бэкенда
       };
   
       Object.keys(params).forEach(key => {

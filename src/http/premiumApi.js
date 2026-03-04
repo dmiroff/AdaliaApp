@@ -76,7 +76,6 @@ export const getPremiumProducts = async () => {
     throw error;
   }
 };
-
 // ==============================================
 // МЕТОДЫ ДЛЯ РАБОТЫ С ПЛАТЕЖАМИ (Т-Банк, форма)
 // ==============================================
@@ -85,12 +84,16 @@ export const getPremiumProducts = async () => {
  * Создание заказа перед оплатой через форму Т-Банка
  * @param {number} amount - сумма пополнения в далеонах (рублях)
  * @param {string} returnUrl - URL для возврата после оплаты (страница магазина)
- * @returns {Promise<{order_id: string, terminal_key: string, amount: number, description: string}>}
+ * @param {string} email - email пользователя (обязателен для чека)
+ * @param {string} phone - телефон пользователя (опционально)
+ * @returns {Promise<{order_id: string, terminal_key: string, amount: number, description: string, receipt: string}>}
  */
-export const createPaymentOrder = async (amount, returnUrl) => {
+ export const createPaymentOrder = async (amount, returnUrl, email, phone = '') => {
   const { data } = await apiClient.post('/payment/create', {
     amount,
     return_url: returnUrl,
+    email,
+    phone
   });
   return data;
 };
