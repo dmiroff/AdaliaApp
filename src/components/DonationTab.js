@@ -314,19 +314,21 @@ const DonationTab = observer(() => {
           <div className="fantasy-text-dark fs-3 fw-bold">
             {(playerData?.daleons || 0).toLocaleString('ru-RU')} 💎
           </div>
-          {isPremiumActive && (
-            <Badge bg="success" className="mt-2">
-              ⭐ Пожинатель активен
-            </Badge>
-          )}
-          <Button
-            variant="outline-warning"
-            className="mt-3 fantasy-btn-gold"
-            onClick={() => setShowTopUpModal(true)}
-            disabled={processingTopUp}
-          >
-            {processingTopUp ? <Spinner size="sm" /> : '💰 Пополнить баланс'}
-          </Button>
+          <div className="d-flex flex-column align-items-center mt-3">
+            {isPremiumActive && (
+              <Badge bg="success" className="mb-2">
+                ⭐ Пожинатель активен
+              </Badge>
+            )}
+            <Button
+              variant="outline-warning"
+              className="fantasy-btn-gold"
+              onClick={() => setShowTopUpModal(true)}
+              disabled={processingTopUp}
+            >
+              {processingTopUp ? <Spinner size="sm" /> : '💰 Пополнить баланс'}
+            </Button>
+          </div>
         </Card.Body>
       </Card>
 
