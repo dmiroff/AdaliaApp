@@ -1,4 +1,3 @@
-/* app.css - Объединенные стили приложения */
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=MedievalSharp&display=swap');
 
 /* ===== ЦВЕТОВАЯ ПАЛИТРА ===== */
@@ -122,7 +121,6 @@ html, body, #root {
 }
 
 /* ===== КАРТОЧКИ ===== */
-/* Найдите и исправьте в вашем CSS: */
 .fantasy-card {
   background: linear-gradient(135deg, var(--color-bg-light) 0%, var(--color-bg-light) 100%);
   border: 2px solid var(--color-accent-bronze-light);
@@ -132,11 +130,11 @@ html, body, #root {
   position: relative;
   overflow: hidden;
   animation: fadeIn 0.4s ease-out;
-  color: var(--color-text-dark); /* Добавьте эту строку */
+  color: var(--color-text-dark);
 }
 
 .fantasy-card .card-body {
-  color: var(--color-text-dark) !important; /* Добавьте эту строку */
+  color: var(--color-text-dark) !important;
 }
 .fantasy-card::before {
   content: "";
@@ -224,7 +222,6 @@ html, body, #root {
   border-color: var(--color-accent-bronze);
 }
 
-/* ОБЯЗАТЕЛЬНО: Переопределяем цвет текста для заголовков с классом fantasy-text-gold */
 .fantasy-card-header .fantasy-text-gold,
 .birzha-card-header .fantasy-text-gold,
 .birzha-card .birzha-card-header .fantasy-text-gold {
@@ -234,11 +231,12 @@ html, body, #root {
 }
 
 /* ===== КНОПКИ ===== */
+/* ИЗМЕНЕНО: все кнопки стали бежевыми, текст тёмный, при наведении прозрачность 0.8 */
 .fantasy-btn {
-  background: linear-gradient(135deg, var(--color-primary-lighter) 0%, var(--color-primary-lighter) 100%);
+  background: #eedcc9;                /* бежевый фон */
   border: 1px solid var(--color-secondary-dark);
   border-radius: 6px;
-  color: var(--color-accent-gold);
+  color: var(--color-text-dark);      /* тёмный текст */
   font-weight: 600;
   padding: 8px 16px;
   transition: all 0.3s ease;
@@ -254,13 +252,13 @@ html, body, #root {
 }
 
 .fantasy-btn:hover {
+  background: #eedcc9;
+  opacity: 0.8;                        /* прозрачность при наведении */
   transform: translateY(-2px);
-  background: var(--color-accent-bronze);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
   border-color: var(--color-secondary-dark);
-  color: var(--color-accent-golder);
+  color: var(--color-text-dark);
   text-decoration: none;
-  opacity: 1;
 }
 
 .fantasy-btn:active {
@@ -269,24 +267,42 @@ html, body, #root {
 }
 
 .fantasy-btn:disabled {
-  background: linear-gradient(135deg, var(--color-gray) 0%, #8d8987 100%);
+  background: #d3c4b4;                 /* чуть темнее бежевый */
   border-color: var(--color-secondary-dark);
   opacity: 0.65;
 }
 
-/* Варианты кнопок */
-.fantasy-btn-primary { background: linear-gradient(135deg, var(--color-primary-dark) 0%, var(--color-primary) 100%); }
-.fantasy-btn-success { background: linear-gradient(135deg, var(--color-success-dark) 0%, var(--color-success) 100%); }
-.fantasy-btn-warning { background: linear-gradient(135deg, var(--color-warning-dark) 0%, var(--color-warning) 100%); }
-.fantasy-btn-info { background: linear-gradient(135deg, var(--color-info-dark) 0%, var(--color-info) 100%); }
-.fantasy-btn-danger { background: linear-gradient(135deg, var(--color-danger-dark) 0%, var(--color-danger) 100%); }
-.fantasy-btn-magic { background: linear-gradient(135deg, var(--color-bg-dark) 0%, var(--color-magic) 100%); }
+/* Варианты кнопок — теперь все бежевые, можно оставить только для изменения цвета текста, если нужно */
+.fantasy-btn-primary {
+  background: #eedcc9;
+  color: var(--color-text-dark);
+}
+.fantasy-btn-success {
+  background: #eedcc9;
+  color: var(--color-text-dark);
+}
+.fantasy-btn-warning {
+  background: #eedcc9;
+  color: var(--color-text-dark);
+}
+.fantasy-btn-info {
+  background: #eedcc9;
+  color: var(--color-text-dark);
+}
+.fantasy-btn-danger {
+  background: #eedcc9;
+  color: var(--color-text-dark);
+}
+.fantasy-btn-magic {
+  background: #eedcc9;
+  color: var(--color-text-dark);
+}
 
 /* Размеры кнопок */
 .fantasy-btn-sm { padding: 4px 12px; font-size: 0.875em; }
 .fantasy-btn-lg { padding: 12px 24px; font-size: 1.125em; font-weight: 700; }
 
-/* Улучшенные кнопки для биржи */
+/* Улучшенные кнопки для биржи (наследуют фон) */
 .birzha-btn-loading {
   position: relative;
 }
@@ -307,7 +323,6 @@ html, body, #root {
   100% { transform: rotate(360deg); }
 }
 
-/* Состояния кнопок биржи */
 .birzha-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
@@ -341,9 +356,9 @@ html, body, #root {
 }
 
 .dropdown-toggle.fantasy-btn {
-  background: linear-gradient(135deg, var(--color-primary-lighter) 0%, var(--color-primary-lighter) 100%) !important;
+  background: #eedcc9 !important;      /* бежевый */
   border: 2px solid var(--color-secondary-dark) !important;
-  color: var(--color-accent-gold) !important;
+  color: var(--color-text-dark) !important;
   text-align: left;
   display: flex;
   justify-content: space-between;
@@ -360,8 +375,10 @@ html, body, #root {
 .dropdown-toggle.fantasy-btn:hover,
 .dropdown-toggle.fantasy-btn:focus,
 .dropdown-toggle.fantasy-btn:active {
+  background: #eedcc9 !important;
+  opacity: 0.8 !important;
   border-color: var(--color-secondary-dark) !important;
-  color: var(--color-accent-golder) !important;
+  color: var(--color-text-dark) !important;
   transform: translateY(-1px);
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4) !important;
 }
@@ -396,16 +413,16 @@ html, body, #root {
 
 .fantasy-dropdown-menu .dropdown-item:hover,
 .fantasy-dropdown-menu .dropdown-item:focus {
-  background: linear-gradient(135deg, var(--color-primary-lighter) 0%, var(--color-primary-lighter) 100%) !important;
-  color: var(--color-accent-gold) !important;
+  background: #eedcc9 !important;      /* бежевый при наведении */
+  color: var(--color-text-dark) !important;
   transform: translateX(5px);
   padding-left: 20px !important;
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5) !important;
 }
 
 .fantasy-dropdown-menu .dropdown-item.active {
-  background: linear-gradient(135deg, var(--color-primary-lighter) 0%, var(--color-primary-lighter) 100%) !important;
-  color: var(--color-accent-gold) !important;
+  background: #eedcc9 !important;
+  color: var(--color-text-dark) !important;
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5) !important;
 }
 
@@ -415,7 +432,6 @@ html, body, #root {
   opacity: 0.5;
 }
 
-/* Убираем стандартные стили Bootstrap для dropdown */
 .btn-check:focus + .btn, 
 .btn:focus,
 .dropdown-toggle:focus {
@@ -423,17 +439,15 @@ html, body, #root {
   outline: none !important;
 }
 
-/* Стили для кнопки в TypeBar */
 .typebar-container .fantasy-btn {
-  background: linear-gradient(135deg, var(--color-primary-lighter) 0%, var(--color-primary-lighter) 100%) !important;
+  background: #eedcc9 !important;
   border: 2px solid var(--color-secondary-dark) !important;
-  color: var(--color-accent-gold) !important;
+  color: var(--color-text-dark) !important;
   padding: 8px 16px !important;
   font-size: 1rem !important;
   min-height: 40px;
 }
 
-/* Адаптивность для мобильных устройств */
 @media (max-width: 768px) {
   .fantasy-dropdown-menu {
     position: fixed !important;
@@ -472,14 +486,12 @@ html, body, #root {
   }
 }
 
-/* Для горизонтальной ориентации на мобильных */
 @media (max-width: 768px) and (orientation: landscape) {
   .fantasy-dropdown-menu {
     max-height: 60vh !important;
   }
 }
 
-/* Убираем стандартный маркер Bootstrap */
 .dropdown-toggle::after {
   display: none !important;
 }
@@ -499,7 +511,7 @@ html, body, #root {
 
 /* ===== СТИЛИ ДЛЯ ПЕРСОНАЖА ===== */
 .character-container {
-  margin-top: 60px;
+  margin-top: 20px;        /* ИЗМЕНЕНО: было 60px, уменьшено до 20px */
   padding: 0 15px;
 }
 
@@ -510,13 +522,11 @@ html, body, #root {
   width: 100%;
 }
 
-/* Контейнер для прогресс-бара с текстом */
 .progress-with-text {
   position: relative;
   width: 100%;
 }
 
-/* Прогресс-бары */
 .health-progress,
 .experience-progress {
   position: relative;
@@ -532,7 +542,6 @@ html, body, #root {
   justify-content: center;
 }
 
-/* Заполнение прогресс-баров */
 .health-fill {
   position: absolute;
   top: 0;
@@ -545,7 +554,6 @@ html, body, #root {
   z-index: 1;
 }
 
-/* Эффект пульсации для низкого здоровья */
 @keyframes lowHealthPulse {
   0%, 100% { box-shadow: inset 0 0 10px rgba(76, 175, 80, 0.7); }
   50% { box-shadow: inset 0 0 15px rgba(76, 175, 80, 0.9), 0 0 10px rgba(76, 175, 80, 0.7); }
@@ -568,13 +576,11 @@ html, body, #root {
   z-index: 1;
 }
 
-/* Альтернативный синий цвет для опыта */
 .experience-fill.blue-theme {
   background: linear-gradient(90deg, #1976d2 0%, var(--color-blue) 50%, #64b5f6 100%);
   box-shadow: inset 0 0 10px rgba(33, 150, 243, 0.7);
 }
 
-/* Эффект блеска для прогресс-баров */
 .health-fill::after,
 .experience-fill::after {
   content: '';
@@ -597,7 +603,6 @@ html, body, #root {
   100% { left: 100%; }
 }
 
-/* Текст внутри прогресс-баров - ОБЯЗАТЕЛЬНО ВИДИМЫЙ */
 .progress-text {
   position: absolute;
   top: 50%;
@@ -623,7 +628,6 @@ html, body, #root {
   line-height: 1.2;
 }
 
-/* Резервный текст - всегда виден даже при малом заполнении */
 .progress-text-backup {
   position: absolute;
   top: 50%;
@@ -641,7 +645,6 @@ html, body, #root {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
-/* Текст под прогресс-барами */
 .progress-label {
   display: flex;
   justify-content: space-between;
@@ -671,7 +674,6 @@ html, body, #root {
   text-align: center;
 }
 
-/* Стили для иконок в лейблах */
 .health-icon {
   color: var(--color-red);
   font-size: 1.2rem;
@@ -689,7 +691,6 @@ html, body, #root {
   filter: drop-shadow(0 0 2px rgba(33, 150, 243, 0.7));
 }
 
-/* Строки статистики */
 .fantasy-stat-row {
   display: flex;
   justify-content: space-between;
@@ -704,7 +705,6 @@ html, body, #root {
   border-bottom: none;
 }
 
-/* Бейджи */
 .fantasy-badge {
   font-weight: 600;
   border: 1px solid;
@@ -740,7 +740,6 @@ html, body, #root {
   border-color: #1b5e20;
 }
 
-/* Для мобильных устройств - АДАПТИВНОСТЬ */
 @media (max-width: 768px) {
   .progress-section {
     max-width: 95%;
@@ -816,7 +815,6 @@ html, body, #root {
   }
 }
 
-/* ОЧЕНЬ маленькие экраны - гарантируем видимость текста */
 @media (max-width: 400px) {
   .progress-text {
     font-size: 0.8rem;
@@ -825,7 +823,6 @@ html, body, #root {
     padding: 2px 5px;
   }
   
-  /* На очень маленьких экранах показываем резервный текст */
   .progress-text.small-screen {
     display: none;
   }
@@ -835,15 +832,11 @@ html, body, #root {
   }
 }
 
-/* ГАРАНТИРОВАННАЯ ВИДИМОСТЬ ТЕКСТА В ЛЮБОЙ СИТУАЦИИ */
 .health-progress .progress-text,
 .experience-progress .progress-text {
-  /* Принудительно белый цвет с максимальным контрастом */
   color: var(--color-text-white) !important;
   mix-blend-mode: difference;
   font-weight: 900 !important;
-  
-  /* Двойная тень для контраста на любом фоне */
   text-shadow: 
     0 0 4px #000000,
     0 0 6px #000000,
@@ -853,13 +846,10 @@ html, body, #root {
     -2px -2px 2px #000000,
     2px -2px 2px #000000,
     -2px 2px 2px #000000 !important;
-  
-  /* Контур текста */
   -webkit-text-stroke: 0.5px #000000;
   paint-order: stroke fill;
 }
 
-/* Для темного фона добавляем светлую тень */
 .health-fill .progress-text,
 .experience-fill .progress-text {
   text-shadow: 
@@ -870,7 +860,6 @@ html, body, #root {
     -2px -2px 2px #000000 !important;
 }
 
-
 /* ===== СТИЛИ ДЛЯ БИРЖИ ===== */
 .birzha-container {
   padding: 15px;
@@ -878,7 +867,6 @@ html, body, #root {
   margin: 0 auto;
 }
 
-/* Адаптивный график */
 .birzha-chart-card {
   margin-bottom: 20px;
   overflow: hidden;
@@ -901,20 +889,17 @@ html, body, #root {
   min-height: 200px;
 }
 
-/* Контейнер для canvas графика */
 .birzha-chart-wrapper canvas {
   width: 100% !important;
   height: 100% !important;
 }
 
-/* Статистика под графиком */
 .birzha-chart-stats {
   border-top: 1px solid var(--color-accent-bronze);
   padding-top: 15px;
   margin-top: 15px;
 }
 
-/* Заголовки карточек биржи */
 .birzha-card-header {
   background: linear-gradient(135deg, var(--color-primary-dark) 0%, var(--color-primary) 100%) !important;
   border-bottom: 3px double var(--color-accent-bronze) !important;
@@ -939,7 +924,6 @@ html, body, #root {
   text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.9) !important;
 }
 
-/* Информация о бирже */
 .birzha-info {
   display: flex;
   flex-direction: column;
@@ -964,7 +948,6 @@ html, body, #root {
   line-height: 1.4;
 }
 
-/* Индикаторы баланса */
 .birzha-balance-info {
   background: rgba(244, 228, 188, 0.5);
   border-radius: 8px;
@@ -985,7 +968,6 @@ html, body, #root {
   color: var(--color-danger-lighter);
 }
 
-/* Кнопки для мобильных */
 @media (max-width: 768px) {
   .birzha-container {
     padding: 10px;
@@ -1021,7 +1003,6 @@ html, body, #root {
   }
 }
 
-/* Очень маленькие экраны */
 @media (max-width: 576px) {
   .birzha-container {
     padding: 8px;
@@ -1049,7 +1030,6 @@ html, body, #root {
   }
 }
 
-/* Планшеты в портретной ориентации */
 @media (min-width: 768px) and (max-width: 1024px) {
   .birzha-chart-container {
     min-height: 280px;
@@ -1060,7 +1040,6 @@ html, body, #root {
   }
 }
 
-/* Десктоп и большие экраны */
 @media (min-width: 1200px) {
   .birzha-chart-container {
     min-height: 320px;
@@ -1071,7 +1050,6 @@ html, body, #root {
   }
 }
 
-/* Поддержка горизонтальной ориентации на мобильных */
 @media (max-width: 768px) and (orientation: landscape) {
   .birzha-chart-container {
     min-height: 200px;
@@ -1082,20 +1060,17 @@ html, body, #root {
   }
 }
 
-/* Ховер эффекты для десктопа */
 @media (hover: hover) and (pointer: fine) {
   .birzha-chart-card:hover {
     box-shadow: 0 6px 20px rgba(139, 69, 19, 0.5);
   }
 }
 
-/* Улучшенная прокрутка для графика на мобильных */
 .birzha-chart-wrapper {
   -webkit-overflow-scrolling: touch;
   overflow-x: auto;
 }
 
-/* Скрыть полосу прокрутки на некоторых устройствах */
 .birzha-chart-wrapper::-webkit-scrollbar {
   height: 4px;
 }
@@ -1110,7 +1085,6 @@ html, body, #root {
   border-radius: 2px;
 }
 
-/* Мобильное меню */
 @media (max-width: 992px) {
   .fantasy-navbar .container {
     width: 100%;
@@ -1323,8 +1297,6 @@ html, body, #root {
 }
 
 /* ===== СТИЛИ ДЛЯ ПРЕДМЕТОВ ИНВЕНТАРЯ ===== */
-
-/* Контейнер предмета инвентаря */
 .inventory-item-container {
   position: relative;
   cursor: pointer;
@@ -1339,7 +1311,6 @@ html, body, #root {
   transform: scale(1.05);
 }
 
-/* Галочка для надетых предметов */
 .equipped-badge {
   position: absolute;
   top: 5px;
@@ -1375,14 +1346,12 @@ html, body, #root {
   }
 }
 
-/* Бейдж "надет" в названии предмета */
 .badge.bg-success {
   background-color: var(--color-success-lighter) !important;
   font-weight: 600;
   letter-spacing: 0.5px;
 }
 
-/* Изображение предмета */
 .list-images {
   aspect-ratio: 1/1;
   object-fit: cover;
@@ -1451,19 +1420,16 @@ html, body, #root {
   transform: translateX(3px);
 }
 
-/* Анимация появления дропдауна */
 .inventory-item-fantasy-dropdown .dropdown-menu.show {
   animation: fadeInUp 0.3s ease-out;
 }
 
-/* Стили для иконки меню (три точки) */
 .inventory-menu-icon {
   font-size: 1.2rem;
   font-weight: bold;
   line-height: 1;
 }
 
-/* Адаптивность для мобильных устройств */
 @media (max-width: 768px) {
   .inventory-item-fantasy-dropdown {
     position: static;
@@ -1516,8 +1482,8 @@ body .inventory-item-fantasy-dropdown .dropdown-item {
   border-radius: 4px;
   color: var(--color-text-dark);
   font-weight: 500;
-  padding: 0.375rem 0.75rem !important; /* Убираем большие отступы */
-  height: 38px !important; /* Фиксированная высота */
+  padding: 0.375rem 0.75rem !important;
+  height: 38px !important;
 }
 
 .inventory-search-input:focus {
@@ -1527,13 +1493,11 @@ body .inventory-item-fantasy-dropdown .dropdown-item {
   color: var(--color-text-dark);
 }
 
-/* Убираем лишние отступы в панели управления */
 .row.mb-3 {
   margin-top: 0 !important;
   padding-top: 0 !important;
 }
 
-/* Адаптивность для поискового поля */
 @media (max-width: 768px) {
   .inventory-search-input {
     padding: 0.35rem 0.65rem !important;
@@ -1550,7 +1514,6 @@ body .inventory-item-fantasy-dropdown .dropdown-item {
   }
 }
 
-/* Более радикальное уменьшение отступа */
 .bulk-purchase-tab .inventory-search-input {
   padding-left: 0.3rem !important;
   padding-right: 0.75rem !important;
@@ -1571,7 +1534,6 @@ body .inventory-item-fantasy-dropdown .dropdown-item {
   }
 }
 
-/* Улучшенные стили для атрибутов и навыков */
 .fantasy-attributes-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -1627,7 +1589,6 @@ body .inventory-item-fantasy-dropdown .dropdown-item {
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.6);
 }
 
-/* Стили для отдельных карточек магии и умений */
 .fantasy-card .fantasy-stat-row {
   margin-bottom: 12px;
   padding: 10px 0;
@@ -1661,7 +1622,6 @@ body .inventory-item-fantasy-dropdown .dropdown-item {
   padding-left: 10px;
 }
 
-/* Адаптивность для мобильных устройств */
 @media (max-width: 768px) {
   .fantasy-attributes-grid {
     grid-template-columns: 1fr;
@@ -1705,7 +1665,6 @@ body .inventory-item-fantasy-dropdown .dropdown-item {
   }
 }
 
-/* Для очень маленьких экранов */
 @media (max-width: 480px) {
   .fantasy-attributes-grid {
     padding: 8px;
@@ -1727,7 +1686,6 @@ body .inventory-item-fantasy-dropdown .dropdown-item {
   }
 }
 
-/* Стили для тултипов */
 .fantasy-tooltip {
   font-family: 'Cinzel', serif;
   background: linear-gradient(135deg, var(--color-primary-dark) 0%, var(--color-primary) 100%);
@@ -1746,7 +1704,6 @@ body .inventory-item-fantasy-dropdown .dropdown-item {
   text-align: left;
 }
 
-/* Улучшенные стили для строк статистики в основных карточках */
 .fantasy-stat-row {
   display: flex;
   justify-content: space-between;
@@ -1762,7 +1719,6 @@ body .inventory-item-fantasy-dropdown .dropdown-item {
   border-bottom: none;
 }
 
-/* Анимации для карточек */
 @keyframes cardAppear {
   from {
     opacity: 0;
@@ -1779,32 +1735,31 @@ body .inventory-item-fantasy-dropdown .dropdown-item {
 }
 
 /* ===== ДОПОЛНИТЕЛЬНЫЕ СТИЛИ ДЛЯ МАГАЗИНА ===== */
-
 @keyframes tabGlow {
   0%, 100% { opacity: 0.8; }
   50% { opacity: 1; }
 }
 
-/* Улучшенные кнопки для магазина событий */
+/* Улучшенные кнопки для магазина событий (теперь тоже бежевые) */
 .fantasy-btn-info {
-  background: linear-gradient(135deg, var(--color-info-light) 0%, var(--color-info-lighter) 100%);
-  border: 1px solid var(--color-secondary-dark);
-  border-radius: 6px;
-  color: var(--color-text-white);
+  background: #eedcc9 !important;
+  border: 1px solid var(--color-secondary-dark) !important;
+  color: var(--color-text-dark) !important;
   font-weight: 600;
   transition: all 0.3s ease;
 }
 
 .fantasy-btn-info:hover {
-  background: linear-gradient(135deg, var(--color-info-lighter) 0%, var(--color-info-light) 100%);
-  border-color: var(--color-secondary-dark);
-  color: var(--color-text-white);
+  background: #eedcc9 !important;
+  opacity: 0.8 !important;
+  border-color: var(--color-secondary-dark) !important;
+  color: var(--color-text-dark) !important;
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(13, 110, 253, 0.4);
 }
 
 .fantasy-btn-info:disabled {
-  background: linear-gradient(135deg, var(--color-gray) 0%, #5a6268 100%);
+  background: #d3c4b4 !important;
   opacity: 0.65;
 }
 
@@ -1814,7 +1769,6 @@ body .inventory-item-fantasy-dropdown .dropdown-item {
   color: var(--color-text-white);
 }
 
-/* Стили для снежков (валюты события) */
 .snowflake-badge {
   background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
   color: #1565c0;
@@ -1827,7 +1781,6 @@ body .inventory-item-fantasy-dropdown .dropdown-item {
   gap: 5px;
 }
 
-/* Анимация для снежков */
 @keyframes snowflakeSpin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
@@ -1837,7 +1790,6 @@ body .inventory-item-fantasy-dropdown .dropdown-item {
   animation: snowflakeSpin 8s linear infinite;
 }
 
-/* Стили для товаров события */
 .event-shop-item {
   transition: all 0.3s ease;
   position: relative;
@@ -1872,7 +1824,6 @@ body .inventory-item-fantasy-dropdown .dropdown-item {
   100% { left: 150%; }
 }
 
-/* Редкость предметов */
 .rarity-common { color: #b0b0b0; }
 .rarity-uncommon { color: var(--color-success-light); }
 .rarity-rare { color: var(--color-blue); }
@@ -1880,7 +1831,6 @@ body .inventory-item-fantasy-dropdown .dropdown-item {
 .rarity-legendary { color: var(--color-warning-lighter); }
 .rarity-mythic { color: #ff5722; }
 
-/* Бейджи редкости */
 .badge.bg-purple {
   background-color: var(--color-purple) !important;
 }
@@ -1889,7 +1839,6 @@ body .inventory-item-fantasy-dropdown .dropdown-item {
   background-color: #fd7e14 !important;
 }
 
-/* Стили для выбора образа */
 .image-selection-card {
   transition: all 0.3s ease;
   cursor: pointer;
@@ -1906,7 +1855,6 @@ body .inventory-item-fantasy-dropdown .dropdown-item {
   box-shadow: 0 0 15px rgba(23, 162, 184, 0.6);
 }
 
-/* Таймер события */
 .event-timer {
   background: linear-gradient(135deg, var(--color-info-light) 0%, var(--color-info-lighter) 100%);
   color: var(--color-text-white);
@@ -1919,7 +1867,6 @@ body .inventory-item-fantasy-dropdown .dropdown-item {
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
 }
 
-/* Стили для заголовков магазина */
 .shop-header {
   text-align: center;
   margin-bottom: 30px;
@@ -1946,7 +1893,6 @@ body .inventory-item-fantasy-dropdown .dropdown-item {
 }
 
 /* ===== СТИЛИ ДЛЯ ВКЛАДОК ===== */
-/* ===== СТИЛИ ДЛЯ ВКЛАДОК ===== */
 .fantasy-tabs {
   background: rgba(244, 228, 188, 0.8);
   border: 2px solid var(--color-accent-bronze);
@@ -1968,12 +1914,11 @@ body .inventory-item-fantasy-dropdown .dropdown-item {
   margin: 0;
 }
 
-/* Стили для кнопок-вкладок - КОРИЧНЕВЫЙ ФОН, ЧЕРНЫЙ ТЕКСТ */
 .fantasy-tabs .nav-link {
-  background: var(--color-accent-bronze-light); /* Коричневый фон */
+  background: var(--color-accent-bronze-light);
   border: 2px solid transparent;
   border-bottom: none;
-  color: var(--color-text-dark) !important; /* Черный текст */
+  color: var(--color-text-dark) !important;
   font-weight: 600;
   transition: all 0.3s ease;
   position: relative;
@@ -1988,17 +1933,16 @@ body .inventory-item-fantasy-dropdown .dropdown-item {
 }
 
 .fantasy-tabs .nav-link:hover {
-  background: var(--color-accent-bronze); /* Темнее при наведении */
-  color: var(--color-text-dark) !important; /* Черный текст при наведении */
+  background: var(--color-accent-bronze);
+  color: var(--color-text-dark) !important;
   border-color: var(--color-accent-bronze);
   transform: translateY(-2px);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
-/* Активная вкладка - КОРИЧНЕВЫЙ ФОН, ЧЕРНЫЙ ТЕКСТ */
 .fantasy-tabs .nav-link.active {
-  background: var(--color-accent-bronze-light) !important; /* Коричневый фон */
-  color: var(--color-text-dark) !important; /* Черный текст */
+  background: var(--color-accent-bronze-light) !important;
+  color: var(--color-text-dark) !important;
   border-color: var(--color-primary-lighter);
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
   box-shadow: 0 -2px 10px rgba(139, 69, 19, 0.4);
@@ -2006,13 +1950,12 @@ body .inventory-item-fantasy-dropdown .dropdown-item {
 }
 
 .fantasy-tabs .nav-link.active:hover {
-  background: var(--color-accent-bronze) !important; /* Темнее при наведении */
+  background: var(--color-accent-bronze) !important;
   border-color: var(--color-primary-lighter);
-  color: var(--color-text-dark) !important; /* Черный текст при наведении */
+  color: var(--color-text-dark) !important;
   transform: translateY(-2px);
 }
 
-/* Подчеркивание для активной вкладки - темно-коричневое */
 .fantasy-tabs .nav-link.active::before {
   content: '';
   position: absolute;
@@ -2024,12 +1967,6 @@ body .inventory-item-fantasy-dropdown .dropdown-item {
   animation: tabGlow 2s infinite;
 }
 
-@keyframes tabGlow {
-  0%, 100% { opacity: 0.8; }
-  50% { opacity: 1; }
-}
-
-/* Контент вкладок */
 .fantasy-tabs .tab-content {
   background: linear-gradient(135deg, var(--color-bg-light) 0%, var(--color-bg-light) 100%);
   border: 2px solid var(--color-accent-bronze);
@@ -2042,7 +1979,6 @@ body .inventory-item-fantasy-dropdown .dropdown-item {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
-/* Адаптивность для мобильных устройств */
 @media (max-width: 768px) {
   .fantasy-tabs .nav {
     gap: 5px;
@@ -2084,7 +2020,6 @@ body .inventory-item-fantasy-dropdown .dropdown-item {
   }
 }
 
-/* Для очень широких экранов - больше отступов */
 @media (min-width: 1200px) {
   .fantasy-tabs .nav {
     gap: 10px;
@@ -2096,7 +2031,6 @@ body .inventory-item-fantasy-dropdown .dropdown-item {
   }
 }
 
-/* Анимация переключения вкладок */
 @keyframes fadeInTab {
   from {
     opacity: 0;
@@ -2112,7 +2046,6 @@ body .inventory-item-fantasy-dropdown .dropdown-item {
   animation: fadeInTab 0.3s ease-out;
 }
 
-/* Стили для разделителей между вкладками */
 .fantasy-tabs .nav-item:not(:last-child)::after {
   content: '';
   position: absolute;
@@ -2129,7 +2062,6 @@ body .inventory-item-fantasy-dropdown .dropdown-item {
   }
 }
 
-/* Стили для иконок во вкладках (если есть) */
 .fantasy-tabs .nav-link i,
 .fantasy-tabs .nav-link svg {
   margin-right: 8px;
@@ -2145,12 +2077,10 @@ body .inventory-item-fantasy-dropdown .dropdown-item {
 }
 
 /* ===== КОМПАКТНАЯ КНОПКА НАСТРОЕК ===== */
-
-/* Стили для кнопки настроек в навбаре */
 .navbar-settings-btn {
-  background: linear-gradient(180deg, #3a7bd5 0%, #00d2ff 100%) !important;
+  background: #eedcc9 !important;      /* бежевый */
   border: 1px solid var(--color-secondary-dark) !important;
-  color: var(--color-text-white) !important;
+  color: var(--color-text-dark) !important;
   font-family: "georgia", serif !important;
   font-weight: bold !important;
   padding: 6px 10px !important;
@@ -2163,19 +2093,19 @@ body .inventory-item-fantasy-dropdown .dropdown-item {
 }
 
 .navbar-settings-btn:hover {
+  background: #eedcc9 !important;
+  opacity: 0.8 !important;
   transform: scale(1.1) !important;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4) !important;
-  color: var(--color-accent-gold) !important;
+  color: var(--color-text-dark) !important;
 }
 
-/* На мобильных - скрыть компактную кнопку */
 @media (max-width: 991.98px) {
   .navbar-settings-btn.d-lg-block {
     display: none !important;
   }
 }
 
-/* На десктопе - показать компактную кнопку */
 @media (min-width: 992px) {
   .navbar-settings-btn.d-lg-block {
     display: flex !important;
@@ -2183,7 +2113,6 @@ body .inventory-item-fantasy-dropdown .dropdown-item {
     margin-right: 10px !important;
   }
   
-  /* Делаем навбар компактнее */
   .fantasy-navbar .nav {
     flex-wrap: nowrap !important;
     overflow-x: auto !important;
@@ -2197,13 +2126,11 @@ body .inventory-item-fantasy-dropdown .dropdown-item {
     min-width: fit-content !important;
   }
   
-  /* Убираем большой отступ у мобильной кнопки настроек на десктопе */
   .fantasy-navbar .d-flex.justify-content-center.mt-2.w-100 {
     display: none !important;
   }
 }
 
-/* Адаптация для очень широких экранов */
 @media (min-width: 1200px) {
   .navbar-settings-btn {
     padding: 4px 8px !important;
@@ -2218,7 +2145,6 @@ body .inventory-item-fantasy-dropdown .dropdown-item {
   }
 }
 
-/* Адаптация для очень узких экранов */
 @media (max-width: 768px) {
   .fantasy-navbar .navbar-toggler {
     width: 100% !important;
@@ -2233,7 +2159,6 @@ body .inventory-item-fantasy-dropdown .dropdown-item {
   }
 }
 
-/* Общие стили для навбара чтобы избежать слипания */
 .fantasy-navbar {
   padding: 8px 15px !important;
   min-height: 60px !important;
@@ -2244,24 +2169,25 @@ body .inventory-item-fantasy-dropdown .dropdown-item {
   padding-right: 10px !important;
 }
 
-/* Стили для всех кнопок навбара чтобы были одинаковые */
 .fantasy-navbar .fantasy-btn {
   font-family: "georgia", serif !important;
   font-weight: bold !important;
   font-style: normal !important;
   text-transform: uppercase !important;
-  background: var(--color-accent-bronze-light);
+  background: #eedcc9 !important;
   border: 1px solid var(--color-secondary-dark) !important;
-  color: var(--color-accent-gold);
+  color: var(--color-text-dark) !important;
   transition: all 0.3s ease !important;
 }
 
 .fantasy-navbar .fantasy-btn:hover {
+  background: #eedcc9 !important;
+  opacity: 0.8 !important;
   transform: translateY(-2px) !important;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4) !important;
+  color: var(--color-text-dark) !important;
 }
 
-/* Убираем полосу прокрутки на десктопе */
 .fantasy-navbar .nav::-webkit-scrollbar {
   height: 4px !important;
 }
@@ -2275,7 +2201,6 @@ body .inventory-item-fantasy-dropdown .dropdown-item {
   border-radius: 2px !important;
 }
 
-/* Для Firefox */
 .fantasy-navbar .nav {
   scrollbar-width: thin !important;
   scrollbar-color: rgba(139, 69, 19, 0.4) rgba(139, 69, 19, 0.2) !important;
@@ -2334,7 +2259,6 @@ body .inventory-item-fantasy-dropdown .dropdown-item {
   margin-top: 15px;
 }
 
-/* Адаптивность для мобильных */
 @media (max-width: 768px) {
   .inventory-container {
     padding: 10px !important;
@@ -2400,13 +2324,11 @@ body .inventory-item-fantasy-dropdown .dropdown-item {
   border-left: 3px solid #007bff;
 }
 
-/* Стили для футера */
 footer {
   background-color: rgba(33, 37, 41, 0.95);
   border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-/* Стили для страницы с соглашением */
 .nav-tabs .nav-link {
   color: #adb5bd;
   border: none;
@@ -2423,7 +2345,6 @@ footer {
   border: none;
 }
 
-/* Адаптивность */
 @media (max-width: 768px) {
   .tab-content {
     font-size: 0.85rem;
@@ -2449,7 +2370,6 @@ html, body, #root {
   padding: 0;
 }
 
-/* Стили для основного приложения */
 .app-container {
   min-height: 100vh;
   display: flex;
@@ -2460,7 +2380,6 @@ html, body, #root {
   flex: 1 0 auto;
 }
 
-/* Стили для футера */
 footer {
   background-color: rgba(0, 0, 0, 0.9);
   border-top: 1px solid #444;
@@ -2468,7 +2387,6 @@ footer {
   width: 100%;
 }
 
-/* Стили для страницы соглашений */
 .tab-content {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   line-height: 1.6;
@@ -2491,7 +2409,6 @@ footer {
   margin-bottom: 1rem;
 }
 
-/* Стили для формы авторизации */
 .login-container,
 .register-container {
   animation: fadeIn 0.5s ease-out;
@@ -2518,14 +2435,6 @@ footer {
   opacity: 0.7;
 }
 
-/* Кнопки для форм */
-.fantasy-btn {
-  font-family: 'Cinzel', serif;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-  transition: all 0.3s ease;
-}
-
 .fantasy-btn:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
@@ -2536,7 +2445,6 @@ footer {
   cursor: not-allowed;
 }
 
-/* Анимация появления */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -2548,7 +2456,6 @@ footer {
   }
 }
 
-/* Адаптивность для мобильных */
 @media (max-width: 576px) {
   .login-container,
   .register-container {
@@ -2672,7 +2579,6 @@ footer {
   text-transform: uppercase;
 }
 
-/* Анимации */
 @keyframes pulse {
   0% { transform: scale(1); }
   50% { transform: scale(1.05); }
@@ -2683,7 +2589,6 @@ footer {
   animation: pulse 2s infinite;
 }
 
-/* Responsive adjustments */
 @media (max-width: 768px) {
   .guild-stat-value {
     font-size: 18px;
@@ -2694,7 +2599,6 @@ footer {
   }
 }
 
-/* Z-index layers для всего приложения */
 :root {
   --z-index-dropdown: 1000;
   --z-index-sticky: 1020;
@@ -2706,7 +2610,6 @@ footer {
   --z-index-guild-dropdown: 1100;
 }
 
-/* Убедитесь что модальные окна не перекрывают dropdown */
 .modal {
   z-index: var(--z-index-modal) !important;
 }
@@ -2715,7 +2618,6 @@ footer {
   z-index: var(--z-index-modal-backdrop) !important;
 }
 
-/* Добавьте это в самый конец app.css файла */
 .guild-container .member-card {
   overflow: visible !important;
 }
@@ -2725,5 +2627,5 @@ footer {
 }
 
 .modal-title.fantasy-text-black {
-  color: #000 !important; /* или color: black; */
+  color: #000 !important;
 }
