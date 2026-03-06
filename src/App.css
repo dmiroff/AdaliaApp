@@ -18,8 +18,8 @@
   --color-accent-gold: gold;
   --color-accent-golder: #fffacd;
   --color-accent-bronze: #c19a6b;
-  --color-accent-bronze-light: #FFF0DB;
-  --color-accent-bronze-lighter: #f4e4bc;
+  --color-accent-bronze-light: #F0E0C0;
+  --color-accent-bronze-lighter: #e0b158;
   
   /* Фоновые цвета */
   --color-bg-dark: #1a0f2f;
@@ -2764,8 +2764,8 @@ footer {
 .btn-danger:focus,
 .btn-danger:active,
 .btn-danger.show {
-  background: transparent !important;
-  border-color: transparent !important;
+  background: var(--color-accent-bronze-lighter) !important;
+  border-color: var(--color-bg-dark) !important;
   color: inherit !important;
   box-shadow: none !important;
   transition: none !important; /* Убираем переходы Bootstrap */
@@ -2783,7 +2783,7 @@ html body .btn-warning:hover,
 html body .btn-danger:hover,
 html body .navbar-settings-btn:hover,
 html body .birzha-btn:hover {
-  background: var(--color-accent-gold) !important;
+  background: var(--color-accent-bronze-light) !important;
   color: var(--color-text-dark) !important;
   border-color: var(--color-secondary-dark) !important;
   background-image: none !important;
