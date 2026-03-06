@@ -2812,10 +2812,3 @@ html body .birzha-btn:hover {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
   transition: all 0.3s ease !important; /* Наш плавный переход */
 }
-
-/* Добавим обычное состояние для fantasy-btn-gold, если его нет */
-.fantasy-btn-gold {
-  background: var(--color-accent-gold) !important;
-  color: var(--color-text-dark) !important;
-  border: 1px solid var(--color-secondary-dark) !important;
-}
