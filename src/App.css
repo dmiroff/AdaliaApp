@@ -2728,7 +2728,25 @@ footer {
   color: #000 !important; /* или color: black; */
 }
 
-.fantasy-btn:focus {
+/* Убираем стандартный синий outline/focus у всех кнопок */
+.fantasy-btn:focus,
+.fantasy-btn:active,
+.btn:focus,
+.btn:active {
   box-shadow: 0 0 0 0.2rem rgba(212, 175, 55, 0.5); /* золотистый оттенок */
   outline: none;
+}
+
+/* (Опционально) Собственный эффект при фокусе для доступности */
+.fantasy-btn:focus-visible {
+  outline: 2px solid var(--color-accent-gold);
+  outline-offset: 2px;
+}
+
+/* Для кнопок с модификатором fantasy-btn-gold можно оставить отдельный стиль фокуса */
+.fantasy-btn-gold:focus-visible {
+  outline: 2px solid var(--color-accent-gold);
+}
+
+.fantasy-btn:focus {
 }
