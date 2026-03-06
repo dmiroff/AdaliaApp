@@ -2748,67 +2748,74 @@ footer {
   outline: 2px solid var(--color-accent-gold);
 }
 
-/* ===== ИСПРАВЛЕНИЕ СИНЕГО ПРИ НАВЕДЕНИИ ===== */
-/* Делаем кнопку настроек золотой при наведении */
-.navbar-settings-btn:hover {
-  background: var(--color-accent-gold) !important;          /* Золотой фон */
-  color: var(--color-text-dark) !important;                /* Тёмный текст для контраста */
-  border-color: var(--color-secondary-dark) !important;    /* Тёмная обводка */
-}
 
-/* Если есть другие кнопки с синим градиентом, добавляем для них */
-.fantasy-btn-info:hover,
-.fantasy-btn-primary:hover,
-.fantasy-btn-success:hover,
-.fantasy-btn-warning:hover,
-.fantasy-btn-danger:hover,
-.fantasy-btn-magic:hover {
-  background: var(--color-accent-gold) !important;         /* Золотой фон */
-  color: var(--color-text-dark) !important;                /* Тёмный текст */
-  border-color: var(--color-secondary-dark) !important;
-}
-
-/* Для любых кнопок биржи, если они есть */
-.birzha-btn:hover {
-  background: var(--color-accent-gold) !important;
-  color: var(--color-text-dark) !important;
-}
-
-/* Убираем синий outline при фокусе (заменяем на золотистый) */
-.fantasy-btn:focus,
-.fantasy-btn:active,
+/* ===== ПОЛНОЕ ОТКЛЮЧЕНИЕ BOOTSTRAP HOVER ===== */
+.btn,
+.btn:hover,
 .btn:focus,
 .btn:active,
-.navbar-settings-btn:focus,
-.navbar-settings-btn:active {
-  box-shadow: 0 0 0 0.2rem rgba(212, 175, 55, 0.5) !important; /* золотистая тень */
-  outline: none !important;
+.btn.show,
+.btn-primary,
+.btn-primary:hover,
+.btn-primary:focus,
+.btn-primary:active,
+.btn-primary.show,
+.btn-secondary,
+.btn-secondary:hover,
+.btn-secondary:focus,
+.btn-secondary:active,
+.btn-secondary.show,
+.btn-success,
+.btn-success:hover,
+.btn-success:focus,
+.btn-success:active,
+.btn-success.show,
+.btn-info,
+.btn-info:hover,
+.btn-info:focus,
+.btn-info:active,
+.btn-info.show,
+.btn-warning,
+.btn-warning:hover,
+.btn-warning:focus,
+.btn-warning:active,
+.btn-warning.show,
+.btn-danger,
+.btn-danger:hover,
+.btn-danger:focus,
+.btn-danger:active,
+.btn-danger.show {
+  background: transparent !important;
+  border-color: transparent !important;
+  color: inherit !important;
+  box-shadow: none !important;
+  transition: none !important; /* Убираем переходы Bootstrap */
 }
 
-/* Для доступности оставляем контур при фокусе с клавиатуры */
-.fantasy-btn:focus-visible,
-.navbar-settings-btn:focus-visible {
-  outline: 2px solid var(--color-accent-gold);
-  outline-offset: 2px;
-}
-
-/* ===== ГЛОБАЛЬНОЕ ПРАВИЛО: ЗОЛОТОЙ HOVER ДЛЯ ВСЕХ КНОПОК ===== */
-/* Используем !important и высокую специфичность, чтобы перебить Bootstrap */
+/* ===== НАШИ ЗОЛОТЫЕ HOVER-ЭФФЕКТЫ ===== */
 html body .fantasy-btn:hover,
-html body .btn:hover,
 html body .fantasy-btn-gold:hover,
-html body .fantasy-btn-primary:hover,
-html body .fantasy-btn-success:hover,
-html body .fantasy-btn-warning:hover,
-html body .fantasy-btn-info:hover,
-html body .fantasy-btn-danger:hover,
-html body .fantasy-btn-magic:hover,
+html body .btn:hover,
+html body .btn-primary:hover,
+html body .btn-secondary:hover,
+html body .btn-success:hover,
+html body .btn-info:hover,
+html body .btn-warning:hover,
+html body .btn-danger:hover,
 html body .navbar-settings-btn:hover,
 html body .birzha-btn:hover {
-  background: var(--color-accent-gold) !important;      /* Золотой фон */
-  color: var(--color-text-dark) !important;            /* Тёмный текст */
-  border-color: var(--color-secondary-dark) !important; /* Тёмная обводка */
-  background-image: none !important;                    /* Убираем возможные градиенты */
-  transform: translateY(-2px);                          /* Лёгкий подъём (как у вас) */
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important; /* Тень */
+  background: var(--color-accent-gold) !important;
+  color: var(--color-text-dark) !important;
+  border-color: var(--color-secondary-dark) !important;
+  background-image: none !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
+  transition: all 0.3s ease !important; /* Наш плавный переход */
+}
+
+/* Добавим обычное состояние для fantasy-btn-gold, если его нет */
+.fantasy-btn-gold {
+  background: var(--color-accent-gold) !important;
+  color: var(--color-text-dark) !important;
+  border: 1px solid var(--color-secondary-dark) !important;
 }
