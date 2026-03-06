@@ -2747,3 +2747,47 @@ footer {
 .fantasy-btn-gold:focus-visible {
   outline: 2px solid var(--color-accent-gold);
 }
+
+/* ===== ИСПРАВЛЕНИЕ СИНЕГО ПРИ НАВЕДЕНИИ ===== */
+/* Делаем кнопку настроек золотой при наведении */
+.navbar-settings-btn:hover {
+  background: var(--color-accent-gold) !important;          /* Золотой фон */
+  color: var(--color-text-dark) !important;                /* Тёмный текст для контраста */
+  border-color: var(--color-secondary-dark) !important;    /* Тёмная обводка */
+}
+
+/* Если есть другие кнопки с синим градиентом, добавляем для них */
+.fantasy-btn-info:hover,
+.fantasy-btn-primary:hover,
+.fantasy-btn-success:hover,
+.fantasy-btn-warning:hover,
+.fantasy-btn-danger:hover,
+.fantasy-btn-magic:hover {
+  background: var(--color-accent-gold) !important;         /* Золотой фон */
+  color: var(--color-text-dark) !important;                /* Тёмный текст */
+  border-color: var(--color-secondary-dark) !important;
+}
+
+/* Для любых кнопок биржи, если они есть */
+.birzha-btn:hover {
+  background: var(--color-accent-gold) !important;
+  color: var(--color-text-dark) !important;
+}
+
+/* Убираем синий outline при фокусе (заменяем на золотистый) */
+.fantasy-btn:focus,
+.fantasy-btn:active,
+.btn:focus,
+.btn:active,
+.navbar-settings-btn:focus,
+.navbar-settings-btn:active {
+  box-shadow: 0 0 0 0.2rem rgba(212, 175, 55, 0.5) !important; /* золотистая тень */
+  outline: none !important;
+}
+
+/* Для доступности оставляем контур при фокусе с клавиатуры */
+.fantasy-btn:focus-visible,
+.navbar-settings-btn:focus-visible {
+  outline: 2px solid var(--color-accent-gold);
+  outline-offset: 2px;
+}
