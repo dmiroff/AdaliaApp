@@ -343,7 +343,7 @@ html, body, #root {
 .dropdown-toggle.fantasy-btn {
   background: linear-gradient(135deg, var(--color-primary-lighter) 0%, var(--color-primary-lighter) 100%) !important;
   border: 2px solid var(--color-secondary-dark) !important;
-  color: var(--color-accent-gold) !important;
+  color: var(--color-text-dark) !important;
   text-align: left;
   display: flex;
   justify-content: space-between;
@@ -361,7 +361,7 @@ html, body, #root {
 .dropdown-toggle.fantasy-btn:focus,
 .dropdown-toggle.fantasy-btn:active {
   border-color: var(--color-secondary-dark) !important;
-  color: var(--color-accent-golder) !important;
+  color: var(--color-text-dark) !important;
   transform: translateY(-1px);
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4) !important;
 }
@@ -2252,7 +2252,7 @@ body .inventory-item-fantasy-dropdown .dropdown-item {
   text-transform: uppercase !important;
   background: var(--color-accent-bronze-light);
   border: 1px solid var(--color-secondary-dark) !important;
-  color: var(--color-accent-gold);
+  color: var(--color-text-dark);
   transition: all 0.3s ease !important;
 }
 
