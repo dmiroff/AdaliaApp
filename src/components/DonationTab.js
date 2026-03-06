@@ -54,7 +54,7 @@ const DonationTab = observer(() => {
     }
   }, [playerData]);
 
-  // Подгружаем скрипт виджета Т-Банка (если нужен, но теперь мы используем редирект)
+  // Подгружаем скрипт виджета Т-Банка (если нужен)
   useEffect(() => {
     if (!document.querySelector('script[src*="tinkoff_v2.js"]')) {
       const script = document.createElement('script');
@@ -64,7 +64,7 @@ const DonationTab = observer(() => {
     }
   }, []);
 
-  // Проверка статуса платежа после возврата с оплаты (по сохранённому order_id)
+  // Проверка статуса платежа после возврата с оплаты
   useEffect(() => {
     const storedPaymentId = sessionStorage.getItem('pendingPaymentId');
     if (storedPaymentId && !paymentChecked.current) {
@@ -233,17 +233,13 @@ const DonationTab = observer(() => {
   
     try {
       const returnUrl = window.location.origin + window.location.pathname;
-      // Получаем контактные данные пользователя из контекста (если они там есть)
       const email = user.email || '';
       const phone = user.phone || '';
   
-      // Создаём заказ на бэкенде, передавая email и phone
       const orderData = await createPaymentOrder(topUpAmount, returnUrl, email, phone);
   
-      // Сохраняем order_id для проверки после возврата
       sessionStorage.setItem('pendingPaymentId', orderData.order_id);
   
-      // Перенаправляем пользователя на страницу оплаты Т-Кассы
       window.location.href = orderData.payment_url;
     } catch (err) {
       console.error('Ошибка создания платежа:', err);
@@ -320,9 +316,9 @@ const DonationTab = observer(() => {
                 ⭐ Пожинатель активен
               </Badge>
             )}
+            {/* ИСПРАВЛЕНО: убран variant, добавлены классы fantasy-btn fantasy-btn-gold */}
             <Button
-              variant="outline-warning"
-              className="fantasy-btn-gold"
+              className="fantasy-btn fantasy-btn-gold"
               onClick={() => setShowTopUpModal(true)}
               disabled={processingTopUp}
             >
