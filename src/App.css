@@ -2629,3 +2629,56 @@ footer {
 .modal-title.fantasy-text-black {
   color: #000 !important;
 }
+
+/* Единый стиль для всех вариантов кнопок в донате */
+.fantasy-btn-gold,
+.fantasy-btn-secondary,
+.fantasy-btn-outline,
+.fantasy-btn-disabled {
+  background: #eedcc9;
+  border: 1px solid var(--color-secondary-dark);
+  border-radius: 6px;
+  color: var(--color-text-dark);
+  font-weight: 600;
+  padding: 8px 16px;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  text-decoration: none;
+  display: inline-block;
+  text-align: center;
+  z-index: 2;
+  opacity: 0.95;
+}
+
+.fantasy-btn-gold:hover,
+.fantasy-btn-secondary:hover,
+.fantasy-btn-outline:hover,
+.fantasy-btn-disabled:hover {
+  background: #eedcc9;
+  opacity: 0.8;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  border-color: var(--color-secondary-dark);
+  color: var(--color-text-dark);
+  text-decoration: none;
+}
+
+.fantasy-btn-gold:active,
+.fantasy-btn-secondary:active,
+.fantasy-btn-outline:active,
+.fantasy-btn-disabled:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.fantasy-btn-gold:disabled,
+.fantasy-btn-secondary:disabled,
+.fantasy-btn-outline:disabled,
+.fantasy-btn-disabled:disabled {
+  background: #d3c4b4;
+  border-color: var(--color-secondary-dark);
+  opacity: 0.65;
+}
