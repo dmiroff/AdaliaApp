@@ -55,7 +55,7 @@ const NavBar = observer(() => {
               onClick={() => handleNavLinkClick("/guild")}
               className="fantasy-btn fantasy-btn-warning fantasy-btn-lg mx-1 my-1 w-100"
             >
-              🏰 Гильдия
+              Гильдия
             </Nav.Link>
             <Nav.Link 
               eventKey="map" 

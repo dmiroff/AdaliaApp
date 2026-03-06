@@ -38,6 +38,9 @@ const BulkPurchaseTab = observer(() => {
   const [userInventory, setUserInventory] = useState({});
   const [dataLoaded, setDataLoaded] = useState(false);
   
+  // Фильтр "Мои заявки"
+  const [showOnlyMyRequests, setShowOnlyMyRequests] = useState(false);
+  
   // Флаги для предотвращения повторных загрузок
   const hasLoadedPlayerData = useRef(false);
   const hasLoadedRequests = useRef(false);
@@ -65,6 +68,7 @@ const BulkPurchaseTab = observer(() => {
       return newMode;
     });
     setQuery("");
+    setShowOnlyMyRequests(false); // Сбрасываем фильтр при смене режима
   }, []);
 
   // Функция для загрузки данных игрока
@@ -322,13 +326,19 @@ const BulkPurchaseTab = observer(() => {
     return itemObjects;
   }, [userInventory]);
 
-  // Безопасная фильтрация заявок
+  // Безопасная фильтрация заявок с учётом фильтра "Мои заявки"
   const filteredRequests = React.useMemo(() => {
-    if (!Array.isArray(buyRequests)) return [];
+    let requests = buyRequests;
+    if (!Array.isArray(requests)) return [];
     
-    if (query && buyRequests.length > 0 && currentMode === 'requests') {
+    // Фильтр по своим заявкам
+    if (showOnlyMyRequests && playerData?.id) {
+      requests = requests.filter(req => req.user_id === playerData.id);
+    }
+    
+    if (query && requests.length > 0) {
       try {
-        const fuse = new Fuse(buyRequests, {
+        const fuse = new Fuse(requests, {
           keys: ["item_name"],
           threshold: 0.3
         });
@@ -336,12 +346,12 @@ const BulkPurchaseTab = observer(() => {
         return searchResults.map(result => result.item);
       } catch (error) {
         console.error("Search error:", error);
-        return buyRequests;
+        return requests;
       }
     }
     
-    return buyRequests;
-  }, [buyRequests, query, currentMode]);
+    return requests;
+  }, [buyRequests, query, showOnlyMyRequests, playerData]);
 
   // Безопасная фильтрация склада
   const filteredStorage = React.useMemo(() => {
@@ -422,9 +432,9 @@ const BulkPurchaseTab = observer(() => {
         </Modal.Footer>
       </Modal>
 
-      {/* Упрощенная панель управления с поиском сразу без верхнего отступа */}
+      {/* Панель управления с поиском и фильтрами */}
       <Row className="mb-3">
-        <Col md={8}>
+        <Col md={7}>
           <Form.Control
             type="text"
             value={query}
@@ -433,14 +443,26 @@ const BulkPurchaseTab = observer(() => {
             className="inventory-search-input"
           />
         </Col>
-        <Col md={4}>
+        <Col md={5}>
           <div className="d-flex gap-2">
-            {/* Кнопка-переключатель режимов */}
+            {/* Кнопка "Мои заявки" - только в режиме заявок */}
+            {currentMode === 'requests' && (
+              <Button
+                className="fantasy-btn"
+                variant={showOnlyMyRequests ? "warning" : "outline-warning"}
+                onClick={() => setShowOnlyMyRequests(prev => !prev)}
+                title={showOnlyMyRequests ? "Показать все заявки" : "Показать только мои заявки"}
+              >
+                {showOnlyMyRequests ? "👥 Все" : "👤 Мои"}
+              </Button>
+            )}
+            
+            {/* Кнопка переключения режимов */}
             <Button 
               className="fantasy-btn fantasy-btn-primary flex-grow-1"
               onClick={toggleMode}
             >
-              {currentMode === 'requests' ? '📦 Перейти к складу' : '📋 Перейти к заявкам'}
+              {currentMode === 'requests' ? '📦 Склад' : '📋 Заявки'}
             </Button>
             
             {/* Кнопка создания заявки - только в режиме заявок */}
@@ -449,7 +471,7 @@ const BulkPurchaseTab = observer(() => {
                 className="fantasy-btn fantasy-btn-success"
                 onClick={() => setShowCreateModal(true)}
               >
-                💰 Выставить заявку
+                💰 Создать
               </Button>
             )}
           </div>
@@ -460,6 +482,9 @@ const BulkPurchaseTab = observer(() => {
       <div className="mb-3">
         <h4 className="fantasy-text-primary">
           {currentMode === 'requests' ? '📋 Заявки на скупку' : '📦 Мой склад'}
+          {currentMode === 'requests' && showOnlyMyRequests && (
+            <Badge bg="warning" className="ms-2">Мои заявки</Badge>
+          )}
         </h4>
         <div className="fantasy-text-muted small">
           {currentMode === 'requests' 
@@ -495,7 +520,12 @@ const BulkPurchaseTab = observer(() => {
 
           {filteredRequests.length === 0 && (
             <div className="text-center fantasy-text-muted py-4">
-              {query ? "Заявки по вашему запросу не найдены" : "Заявок на скупку нет"}
+              {query 
+                ? "Заявки по вашему запросу не найдены" 
+                : showOnlyMyRequests 
+                  ? "У вас нет активных заявок" 
+                  : "Заявок на скупку нет"
+              }
             </div>
           )}
         </>
