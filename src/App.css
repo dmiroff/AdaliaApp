@@ -238,7 +238,7 @@ html, body, #root {
   background: linear-gradient(135deg, var(--color-primary-lighter) 0%, var(--color-primary-lighter) 100%);
   border: 1px solid var(--color-secondary-dark);
   border-radius: 6px;
-  color: var(--color-accent-gold);
+  color: var(--color-text-dark);
   font-weight: 600;
   padding: 8px 16px;
   transition: all 0.3s ease;
