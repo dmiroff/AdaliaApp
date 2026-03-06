@@ -459,7 +459,7 @@ const BulkPurchaseTab = observer(() => {
             
             {/* Кнопка переключения режимов */}
             <Button 
-              className="fantasy-btn fantasy-btn-primary flex-grow-1"
+              className="fantasy-btn fantasy-btn-primary"
               onClick={toggleMode}
             >
               {currentMode === 'requests' ? '📦 Склад' : '📋 Заявки'}
