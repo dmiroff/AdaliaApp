@@ -2791,3 +2791,24 @@ footer {
   outline: 2px solid var(--color-accent-gold);
   outline-offset: 2px;
 }
+
+/* ===== ГЛОБАЛЬНОЕ ПРАВИЛО: ЗОЛОТОЙ HOVER ДЛЯ ВСЕХ КНОПОК ===== */
+/* Используем !important и высокую специфичность, чтобы перебить Bootstrap */
+html body .fantasy-btn:hover,
+html body .btn:hover,
+html body .fantasy-btn-gold:hover,
+html body .fantasy-btn-primary:hover,
+html body .fantasy-btn-success:hover,
+html body .fantasy-btn-warning:hover,
+html body .fantasy-btn-info:hover,
+html body .fantasy-btn-danger:hover,
+html body .fantasy-btn-magic:hover,
+html body .navbar-settings-btn:hover,
+html body .birzha-btn:hover {
+  background: var(--color-accent-gold) !important;      /* Золотой фон */
+  color: var(--color-text-dark) !important;            /* Тёмный текст */
+  border-color: var(--color-secondary-dark) !important; /* Тёмная обводка */
+  background-image: none !important;                    /* Убираем возможные градиенты */
+  transform: translateY(-2px);                          /* Лёгкий подъём (как у вас) */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important; /* Тень */
+}
