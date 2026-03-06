@@ -6,19 +6,19 @@
   /* Основные цвета */
   --color-primary-dark: #dab293;
   --color-primary: #dad1ca;
-  --color-primary-light: #b6aba3;
+  --color-primary-light: #8a5530;
   --color-primary-lighter: #c49d82;
   
   /* Вторичные цвета */
   --color-secondary-dark: #1c1c1c;
   --color-secondary: #2d2d2d;
-  --color-secondary-light: #3e2723;
+  --color-secondary-light: rgb(102, 29, 17);
   
   /* Акцентные цвета */
   --color-accent-gold: gold;
   --color-accent-golder: #fffacd;
   --color-accent-bronze: #c19a6b;
-  --color-accent-bronze-light: #793c14;
+  --color-accent-bronze-light: #a8714d;
   --color-accent-bronze-lighter: #f4e4bc;
   
   /* Фоновые цвета */
