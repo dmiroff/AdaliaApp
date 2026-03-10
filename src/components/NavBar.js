@@ -90,7 +90,7 @@ const NavBar = observer(() => {
           {/* Компактная кнопка настроек для десктопа */}
           <Button
             onClick={handleSettingsClick}
-            className="navbar-settings-btn d-lg-block d-none"
+            className="fantasy-btn d-lg-block d-none"
             title="Настройки"
           >
             ⚙️

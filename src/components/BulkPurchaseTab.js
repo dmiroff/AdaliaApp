@@ -38,8 +38,9 @@ const BulkPurchaseTab = observer(() => {
   const [userInventory, setUserInventory] = useState({});
   const [dataLoaded, setDataLoaded] = useState(false);
   
-  // Фильтр "Мои заявки"
+  // Фильтры
   const [showOnlyMyRequests, setShowOnlyMyRequests] = useState(false);
+  const [showOnlySellable, setShowOnlySellable] = useState(false); // НОВЫЙ ФИЛЬТР
   
   // Флаги для предотвращения повторных загрузок
   const hasLoadedPlayerData = useRef(false);
@@ -69,6 +70,7 @@ const BulkPurchaseTab = observer(() => {
     });
     setQuery("");
     setShowOnlyMyRequests(false); // Сбрасываем фильтр при смене режима
+    setShowOnlySellable(false);   // Сбрасываем новый фильтр
   }, []);
 
   // Функция для загрузки данных игрока
@@ -326,7 +328,7 @@ const BulkPurchaseTab = observer(() => {
     return itemObjects;
   }, [userInventory]);
 
-  // Безопасная фильтрация заявок с учётом фильтра "Мои заявки"
+  // Фильтрация заявок с учётом фильтров "Мои заявки" и "Можно продать"
   const filteredRequests = React.useMemo(() => {
     let requests = buyRequests;
     if (!Array.isArray(requests)) return [];
@@ -336,6 +338,16 @@ const BulkPurchaseTab = observer(() => {
       requests = requests.filter(req => req.user_id === playerData.id);
     }
     
+    // НОВЫЙ ФИЛЬТР: "Можно продать"
+    if (showOnlySellable && playerData?.id && Object.keys(userInventory).length > 0) {
+      requests = requests.filter(req => {
+        // Заявка не моя и предмет есть в инвентаре
+        return req.user_id !== playerData.id && 
+               userInventory[req.item_id.toString()]?.count > 0;
+      });
+    }
+    
+    // Поиск
     if (query && requests.length > 0) {
       try {
         const fuse = new Fuse(requests, {
@@ -351,7 +363,7 @@ const BulkPurchaseTab = observer(() => {
     }
     
     return requests;
-  }, [buyRequests, query, showOnlyMyRequests, playerData]);
+  }, [buyRequests, query, showOnlyMyRequests, showOnlySellable, playerData, userInventory]);
 
   // Безопасная фильтрация склада
   const filteredStorage = React.useMemo(() => {
@@ -457,6 +469,18 @@ const BulkPurchaseTab = observer(() => {
               </Button>
             )}
             
+            {/* НОВАЯ КНОПКА "Можно продать" - только в режиме заявок */}
+            {currentMode === 'requests' && (
+              <Button
+                className="fantasy-btn"
+                variant={showOnlySellable ? "success" : "outline-success"}
+                onClick={() => setShowOnlySellable(prev => !prev)}
+                title={showOnlySellable ? "Показать все заявки" : "Показать только продаваемые (есть в инвентаре)"}
+              >
+                {showOnlySellable ? "📦 Все" : "💰 Продать"}
+              </Button>
+            )}
+            
             {/* Кнопка переключения режимов */}
             <Button 
               className="fantasy-btn fantasy-btn-primary"
@@ -484,6 +508,9 @@ const BulkPurchaseTab = observer(() => {
           {currentMode === 'requests' ? '📋 Заявки на скупку' : '📦 Мой склад'}
           {currentMode === 'requests' && showOnlyMyRequests && (
             <Badge bg="warning" className="ms-2">Мои заявки</Badge>
+          )}
+          {currentMode === 'requests' && showOnlySellable && (
+            <Badge bg="success" className="ms-2">Можно продать</Badge>
           )}
         </h4>
         <div className="fantasy-text-muted small">
@@ -524,7 +551,9 @@ const BulkPurchaseTab = observer(() => {
                 ? "Заявки по вашему запросу не найдены" 
                 : showOnlyMyRequests 
                   ? "У вас нет активных заявок" 
-                  : "Заявок на скупку нет"
+                  : showOnlySellable
+                    ? "Нет заявок, которые можно продать (предметы отсутствуют в инвентаре)"
+                    : "Заявок на скупку нет"
               }
             </div>
           )}
@@ -595,7 +624,7 @@ const BulkPurchaseTab = observer(() => {
   );
 });
 
-// Компонент карточки заявки (без изменений)
+// Компонент карточки заявки
 const BuyRequestCard = ({ request, onSellClick, onCancelClick, currentUserId, userInventory }) => {
   const isMyRequest = request.user_id === currentUserId;
   const itemIdStr = request.item_id.toString();
@@ -631,7 +660,7 @@ const BuyRequestCard = ({ request, onSellClick, onCancelClick, currentUserId, us
               <Col>
                 <Button 
                   size="sm" 
-                  className={`fantasy-btn fantasy-btn-gold w-100 ${!canSell ? 'fantasy-btn-disabled' : ''}`}
+                  className={`fantasy-btn fantasy-btn-success w-100 ${!canSell ? 'fantasy-btn-disabled' : ''}`}
                   onClick={onSellClick}
                   disabled={!canSell}
                 >
@@ -658,7 +687,7 @@ const BuyRequestCard = ({ request, onSellClick, onCancelClick, currentUserId, us
   );
 };
 
-// Компонент карточки предмета на складе (упрощенный)
+// Компонент карточки предмета на складе
 const StorageItemCard = ({ item, onCollectClick }) => {
   return (
     <Card className="fantasy-card h-100">
