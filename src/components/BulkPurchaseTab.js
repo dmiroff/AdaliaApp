@@ -431,7 +431,7 @@ const BulkPurchaseTab = observer(() => {
           <div className="text-center">
             <div className="fs-1 mb-3">⚠️</div>
             <h5 className="fantasy-text-dark mb-3">Не удалось выполнить операцию</h5>
-            <p className="fantasy-text-muted">{modalError}</p>
+            <p className="fantasy-text-dark">{modalError}</p>
           </div>
         </Modal.Body>
         <Modal.Footer className="fantasy-modal-footer">
@@ -513,7 +513,7 @@ const BulkPurchaseTab = observer(() => {
             <Badge bg="success" className="ms-2">Можно продать</Badge>
           )}
         </h4>
-        <div className="fantasy-text-muted small">
+        <div className="fantasy-text-dark small">
           {currentMode === 'requests' 
             ? 'Продавайте предметы по заявкам других игроков или создавайте свои' 
             : 'Забирайте предметы, купленные по вашим заявкам'
@@ -546,7 +546,7 @@ const BulkPurchaseTab = observer(() => {
           </Row>
 
           {filteredRequests.length === 0 && (
-            <div className="text-center fantasy-text-muted py-4">
+            <div className="text-center fantasy-text-dark py-4">
               {query 
                 ? "Заявки по вашему запросу не найдены" 
                 : showOnlyMyRequests 
@@ -578,7 +578,7 @@ const BulkPurchaseTab = observer(() => {
           </Row>
 
           {filteredStorage.length === 0 && (
-            <div className="text-center fantasy-text-muted py-4">
+            <div className="text-center fantasy-text-dark py-4">
               {query ? "Предметы по вашему запросу не найдены" : "Ваш склад пуст"}
             </div>
           )}
@@ -648,7 +648,7 @@ const BuyRequestCard = ({ request, onSellClick, onCancelClick, currentUserId, us
         </div>
         
         <Card.Text className="flex-grow-1">
-          <small className="fantasy-text-muted">
+          <small className="fantasy-text-dark">
             Цена за шт.: <strong>{request.buy_price} 🌕</strong><br/>
             Общая сумма: <strong>{request.buy_price * request.buy_amount} 🌕</strong><br/>
           </small>
@@ -700,7 +700,7 @@ const StorageItemCard = ({ item, onCollectClick }) => {
         </div>
         
         <Card.Text className="flex-grow-1">
-          <small className="fantasy-text-muted">
+          <small className="fantasy-text-dark">
             Вес за шт.: <strong>{item.weight} ⚖️</strong><br/>
             Ценность: <strong>{item.value} 🌕</strong><br/>
             ID: {item.item_id}
