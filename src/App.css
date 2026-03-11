@@ -341,9 +341,9 @@ html, body, #root {
 }
 
 .dropdown-toggle.fantasy-btn {
-  background: linear-gradient(135deg, var(--color-primary-lighter) 0%, var(--color-primary-lighter) 100%) !important;
-  border: 2px solid var(--color-secondary-dark) !important;
-  color: var(--color-accent-gold) !important;
+  background: linear-gradient(135deg, var(--color-primary-lighter) 0%, var(--color-primary-lighter) 100%);
+  border: 2px solid var(--color-secondary-dark);
+  color: var(--color-accent-gold);
   text-align: left;
   display: flex;
   justify-content: space-between;
@@ -352,22 +352,22 @@ html, body, #root {
   min-width: 150px;
   font-weight: 600;
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3) !important;
-  transition: all 0.3s ease !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  transition: all 0.3s ease;
   z-index: 2;
 }
 
 .dropdown-toggle.fantasy-btn:hover,
 .dropdown-toggle.fantasy-btn:focus,
 .dropdown-toggle.fantasy-btn:active {
-  border-color: var(--color-secondary-dark) !important;
-  color: var(--color-accent-golder) !important;
+  border-color: var(--color-secondary-dark);
+  color: var(--color-accent-golder);
   transform: translateY(-1px);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4) !important;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
 }
 
 .dropdown-toggle.fantasy-btn:focus {
-  box-shadow: 0 0 0 0.2rem rgba(139, 69, 19, 0.25) !important;
+  box-shadow: 0 0 0 0.2rem rgba(139, 69, 19, 0.25);
 }
 
 .fantasy-dropdown-menu {
@@ -419,17 +419,17 @@ html, body, #root {
 .btn-check:focus + .btn, 
 .btn:focus,
 .dropdown-toggle:focus {
-  box-shadow: 0 0 0 0.2rem rgba(139, 69, 19, 0.25) !important;
-  outline: none !important;
+  box-shadow: 0 0 0 0.2rem rgba(139, 69, 19, 0.25);
+  outline: none;
 }
 
 /* Стили для кнопки в TypeBar */
 .typebar-container .fantasy-btn {
-  background: linear-gradient(135deg, var(--color-primary-lighter) 0%, var(--color-primary-lighter) 100%) !important;
-  border: 2px solid var(--color-secondary-dark) !important;
-  color: var(--color-accent-gold) !important;
-  padding: 8px 16px !important;
-  font-size: 1rem !important;
+  background: linear-gradient(135deg, var(--color-primary-lighter) 0%, var(--color-primary-lighter) 100%);
+  border: 2px solid var(--color-secondary-dark);
+  color: var(--color-accent-gold);
+  padding: 8px 16px;
+  font-size: 1rem;
   min-height: 40px;
 }
 
@@ -448,17 +448,17 @@ html, body, #root {
   }
   
   .dropdown-toggle.fantasy-btn {
-    min-width: 140px !important;
-    padding: 6px 12px !important;
-    font-size: 0.9rem !important;
+    min-width: 140px;
+    padding: 6px 12px;
+    font-size: 0.9rem;
   }
 }
 
 @media (max-width: 576px) {
   .dropdown-toggle.fantasy-btn {
-    min-width: 130px !important;
-    padding: 5px 10px !important;
-    font-size: 0.85rem !important;
+    min-width: 130px;
+    padding: 5px 10px;
+    font-size: 0.85rem;
   }
   
   .fantasy-dropdown-menu {
@@ -2148,24 +2148,24 @@ body .inventory-item-fantasy-dropdown .dropdown-item {
 
 /* Стили для кнопки настроек в навбаре */
 .navbar-settings-btn {
-  background: linear-gradient(180deg, #3a7bd5 0%, #00d2ff 100%) !important;
-  border: 1px solid var(--color-secondary-dark) !important;
-  color: var(--color-text-white) !important;
-  font-family: "georgia", serif !important;
-  font-weight: bold !important;
-  padding: 6px 10px !important;
-  min-width: 40px !important;
-  height: 40px !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  transition: all 0.3s ease !important;
+  background: linear-gradient(180deg, #3a7bd5 0%, #00d2ff 100%);
+  border: 1px solid var(--color-secondary-dark);
+  color: var(--color-text-white);
+  font-family: "georgia", serif;
+  font-weight: bold;
+  padding: 6px 10px;
+  min-width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
 }
 
 .navbar-settings-btn:hover {
-  transform: scale(1.1) !important;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4) !important;
-  color: var(--color-accent-gold) !important;
+  transform: scale(1.1);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+  color: var(--color-accent-gold);
 }
 
 /* На мобильных - скрыть компактную кнопку */
@@ -2206,10 +2206,10 @@ body .inventory-item-fantasy-dropdown .dropdown-item {
 /* Адаптация для очень широких экранов */
 @media (min-width: 1200px) {
   .navbar-settings-btn {
-    padding: 4px 8px !important;
-    min-width: 36px !important;
-    height: 36px !important;
-    font-size: 0.9rem !important;
+    padding: 4px 8px;
+    min-width: 36px;
+    height: 36px;
+    font-size: 0.9rem;
   }
   
   .fantasy-navbar .nav-link {
@@ -2246,14 +2246,14 @@ body .inventory-item-fantasy-dropdown .dropdown-item {
 
 /* Стили для всех кнопок навбара чтобы были одинаковые */
 .fantasy-navbar .fantasy-btn {
-  font-family: "georgia", serif !important;
-  font-weight: bold !important;
-  font-style: normal !important;
-  text-transform: uppercase !important;
+  font-family: "georgia", serif;
+  font-weight: bold ;
+  font-style: normal;
+  text-transform: uppercase;
   background: var(--color-accent-bronze-light);
-  border: 1px solid var(--color-secondary-dark) !important;
+  border: 1px solid var(--color-secondary-dark);
   color: var(--color-text-dark);
-  transition: all 0.3s ease !important;
+  transition: all 0.3s ease;
 }
 
 .fantasy-navbar .fantasy-btn:hover {
@@ -2319,15 +2319,15 @@ body .inventory-item-fantasy-dropdown .dropdown-item {
 }
 
 .mass-action-btn {
-  font-family: 'Cinzel', serif !important;
-  font-weight: 600 !important;
-  padding: 6px 12px !important;
+  font-family: 'Cinzel', serif;
+  font-weight: 600;
+  padding: 6px 12px;
 }
 
 .select-all-btn {
-  font-family: 'Cinzel', serif !important;
-  font-weight: 600 !important;
-  padding: 6px 12px !important;
+  font-family: 'Cinzel', serif;
+  font-weight: 600;
+  padding: 6px 12px;
 }
 
 .inventory-items-container {
@@ -2350,13 +2350,13 @@ body .inventory-item-fantasy-dropdown .dropdown-item {
   }
   
   .mass-action-btn {
-    padding: 5px 10px !important;
-    font-size: 0.85rem !important;
+    padding: 5px 10px;
+    font-size: 0.85rem;
   }
   
   .select-all-btn {
-    padding: 5px 10px !important;
-    font-size: 0.85rem !important;
+    padding: 5px 10px;
+    font-size: 0.85rem;
   }
 }
 
@@ -2375,8 +2375,8 @@ body .inventory-item-fantasy-dropdown .dropdown-item {
   }
   
   .mass-action-btn {
-    padding: 4px 8px !important;
-    font-size: 0.8rem !important;
+    padding: 4px 8px;
+    font-size: 0.8rem;
   }
 }
 
@@ -2762,7 +2762,7 @@ footer {
 .btn-danger:focus,
 .btn-danger:active,
 .btn-danger.show {
-  background: var(--color-accent-bronze-lighter) !important;
+  background: var(--color-accent-bronze-lighter);
   border-color: var(--color-bg-dark) !important;
   color: inherit !important;
   box-shadow: none !important;
