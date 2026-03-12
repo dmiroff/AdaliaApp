@@ -20,6 +20,8 @@ export const dict_translator = {
   "attack_range": "Дальность атаки",
   "value": "Цена",
   "weight": "Вес",
+  "attacks": "Атаки",
+  "max_charges": "Заряды",
   "is_equippable": "Можно надеть",
   "skill": "Навык",
   "enchant_damage": "Усиление урона",
