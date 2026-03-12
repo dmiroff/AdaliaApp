@@ -39,49 +39,49 @@ const NavBar = observer(() => {
             <Nav.Link 
               eventKey="inventory" 
               onClick={() => handleNavLinkClick("/inventory")}
-              className="fantasy-btn fantasy-btn-warning fantasy-btn-lg mx-1 my-1 w-100"
+              className="fantasy-btn fantasy-btn-lg mx-1 my-1 w-100"
             >
               Инвентарь
             </Nav.Link>
             <Nav.Link 
               eventKey="character" 
               onClick={() => handleNavLinkClick("/character")}
-              className="fantasy-btn fantasy-btn-warning fantasy-btn-lg mx-1 my-1 w-100"
+              className="fantasy-btn fantasy-btn-lg mx-1 my-1 w-100"
             >
               Персонаж
             </Nav.Link>
             <Nav.Link 
               eventKey="guild" 
               onClick={() => handleNavLinkClick("/guild")}
-              className="fantasy-btn fantasy-btn-warning fantasy-btn-lg mx-1 my-1 w-100"
+              className="fantasy-btn fantasy-btn-lg mx-1 my-1 w-100"
             >
               Гильдия
             </Nav.Link>
             <Nav.Link 
               eventKey="map" 
               onClick={() => handleNavLinkClick("/map")}
-              className="fantasy-btn fantasy-btn-warning fantasy-btn-lg mx-1 my-1 w-100"
+              className="fantasy-btn fantasy-btn-lg mx-1 my-1 w-100"
             >
               Карта
             </Nav.Link>
             <Nav.Link 
               eventKey="rating" 
               onClick={() => handleNavLinkClick("/rating")}
-              className="fantasy-btn fantasy-btn-warning fantasy-btn-lg mx-1 my-1 w-100"
+              className="fantasy-btn fantasy-btn-lg mx-1 my-1 w-100"
             >
               Рейтинг
             </Nav.Link>
             <Nav.Link 
               eventKey="trade" 
               onClick={() => handleNavLinkClick("/trade")}
-              className="fantasy-btn fantasy-btn-warning fantasy-btn-lg mx-1 my-1 w-100"
+              className="fantasy-btn fantasy-btn-lg mx-1 my-1 w-100"
             >
               Торговля
             </Nav.Link>
             <Nav.Link 
               eventKey="donation" 
               onClick={() => handleNavLinkClick("/donation")}
-              className="fantasy-btn fantasy-btn-warning fantasy-btn-lg mx-1 my-1 w-100"
+              className="fantasy-btn fantasy-btn-lg mx-1 my-1 w-100"
             >
               💎 Магазин
             </Nav.Link>

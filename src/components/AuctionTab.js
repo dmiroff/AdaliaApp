@@ -299,7 +299,7 @@ const AuctionTab = observer(() => {
         </Col>
         <Col md={4}>
           <Button 
-            className="fantasy-btn fantasy-btn-success w-100"
+            className="fantasy-btn w-100"
             onClick={handleCreateButtonClick}
             disabled={inventoryArray.length === 0}
           >

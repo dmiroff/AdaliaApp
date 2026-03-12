@@ -15,7 +15,7 @@ const Inventory = () => {
           <Col xs={12} md={8} lg={6} className="text-center p-3">
             <Button 
               onClick={() => setShowEquipment(!showEquipment)}
-              className={`fantasy-btn ${showEquipment ? 'fantasy-btn-warning' : 'fantasy-btn-success'} fantasy-btn-lg w-100`}
+              className={`fantasy-btn ${showEquipment ? 'fantasy-btn-warning' : 'fantasy-btn'} fantasy-btn-lg w-100`}
               style={{ minHeight: '50px' }}
             >
               {showEquipment ? "✖ Спрятать снаряжение" : "Показать снаряжение"}

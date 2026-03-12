@@ -460,7 +460,7 @@ const BulkPurchaseTab = observer(() => {
             {/* Кнопка "Мои заявки" - только в режиме заявок */}
             {currentMode === 'requests' && (
               <Button
-                className="fantasy-btn"
+                className="fantasy-btn fantsy-btn-secondary"
                 variant={showOnlyMyRequests ? "warning" : "outline-warning"}
                 onClick={() => setShowOnlyMyRequests(prev => !prev)}
                 title={showOnlyMyRequests ? "Показать все заявки" : "Показать только мои заявки"}
@@ -483,7 +483,7 @@ const BulkPurchaseTab = observer(() => {
             
             {/* Кнопка переключения режимов */}
             <Button 
-              className="fantasy-btn fantasy-btn-primary"
+              className="fantasy-btn"
               onClick={toggleMode}
             >
               {currentMode === 'requests' ? '📦 Склад' : '📋 Заявки'}
@@ -492,7 +492,7 @@ const BulkPurchaseTab = observer(() => {
             {/* Кнопка создания заявки - только в режиме заявок */}
             {currentMode === 'requests' && (
               <Button 
-                className="fantasy-btn fantasy-btn-success"
+                className="fantasy-btn"
                 onClick={() => setShowCreateModal(true)}
               >
                 💰 Создать

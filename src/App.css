@@ -2762,7 +2762,7 @@ footer {
 .btn-danger:focus,
 .btn-danger:active,
 .btn-danger.show {
-  background: var(--color-accent-bronze-lighter);
+  background: var(--color-accent-bronze-lighter)!important;
   border-color: var(--color-bg-dark) !important;
   color: inherit !important;
   box-shadow: none !important;
@@ -2789,3 +2789,8 @@ html body .birzha-btn:hover {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
   transition: all 0.3s ease !important; /* Наш плавный переход */
 }
+
+.fantasy-btn-primary { background: var(--color-accent-bronze-light) !important; }
+.fantasy-btn-success { background: var(--color-success-lighter) !important; }
+.fantasy-btn-warning { background: var(--color-danger-lighter) !important; }
+.fantasy-btn-danger { background: linear-gradient(135deg, var(--color-danger-dark) 0%, var(--color-danger) 100%) !important; }
