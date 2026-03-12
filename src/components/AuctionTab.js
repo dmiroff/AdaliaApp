@@ -1,7 +1,7 @@
 // src/components/AuctionTab.js
 import React from 'react';
 import { observer } from "mobx-react-lite";
-import { useContext, useEffect, useState, useMemo } from "react";
+import { useContext, useEffect, useState } from "react";
 import { Row, Col, Form, Modal, Button, Card, Badge, Alert } from "react-bootstrap";
 import { Context } from "../index";
 import { Spinner } from "react-bootstrap";
@@ -12,51 +12,51 @@ import GetDataById from "../http/GetData";
 
 const AuctionTab = observer(() => {
   const { user } = useContext(Context);
-
-  // Инициализируем состояния данными из контекста, если они уже есть
-  const [playerData, setPlayerData] = useState(user.player || null);
-  const [userInventory, setUserInventory] = useState(user.playerInventory || {});
-  const [dataLoaded, setDataLoaded] = useState(!!user.player); // true, если данные уже были
-
   const [auctionLots, setAuctionLots] = useState([]);
-  const [loading, setLoading] = useState(!dataLoaded); // если данных нет, начинаем с загрузки
+  const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
   const [selectedLot, setSelectedLot] = useState(null);
   const [showBidModal, setShowBidModal] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showErrorModal, setShowErrorModal] = useState(false);
-  const [modalError, setModalError] = useState("");
+  const [showErrorModal, setShowErrorModal] = useState(false); // Новое состояние для модального окна ошибок
+  const [modalError, setModalError] = useState(""); // Текст ошибки для модалки
   const [bidAmount, setBidAmount] = useState("");
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
+  // Добавляем состояния как в InventoryList
+  const [playerData, setPlayerData] = useState(null);
+  const [userInventory, setUserInventory] = useState({});
+  const [dataLoaded, setDataLoaded] = useState(false);
+
+  // Функция для показа ошибки в модальном окне
   const showErrorInModal = (errorMessage) => {
     setModalError(errorMessage);
     setShowErrorModal(true);
   };
 
+  // Функция закрытия модального окна ошибок
   const handleCloseErrorModal = () => {
     setShowErrorModal(false);
     setModalError("");
   };
 
-  // Загрузка данных игрока (обновляет контекст и состояния)
   useEffect(() => {
     const fetchPlayer = async () => {
       try {
         setLoading(true);
         const playerDataResponse = await GetDataById();
-
+        
         if (playerDataResponse && playerDataResponse.data) {
           setPlayerData(playerDataResponse.data);
+          
+          // Защищенная установка инвентаря как в InventoryList
           const safeInventory = playerDataResponse.data.inventory_new || {};
           user.setPlayerInventory(safeInventory);
           setUserInventory(safeInventory);
           user.setPlayer(playerDataResponse.data);
           setDataLoaded(true);
-        } else {
-          showErrorInModal("Не удалось загрузить данные игрока: пустой ответ");
         }
       } catch (error) {
         console.error("Error fetching player data:", error);
@@ -69,13 +69,13 @@ const AuctionTab = observer(() => {
     };
 
     fetchPlayer();
-  }, [user, refreshTrigger, showErrorInModal]);
+  }, [user, refreshTrigger]);
 
-  // Загружаем лоты аукциона только когда есть данные игрока
+  // Загружаем лоты аукциона после загрузки данных игрока
   useEffect(() => {
     const loadAuctionLots = async () => {
       if (!dataLoaded) return;
-
+      
       try {
         const lots = await fetchAuctionLots();
         setAuctionLots(lots);
@@ -88,7 +88,7 @@ const AuctionTab = observer(() => {
     };
 
     loadAuctionLots();
-  }, [dataLoaded, refreshTrigger, showErrorInModal]);
+  }, [dataLoaded, refreshTrigger]);
 
   const updateUserData = async () => {
     try {
@@ -117,14 +117,14 @@ const AuctionTab = observer(() => {
       }
 
       const response = await placeBid(selectedLot.id, { amount: bidValue });
-
+      
       if (response.status) {
         setSuccess(response.message);
         setShowBidModal(false);
         setBidAmount("");
         await updateUserData();
         setRefreshTrigger(prev => prev + 1);
-
+        
         setTimeout(() => setSuccess(""), 3000);
       }
     } catch (error) {
@@ -139,12 +139,12 @@ const AuctionTab = observer(() => {
     try {
       setError("");
       const response = await buyoutLot(lotId);
-
+      
       if (response.status) {
         setSuccess(response.message);
         await updateUserData();
         setRefreshTrigger(prev => prev + 1);
-
+        
         setTimeout(() => setSuccess(""), 3000);
       }
     } catch (error) {
@@ -159,13 +159,13 @@ const AuctionTab = observer(() => {
     try {
       setError("");
       const response = await createAuctionLot(lotData);
-
+      
       if (response.status) {
         setSuccess(response.message);
         setShowCreateModal(false);
         await updateUserData();
         setRefreshTrigger(prev => prev + 1);
-
+        
         setTimeout(() => setSuccess(""), 3000);
       }
     } catch (error) {
@@ -176,6 +176,7 @@ const AuctionTab = observer(() => {
     }
   };
 
+  // Обработчик клика по кнопке "Выставить предмет"
   const handleCreateButtonClick = () => {
     if (inventoryArray.length === 0) {
       const errorMessage = "У вас нет предметов для выставления на аукцион";
@@ -197,47 +198,49 @@ const AuctionTab = observer(() => {
       filteredLots = searchResults.map(result => result.item);
     } catch (error) {
       console.error("Search error:", error);
+      // В случае ошибки поиска оставляем исходный список
+      filteredLots = auctionLots;
     }
   }
 
-  // Преобразование инвентаря в массив
-  const inventoryArray = useMemo(() => {
+  // ПРЕОБРАЗОВАНИЕ ИНВЕНТАРЯ В МАССИВ С ПОДРОБНОЙ ОТЛАДКОЙ
+  const inventoryArray = React.useMemo(() => {
+    
     if (!userInventory || Object.keys(userInventory).length === 0) {
-      return [];
+        return [];
     }
-    const filteredItemsWithKeys = Object.entries(userInventory).filter(
-      ([key, item]) => item && typeof item === 'object'
-    );
-    return filteredItemsWithKeys.map(([id, data]) => ({
-      id: parseInt(id),
-      ...(data || {})
-    }));
-  }, [userInventory]);
 
-  // Состояния загрузки
+    // Используем ту же логику, что и в InventoryList
+    const filteredItemsWithKeys = Object.entries(userInventory).filter(
+        ([key, item]) => {
+        // Проверяем что item существует и имеет тип
+        if (!item || typeof item !== 'object') return false;
+        return true; // Показываем все предметы без фильтрации по типу
+        }
+    );
+
+    const itemObjects = filteredItemsWithKeys.map(([id, data]) => ({ 
+        id: parseInt(id), 
+        ...(data || {}) // Защита от undefined data
+    }));
+
+    return itemObjects;
+    }, [userInventory]);
+
   if (loading) {
     return (
       <div className="d-flex justify-content-center align-items-center fantasy-paper p-4">
         <Spinner animation="border" role="status" className="fantasy-text-primary">
-          <span className="visually-hidden">Загрузка...</span>
+          <span className="visually-hidden">Loading...</span>
         </Spinner>
       </div>
     );
   }
 
-  // Если данных нет совсем — предлагаем повторить
   if (!playerData) {
     return (
       <div className="fantasy-paper p-4 text-center">
-        <div className="fantasy-text-danger mb-3">
-          Не удалось загрузить данные игрока.
-        </div>
-        <Button
-          className="fantasy-btn fantasy-btn-primary"
-          onClick={() => setRefreshTrigger(prev => prev + 1)}
-        >
-          Повторить попытку
-        </Button>
+        <div className="fantasy-text-danger">Error: Player data not found</div>
       </div>
     );
   }
@@ -257,8 +260,8 @@ const AuctionTab = observer(() => {
       )}
 
       {/* Модальное окно для ошибок */}
-      <Modal
-        show={showErrorModal}
+      <Modal 
+        show={showErrorModal} 
         onHide={handleCloseErrorModal}
         centered
         className="fantasy-modal"
@@ -274,7 +277,7 @@ const AuctionTab = observer(() => {
           </div>
         </Modal.Body>
         <Modal.Footer className="fantasy-modal-footer">
-          <Button
+          <Button 
             className="fantasy-btn fantasy-btn-primary"
             onClick={handleCloseErrorModal}
           >
@@ -295,7 +298,7 @@ const AuctionTab = observer(() => {
           />
         </Col>
         <Col md={4}>
-          <Button
+          <Button 
             className="fantasy-btn w-100"
             onClick={handleCreateButtonClick}
             disabled={inventoryArray.length === 0}
@@ -309,8 +312,8 @@ const AuctionTab = observer(() => {
       <Row>
         {filteredLots.map((lot) => (
           <Col key={lot.id} md={6} lg={4} className="mb-3">
-            <AuctionLotCard
-              lot={lot}
+            <AuctionLotCard 
+              lot={lot} 
               onBidClick={() => {
                 setSelectedLot(lot);
                 setBidAmount((lot.start_price + lot.price_step).toString());
@@ -358,13 +361,13 @@ const AuctionTab = observer(() => {
           )}
         </Modal.Body>
         <Modal.Footer>
-          <Button
+          <Button 
             className="fantasy-btn fantasy-btn-secondary"
             onClick={() => setShowBidModal(false)}
           >
             Отмена
           </Button>
-          <Button
+          <Button 
             className="fantasy-btn fantasy-btn-gold"
             onClick={handlePlaceBid}
             disabled={!bidAmount || Number(bidAmount) < (selectedLot?.start_price + selectedLot?.price_step) || Number(bidAmount) > (playerData?.money || 0)}
@@ -375,7 +378,7 @@ const AuctionTab = observer(() => {
       </Modal>
 
       {/* Модальное окно создания лота */}
-      <CreateAuctionModal
+      <CreateAuctionModal 
         show={showCreateModal}
         onHide={() => setShowCreateModal(false)}
         onCreate={handleCreateLot}
@@ -386,7 +389,7 @@ const AuctionTab = observer(() => {
   );
 });
 
-// Компонент карточки лота (с бейджем "Мой лот")
+// Компонент карточки лота
 const AuctionLotCard = ({ lot, onBidClick, onBuyoutClick, onViewHistory, currentUserId }) => {
   const timeLeft = new Date(lot.end_time) - new Date();
   const hoursLeft = Math.max(0, Math.floor(timeLeft / (1000 * 60 * 60)));
@@ -401,7 +404,6 @@ const AuctionLotCard = ({ lot, onBidClick, onBuyoutClick, onViewHistory, current
             <Badge bg={hoursLeft < 1 ? "danger" : hoursLeft < 24 ? "warning" : "success"}>
               {hoursLeft}ч
             </Badge>
-            {/* Бейдж "Мой лот" – как в скупке */}
             {isMyLot && (
               <Badge bg="warning" className="mt-1">
                 Мой лот
@@ -409,7 +411,7 @@ const AuctionLotCard = ({ lot, onBidClick, onBuyoutClick, onViewHistory, current
             )}
           </div>
         </div>
-
+        
         <Card.Text className="flex-grow-1">
           <small className="fantasy-text-muted">
             Текущая цена: <strong>{lot.start_price} 🌕</strong><br/>
@@ -420,29 +422,29 @@ const AuctionLotCard = ({ lot, onBidClick, onBuyoutClick, onViewHistory, current
         </Card.Text>
 
         <div className="mt-auto">
-          <Row className="g-2">
-            <Col>
-              <Button
-                size="sm"
-                className={`fantasy-btn fantasy-btn-gold w-100 ${isMyLot ? 'fantasy-btn-disabled' : ''}`}
-                onClick={onBidClick}
-                disabled={isMyLot}
-              >
-                <span className="fantasy-btn-text">Ставка</span>
-              </Button>
-            </Col>
-            {lot.buyout_price > 0 && (
-              <Col>
-                <Button
-                  size="sm"
-                  className="fantasy-btn fantasy-btn-gold w-100"
-                  onClick={onBuyoutClick}
+            <Row className="g-2">
+                <Col>
+                <Button 
+                    size="sm" 
+                    className={`fantasy-btn fantasy-btn-gold w-100 ${isMyLot ? 'fantasy-btn-disabled' : ''}`}
+                    onClick={onBidClick}
+                    disabled={isMyLot}
                 >
-                  <span className="fantasy-btn-text">Выкупить</span>
+                    <span className="fantasy-btn-text">Ставка</span>
                 </Button>
-              </Col>
-            )}
-          </Row>
+                </Col>
+                {lot.buyout_price > 0 && (
+                <Col>
+                    <Button 
+                    size="sm" 
+                    className="fantasy-btn fantasy-btn-gold w-100"
+                    onClick={onBuyoutClick}
+                    >
+                    <span className="fantasy-btn-text">Выкупить</span>
+                    </Button>
+                </Col>
+                )}
+            </Row>
         </div>
       </Card.Body>
     </Card>
