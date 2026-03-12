@@ -462,6 +462,11 @@ const CastleStorage = observer(() => {
     { field: "", operator: "equals", value: "" }
   ]);
 
+  // UPDATED: Проверка наличия улучшения "Гильдейский посланник"
+  const hasMessenger = useMemo(() => {
+    return playerData?.upgrades?.includes("Гильдейский посланник") || false;
+  }, [playerData]);
+
   const translateValue = useCallback((value) => {
     if (value === null || value === undefined) return "";
     const strValue = String(value).toLowerCase();
@@ -608,8 +613,16 @@ const CastleStorage = observer(() => {
     }
   }, [activeCastle]);
 
+  // UPDATED: Функция проверки доступа теперь учитывает Гильдейского посланника
   const checkAccess = useCallback((playerData) => {
     if (!activeCastle) return;
+    
+    // Если есть апгрейд, доступ всегда есть
+    if (playerData?.upgrades?.includes("Гильдейский посланник")) {
+      setHasAccess(true);
+      setAccessReason("Доступ разрешен благодаря Гильдейскому посланнику");
+      return;
+    }
     
     const isEventActive = playerData?.active_event === "Castle";
     
@@ -622,6 +635,7 @@ const CastleStorage = observer(() => {
     }
   }, [activeCastle]);
 
+  // UPDATED: При загрузке данных хранилища также учитываем апгрейд
   const fetchCastleStorage = useCallback(async (castleId) => {
     if (!castleId) return;
     
@@ -659,16 +673,20 @@ const CastleStorage = observer(() => {
           max: storageData.storage_capacity || 1000
         });
         
-        if (storageData.has_access !== undefined) {
+        // Проверяем апгрейд (данные playerData могут быть ещё не загружены, но у нас есть hasMessenger из useMemo)
+        if (hasMessenger) {
+          setHasAccess(true);
+          setAccessReason("Доступ разрешен благодаря Гильдейскому посланнику");
+        } else if (storageData.has_access !== undefined) {
           setHasAccess(storageData.has_access);
         } else {
           const isEventActive = playerData?.active_event === "Castle";
           setHasAccess(isEventActive);
         }
         
-        if (storageData.message && !storageData.has_access) {
+        if (storageData.message && !storageData.has_access && !hasMessenger) {
           setAccessReason(storageData.message);
-        } else if (!hasAccess && playerData) {
+        } else if (!hasAccess && !hasMessenger && playerData) {
           const isEventActive = playerData.active_event === "Castle";
           if (!isEventActive) {
             setAccessReason(`Доступ запрещён - вы не находитесь в событии 'Замок'. Текущее событие: ${playerData.active_event || "не определено"}`);
@@ -683,7 +701,7 @@ const CastleStorage = observer(() => {
     } finally {
       setLoading(false);
     }
-  }, [playerData, hasAccess]);
+  }, [playerData, hasMessenger]);
 
   useEffect(() => {
     if (activeCastle) {
@@ -1055,14 +1073,15 @@ const CastleStorage = observer(() => {
     fetchPlayerData();
   };
 
+  // UPDATED: Предупреждение показываем только если нет апгрейда и нет события
   const renderEventWarning = () => {
-    if (!isCastleEventActive && playerData) {
+    if (!isCastleEventActive && !hasMessenger && playerData) {
       return (
         <Alert variant="danger" className="mb-3">
           <i className="fas fa-exclamation-triangle me-2"></i>
           <strong>Доступ к хранилищу замка ограничен!</strong>
           <div className="mt-1">
-            Для использования хранилища замка вы должны находиться в событии "Замок".
+            Для использования хранилища замка вы должны находиться в событии "Замок" или иметь улучшение "Гильдейский посланник".
             Текущее событие: <strong>{playerData.active_event || "не определено"}</strong>
           </div>
         </Alert>

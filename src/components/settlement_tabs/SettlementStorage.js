@@ -20,7 +20,7 @@ import { toJS } from 'mobx';
 import { settlementService } from '../../services/SettlementService';
 import GetDataById from "../../http/GetData";
 
-// Полный список реагентов
+// Полный список реагентов (без изменений)
 const RESOURCES_DATA = {
   48: "Коготь страшной крысы",
   66: "Крысиный хвост",
@@ -730,7 +730,13 @@ const SettlementStorage = observer(() => {
     }
     return 'member';
   }, [guild.guildData]);
+
+  // Проверка наличия улучшения "Гильдейский посланник" (только для отображения и будущего использования)
+  const hasMessenger = useMemo(() => {
+    return playerData?.upgrades?.includes("Гильдейский посланник") || false;
+  }, [playerData]);
   
+  // FIXED: Право забирать ресурсы – только офицеры и лидер (посланник не даёт этого права)
   const canTakeResources = useMemo(() => {
     return playerRole === 'leader' || playerRole === 'officer';
   }, [playerRole]);
@@ -1118,6 +1124,13 @@ const SettlementStorage = observer(() => {
                     {safeToString(isLeader ? "Лидер гильдии" : "Офицер гильдии")}
                   </Badge>
                 )}
+                {/* Значок для посланника (только информация) */}
+                {hasMessenger && !isOfficerOrLeader && (
+                  <Badge bg="success" className="ms-2">
+                    <i className="fas fa-crown me-1"></i>
+                    Гильдейский посланник
+                  </Badge>
+                )}
               </div>
             </div>
             <div className="d-flex gap-2">
@@ -1300,6 +1313,7 @@ const SettlementStorage = observer(() => {
             </Col>
           </Row>
           
+          {/* Информационные сообщения о доступе */}
           {!canTakeResources && (
             <Alert variant="warning" className="fantasy-alert mb-3">
               <i className="fas fa-exclamation-triangle me-2"></i>
@@ -1307,12 +1321,20 @@ const SettlementStorage = observer(() => {
               Только офицеры и лидер гильдии могут забирать ресурсы со склада.
             </Alert>
           )}
-          
+
           {isOfficerOrLeader && (
             <Alert variant="info" className="fantasy-alert mb-3">
               <i className="fas fa-info-circle me-2"></i>
               Ваша роль: <Badge bg={isLeader ? "danger" : "warning"}>{safeToString(isLeader ? "Лидер гильдии" : "Офицер гильдии")}</Badge>. 
               Вы можете забирать ресурсы со склада.
+            </Alert>
+          )}
+
+          {hasMessenger && !isOfficerOrLeader && (
+            <Alert variant="success" className="fantasy-alert mb-3">
+              <i className="fas fa-check-circle me-2"></i>
+              У вас есть улучшение <Badge bg="success">«Гильдейский посланник»</Badge>. 
+              Оно позволяет взаимодействовать со складом из любой локации (если вы не в бою).
             </Alert>
           )}
           

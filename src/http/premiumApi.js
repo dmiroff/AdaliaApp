@@ -1,12 +1,16 @@
 import apiClient from "./apiClient";
 
-export const premiumPurchase = async (productId, durationDays = null, quantity = 1) => {
+export const premiumPurchase = async (productId, durationDays = null, quantity = 1, extraData = {}) => {
   try {
     const requestData = {
       product_id: productId,
       ...(durationDays && { duration_days: durationDays }),
       ...(quantity && quantity > 1 && { quantity: quantity })
     };
+    // Добавляем custom_request, если он передан
+    if (extraData.custom_request) {
+      requestData.custom_request = extraData.custom_request;
+    }
 
     const response = await apiClient.post(`/premium-purchase`, requestData);
     return response.data;
@@ -46,6 +50,7 @@ export const premiumPurchase = async (productId, durationDays = null, quantity =
   }
 };
 
+// Остальные функции (fetchPlayerData, checkPremiumStatus, getPremiumProducts, createPaymentOrder, checkPaymentStatus) остаются без изменений
 export const fetchPlayerData = async () => {
   try {
     const response = await apiClient.get(`/player/data`);
@@ -56,7 +61,6 @@ export const fetchPlayerData = async () => {
   }
 };
 
-// Дополнительные методы для работы с премиумом
 export const checkPremiumStatus = async () => {
   try {
     const response = await apiClient.get(`/premium/status`);
@@ -77,16 +81,7 @@ export const getPremiumProducts = async () => {
   }
 };
 
-
-/**
- * Создание заказа перед оплатой через Т-Кассу
- * @param {number} amount - сумма пополнения в далеонах (рублях)
- * @param {string} returnUrl - URL для возврата после оплаты (страница магазина)
- * @param {string} email - email пользователя (обязателен для чека)
- * @param {string} phone - телефон пользователя (опционально)
- * @returns {Promise<{order_id: string, payment_url: string}>}
- */
- export const createPaymentOrder = async (amount, returnUrl, email, phone = '') => {
+export const createPaymentOrder = async (amount, returnUrl, email, phone = '') => {
   const { data } = await apiClient.post('/payment/create', {
     amount,
     return_url: returnUrl,
@@ -96,11 +91,6 @@ export const getPremiumProducts = async () => {
   return data;
 };
 
-/**
- * Проверка статуса платежа по его идентификатору (order_id)
- * @param {string} paymentId - идентификатор платежа (order_id)
- * @returns {Promise<{status: string, amount: number, tinkoff_status?: string}>}
- */
 export const checkPaymentStatus = async (paymentId) => {
   try {
     const response = await apiClient.get(`/payment/status/${paymentId}`);
