@@ -19,6 +19,8 @@ const DonationTab = observer(() => {
   const [loading, setLoading] = useState(true);
   const [delay, setDelay] = useState(false);
   const [quantity, setQuantity] = useState(1);
+  // NEW: состояние для текста заказа (арт / анимированный образ)
+  const [customRequest, setCustomRequest] = useState("");
 
   // Состояния для пополнения
   const [showTopUpModal, setShowTopUpModal] = useState(false);
@@ -100,7 +102,7 @@ const DonationTab = observer(() => {
     }
   }, [pendingPaymentId, fetchPlayer, user]);
 
-  // Список донатных товаров (полная версия)
+  // NEW: Обновлённый список товаров с двумя новыми позициями (арт на заказ и анимированный образ)
   const donationProducts = [
     {
       id: 1,
@@ -164,28 +166,89 @@ const DonationTab = observer(() => {
       features: ["Автоматический сбор тайников и разделка"],
       purchased: playerData?.upgrades?.includes("Глаз добытчика") || false,
       type: "permanent"
+    },
+    {
+      id: 7,
+      name: "🏰 Гильдейский посланник",
+      description: "Взаимодействие с замком/поселением из любой локации",
+      price: 2000,
+      currency: "💎",
+      features: ["Взаимодействие с замком/поселением из любой локации"],
+      purchased: playerData?.upgrades?.includes("Гильдейский посланник") || false,
+      type: "permanent"
+    },
+    // NEW: Арт персонажа на заказ (требует описания)
+    {
+      id: 8,
+      name: "🎨 Арт персонажа на заказ",
+      description: "Уникальный арт вашего персонажа, созданный художником",
+      price: 1500,
+      currency: "💎",
+      features: ["Индивидуальный арт персонажа"],
+      purchased: false,
+      type: "custom",
+      requiresSelection: true,
+      selectionPlaceholder: "Опишите вашего персонажа: расу, пол, класс, одежду, позу, фон, детали...",
+      selectionMinLength: 20
+    },
+    // NEW: Анимированный образ персонажа
+    {
+      id: 9,
+      name: "✨ Анимированный образ персонажа",
+      description: "Живой анимированный портрет вашего персонажа с эффектами",
+      price: 3000,
+      currency: "💎",
+      features: ["Анимированный образ", "Уникальные эффекты"],
+      purchased: false,
+      type: "custom",
+      requiresSelection: true,
+      selectionPlaceholder: "Опишите желаемый образ для анимации: внешность, одежда, анимации, эффекты...",
+      selectionMinLength: 20
     }
   ];
 
   const handlePurchaseClick = (product) => {
     setSelectedProduct(product);
     setQuantity(1);
+    setCustomRequest(""); // NEW: сбрасываем предыдущий запрос
     setShowConfirmModal(true);
     setError("");
   };
 
+  // NEW: Обновлённая функция подтверждения покупки с поддержкой extra данных
   const handleConfirmPurchase = async () => {
     try {
+      // Валидация для товаров с описанием
+      if (selectedProduct.requiresSelection) {
+        const minLength = selectedProduct.selectionMinLength || 10;
+        if (!customRequest || customRequest.trim().length < minLength) {
+          setError(`Пожалуйста, введите описание (минимум ${minLength} символов)`);
+          return;
+        }
+      }
+
+      // Формируем дополнительные данные, если нужно
+      const extraData = selectedProduct.requiresSelection 
+        ? { custom_request: customRequest.trim() } 
+        : {};
+
+      // Вызов API (предполагается, что premiumPurchase теперь поддерживает четвёртый параметр extraData)
       const result = await premiumPurchase(
         selectedProduct.id,
         selectedProduct.type === "premium" ? selectedProduct.duration_days : null,
-        selectedProduct.type === "consumable" ? quantity : undefined
+        selectedProduct.type === "consumable" ? quantity : undefined,
+        extraData   // NEW: передаём описание для кастомных заказов
       );
 
       if (result.status === 200) {
-        const message = selectedProduct.type === "consumable" 
-          ? `Покупка "${selectedProduct.name}" x${quantity} успешна!`
-          : `Покупка "${selectedProduct.name}" успешна!`;
+        let message = "";
+        if (selectedProduct.type === "consumable") {
+          message = `Покупка "${selectedProduct.name}" x${quantity} успешна!`;
+        } else if (selectedProduct.requiresSelection) {
+          message = `Заказ "${selectedProduct.name}" отправлен! Администратор свяжется с вами.`;
+        } else {
+          message = `Покупка "${selectedProduct.name}" успешна!`;
+        }
         setSuccess(message);
         
         if (user.updatePlayerData) user.updatePlayerData();
@@ -202,6 +265,7 @@ const DonationTab = observer(() => {
 
     setShowConfirmModal(false);
     setSelectedProduct(null);
+    setCustomRequest(""); // NEW: очищаем
     
     setTimeout(() => {
       setSuccess("");
@@ -316,7 +380,6 @@ const DonationTab = observer(() => {
                 ⭐ Пожинатель активен
               </Badge>
             )}
-            {/* ИСПРАВЛЕНО: убран variant, добавлены классы fantasy-btn fantasy-btn-gold */}
             <Button
               className="fantasy-btn fantasy-btn-gold"
               onClick={() => setShowTopUpModal(true)}
@@ -331,6 +394,7 @@ const DonationTab = observer(() => {
       {/* Список товаров */}
       <Row>
         {donationProducts.map((product) => {
+          // Для постоянных улучшений проверяем, куплено ли
           const isPurchased = product.type === "permanent" ? product.purchased : false;
           const isDisabled = isPurchased || (playerData?.daleons || 0) < product.price;
           
@@ -348,6 +412,12 @@ const DonationTab = observer(() => {
                     {product.type === "premium" && isPremiumActive && (
                       <Badge bg="info" className="mb-2">
                         ⭐ Активен
+                      </Badge>
+                    )}
+                    {/* NEW: для кастомных товаров можно добавить значок */}
+                    {product.requiresSelection && (
+                      <Badge bg="warning" className="mb-2">
+                        ✨ На заказ
                       </Badge>
                     )}
                   </div>
@@ -391,9 +461,11 @@ const DonationTab = observer(() => {
                         ? 'Приобретено' 
                         : (playerData?.daleons || 0) < product.price 
                           ? 'Недостаточно средств'
-                          : product.type === "consumable"
-                            ? 'Купить'
-                            : 'Приобрести'
+                          : product.requiresSelection
+                            ? 'Оформить заказ'
+                            : product.type === "consumable"
+                              ? 'Купить'
+                              : 'Приобрести'
                       }
                     </Button>
                   </div>
@@ -407,12 +479,19 @@ const DonationTab = observer(() => {
       {/* Модальное окно подтверждения покупки (товары) */}
       <Modal 
         show={showConfirmModal} 
-        onHide={() => setShowConfirmModal(false)}
+        onHide={() => {
+          setShowConfirmModal(false);
+          setSelectedProduct(null);
+          setCustomRequest("");
+        }}
         centered
         className="fantasy-modal"
+        size={selectedProduct?.requiresSelection ? "lg" : "md"} // NEW: для заказов окно побольше
       >
         <Modal.Header closeButton className="fantasy-card-header fantasy-card-header-primary">
-          <Modal.Title className="fantasy-text-gold">Подтверждение покупки</Modal.Title>
+          <Modal.Title className="fantasy-text-gold">
+            {selectedProduct?.requiresSelection ? 'Оформление заказа' : 'Подтверждение покупки'}
+          </Modal.Title>
         </Modal.Header>
         <Modal.Body className="fantasy-modal-body">
           {selectedProduct && (
@@ -420,7 +499,38 @@ const DonationTab = observer(() => {
               <h4 className="fantasy-text-primary mb-3">{selectedProduct.name}</h4>
               <p className="fantasy-text-dark">{selectedProduct.description}</p>
               
-              {selectedProduct.type === "consumable" && (
+              {/* NEW: Поле ввода описания для кастомных товаров */}
+              {selectedProduct.requiresSelection && (
+                <div className="my-4">
+                  <Form.Group>
+                    <Form.Label className="fantasy-text-dark">
+                      <strong>Опишите ваш заказ:</strong>
+                    </Form.Label>
+                    <Form.Control
+                      as="textarea"
+                      rows={5}
+                      value={customRequest}
+                      onChange={(e) => setCustomRequest(e.target.value)}
+                      placeholder={selectedProduct.selectionPlaceholder || "Введите описание..."}
+                      className="fantasy-textarea"
+                    />
+                    <Form.Text className="fantasy-text-muted">
+                      Минимум {selectedProduct.selectionMinLength || 10} символов. 
+                      Чем подробнее описание, тем лучше художник поймёт вашу идею.
+                    </Form.Text>
+                  </Form.Group>
+                  {customRequest && customRequest.length < (selectedProduct.selectionMinLength || 10) && (
+                    <Alert variant="warning" className="mt-2 fantasy-alert">
+                      <small>
+                        Осталось { (selectedProduct.selectionMinLength || 10) - customRequest.length } символов
+                      </small>
+                    </Alert>
+                  )}
+                </div>
+              )}
+              
+              {/* Выбор количества для consumable (не для кастомных) */}
+              {selectedProduct.type === "consumable" && !selectedProduct.requiresSelection && (
                 <div className="my-4">
                   <Form.Label className="fantasy-text-dark">Количество:</Form.Label>
                   <div className="d-flex align-items-center justify-content-center">
@@ -460,12 +570,12 @@ const DonationTab = observer(() => {
               
               <div className="fantasy-price-display mb-3">
                 <span className="fantasy-text-gold fs-2 fw-bold">
-                  {selectedProduct.type === "consumable" 
+                  {selectedProduct.type === "consumable" && !selectedProduct.requiresSelection
                     ? `${formatPrice(calculateTotalPrice(), selectedProduct.currency)} (${quantity} шт.)`
                     : formatPrice(selectedProduct.price, selectedProduct.currency)
                   }
                 </span>
-                {selectedProduct.type === "consumable" && (
+                {selectedProduct.type === "consumable" && !selectedProduct.requiresSelection && (
                   <div className="mt-1">
                     <small className="fantasy-text-muted">
                       {selectedProduct.price} 💎 за штуку
@@ -476,9 +586,14 @@ const DonationTab = observer(() => {
               
               <Alert variant="info" className="fantasy-alert">
                 <small>
-                  С вашего счета будет списано {selectedProduct.type === "consumable" 
-                    ? calculateTotalPrice() 
-                    : selectedProduct.price} далеонов
+                  {selectedProduct.requiresSelection
+                    ? 'После подтверждения заявка будет отправлена администратору. С вашего счета будет списана указанная сумма.'
+                    : `С вашего счета будет списано ${
+                        selectedProduct.type === "consumable" && !selectedProduct.requiresSelection
+                          ? calculateTotalPrice()
+                          : selectedProduct.price
+                      } далеонов`
+                  }
                 </small>
               </Alert>
             </div>
@@ -487,18 +602,30 @@ const DonationTab = observer(() => {
         <Modal.Footer className="fantasy-modal-footer">
           <Button 
             className="fantasy-btn fantasy-btn-secondary"
-            onClick={() => setShowConfirmModal(false)}
+            onClick={() => {
+              setShowConfirmModal(false);
+              setSelectedProduct(null);
+              setCustomRequest("");
+            }}
           >
             Отмена
           </Button>
           <Button 
             className="fantasy-btn fantasy-btn-gold"
             onClick={handleConfirmPurchase}
-            disabled={selectedProduct?.type === "consumable" && (playerData?.daleons || 0) < calculateTotalPrice()}
+            disabled={
+              selectedProduct?.type === "consumable" && !selectedProduct.requiresSelection
+                ? (playerData?.daleons || 0) < calculateTotalPrice()
+                : selectedProduct?.requiresSelection
+                ? !customRequest || customRequest.length < (selectedProduct.selectionMinLength || 10)
+                : (playerData?.daleons || 0) < (selectedProduct?.price || 0)
+            }
           >
-            {selectedProduct?.type === "consumable" 
-              ? `Купить ${quantity} шт.`
-              : 'Подтвердить покупку'
+            {selectedProduct?.requiresSelection
+              ? 'Отправить заявку'
+              : selectedProduct?.type === "consumable"
+                ? `Купить ${quantity} шт.`
+                : 'Подтвердить покупку'
             }
           </Button>
         </Modal.Footer>
