@@ -2864,3 +2864,13 @@ html body .birzha-btn:hover {
   opacity: 0.6;
   cursor: not-allowed;
 }
+
+.settlement-main-tabs .nav-link {
+  transition: all 0.3s ease; /* плавность изменения цвета и тени */
+}
+
+.settlement-main-tabs .nav-link:hover {
+  transform: none !important; /* убираем сдвиг */
+  /* при желании можно оставить тень и изменение цвета */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
