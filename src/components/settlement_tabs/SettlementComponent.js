@@ -107,13 +107,13 @@ const SettlementComponent = observer(() => {
         console.log('  - settlement.settlementData:', settlement.settlementData);
     }, [guild.hasGuild, guild.guildData?.id, isLoading, settlementData, error, settlement.settlementData]);
 
-    // Если данные гильдии еще загружаются
+    // Если данные гильдии еще загружаются (ID ещё не известен)
     if (guild.guildData?.id === undefined || guild.guildData?.id === null) {
         return (
             <Card className="fantasy-card">
                 <Card.Body className="text-center py-5">
                     <Spinner animation="border" variant="primary" />
-                    <p className="mt-3 fantasy-text-muted">Проверка наличия гильдии...</p>
+                    <p className="mt-3 fantasy-text-muted">Загрузка данных гильдии...</p>
                 </Card.Body>
             </Card>
         );
