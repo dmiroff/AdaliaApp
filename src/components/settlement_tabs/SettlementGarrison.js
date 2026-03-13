@@ -1218,7 +1218,7 @@ const SettlementGarrison = observer(() => {
                                 <i className="fas fa-users me-2"></i>
                                 Спутники
                             </h5>
-                            <div className="fantasy-text-muted mt-1">
+                            <div className="fantasy-text-gold mt-1">
                                 Размер отряда: <Badge bg={remainingSlots > 0 ? "success" : "danger"}>
                                     {currentPartyCount}/{maxPartySize}
                                 </Badge>
@@ -1228,7 +1228,7 @@ const SettlementGarrison = observer(() => {
                                     </span>
                                 )}
                                 <br />
-                                <small className="text-muted">
+                                <small className="fantasy-text-gold">
                                     Вес отряда: {currentPartyWeight}
                                 </small>
                             </div>
