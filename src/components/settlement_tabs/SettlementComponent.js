@@ -68,7 +68,7 @@ const SettlementComponent = observer(() => {
     useEffect(() => {
         console.log('🔍 Effect: Проверяем условия для загрузки данных поселения');
         console.log('  - guild.hasGuild:', guild.hasGuild);
-        console.log('  - guild.guildData?.id:', guild.guildData?.id);
+        console.log('  - guild.guildData?.id:', guild.guildData.id);
         console.log('  - isInitialLoad:', isInitialLoad);
         console.log('  - isLoading:', isLoading);
         
@@ -108,8 +108,7 @@ const SettlementComponent = observer(() => {
     }, [guild.hasGuild, guild.guildData?.id, isLoading, settlementData, error, settlement.settlementData]);
 
     // Если данные гильдии еще загружаются
-    if (!guild.hasGuild && !guild.guildData?.id) {
-        console.log(guild.guildData.id)
+    if (guild.guildData?.id === undefined || guild.guildData?.id === null) {
         return (
             <Card className="fantasy-card">
                 <Card.Body className="text-center py-5">
