@@ -2795,8 +2795,6 @@ html body .birzha-btn:hover {
 .fantasy-btn-warning { background: var(--color-danger-lighter) !important; }
 .fantasy-btn-danger { background: linear-gradient(135deg, var(--color-danger-dark) 0%, var(--color-danger) 100%) !important; }
 
-
-
 .dungeon-card {
   cursor: pointer;
   transition: all 0.3s;
@@ -2804,13 +2802,13 @@ html body .birzha-btn:hover {
 }
 
 .dungeon-card:hover {
-  border-color: #fbbf24;
+  border-color: var(--color-accent-bronze-lighter);
   transform: translateY(-2px);
 }
 
 .selected-dungeon {
-  border-color: #4299e1 !important;
-  background-color: rgba(66, 153, 225, 0.1);
+  border-color: var(--color-bg-dark) !important;
+  background-color: var(--color-accent-bronze-light);
 }
 
 .dungeon-select {

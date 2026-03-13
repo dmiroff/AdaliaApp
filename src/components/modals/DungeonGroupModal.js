@@ -191,23 +191,23 @@ const DungeonGroupModal = ({
                 <Card.Body>
                   <Row className="text-center">
                     <Col xs={6}>
-                      <div className="text-muted small">Игроков:</div>
-                      <div className="text-dark fs-5">{selectedPlayers.length}</div>
+                      <div className="fantasy-text-dark small">Игроков:</div>
+                      <div className="fantasy-text-dark fs-5">{selectedPlayers.length}</div>
                     </Col>
                     <Col xs={6}>
-                      <div className="text-muted small">Ср. уровень:</div>
-                      <div className="text-dark fs-5">{calculateAverageLevel()}</div>
+                      <div className="fantasy-text-dark small">Ср. уровень:</div>
+                      <div className="fantasy-text-dark fs-5">{calculateAverageLevel()}</div>
                     </Col>
                   </Row>
                   <hr className="bg-secondary" />
                   <div className="text-center">
-                    <div className="text-muted small">Подземелье:</div>
-                    <div className="text-light">
-                      <i className="fas fa-dungeon me-2"></i>
+                    <div className="fantasy-text-dark small">Подземелье:</div>
+                    <div className="fantasy-text-dark">
+                      <i className="fantasy-text-dark fa-dungeon me-2"></i>
                       {selectedDungeon ? selectedDungeon.name : 'Будет выбрано случайное'}
                     </div>
                     <div className="small text-info mt-1">
-                      <i className="fas fa-info-circle me-1"></i>
+                      <i className="fantasy-text-gold me-1"></i>
                       Сложность и время будут определены автоматически
                     </div>
                   </div>
