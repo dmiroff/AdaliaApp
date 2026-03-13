@@ -192,11 +192,11 @@ const DungeonGroupModal = ({
                   <Row className="text-center">
                     <Col xs={6}>
                       <div className="text-muted small">Игроков:</div>
-                      <div className="text-light fs-5">{selectedPlayers.length}</div>
+                      <div className="text-dark fs-5">{selectedPlayers.length}</div>
                     </Col>
                     <Col xs={6}>
                       <div className="text-muted small">Ср. уровень:</div>
-                      <div className="text-light fs-5">{calculateAverageLevel()}</div>
+                      <div className="text-dark fs-5">{calculateAverageLevel()}</div>
                     </Col>
                   </Row>
                   <hr className="bg-secondary" />
