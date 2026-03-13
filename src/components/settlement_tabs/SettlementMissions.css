@@ -235,3 +235,22 @@
 .fantasy-list-item:hover {
   background-color: #4a5568;
 }
+
+.member-item {
+  cursor: pointer;
+  border-radius: 5px;
+  margin-bottom: 5px;
+  border: 1px solid transparent;
+  transition: all 0.2s;
+}
+.member-item:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+.member-item.selected {
+  background-color: rgba(13, 110, 253, 0.2);
+  border-color: #0d6efd;
+}
+.member-item.in-dungeon {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

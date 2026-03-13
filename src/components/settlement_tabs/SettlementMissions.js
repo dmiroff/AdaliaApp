@@ -608,7 +608,7 @@ const SettlementMissions = observer(() => {
               🏗️
             </div>
             <h5 className="fantasy-text-gold">Дозорная башня не построена</h5>
-            <p className="fantasy-text-muted">
+            <p className="fantasy-text-gold">
               Постройте Дозорную башню, чтобы отправлять группы в подземелья
               и исследовать окрестности
             </p>
@@ -650,7 +650,7 @@ const SettlementMissions = observer(() => {
                 <i className="fas fa-tower-observation me-2"></i>
                 {towerName} (Уровень {towerLevel})
               </h5>
-              <div className="fantasy-text-muted mt-1">
+              <div className="fantasy-text-gold mt-1">
                 Дозорная башня позволяет отправлять миссии
                 {!canStartMissions && (
                   <span className="ms-2 text-warning">
