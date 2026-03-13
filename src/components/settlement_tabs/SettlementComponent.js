@@ -20,9 +20,14 @@ const SettlementComponent = observer(() => {
     const [error, setError] = useState(null);
     const [isInitialLoad, setIsInitialLoad] = useState(true);
 
+    // Вспомогательная функция для проверки наличия ID гильдии (допускает 0)
+    const hasGuildId = () => {
+        return guild.guildData?.id != null; // true для 0, false для null/undefined
+    };
+
     // Функция загрузки данных поселения
     const loadSettlementData = async () => {
-        if (!guild.guildData?.id) {
+        if (!hasGuildId()) {
             setError('ID гильдии не найден');
             setIsLoading(false);
             return;
@@ -35,13 +40,11 @@ const SettlementComponent = observer(() => {
             console.log('🔄 Загружаем данные поселения для гильдии ID:', guild.guildData.id);
             await settlement.fetchSettlementData(guild.guildData.id);
             
-            // Проверяем, получили ли мы данные
             if (settlement.settlementData) {
                 console.log('✅ Данные поселения загружены:', settlement.settlementData);
                 setSettlementData(settlement.settlementData);
             } else {
                 console.log('⚠️ Данные поселения пустые');
-                // Создаем базовую структуру данных для нового поселения
                 const baseSettlementData = {
                     level: 1,
                     type: 'new_settlement',
@@ -70,15 +73,14 @@ const SettlementComponent = observer(() => {
         console.log('🔍 Effect: Проверяем условия для загрузки данных поселения');
         console.log('  - guild.hasGuild:', guild.hasGuild);
         console.log('  - guild.guildData?.id:', guild.guildData?.id);
+        console.log('  - hasGuildId():', hasGuildId());
         console.log('  - isInitialLoad:', isInitialLoad);
-        console.log('  - isLoading:', isLoading);
         
-        // Убираем зависимость от guild.isInitialized, используем факт наличия данных гильдии
-        if (guild.hasGuild && guild.guildData?.id && isInitialLoad) {
+        if (guild.hasGuild && hasGuildId() && isInitialLoad) {
             console.log('🚀 Начинаем загрузку данных поселения...');
             loadSettlementData();
         }
-    }, [guild.hasGuild, guild.guildData?.id, isInitialLoad]);
+    }, [guild.hasGuild, guild.guildData?.id, isInitialLoad]); // зависимость от id (включая 0) остаётся
 
     // Также слушаем изменения в сторе поселения
     useEffect(() => {
@@ -99,14 +101,14 @@ const SettlementComponent = observer(() => {
         console.log('🔍 SettlementComponent состояние обновлено:');
         console.log('  - guild.hasGuild:', guild.hasGuild);
         console.log('  - guild.guildData?.id:', guild.guildData?.id);
+        console.log('  - hasGuildId():', hasGuildId());
         console.log('  - isLoading:', isLoading);
         console.log('  - settlementData:', settlementData);
         console.log('  - error:', error);
-        console.log('  - settlement.settlementData:', settlement.settlementData);
-    }, [guild.hasGuild, guild.guildData?.id, isLoading, settlementData, error, settlement.settlementData]);
+    }, [guild.hasGuild, guild.guildData?.id, isLoading, settlementData, error]);
 
-    // Если данные гильдии еще загружаются
-    if (!guild.hasGuild && !guild.guildData?.id) {
+    // Если данные гильдии еще загружаются (нет ни hasGuild, ни id)
+    if (!guild.hasGuild && !hasGuildId()) {
         return (
             <Card className="fantasy-card">
                 <Card.Body className="text-center py-5">
@@ -117,13 +119,25 @@ const SettlementComponent = observer(() => {
         );
     }
 
-    // Если у пользователя нет гильдии
-    if (!guild.hasGuild || !guild.guildData?.id) {
+    // Если у пользователя нет гильдии (hasGuild === false и id отсутствует)
+    if (!guild.hasGuild && !hasGuildId()) {
         return (
             <Alert variant="warning" className="mt-3">
                 <i className="fas fa-exclamation-triangle me-2"></i>
                 У вас нет гильдии. Для управления поселением необходимо состоять в гильдии.
             </Alert>
+        );
+    }
+
+    // Если есть hasGuild, но id всё ещё нет (не должно происходить, но на всякий случай)
+    if (guild.hasGuild && !hasGuildId()) {
+        return (
+            <Card className="fantasy-card">
+                <Card.Body className="text-center py-5">
+                    <Spinner animation="border" variant="primary" />
+                    <p className="mt-3 fantasy-text-muted">Загрузка идентификатора гильдии...</p>
+                </Card.Body>
+            </Card>
         );
     }
 
@@ -230,7 +244,7 @@ const SettlementComponent = observer(() => {
                             <Tab.Pane eventKey="overview">
                                 <SettlementOverview 
                                     settlementData={currentSettlementData}
-                                    guildId={guild.guildData.id}
+                                    guildId={guild.guildData.id} // здесь id точно есть, т.к. прошли проверки
                                     onRefresh={handleRefresh}
                                     isLoading={isLoading}
                                 />
