@@ -120,7 +120,7 @@ const SettlementComponent = observer(() => {
     }
 
     // Если у пользователя нет гильдии
-    if (!guild.hasGuild || !guild.guildData?.id) {
+    if (!guild.hasGuild || !guild.guildData) {
         return (
             <Alert variant="warning" className="mt-3">
                 <i className="fas fa-exclamation-triangle me-2"></i>
