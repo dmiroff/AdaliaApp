@@ -1,5 +1,5 @@
 import { Modal, Button, Alert, Badge, Card, Spinner } from 'react-bootstrap';
-import './SettlementMissions.css'; // если классы определены там, иначе импортируйте свой CSS
+import '../settlement_tabs/SettlementMissions.css'; // если классы определены там, иначе импортируйте свой CSS
 
 const DungeonGroupModal = ({
   show,
