@@ -109,6 +109,7 @@ const SettlementComponent = observer(() => {
 
     // Если данные гильдии еще загружаются
     if (!guild.hasGuild && !guild.guildData?.id) {
+        console.log(guild.guildData.id)
         return (
             <Card className="fantasy-card">
                 <Card.Body className="text-center py-5">
