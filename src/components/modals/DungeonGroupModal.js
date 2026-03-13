@@ -126,8 +126,8 @@ const DungeonGroupModal = ({
                 >
                   <div>
                     <strong className="text-light">{member.name}</strong>
-                    <div className="small text-muted">
-                      Уровень {member.level || 1} • {member.class || 'Adventurer'}
+                    <div className="small fantasy-text-gold">
+                      Уровень {member.level || 1} • {member.class || 'Странник'}
                       {isInDungeon && (
                         <Badge bg="danger" className="ms-2 fantasy-badge">
                           В данже
