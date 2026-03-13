@@ -20,14 +20,10 @@ const SettlementComponent = observer(() => {
     const [error, setError] = useState(null);
     const [isInitialLoad, setIsInitialLoad] = useState(true);
 
-    // Вспомогательная функция для проверки наличия ID гильдии (допускает 0)
-    const hasGuildId = () => {
-        return guild.guildData?.id != null; // true для 0, false для null/undefined
-    };
-
     // Функция загрузки данных поселения
     const loadSettlementData = async () => {
-        if (!hasGuildId()) {
+        // Явная проверка на отсутствие id (undefined или null), 0 считается валидным
+        if (!guild.guildData || guild.guildData.id === undefined || guild.guildData.id === null) {
             setError('ID гильдии не найден');
             setIsLoading(false);
             return;
@@ -73,14 +69,18 @@ const SettlementComponent = observer(() => {
         console.log('🔍 Effect: Проверяем условия для загрузки данных поселения');
         console.log('  - guild.hasGuild:', guild.hasGuild);
         console.log('  - guild.guildData?.id:', guild.guildData?.id);
-        console.log('  - hasGuildId():', hasGuildId());
         console.log('  - isInitialLoad:', isInitialLoad);
+        console.log('  - isLoading:', isLoading);
         
-        if (guild.hasGuild && hasGuildId() && isInitialLoad) {
+        // Явная проверка на существование id (даже если он равен 0)
+        if (guild.hasGuild && 
+            guild.guildData?.id !== undefined && 
+            guild.guildData?.id !== null && 
+            isInitialLoad) {
             console.log('🚀 Начинаем загрузку данных поселения...');
             loadSettlementData();
         }
-    }, [guild.hasGuild, guild.guildData?.id, isInitialLoad]); // зависимость от id (включая 0) остаётся
+    }, [guild.hasGuild, guild.guildData?.id, isInitialLoad]);
 
     // Также слушаем изменения в сторе поселения
     useEffect(() => {
@@ -101,14 +101,14 @@ const SettlementComponent = observer(() => {
         console.log('🔍 SettlementComponent состояние обновлено:');
         console.log('  - guild.hasGuild:', guild.hasGuild);
         console.log('  - guild.guildData?.id:', guild.guildData?.id);
-        console.log('  - hasGuildId():', hasGuildId());
         console.log('  - isLoading:', isLoading);
         console.log('  - settlementData:', settlementData);
         console.log('  - error:', error);
-    }, [guild.hasGuild, guild.guildData?.id, isLoading, settlementData, error]);
+        console.log('  - settlement.settlementData:', settlement.settlementData);
+    }, [guild.hasGuild, guild.guildData?.id, isLoading, settlementData, error, settlement.settlementData]);
 
-    // Если данные гильдии еще загружаются (нет ни hasGuild, ни id)
-    if (!guild.hasGuild && !hasGuildId()) {
+    // Если данные гильдии еще загружаются
+    if (!guild.hasGuild && !guild.guildData?.id) {
         return (
             <Card className="fantasy-card">
                 <Card.Body className="text-center py-5">
@@ -119,25 +119,13 @@ const SettlementComponent = observer(() => {
         );
     }
 
-    // Если у пользователя нет гильдии (hasGuild === false и id отсутствует)
-    if (!guild.hasGuild && !hasGuildId()) {
+    // Если у пользователя нет гильдии
+    if (!guild.hasGuild || !guild.guildData?.id) {
         return (
             <Alert variant="warning" className="mt-3">
                 <i className="fas fa-exclamation-triangle me-2"></i>
                 У вас нет гильдии. Для управления поселением необходимо состоять в гильдии.
             </Alert>
-        );
-    }
-
-    // Если есть hasGuild, но id всё ещё нет (не должно происходить, но на всякий случай)
-    if (guild.hasGuild && !hasGuildId()) {
-        return (
-            <Card className="fantasy-card">
-                <Card.Body className="text-center py-5">
-                    <Spinner animation="border" variant="primary" />
-                    <p className="mt-3 fantasy-text-muted">Загрузка идентификатора гильдии...</p>
-                </Card.Body>
-            </Card>
         );
     }
 
@@ -185,7 +173,6 @@ const SettlementComponent = observer(() => {
 
     return (
         <div className="settlement-container">
-            {/* Основные вкладки */}
             <Tab.Container activeKey={settlement.activeTab} onSelect={(k) => settlement.setActiveTab(k)}>
                 <Card className="fantasy-card">
                     <Card.Header className="fantasy-card-header">
@@ -244,7 +231,7 @@ const SettlementComponent = observer(() => {
                             <Tab.Pane eventKey="overview">
                                 <SettlementOverview 
                                     settlementData={currentSettlementData}
-                                    guildId={guild.guildData.id} // здесь id точно есть, т.к. прошли проверки
+                                    guildId={guild.guildData.id}
                                     onRefresh={handleRefresh}
                                     isLoading={isLoading}
                                 />
@@ -292,7 +279,6 @@ const SettlementComponent = observer(() => {
                 </Card>
             </Tab.Container>
 
-            {/* Модальные окна */}
             {settlement.modal.type === 'construction' && (
                 <SettlementConstructionModal />
             )}
@@ -303,7 +289,6 @@ const SettlementComponent = observer(() => {
     );
 });
 
-// Вспомогательная функция для преобразования типа поселения
 const getSettlementTypeName = (type) => {
     const typeMap = {
         'new_settlement': 'Новое поселение',
@@ -315,7 +300,6 @@ const getSettlementTypeName = (type) => {
         'outpost': 'Аванпост',
         'castle': 'Замок'
     };
-    
     return typeMap[type] || type || 'Не указан';
 };
 
