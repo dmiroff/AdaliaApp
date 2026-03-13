@@ -423,7 +423,7 @@ export const takeResource = async (guildId, playerId, resourceId, quantity) => {
     if (error.response?.status === 404) {
       return {
         status: 404,
-        message: "Ресурс не найден на складе",
+        message: response.data.message || "Ресурс не найден на складе",
         data: null
       };
     }
@@ -431,7 +431,7 @@ export const takeResource = async (guildId, playerId, resourceId, quantity) => {
     if (error.response?.status === 403) {
       return {
         status: 403,
-        message: "У вас недостаточно прав для забора ресурсов",
+        message: response.data.message || "У вас недостаточно прав для забора ресурсов",
         data: null
       };
     }
@@ -439,7 +439,7 @@ export const takeResource = async (guildId, playerId, resourceId, quantity) => {
     if (error.response?.status === 400) {
       return {
         status: 400,
-        message: "Некорректный запрос",
+        message: response.data.message || "Некорректный запрос",
         data: null
       };
     }
@@ -447,7 +447,7 @@ export const takeResource = async (guildId, playerId, resourceId, quantity) => {
     if (error.response?.status === 422) {
       return {
         status: 422,
-        message: "Ошибка валидации данных",
+        message: response.data.message || "Ошибка валидации данных",
         data: null
       };
     }
