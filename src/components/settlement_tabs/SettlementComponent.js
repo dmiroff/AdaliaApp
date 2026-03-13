@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { Container, Row, Col, Card, Spinner, Alert, Tab, Nav } from 'react-bootstrap';
+import { Card, Spinner, Alert, Tab, Nav } from 'react-bootstrap';
 import { observer } from "mobx-react-lite";
 import { Context } from "../../index";
 import SettlementOverview from './SettlementOverview';
@@ -15,100 +15,110 @@ import './SettlementComponent.css';
 
 const SettlementComponent = observer(() => {
     const { guild, settlement } = useContext(Context);
-    const [isLoading, setIsLoading] = useState(true);
-    const [settlementData, setSettlementData] = useState(null);
-    const [error, setError] = useState(null);
-    const [isInitialLoad, setIsInitialLoad] = useState(true);
+    const [localSettlementData, setLocalSettlementData] = useState(null);
+    const [localError, setLocalError] = useState(null);
+    const [isLoadingSettlement, setIsLoadingSettlement] = useState(false);
+    const [hasAttemptedLoad, setHasAttemptedLoad] = useState(false);
 
     // Функция загрузки данных поселения
     const loadSettlementData = async () => {
-        // Явная проверка на отсутствие id (undefined или null), 0 считается валидным
+        // Проверяем, что guildData существует и имеет id (даже 0)
         if (!guild.guildData || guild.guildData.id === undefined || guild.guildData.id === null) {
-            setError('ID гильдии не найден');
-            setIsLoading(false);
+            setLocalError('ID гильдии не найден');
+            setIsLoadingSettlement(false);
             return;
         }
 
-        setIsLoading(true);
-        setError(null);
+        setIsLoadingSettlement(true);
+        setLocalError(null);
         
         try {
             console.log('🔄 Загружаем данные поселения для гильдии ID:', guild.guildData.id);
             await settlement.fetchSettlementData(guild.guildData.id);
             
+            // После вызова fetch смотрим, что в сторе
             if (settlement.settlementData) {
-                console.log('✅ Данные поселения загружены:', settlement.settlementData);
-                setSettlementData(settlement.settlementData);
+                console.log('✅ Данные поселения загружены в стор:', settlement.settlementData);
+                setLocalSettlementData(settlement.settlementData);
             } else {
-                console.log('⚠️ Данные поселения пустые');
-                const baseSettlementData = {
-                    level: 1,
-                    type: 'new_settlement',
-                    name: 'Новое поселение',
-                    happiness: 50,
-                    buildings: {},
-                    garrison: {},
-                    heroes: {},
-                    operations: {},
-                    storage: {},
-                    buffs: {}
-                };
-                setSettlementData(baseSettlementData);
+                console.log('⚠️ Данные поселения пустые (возможно, поселения нет)');
+                // Если данных нет, оставляем null, чтобы показать заглушку или кнопку создания
+                setLocalSettlementData(null);
             }
-            setIsInitialLoad(false);
         } catch (err) {
             console.error('❌ Ошибка загрузки данных поселения:', err);
-            setError('Не удалось загрузить данные поселения. Пожалуйста, попробуйте обновить страницу.');
+            setLocalError('Не удалось загрузить данные поселения. Пожалуйста, попробуйте обновить страницу.');
         } finally {
-            setIsLoading(false);
+            setIsLoadingSettlement(false);
+            setHasAttemptedLoad(true);
         }
     };
 
-    // Автоматическая загрузка данных при монтировании компонента
+    // Эффект для запуска загрузки после того, как данные гильдии готовы
     useEffect(() => {
-        console.log('🔍 Effect: Проверяем условия для загрузки данных поселения');
+        console.log('🔍 Эффект проверки условий для загрузки поселения:');
+        console.log('  - guild.loading:', guild.loading);
         console.log('  - guild.hasGuild:', guild.hasGuild);
-        console.log('  - guild.guildData?.id:', guild.guildData.id);
-        console.log('  - isInitialLoad:', isInitialLoad);
-        console.log('  - isLoading:', isLoading);
-        
-        // Явная проверка на существование id (даже если он равен 0)
-        if (guild.hasGuild && 
-            guild.guildData?.id !== undefined && 
-            guild.guildData?.id !== null && 
-            isInitialLoad) {
-            console.log('🚀 Начинаем загрузку данных поселения...');
+        console.log('  - guild.guildData?.id:', guild.guildData?.id);
+        console.log('  - hasAttemptedLoad:', hasAttemptedLoad);
+        console.log('  - isLoadingSettlement:', isLoadingSettlement);
+
+        // Ждём, пока закончится загрузка гильдии
+        if (guild.loading) {
+            return;
+        }
+
+        // Если гильдии нет, ничего не загружаем
+        if (!guild.hasGuild) {
+            setHasAttemptedLoad(true);
+            return;
+        }
+
+        // Если гильдия есть, но ID отсутствует – ошибка
+        if (guild.guildData?.id === undefined || guild.guildData?.id === null) {
+            console.error('❌ guild.hasGuild = true, но guild.guildData.id отсутствует');
+            setLocalError('Некорректные данные гильдии');
+            setHasAttemptedLoad(true);
+            return;
+        }
+
+        // Если ещё не пытались загрузить и не грузим сейчас – запускаем
+        if (!hasAttemptedLoad && !isLoadingSettlement) {
+            console.log('🚀 Запуск загрузки поселения');
             loadSettlementData();
         }
-    }, [guild.hasGuild, guild.guildData?.id, isInitialLoad]);
+    }, [guild.loading, guild.hasGuild, guild.guildData?.id, hasAttemptedLoad, isLoadingSettlement]);
 
-    // Также слушаем изменения в сторе поселения
+    // Синхронизация с изменениями в сторе (например, после ручного обновления)
     useEffect(() => {
-        if (settlement.settlementData && settlement.settlementData !== settlementData) {
-            console.log('📥 Данные изменились в сторе:', settlement.settlementData);
-            setSettlementData(settlement.settlementData);
+        if (settlement.settlementData && settlement.settlementData !== localSettlementData) {
+            console.log('📥 Данные изменились в сторе, обновляем локальное состояние');
+            setLocalSettlementData(settlement.settlementData);
         }
     }, [settlement.settlementData]);
 
-    // Обработчик для кнопки обновления
+    // Обработчик ручного обновления
     const handleRefresh = () => {
         console.log('🔄 Ручное обновление данных поселения');
-        loadSettlementData();
+        setHasAttemptedLoad(false); // сбросим флаг, чтобы useEffect снова запустил загрузку
     };
 
-    // Для отладки
+    // Отладочный лог при любых изменениях
     useEffect(() => {
-        console.log('🔍 SettlementComponent состояние обновлено:');
-        console.log('  - guild.hasGuild:', guild.hasGuild);
-        console.log('  - guild.guildData?.id:', guild.guildData?.id);
-        console.log('  - isLoading:', isLoading);
-        console.log('  - settlementData:', settlementData);
-        console.log('  - error:', error);
-        console.log('  - settlement.settlementData:', settlement.settlementData);
-    }, [guild.hasGuild, guild.guildData?.id, isLoading, settlementData, error, settlement.settlementData]);
+        console.log('📊 Состояние компонента:', {
+            guildLoading: guild.loading,
+            guildHasGuild: guild.hasGuild,
+            guildId: guild.guildData?.id,
+            hasAttemptedLoad,
+            isLoadingSettlement,
+            localSettlementData,
+            localError,
+            storeSettlementData: settlement.settlementData,
+        });
+    });
 
-    // Если данные гильдии еще загружаются (ID ещё не известен)
-    if (guild.guildData?.id === undefined || guild.guildData?.id === null) {
+    // 1. Если гильдия ещё загружается – показываем спиннер
+    if (guild.loading) {
         return (
             <Card className="fantasy-card">
                 <Card.Body className="text-center py-5">
@@ -119,8 +129,8 @@ const SettlementComponent = observer(() => {
         );
     }
 
-    // Если у пользователя нет гильдии
-    if (!guild.hasGuild || !guild.guildData) {
+    // 2. Если после загрузки выяснилось, что у пользователя нет гильдии
+    if (!guild.hasGuild) {
         return (
             <Alert variant="warning" className="mt-3">
                 <i className="fas fa-exclamation-triangle me-2"></i>
@@ -129,8 +139,18 @@ const SettlementComponent = observer(() => {
         );
     }
 
-    // Если это первоначальная загрузка
-    if (isLoading && isInitialLoad && !settlementData) {
+    // 3. Если гильдия есть, но нет ID (аварийный случай)
+    if (guild.guildData?.id === undefined || guild.guildData?.id === null) {
+        return (
+            <Alert variant="danger" className="mt-3">
+                <i className="fas fa-exclamation-circle me-2"></i>
+                Ошибка: идентификатор гильдии не определён.
+            </Alert>
+        );
+    }
+
+    // 4. Если идёт загрузка поселения – показываем спиннер
+    if (isLoadingSettlement) {
         return (
             <Card className="fantasy-card">
                 <Card.Body className="text-center py-5">
@@ -141,14 +161,14 @@ const SettlementComponent = observer(() => {
         );
     }
 
-    // Если произошла ошибка
-    if (error && !settlementData) {
+    // 5. Если произошла ошибка при загрузке поселения
+    if (localError) {
         return (
             <Card className="fantasy-card">
                 <Card.Body className="text-center py-5">
                     <i className="fas fa-exclamation-circle fa-3x text-danger mb-3"></i>
                     <h5 className="fantasy-text-danger mb-3">Ошибка загрузки</h5>
-                    <p className="fantasy-text-muted mb-4">{error}</p>
+                    <p className="fantasy-text-muted mb-4">{localError}</p>
                     <button 
                         className="btn btn-primary fantasy-btn"
                         onClick={handleRefresh}
@@ -161,15 +181,31 @@ const SettlementComponent = observer(() => {
         );
     }
 
-    // Используем данные из локального состояния или из стора
-    const currentSettlementData = settlementData || settlement.settlementData || {
-        level: 1,
-        type: 'new_settlement',
-        name: 'Новое поселение',
-        buildings: {},
-        garrison: {},
-        storage: {}
-    };
+    // 6. Если поселение не найдено (settlementData === null) – показываем заглушку с кнопкой создания
+    if (!localSettlementData && !settlement.settlementData) {
+        return (
+            <Card className="fantasy-card">
+                <Card.Body className="text-center py-5">
+                    <i className="fas fa-campground fa-3x text-muted mb-3"></i>
+                    <h5 className="fantasy-text-muted mb-3">Поселение не создано</h5>
+                    <p className="mb-4">У вашей гильдии пока нет поселения. Создайте его, чтобы начать развитие.</p>
+                    <button 
+                        className="btn btn-primary fantasy-btn"
+                        onClick={() => {
+                            // Здесь логика создания поселения
+                            console.log('Создание поселения...');
+                        }}
+                    >
+                        <i className="fas fa-plus me-2"></i>
+                        Создать поселение
+                    </button>
+                </Card.Body>
+            </Card>
+        );
+    }
+
+    // 7. Данные есть – отображаем интерфейс
+    const currentData = localSettlementData || settlement.settlementData;
 
     return (
         <div className="settlement-container">
@@ -193,9 +229,9 @@ const SettlementComponent = observer(() => {
                                 <Nav.Link eventKey="buildings">
                                     <i className="fas fa-building me-2"></i>
                                     Здания
-                                    {currentSettlementData.buildings && Object.keys(currentSettlementData.buildings).length > 0 && (
+                                    {currentData.buildings && Object.keys(currentData.buildings).length > 0 && (
                                         <span className="badge bg-warning ms-2">
-                                            {Object.keys(currentSettlementData.buildings).length}
+                                            {Object.keys(currentData.buildings).length}
                                         </span>
                                     )}
                                 </Nav.Link>
@@ -230,47 +266,47 @@ const SettlementComponent = observer(() => {
                         <Tab.Content className="p-3">
                             <Tab.Pane eventKey="overview">
                                 <SettlementOverview 
-                                    settlementData={currentSettlementData}
+                                    settlementData={currentData}
                                     guildId={guild.guildData.id}
                                     onRefresh={handleRefresh}
-                                    isLoading={isLoading}
+                                    isLoading={isLoadingSettlement}
                                 />
                             </Tab.Pane>
                             <Tab.Pane eventKey="buildings">
                                 <SettlementBuildings 
-                                    buildings={currentSettlementData.buildings || {}}
-                                    construction={currentSettlementData.construction || {}}
-                                    settlementType={currentSettlementData.type}
+                                    buildings={currentData.buildings || {}}
+                                    construction={currentData.construction || {}}
+                                    settlementType={currentData.type}
                                     guildId={guild.guildData.id}
                                 />
                             </Tab.Pane>
                             <Tab.Pane eventKey="garrison">
                                 <SettlementGarrison 
-                                    garrison={currentSettlementData.garrison || {}}
+                                    garrison={currentData.garrison || {}}
                                     guildId={guild.guildData.id}
                                 />
                             </Tab.Pane>
                             <Tab.Pane eventKey="heroes">
                                 <SettlementHeroes 
-                                    heroes={currentSettlementData.heroes || {}}
+                                    heroes={currentData.heroes || {}}
                                     guildId={guild.guildData.id}
                                 />
                             </Tab.Pane>
                             <Tab.Pane eventKey="missions">
                                 <SettlementMissions 
-                                    operations={currentSettlementData.operations || {}}
+                                    operations={currentData.operations || {}}
                                     guildId={guild.guildData.id}
                                 />
                             </Tab.Pane>
                             <Tab.Pane eventKey="storage">
                                 <SettlementStorage 
-                                    storage={currentSettlementData.storage || {}}
+                                    storage={currentData.storage || {}}
                                     guildId={guild.guildData.id}
                                 />
                             </Tab.Pane>
                             <Tab.Pane eventKey="rituals">
                                 <SettlementRituals 
-                                    buffs={currentSettlementData.buffs || {}}
+                                    buffs={currentData.buffs || {}}
                                     guildId={guild.guildData.id}
                                 />
                             </Tab.Pane>
@@ -288,19 +324,5 @@ const SettlementComponent = observer(() => {
         </div>
     );
 });
-
-const getSettlementTypeName = (type) => {
-    const typeMap = {
-        'new_settlement': 'Новое поселение',
-        'village': 'Деревня',
-        'town': 'Городок',
-        'city': 'Город',
-        'fortress': 'Крепость',
-        'capital': 'Столица',
-        'outpost': 'Аванпост',
-        'castle': 'Замок'
-    };
-    return typeMap[type] || type || 'Не указан';
-};
 
 export default SettlementComponent;
