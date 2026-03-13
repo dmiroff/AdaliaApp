@@ -68,7 +68,8 @@ export default class SettlementStore {
 
     // Основные методы
     async fetchSettlementData(guildId) {
-        if (!guildId) {
+        // Стало (правильно, 0 пропускается)
+        if (guildId === undefined || guildId === null) {
             console.error('❌ ID гильдии не указан');
             this.setError('ID гильдии не указан');
             return;
