@@ -1110,7 +1110,7 @@ const SettlementStorage = observer(() => {
                 <i className="fas fa-warehouse me-2"></i>
                 Склад поселения
               </h5>
-              <div className="fantasy-text-muted mt-1">
+              <div className="fantasy-text-gold mt-1">
                 Использование склада (только стройматериалы): <Badge bg={storageUsage.percentage > 80 ? "danger" : storageUsage.percentage > 60 ? "warning" : "success"}>
                   {storageUsage.used.toLocaleString()} / {storageUsage.capacity.toLocaleString()}
                 </Badge>
