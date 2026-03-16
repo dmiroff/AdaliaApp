@@ -1,266 +1,299 @@
 // src/components/PlayerImages.js
 import React, { useState, useEffect, useContext } from 'react';
-import { Card, Row, Col, Button, Alert, Spinner, Badge, Accordion } from "react-bootstrap";
-import { Context } from "../index";
-import GetDataById from "../http/GetData";
-import { getPlayerSettings, setCurrentImage } from "../http/playerSettingsApi";
+import { Card, Row, Col, Button, Alert, Spinner, Badge, Accordion } from 'react-bootstrap';
+import { Context } from '../index';
+import GetDataById from '../http/GetData';
+import { getPlayerSettings, setCurrentImage } from '../http/playerSettingsApi';
 
+/**
+ * Компонент для отображения и выбора образов игрока.
+ * Поддерживает реальные изображения из public/Images/Profiles.
+ * Для статичных изображений (png/jpg) используется формат WebP – расширение заменяется автоматически.
+ * Гифки и файлы из папки Custom остаются без изменений.
+ */
 const PlayerImages = () => {
   const { user } = useContext(Context);
   const [settings, setSettings] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [playerData, setPlayerData] = useState(null);
 
-  // Маппинг путей к изображениям для читаемых имен и эмодзи
+  // Маппинг путей к изображениям для читаемых имён и эмодзи (используются как fallback)
   const IMAGE_CONFIG = {
     // Базовые расовые образы
-    "Images/Profiles/HumanM.png": { 
-      name: "Человек (мужской)", 
-      emoji: "👤",
-      type: "base"
+    'Images/Profiles/HumanM.png': {
+      name: 'Человек (мужской)',
+      emoji: '👤',
+      type: 'base',
     },
-    "Images/Profiles/HumanW.png": { 
-      name: "Человек (женский)", 
-      emoji: "👤",
-      type: "base"
+    'Images/Profiles/HumanW.png': {
+      name: 'Человек (женский)',
+      emoji: '👤',
+      type: 'base',
     },
-    "Images/Profiles/HighElfM.png": { 
-      name: "Высший эльф (мужской)", 
-      emoji: "🧝",
-      type: "base"
+    'Images/Profiles/HighElfM.png': {
+      name: 'Высший эльф (мужской)',
+      emoji: '🧝',
+      type: 'base',
     },
-    "Images/Profiles/HighElfW.png": { 
-      name: "Высший эльф (женский)", 
-      emoji: "🧝",
-      type: "base"
+    'Images/Profiles/HighElfW.png': {
+      name: 'Высший эльф (женский)',
+      emoji: '🧝',
+      type: 'base',
     },
-    "Images/Profiles/DwarfM.png": { 
-      name: "Дварф (мужской)", 
-      emoji: "🧔",
-      type: "base"
+    'Images/Profiles/DwarfM.png': {
+      name: 'Дварф (мужской)',
+      emoji: '🧔',
+      type: 'base',
     },
-    "Images/Profiles/DwarfW.png": { 
-      name: "Дварф (женский)", 
-      emoji: "🧔",
-      type: "base"
+    'Images/Profiles/DwarfW.png': {
+      name: 'Дварф (женский)',
+      emoji: '🧔',
+      type: 'base',
     },
-    "Images/Profiles/GoblinM.png": { 
-      name: "Гоблин (мужской)", 
-      emoji: "👺",
-      type: "base"
+    'Images/Profiles/GoblinM.png': {
+      name: 'Гоблин (мужской)',
+      emoji: '👺',
+      type: 'base',
     },
-    "Images/Profiles/GoblinW.png": { 
-      name: "Гоблин (женский)", 
-      emoji: "👺",
-      type: "base"
+    'Images/Profiles/GoblinW.png': {
+      name: 'Гоблин (женский)',
+      emoji: '👺',
+      type: 'base',
     },
-    "Images/Profiles/DrowM.png": { 
-      name: "Тёмный эльф (мужской)", 
-      emoji: "🧝‍♂️",
-      type: "base"
+    'Images/Profiles/DrowM.png': {
+      name: 'Тёмный эльф (мужской)',
+      emoji: '🧝‍♂️',
+      type: 'base',
     },
-    "Images/Profiles/DrowW.png": { 
-      name: "Тёмный эльф (женский)", 
-      emoji: "🧝‍♂️",
-      type: "base"
+    'Images/Profiles/DrowW.png': {
+      name: 'Тёмный эльф (женский)',
+      emoji: '🧝‍♂️',
+      type: 'base',
     },
-    "Images/Profiles/HalfOrcM.png": { 
-      name: "Полуорк (мужской)", 
-      emoji: "🧌",
-      type: "base"
+    'Images/Profiles/HalfOrcM.png': {
+      name: 'Полуорк (мужской)',
+      emoji: '🧌',
+      type: 'base',
     },
-    "Images/Profiles/HalfOrcW.png": { 
-      name: "Полуорк (женский)", 
-      emoji: "🧌",
-      type: "base"
+    'Images/Profiles/HalfOrcW.png': {
+      name: 'Полуорк (женский)',
+      emoji: '🧌',
+      type: 'base',
     },
-    "Images/Profiles/WoodElfM.png": { 
-      name: "Лесной эльф (мужской)", 
-      emoji: "🧝",
-      type: "base"
+    'Images/Profiles/WoodElfM.png': {
+      name: 'Лесной эльф (мужской)',
+      emoji: '🧝',
+      type: 'base',
     },
-    "Images/Profiles/WoodElfW.png": { 
-      name: "Лесной эльф (женский)", 
-      emoji: "🧝",
-      type: "base"
+    'Images/Profiles/WoodElfW.png': {
+      name: 'Лесной эльф (женский)',
+      emoji: '🧝',
+      type: 'base',
     },
-    "Images/Profiles/HobbitM.png": { 
-      name: "Хоббит (мужской)", 
-      emoji: "🧙",
-      type: "base"
+    'Images/Profiles/HobbitM.png': {
+      name: 'Хоббит (мужской)',
+      emoji: '🧙',
+      type: 'base',
     },
-    "Images/Profiles/HobbitW.png": { 
-      name: "Хоббит (женский)", 
-      emoji: "🧙",
-      type: "base"
+    'Images/Profiles/HobbitW.png': {
+      name: 'Хоббит (женский)',
+      emoji: '🧙',
+      type: 'base',
     },
-    
+
     // Событийные образы (зимние)
-    "Images/Profiles/IceKnight.png": { 
-      name: "Ледяной рыцарь", 
-      emoji: "⚔️",
-      type: "event",
-      rarity: "epic"
+    'Images/Profiles/IceKnight.png': {
+      name: 'Ледяной рыцарь',
+      emoji: '⚔️',
+      type: 'event',
+      rarity: 'epic',
     },
-    "Images/Profiles/SnowFairy.png": { 
-      name: "Снежная фея", 
-      emoji: "🧚",
-      type: "event",
-      rarity: "legendary"
+    'Images/Profiles/SnowFairy.png': {
+      name: 'Снежная фея',
+      emoji: '🧚',
+      type: 'event',
+      rarity: 'legendary',
     },
-    "Images/Profiles/PolarWolf.png": { 
-      name: "Полярный волк", 
-      emoji: "🐺",
-      type: "event",
-      rarity: "rare"
+    'Images/Profiles/PolarWolf.png': {
+      name: 'Полярный волк',
+      emoji: '🐺',
+      type: 'event',
+      rarity: 'rare',
     },
-    "Images/Profiles/NewYearMage.png": { 
-      name: "Новогодний маг", 
-      emoji: "🧙",
-      type: "event",
-      rarity: "epic"
+    'Images/Profiles/NewYearMage.png': {
+      name: 'Новогодний маг',
+      emoji: '🧙',
+      type: 'event',
+      rarity: 'epic',
     },
-    "Images/Profiles/FrostArcher.png": { 
-      name: "Морозный лучник", 
-      emoji: "🏹",
-      type: "event",
-      rarity: "legendary"
+    'Images/Profiles/FrostArcher.png': {
+      name: 'Морозный лучник',
+      emoji: '🏹',
+      type: 'event',
+      rarity: 'legendary',
     },
-    
-    // Новогодние образы (новые)
-    "Images/Profiles/ng/newyear_barbarian.png": { 
-      name: "Новогодний варвар", 
-      emoji: "🎄",
-      type: "event",
-      rarity: "epic"
+
+    // Новогодние образы (в папке ng)
+    'Images/Profiles/ng/newyear_barbarian.png': {
+      name: 'Новогодний варвар',
+      emoji: '🎄',
+      type: 'event',
+      rarity: 'epic',
     },
-    "Images/Profiles/ng/newyear_bard.png": { 
-      name: "Новогодний бард", 
-      emoji: "🎶",
-      type: "event",
-      rarity: "legendary"
+    'Images/Profiles/ng/newyear_bard.png': {
+      name: 'Новогодний бард',
+      emoji: '🎶',
+      type: 'event',
+      rarity: 'legendary',
     },
-    "Images/Profiles/ng/newyear_darkpriest.png": { 
-      name: "Новогодний темный жрец", 
-      emoji: "🔮",
-      type: "event",
-      rarity: "rare"
+    'Images/Profiles/ng/newyear_darkpriest.png': {
+      name: 'Новогодний темный жрец',
+      emoji: '🔮',
+      type: 'event',
+      rarity: 'rare',
     },
-    "Images/Profiles/ng/newyear_dwarf.png": { 
-      name: "Новогодний дварф", 
-      emoji: "🧔",
-      type: "event",
-      rarity: "epic"
+    'Images/Profiles/ng/newyear_dwarf.png': {
+      name: 'Новогодний дварф',
+      emoji: '🧔',
+      type: 'event',
+      rarity: 'epic',
     },
-    "Images/Profiles/ng/newyear_firemage.png": { 
-      name: "Новогодний маг огня", 
-      emoji: "🔥",
-      type: "event",
-      rarity: "legendary"
+    'Images/Profiles/ng/newyear_firemage.png': {
+      name: 'Новогодний маг огня',
+      emoji: '🔥',
+      type: 'event',
+      rarity: 'legendary',
     },
-    "Images/Profiles/ng/newyear_goblinrash.png": { 
-      name: "Новогодний гоблин", 
-      emoji: "👺",
-      type: "event",
-      rarity: "rare"
+    'Images/Profiles/ng/newyear_goblinrash.png': {
+      name: 'Новогодний гоблин',
+      emoji: '👺',
+      type: 'event',
+      rarity: 'rare',
     },
-    "Images/Profiles/ng/newyear_guardian.png": { 
-      name: "Новогодний страж", 
-      emoji: "🛡️",
-      type: "event",
-      rarity: "epic"
+    'Images/Profiles/ng/newyear_guardian.png': {
+      name: 'Новогодний страж',
+      emoji: '🛡️',
+      type: 'event',
+      rarity: 'epic',
     },
-    "Images/Profiles/ng/newyear_icemage.png": { 
-      name: "Новогодний маг льда", 
-      emoji: "❄️",
-      type: "event",
-      rarity: "legendary"
+    'Images/Profiles/ng/newyear_icemage.png': {
+      name: 'Новогодний маг льда',
+      emoji: '❄️',
+      type: 'event',
+      rarity: 'legendary',
     },
-    "Images/Profiles/ng/newyear_lifepriestess.png": { 
-      name: "Новогодняя жрица жизни", 
-      emoji: "🌿",
-      type: "event",
-      rarity: "epic"
+    'Images/Profiles/ng/newyear_lifepriestess.png': {
+      name: 'Новогодняя жрица жизни',
+      emoji: '🌿',
+      type: 'event',
+      rarity: 'epic',
     },
-    "Images/Profiles/ng/newyear_paladin.png": { 
-      name: "Новогодний паладин", 
-      emoji: "⚔️",
-      type: "event",
-      rarity: "legendary"
-    }
+    'Images/Profiles/ng/newyear_paladin.png': {
+      name: 'Новогодний паладин',
+      emoji: '⚔️',
+      type: 'event',
+      rarity: 'legendary',
+    },
   };
 
+  // Вспомогательные функции для работы с конфигом
   const getImageConfig = (imagePath) => {
     if (!imagePath) {
-      return { name: "Стандартный образ", emoji: "👤", type: "default" };
+      return { name: 'Стандартный образ', emoji: '👤', type: 'default' };
     }
-    
     const config = IMAGE_CONFIG[imagePath];
-    if (config) {
-      return config;
-    }
-    
-    // Если путь не найден в конфиге, пытаемся извлечь информацию из пути
+    if (config) return config;
+
+    // Если путь не найден, пытаемся извлечь имя из файла
     const fileName = imagePath.split('/').pop().replace('.png', '');
     const displayName = fileName.replace(/([A-Z])/g, ' $1').trim();
-    
-    return {
-      name: displayName,
-      emoji: "👤", // эмодзи по умолчанию
-      type: "unknown"
-    };
+    return { name: displayName, emoji: '👤', type: 'unknown' };
   };
 
-  const getEmojiForImage = (imagePath) => {
-    return getImageConfig(imagePath).emoji;
-  };
-
-  const getDisplayName = (imagePath) => {
-    return getImageConfig(imagePath).name;
-  };
+  const getDisplayName = (imagePath) => getImageConfig(imagePath).name;
+  const getEmojiForImage = (imagePath) => getImageConfig(imagePath).emoji;
 
   const getRarityBadge = (imagePath) => {
     const config = IMAGE_CONFIG[imagePath];
-    if (!config || !config.rarity) return null;
-    
+    if (!config?.rarity) return null;
+
     const rarityColors = {
-      "common": "secondary",
-      "rare": "info",
-      "epic": "purple",
-      "legendary": "warning"
+      common: 'secondary',
+      rare: 'info',
+      epic: 'purple',
+      legendary: 'warning',
     };
-    
     const rarityNames = {
-      "common": "Обычный",
-      "rare": "Редкий",
-      "epic": "Эпический",
-      "legendary": "Легендарный"
+      common: 'Обычный',
+      rare: 'Редкий',
+      epic: 'Эпический',
+      legendary: 'Легендарный',
     };
-    
+
     return (
-      <Badge 
-        bg={rarityColors[config.rarity] || "secondary"} 
-        className="ms-2"
-      >
+      <Badge bg={rarityColors[config.rarity] || 'secondary'} className="ms-2">
         {rarityNames[config.rarity] || config.rarity}
       </Badge>
     );
   };
 
+  /**
+   * Преобразует путь из конфига в реальный путь к файлу в public.
+   * Для всех статичных изображений (не .gif и не из папки Custom) заменяет .png на .webp.
+   */
+  const getImageSrc = (imagePath) => {
+    if (!imagePath) return null;
+
+    // Если это гифка или пользовательский образ (папка Custom) – оставляем как есть
+    if (imagePath.toLowerCase().includes('.gif') || imagePath.includes('/Custom/')) {
+      return `/${imagePath}`;
+    }
+
+    // Иначе заменяем расширение .png (или .jpg, .jpeg) на .webp
+    // Предполагаем, что все статичные образы сохранены в формате webp.
+    const webpPath = imagePath.replace(/\.(png|jpg|jpeg)$/i, '.webp');
+    return `/${webpPath}`;
+  };
+
+  // Компонент для отображения изображения с запасным эмодзи при ошибке загрузки
+  const ImageWithFallback = ({ src, alt, className, style }) => {
+    const [imgError, setImgError] = useState(false);
+
+    if (!src || imgError) {
+      // Показываем эмодзи из конфига (или стандартное)
+      return (
+        <div className={`d-flex align-items-center justify-content-center ${className}`} style={style}>
+          <span className="fs-1">{getEmojiForImage(alt) || '👤'}</span>
+        </div>
+      );
+    }
+
+    return (
+      <img
+        src={src}
+        alt={alt}
+        className={className}
+        style={{ ...style, objectFit: 'contain' }}
+        onError={() => setImgError(true)}
+      />
+    );
+  };
+
+  // Загрузка данных
   useEffect(() => {
     const fetchData = async () => {
       try {
         const playerDataResponse = await GetDataById();
         setPlayerData(playerDataResponse.data);
-        
+
         const settingsResponse = await getPlayerSettings();
         setSettings(settingsResponse.data);
-        setLoading(false);
       } catch (err) {
-        console.error("Ошибка загрузки данных:", err);
-        setError("Не удалось загрузить коллекцию образов");
+        console.error('Ошибка загрузки данных:', err);
+        setError('Не удалось загрузить коллекцию образов');
+      } finally {
         setLoading(false);
       }
     };
@@ -268,27 +301,29 @@ const PlayerImages = () => {
     fetchData();
   }, []);
 
+  // Смена текущего образа
   const handleSetCurrentImage = async (imagePath) => {
     try {
-      setError("");
+      setError('');
       const response = await setCurrentImage(imagePath);
       if (response.status === 200) {
         const displayName = getDisplayName(imagePath);
         setSuccess(`Образ "${displayName}" установлен как текущий!`);
-        
+
         // Обновляем данные
-        const playerDataResponse = await GetDataById();
-        setPlayerData(playerDataResponse.data);
-        
-        const settingsResponse = await getPlayerSettings();
-        setSettings(settingsResponse.data);
-        
-        setTimeout(() => setSuccess(""), 3000);
+        const [playerRes, settingsRes] = await Promise.all([
+          GetDataById(),
+          getPlayerSettings(),
+        ]);
+        setPlayerData(playerRes.data);
+        setSettings(settingsRes.data);
+
+        setTimeout(() => setSuccess(''), 3000);
       } else {
-        setError(response.detail || "Ошибка при смене образа");
+        setError(response.detail || 'Ошибка при смене образа');
       }
     } catch (err) {
-      setError(err.message || "Ошибка при смене образа");
+      setError(err.message || 'Ошибка при смене образа');
     }
   };
 
@@ -305,47 +340,42 @@ const PlayerImages = () => {
   const currentImage = settings?.current_image || playerData?.character_art;
   const currentImageConfig = getImageConfig(currentImage);
 
-  // Разделяем образы по типам для лучшей организации
-  const baseImages = availableImages.filter(img => {
-    const config = IMAGE_CONFIG[img];
-    return config && config.type === "base";
-  });
-  
-  const eventImages = availableImages.filter(img => {
-    const config = IMAGE_CONFIG[img];
-    return config && config.type === "event";
-  });
-  
-  const otherImages = availableImages.filter(img => {
-    const config = IMAGE_CONFIG[img];
-    return !config || (config.type !== "base" && config.type !== "event");
-  });
+  // Группировка образов по типу
+  const baseImages = availableImages.filter((img) => IMAGE_CONFIG[img]?.type === 'base');
+  const eventImages = availableImages.filter((img) => IMAGE_CONFIG[img]?.type === 'event');
+  const otherImages = availableImages.filter(
+    (img) => !IMAGE_CONFIG[img] || (IMAGE_CONFIG[img].type !== 'base' && IMAGE_CONFIG[img].type !== 'event')
+  );
 
   return (
     <div className="images-container">
-      {success && <Alert variant="success" className="mb-3">{success}</Alert>}
-      {error && <Alert variant="danger" className="mb-3">{error}</Alert>}
+      {success && <Alert variant="success">{success}</Alert>}
+      {error && <Alert variant="danger">{error}</Alert>}
 
       <Accordion defaultActiveKey="0" className="mb-4">
         {/* Текущий активный образ */}
         <Accordion.Item eventKey="0" className="fantasy-card border-success">
           <Accordion.Header className="fantasy-card-header-success">
             <div className="d-flex align-items-center">
-              <div className="me-2">{currentImageConfig.emoji}</div>
+              <span className="me-2">{currentImageConfig.emoji}</span>
               <h5 className="mb-0">Активный образ</h5>
               {currentImage && (
-                <Badge bg="success" className="ms-2">Активен</Badge>
+                <Badge bg="success" className="ms-2">
+                  Активен
+                </Badge>
               )}
             </div>
           </Accordion.Header>
           <Accordion.Body className="text-center">
-            <div className="fs-1 mb-3">
-              {currentImageConfig.emoji}
+            <div className="d-flex justify-content-center mb-3" style={{ minHeight: '150px' }}>
+              <ImageWithFallback
+                src={getImageSrc(currentImage)}
+                alt={currentImage}
+                style={{ maxHeight: '150px', maxWidth: '100%' }}
+              />
             </div>
-            <h4 className="fantasy-text-success mb-2">
-              {currentImageConfig.name}
-            </h4>
-            {IMAGE_CONFIG[currentImage]?.rarity && getRarityBadge(currentImage)}
+            <h4 className="fantasy-text-success mb-2">{currentImageConfig.name}</h4>
+            {getRarityBadge(currentImage)}
             {!currentImage && (
               <p className="fantasy-text-muted mt-3">
                 Вы ещё не выбрали образ. Приобретите образ в событийном магазине!
@@ -360,32 +390,38 @@ const PlayerImages = () => {
         <h5 className="fantasy-text-dark mb-3">
           📚 Доступные образы ({availableImages.length})
         </h5>
-        
+
         {availableImages.length > 0 ? (
           <>
-            {/* Базовые образы (рас) */}
+            {/* Базовые образы */}
             {baseImages.length > 0 && (
               <div className="mb-4">
                 <h6 className="fantasy-text-muted mb-3">🎯 Базовые образы рас</h6>
                 <Row className="g-3">
-                  {baseImages.map((image, index) => (
-                    <Col key={index} md={6} lg={4}>
-                      <Card className={`fantasy-card h-100 ${currentImage === image ? 'border-success border-2' : ''}`}>
+                  {baseImages.map((image) => (
+                    <Col key={image} md={6} lg={4}>
+                      <Card
+                        className={`fantasy-card h-100 ${
+                          currentImage === image ? 'border-success border-2' : ''
+                        }`}
+                      >
                         <Card.Body className="text-center d-flex flex-column">
-                          <div className="fs-2 mb-2">
-                            {getEmojiForImage(image)}
+                          <div className="d-flex justify-content-center mb-2" style={{ height: '80px' }}>
+                            <ImageWithFallback
+                              src={getImageSrc(image)}
+                              alt={image}
+                              style={{ maxHeight: '80px', maxWidth: '100%' }}
+                            />
                           </div>
-                          <h6 className="fantasy-text-dark flex-grow-1 mb-3">
-                            {getDisplayName(image)}
-                          </h6>
+                          <h6 className="fantasy-text-dark flex-grow-1 mb-3">{getDisplayName(image)}</h6>
                           <div className="mt-auto">
                             {currentImage === image ? (
                               <Button variant="success" disabled className="w-100">
                                 ✅ Активен
                               </Button>
                             ) : (
-                              <Button 
-                                variant="outline-success" 
+                              <Button
+                                variant="outline-success"
                                 onClick={() => handleSetCurrentImage(image)}
                                 className="w-100 fantasy-btn fantasy-btn-outline"
                               >
@@ -400,35 +436,47 @@ const PlayerImages = () => {
                 </Row>
               </div>
             )}
-            
+
             {/* Событийные образы */}
             {eventImages.length > 0 && (
               <div className="mb-4">
                 <h6 className="fantasy-text-muted mb-3">🎄 Зимние образы</h6>
                 <Row className="g-3">
-                  {eventImages.map((image, index) => {
+                  {eventImages.map((image) => {
                     const config = IMAGE_CONFIG[image];
                     return (
-                      <Col key={index} md={6} lg={4}>
-                        <Card className={`fantasy-card h-100 ${currentImage === image ? 'border-warning border-2' : ''}`}>
+                      <Col key={image} md={6} lg={4}>
+                        <Card
+                          className={`fantasy-card h-100 ${
+                            currentImage === image ? 'border-warning border-2' : ''
+                          }`}
+                        >
                           <Card.Body className="text-center d-flex flex-column">
-                            <div className="fs-2 mb-2">
-                              {config.emoji}
+                            <div className="d-flex justify-content-center mb-2" style={{ height: '80px' }}>
+                              <ImageWithFallback
+                                src={getImageSrc(image)}
+                                alt={image}
+                                style={{ maxHeight: '80px', maxWidth: '100%' }}
+                              />
                             </div>
-                            <h6 className="fantasy-text-dark flex-grow-1 mb-2">
-                              {config.name}
-                            </h6>
+                            <h6 className="fantasy-text-dark flex-grow-1 mb-2">{config.name}</h6>
                             {config.rarity && (
                               <div className="mb-3">
-                                <Badge 
+                                <Badge
                                   bg={
-                                    config.rarity === 'legendary' ? 'warning' :
-                                    config.rarity === 'epic' ? 'purple' : 'info'
+                                    config.rarity === 'legendary'
+                                      ? 'warning'
+                                      : config.rarity === 'epic'
+                                      ? 'purple'
+                                      : 'info'
                                   }
                                   className="fs-7"
                                 >
-                                  {config.rarity === 'legendary' ? 'Легендарный' :
-                                   config.rarity === 'epic' ? 'Эпический' : 'Редкий'}
+                                  {config.rarity === 'legendary'
+                                    ? 'Легендарный'
+                                    : config.rarity === 'epic'
+                                    ? 'Эпический'
+                                    : 'Редкий'}
                                 </Badge>
                               </div>
                             )}
@@ -438,8 +486,8 @@ const PlayerImages = () => {
                                   ✅ Активен
                                 </Button>
                               ) : (
-                                <Button 
-                                  variant="outline-warning" 
+                                <Button
+                                  variant="outline-warning"
                                   onClick={() => handleSetCurrentImage(image)}
                                   className="w-100 fantasy-btn fantasy-btn-outline"
                                 >
@@ -455,30 +503,36 @@ const PlayerImages = () => {
                 </Row>
               </div>
             )}
-            
+
             {/* Другие образы */}
             {otherImages.length > 0 && (
               <div className="mb-4">
                 <h6 className="fantasy-text-muted mb-3">✨ Другие образы</h6>
                 <Row className="g-3">
-                  {otherImages.map((image, index) => (
-                    <Col key={index} md={6} lg={4}>
-                      <Card className={`fantasy-card h-100 ${currentImage === image ? 'border-info border-2' : ''}`}>
+                  {otherImages.map((image) => (
+                    <Col key={image} md={6} lg={4}>
+                      <Card
+                        className={`fantasy-card h-100 ${
+                          currentImage === image ? 'border-info border-2' : ''
+                        }`}
+                      >
                         <Card.Body className="text-center d-flex flex-column">
-                          <div className="fs-2 mb-2">
-                            {getEmojiForImage(image)}
+                          <div className="d-flex justify-content-center mb-2" style={{ height: '80px' }}>
+                            <ImageWithFallback
+                              src={getImageSrc(image)}
+                              alt={image}
+                              style={{ maxHeight: '80px', maxWidth: '100%' }}
+                            />
                           </div>
-                          <h6 className="fantasy-text-dark flex-grow-1 mb-3">
-                            {getDisplayName(image)}
-                          </h6>
+                          <h6 className="fantasy-text-dark flex-grow-1 mb-3">{getDisplayName(image)}</h6>
                           <div className="mt-auto">
                             {currentImage === image ? (
                               <Button variant="info" disabled className="w-100">
                                 ✅ Активен
                               </Button>
                             ) : (
-                              <Button 
-                                variant="outline-info" 
+                              <Button
+                                variant="outline-info"
                                 onClick={() => handleSetCurrentImage(image)}
                                 className="w-100 fantasy-btn fantasy-btn-outline"
                               >
@@ -505,10 +559,10 @@ const PlayerImages = () => {
         )}
       </div>
 
-      {/* Информация */}
+      {/* Информационная карточка (без изменений) */}
       <Card className="fantasy-card">
         <Card.Header className="fantasy-card-header-info">
-          <h5 className="mb-0">ℹ️ Информация об образах</h5>
+          <h5 className="fantasy-text-gold mb-0">ℹ️ Информация об образах</h5>
         </Card.Header>
         <Card.Body>
           <Row>
@@ -526,7 +580,7 @@ const PlayerImages = () => {
                 <div className="fs-2 mb-2">🎲</div>
                 <h6>Случайный образ</h6>
                 <small className="fantasy-text-muted">
-                  Покупается за 1000 снежков. Вы получаете случайный образ из доступной коллекции.
+                  Покупается за ивентовую валюту.
                 </small>
               </div>
             </Col>
@@ -535,7 +589,7 @@ const PlayerImages = () => {
                 <div className="fs-2 mb-2">🎨</div>
                 <h6>Заказ образа</h6>
                 <small className="fantasy-text-muted">
-                  Покупается за 3000 снежков. Вы заказываете индивидуальный образ у администрации игры.
+                  Покупается за далеоны или ивентовую валюту. Вы заказываете индивидуальный образ у администрации.
                 </small>
               </div>
             </Col>

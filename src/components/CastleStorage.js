@@ -1095,7 +1095,7 @@ const CastleStorage = observer(() => {
       <Container className="castle-storage-container">
         <Card className="fantasy-card">
           <Card.Header className="fantasy-card-header fantasy-card-header-danger">
-            <h4 className="text-dark">🏰 Хранилище замка</h4>
+            <h4 className="fantasy-text-gold">🏰 Хранилище замка</h4>
           </Card.Header>
           <Card.Body className="text-center">
             <div className="py-5">

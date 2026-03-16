@@ -342,7 +342,7 @@ const SettlementBuildings = observer(() => {
                             <div key="essence" className="d-flex align-items-center justify-content-between mt-1">
                                 <div className="d-flex align-items-center">
                                     <i className="fas fa-star me-2 text-primary"></i>
-                                    <span className={`fantasy-text-${hasEnough ? 'dark' : 'danger'}`}>
+                                    <span className={`fantasy-text-${hasEnough ? 'dark' : 'muted'}`}>
                                         Воплощение:
                                     </span>
                                 </div>
@@ -787,11 +787,6 @@ const SettlementBuildings = observer(() => {
                                 <i className="fas fa-building me-2"></i>
                                 Постройки поселения
                             </h5>
-                            <div className="fantasy-text-muted mt-1">
-                                Тип: {typeof SETTLEMENT_TYPE_NAMES[settlementType] === 'string' 
-                                    ? SETTLEMENT_TYPE_NAMES[settlementType] 
-                                    : settlementType}
-                            </div>
                         </div>
                         <div className="d-flex gap-2">
                             <Badge bg={userRole === 'leader' ? 'danger' : userRole === 'officer' ? 'warning' : 'info'} className="me-2">

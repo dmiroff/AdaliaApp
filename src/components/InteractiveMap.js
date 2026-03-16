@@ -466,9 +466,13 @@ const InteractiveMap = observer(() => {
     const renderTooltip = (props) => (
       <Tooltip {...props}>
         <div className="fantasy-tooltip-content">
-          <strong>{dungeonNames[dungeon.name] || dungeon.name}</strong>
+          <strong className="fantasy-text-gold">
+            {dungeonNames[dungeon.name] || dungeon.name}
+          </strong>
           <br />
-          <small>Прогресс: {dungeon.current}/{dungeon.max}</small>
+          <small className="fantasy-text-gold">
+            Прогресс: {dungeon.current}/{dungeon.max}
+          </small>
         </div>
       </Tooltip>
     );

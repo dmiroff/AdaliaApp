@@ -612,7 +612,7 @@ const Guild = observer(() => {
                   </Col>
                 </Row>
                 {lastUpdated && (
-                  <small className="fantasy-text-muted d-block mt-1">
+                  <small className="fantasy-text-gold d-block mt-1">
                     <i className="fas fa-clock me-1"></i>
                     Обновлено: {formatLastUpdated()}
                   </small>

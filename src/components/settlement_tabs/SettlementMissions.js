@@ -607,8 +607,8 @@ const SettlementMissions = observer(() => {
             <div className="mb-3" style={{ fontSize: '4rem' }}>
               🏗️
             </div>
-            <h5 className="fantasy-text-gold">Дозорная башня не построена</h5>
-            <p className="fantasy-text-gold">
+            <h5 className="fantasy-text-dark">Дозорная башня не построена</h5>
+            <p className="fantasy-text-dark">
               Постройте Дозорную башню, чтобы отправлять группы в подземелья
               и исследовать окрестности
             </p>
@@ -672,7 +672,6 @@ const SettlementMissions = observer(() => {
                 ) : (
                   <>
                     <i className="fas fa-sync me-1"></i>
-                    Обновить
                   </>
                 )}
               </Button>
