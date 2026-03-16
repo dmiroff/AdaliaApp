@@ -777,7 +777,7 @@ const SettlementGarrison = observer(() => {
             return;
         }
         
-        if (!guildId) {
+        if (guildId === undefined || guildId === null) {
             showNotification('error', 'Не удалось определить ID гильдии');
             return;
         }
@@ -877,7 +877,7 @@ const SettlementGarrison = observer(() => {
         });
 
         try {
-            if (!guildId) {
+            if (guildId === undefined || guildId === null) {
                 showNotification('error', 'Не удалось определить ID гильдии');
                 return;
             }
@@ -918,6 +918,10 @@ const SettlementGarrison = observer(() => {
     };
 
     const handleHireUnit = async () => {
+        if (guildId === undefined || guildId === null) {
+            showNotification('error', 'Не удалось определить ID гильдии');
+            return;
+        }
         if (!selectedHireUnit) return;
 
         const hireCost = calculateHireCost(selectedHireUnit, selectedTier, hireQuantity);
