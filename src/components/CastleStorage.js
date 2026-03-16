@@ -637,7 +637,7 @@ const CastleStorage = observer(() => {
 
   // UPDATED: При загрузке данных хранилища также учитываем апгрейд
   const fetchCastleStorage = useCallback(async (castleId) => {
-    if (!castleId) return;
+    if (castleId === undefined || castleId === null) return;
     
     setLoading(true);
     setError("");
