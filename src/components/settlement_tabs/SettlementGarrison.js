@@ -77,7 +77,7 @@ const getUnitNameWithoutTier = (fullUnitId) => {
 };
 
 const SettlementGarrison = observer(() => {
-    const { settlement, user, guild } = useContext(Context); // Добавлен guild
+    const { settlement, user, guild } = useContext(Context);
     const [selectedUnit, setSelectedUnit] = useState(null);
     const [quantity, setQuantity] = useState(1);
     const [showTakeModal, setShowTakeModal] = useState(false);
@@ -100,7 +100,6 @@ const SettlementGarrison = observer(() => {
     const [dischargeLoading, setDischargeLoading] = useState(false);
     const [storeLoading, setStoreLoading] = useState(false);
 
-    // Отладка
     useEffect(() => {
         console.log('=== SETTLEMENT GARRISON DEBUG ===');
         console.log('Component mounted');
@@ -111,18 +110,16 @@ const SettlementGarrison = observer(() => {
         setTimeout(() => setNotification({ show: false, type: '', message: '' }), 5000);
     };
 
-    // Получаем данные игрока
+    // Данные игрока
     const playerData = useMemo(() => {
         if (!user) return null;
         return toJS(user.user) || toJS(user.player) || toJS(user.currentUser);
     }, [user]);
 
-    // ID игрока (как в SettlementStorage)
     const playerId = useMemo(() => {
         return user.user?.id;
     }, [user.user]);
 
-    // ID гильдии из контекста guild
     const guildId = useMemo(() => {
         return guild.guildData?.id;
     }, [guild.guildData]);
@@ -131,9 +128,7 @@ const SettlementGarrison = observer(() => {
         return guild.guildData && guild.guildData.has_guild;
     }, [guild.guildData]);
 
-    // Максимальный размер отряда
     const maxPartySize = useMemo(() => {
-        console.log('DEBUG: Getting maxPartySize...');
         let size = 55;
         if (playerData) {
             const sizeFromData = 
@@ -150,7 +145,6 @@ const SettlementGarrison = observer(() => {
         return size;
     }, [playerData]);
 
-    // Загрузка данных игрока
     const loadPlayerData = useCallback(async (force = false) => {
         if (loadingPlayer && !force) return;
         setLoadingPlayer(true);
@@ -175,7 +169,6 @@ const SettlementGarrison = observer(() => {
         }
     }, [user, loadingPlayer]);
 
-    // Инициализация
     useEffect(() => {
         const initData = async () => {
             try {
@@ -193,7 +186,6 @@ const SettlementGarrison = observer(() => {
         initData();
     }, []);
 
-    // Загрузка данных поселения
     useEffect(() => {
         const loadSettlementData = async () => {
             setIsLoading(true);
@@ -210,7 +202,6 @@ const SettlementGarrison = observer(() => {
         loadSettlementData();
     }, [settlement]);
 
-    // Данные отряда
     const partyData = useMemo(() => {
         if (playerPartyData && Object.keys(playerPartyData).length > 0) return playerPartyData;
         if (playerData && (playerData.pets || playerData.party)) {
@@ -226,13 +217,11 @@ const SettlementGarrison = observer(() => {
         return {};
     }, [playerData, playerPartyData]);
 
-    // Данные поселения
     const settlementData = useMemo(() => {
         if (!settlement) return null;
         return toJS(settlement);
     }, [settlement]);
 
-    // Гарнизон, здания, ресурсы
     const garrisonData = useMemo(() => {
         return settlementData?._settlementData?.garrison || {};
     }, [settlementData]);
@@ -265,7 +254,6 @@ const SettlementGarrison = observer(() => {
         return determineSettlementType(buildingsData, garrisonData);
     }, [buildingsData, garrisonData]);
 
-    // Доступные для найма юниты
     const availableUnits = useMemo(() => {
         try {
             if (!buildingsData || Object.keys(buildingsData).length === 0) return [];
@@ -305,7 +293,6 @@ const SettlementGarrison = observer(() => {
         }
     }, [buildingsData]);
 
-    // Вес юнита
     const getUnitWeight = useCallback((unitId) => {
         if (!unitId && unitId !== 0) return 1;
         const idNum = parseInt(unitId);
@@ -320,7 +307,6 @@ const SettlementGarrison = observer(() => {
         return 1;
     }, []);
 
-    // Текущее количество юнитов в отряде
     const currentPartyCount = useMemo(() => {
         if (!partyData || typeof partyData !== 'object' || Object.keys(partyData).length === 0) return 0;
         let total = 0;
@@ -340,12 +326,10 @@ const SettlementGarrison = observer(() => {
         return total;
     }, [partyData]);
 
-    // Оставшиеся места
     const remainingSlots = useMemo(() => {
         return Math.max(0, maxPartySize - currentPartyCount);
     }, [maxPartySize, currentPartyCount]);
 
-    // Список спутников для отображения
     const partyList = useMemo(() => {
         if (!partyData || typeof partyData !== 'object' || Object.keys(partyData).length === 0) return [];
         const list = [];
@@ -431,7 +415,6 @@ const SettlementGarrison = observer(() => {
         return partyList.reduce((sum, pet) => sum + (pet.totalWeight || 0), 0);
     }, [partyList]);
 
-    // Доступные тиры для оснащения
     const checkAvailableTiers = useCallback((buildingTier) => {
         const tiers = [0];
         if (smithLevel >= buildingTier && buildingTier > 0) {
@@ -440,7 +423,6 @@ const SettlementGarrison = observer(() => {
         return tiers;
     }, [smithLevel]);
 
-    // Расчёт стоимости найма
     const calculateHireCost = useCallback((unit, tier, quantity) => {
         const baseEssenceCost = unit.cost * quantity;
         const tierResources = RESOURCE_PER_TIER[tier] || {};
@@ -451,7 +433,6 @@ const SettlementGarrison = observer(() => {
         return { essence: baseEssenceCost, resources: resourcesCost };
     }, []);
 
-    // Проверка наличия ресурсов
     const checkResourcesAvailability = useCallback((cost) => {
         if (cost.essence > currentEssence) {
             return { available: false, missing: 'essence', amount: cost.essence - currentEssence };
@@ -466,14 +447,12 @@ const SettlementGarrison = observer(() => {
         return { available: true };
     }, [currentEssence, currentResources]);
 
-    // Проверка места в отряде
     const checkPartySpaceForTake = useCallback((unitId, quantity) => {
         if (remainingSlots <= 0) return { available: false, message: 'В отряде нет свободного места' };
         if (quantity > remainingSlots) return { available: false, message: `Недостаточно места. Можно взять максимум ${remainingSlots} юнит(ов)` };
         return { available: true };
     }, [remainingSlots]);
 
-    // Обновление всех данных
     const refreshAllData = async () => {
         try {
             if (settlement && settlement.fetchData) await settlement.fetchData();
@@ -484,7 +463,6 @@ const SettlementGarrison = observer(() => {
         }
     };
 
-    // Извлечение тира из названия
     const extractTierFromName = (unitName) => {
         const tierPattern = /\s*[ТTтt]\s*([0-3])\s*/i;
         const match = unitName.match(tierPattern);
@@ -497,10 +475,8 @@ const SettlementGarrison = observer(() => {
         return { tier, nameWithoutTier };
     };
 
-    // Обработчики модалок
     const handleOpenDischargeModal = (unit) => {
         if (!playerId) { showNotification('error', 'Не удалось определить ID игрока'); return; }
-        if (!hasGuildData) { showNotification('error', 'Вы не состоите в гильдии'); return; }
         setSelectedPartyUnit(unit);
         setDischargeQuantity(1);
         setShowDischargeModal(true);
@@ -508,7 +484,7 @@ const SettlementGarrison = observer(() => {
 
     const handleOpenStoreModal = (unit) => {
         if (!playerId) { showNotification('error', 'Не удалось определить ID игрока'); return; }
-        if (!hasGuildData) { showNotification('error', 'Не удалось определить ID гильдии'); return; }
+        if (!hasGuildData) { showNotification('error', 'Вы не состоите в гильдии'); return; }
         setSelectedPartyUnit(unit);
         setStoreQuantity(1);
         setShowStoreModal(true);
@@ -526,7 +502,7 @@ const SettlementGarrison = observer(() => {
             originalName: unit.originalName,
             tier: unit.tier,
             amount: unit.amount,
-            unitId: unit.id // числовой ID
+            unitId: unit.id // это числовой ID (например, "3030")
         });
         setQuantity(1);
         setShowTakeModal(true);
@@ -539,20 +515,21 @@ const SettlementGarrison = observer(() => {
         setShowHireModal(true);
     };
 
-    // Обработчик взятия юнита (исправлен: передаём unitId)
+    // ========== ИСПРАВЛЕННЫЙ ОБРАБОТЧИК ВЗЯТИЯ ЮНИТОВ ==========
     const handleTakeUnit = async () => {
         if (!selectedUnit) return;
+        if (!hasGuildData) {
+            showNotification('error', 'Вы не состоите в гильдии');
+            return;
+        }
         const spaceCheck = checkPartySpaceForTake(null, quantity);
         if (!spaceCheck.available) {
             showNotification('error', spaceCheck.message);
             return;
         }
-        const unitId = selectedUnit.unitId; // числовой ID
+        // Используем числовой ID юнита
+        const unitId = selectedUnit.unitId;
         try {
-            if (!hasGuildData) {
-                showNotification('error', 'Не удалось определить ID гильдии');
-                return;
-            }
             const result = await settlementService.takeFromGarrison(guildId, unitId, quantity);
             if (result.status === 200) {
                 showNotification('success', result.message || `Успешно взято ${quantity} юнитов из гарнизона`);
@@ -574,7 +551,7 @@ const SettlementGarrison = observer(() => {
 
     const handleHireUnit = async () => {
         if (!hasGuildData) {
-            showNotification('error', 'Не удалось определить ID гильдии');
+            showNotification('error', 'Вы не состоите в гильдии');
             return;
         }
         if (!selectedHireUnit) return;
@@ -606,7 +583,7 @@ const SettlementGarrison = observer(() => {
     };
 
     const handleDischargeUnit = async () => {
-        if (!selectedPartyUnit || !playerId || !hasGuildData) return;
+        if (!selectedPartyUnit || !playerId) return;
         setDischargeLoading(true);
         try {
             const result = await settlementService.dischargeFromParty(
@@ -631,7 +608,11 @@ const SettlementGarrison = observer(() => {
     };
 
     const handleStoreUnit = async () => {
-        if (!selectedPartyUnit || !playerId || !hasGuildData) return;
+        if (!selectedPartyUnit || !playerId) return;
+        if (!hasGuildData) {
+            showNotification('error', 'Вы не состоите в гильдии');
+            return;
+        }
         setStoreLoading(true);
         try {
             const result = await settlementService.storeToGarrison(
@@ -659,7 +640,6 @@ const SettlementGarrison = observer(() => {
         }
     };
 
-    // Рендер карточки юнита в гарнизоне
     const renderGarrisonUnitCard = (unitId, unitData) => {
         if (!unitData || typeof unitData !== 'object') return null;
         const amount = unitData.amount || 0;
@@ -710,7 +690,6 @@ const SettlementGarrison = observer(() => {
         );
     };
 
-    // Рендер карточки для найма
     const renderHireUnitCard = (unit) => {
         if (!unit) return null;
         const isUnitAvailable = unit.cost <= currentEssence;
@@ -785,7 +764,6 @@ const SettlementGarrison = observer(() => {
         );
     };
 
-    // Подсчёты
     const totalUnits = useMemo(() => {
         return Object.values(garrisonData).reduce((sum, unit) => {
             if (!unit || typeof unit !== 'object') return sum;
@@ -805,7 +783,6 @@ const SettlementGarrison = observer(() => {
     const resourceCheck = selectedHireUnit ? checkResourcesAvailability(hireCost) : { available: true };
     const canTakeSelectedUnits = quantity <= remainingSlots;
 
-    // Если нет гильдии
     if (!hasGuildData) {
         return (
             <Card className="fantasy-card">
@@ -1111,7 +1088,7 @@ const SettlementGarrison = observer(() => {
                 </Card.Body>
             </Card>
 
-            {/* Модальные окна (без изменений) */}
+            {/* Модальные окна (без изменений, кроме вызова handleTakeUnit) */}
             <Modal show={showTakeModal} onHide={() => setShowTakeModal(false)} backdrop="static" centered className="fantasy-modal mass-operation-modal">
                 <Modal.Header closeButton className="fantasy-card-header fantasy-card-header-primary">
                     <Modal.Title className="d-flex align-items-center fantasy-text-gold">
@@ -1215,6 +1192,7 @@ const SettlementGarrison = observer(() => {
                 </Modal.Footer>
             </Modal>
 
+            {/* Остальные модальные окна (Hire, Discharge, Store) без изменений – они уже используют ID */}
             <Modal show={showHireModal} onHide={() => setShowHireModal(false)} backdrop="static" centered className="fantasy-modal mass-operation-modal" size="lg">
                 <Modal.Header closeButton className="fantasy-card-header fantasy-card-header-success">
                     <Modal.Title className="d-flex align-items-center fantasy-text-gold">

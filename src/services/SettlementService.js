@@ -192,14 +192,14 @@ export const hireUnit = async (guildId, buildingKey, quantity, tier, unitName, u
 };
 
 // Функция для взятия юнитов из гарнизона
-export const takeFromGarrison = async (guildId, unitNameWithTier, amount = 1) => {
+export const takeFromGarrison = async (guildId, unitId, amount = 1) => {
   try {
-    console.log(`🔄 Запрос взять юнитов из гарнизона: ${unitNameWithTier} x${amount}`);
+    console.log(`🔄 Запрос взять юнитов из гарнизона: unitId=${unitId} x${amount}`);
     
     const response = await apiClient.post(
       `/guild/${guildId}/settlement/take-from-garrison`,
       { 
-        unit_name_with_tier: unitNameWithTier,
+        unit_id: unitId,      // теперь передаём ID
         amount: amount
       },
       {
@@ -214,14 +214,6 @@ export const takeFromGarrison = async (guildId, unitNameWithTier, amount = 1) =>
     };
   } catch (error) {
     console.error("❌ Ошибка взятия юнитов из гарнизона:", error);
-    
-    if (error.response?.status === 404) {
-      return {
-        status: 404,
-        message: "Эндпоинт не найден. Проверьте URL и параметры запроса",
-        data: null
-      };
-    }
     
     return {
       status: error.response?.status || 500,
