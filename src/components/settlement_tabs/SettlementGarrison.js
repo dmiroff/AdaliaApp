@@ -819,7 +819,7 @@ const SettlementGarrison = observer(() => {
     };
 
     const handleStoreUnit = async () => {
-        if (!selectedPartyUnit || !playerId || !guildId) return;
+        if (!selectedPartyUnit || !playerId || guildId === undefined || guildId === null) return;
         
         setStoreLoading(true);
         try {
@@ -1295,6 +1295,7 @@ const SettlementGarrison = observer(() => {
                                                 onClick={() => handleOpenDischargeModal(pet)}
                                                 title="Прогнать из отряда"
                                                 className="me-1"
+                                                disabled={loadingPlayer || !playerId}
                                             >
                                                 <i className="fas fa-user-minus"></i>
                                             </Button>
@@ -1303,6 +1304,7 @@ const SettlementGarrison = observer(() => {
                                                 variant="outline-warning"
                                                 onClick={() => handleOpenStoreModal(pet)}
                                                 title="Сложить в гарнизон"
+                                                disabled={loadingPlayer || !playerId}
                                             >
                                                 <i className="fas fa-box"></i>
                                             </Button>
