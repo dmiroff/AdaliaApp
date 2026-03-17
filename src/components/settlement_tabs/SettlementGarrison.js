@@ -508,7 +508,7 @@ const SettlementGarrison = observer(() => {
 
     const handleOpenStoreModal = (unit) => {
         if (!playerId) { showNotification('error', 'Не удалось определить ID игрока'); return; }
-        if (!hasGuildData || !guildId) { showNotification('error', 'Не удалось определить ID гильдии'); return; }
+        if (!hasGuildData) { showNotification('error', 'Не удалось определить ID гильдии'); return; }
         setSelectedPartyUnit(unit);
         setStoreQuantity(1);
         setShowStoreModal(true);
@@ -549,7 +549,7 @@ const SettlementGarrison = observer(() => {
         }
         const unitId = selectedUnit.unitId; // числовой ID
         try {
-            if (!hasGuildData || !guildId) {
+            if (!hasGuildData) {
                 showNotification('error', 'Не удалось определить ID гильдии');
                 return;
             }
@@ -573,7 +573,7 @@ const SettlementGarrison = observer(() => {
     };
 
     const handleHireUnit = async () => {
-        if (!hasGuildData || !guildId) {
+        if (!hasGuildData) {
             showNotification('error', 'Не удалось определить ID гильдии');
             return;
         }
@@ -606,7 +606,7 @@ const SettlementGarrison = observer(() => {
     };
 
     const handleDischargeUnit = async () => {
-        if (!selectedPartyUnit || !playerId || !hasGuildData || !guildId) return;
+        if (!selectedPartyUnit || !playerId || !hasGuildData) return;
         setDischargeLoading(true);
         try {
             const result = await settlementService.dischargeFromParty(
@@ -631,7 +631,7 @@ const SettlementGarrison = observer(() => {
     };
 
     const handleStoreUnit = async () => {
-        if (!selectedPartyUnit || !playerId || !hasGuildData || !guildId) return;
+        if (!selectedPartyUnit || !playerId || !hasGuildData) return;
         setStoreLoading(true);
         try {
             const result = await settlementService.storeToGarrison(
