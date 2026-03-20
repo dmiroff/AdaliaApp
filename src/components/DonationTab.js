@@ -413,7 +413,7 @@ const DonationTab = observer(() => {
       }
 
       // Формируем дополнительные данные
-      let extraData = null;
+      let extraData = {};
       if (selectedProduct.requiresSelection) {
         extraData = { custom_request: customRequest.trim() };
       } else if (selectedProduct.id === 10) {
