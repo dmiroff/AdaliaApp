@@ -1,6 +1,6 @@
 import React, { useState, useContext, useEffect, useRef, useCallback } from 'react';
 import { observer } from "mobx-react-lite";
-import { Row, Col, Card, Button, Badge, Alert, Modal, Spinner, Form } from "react-bootstrap";
+import { Row, Col, Card, Button, Badge, Alert, Modal, Spinner, Form, Tabs, Tab } from "react-bootstrap";
 import { Context } from "../index";
 import GetDataById from "../http/GetData";
 import { 
@@ -19,8 +19,9 @@ const DonationTab = observer(() => {
   const [loading, setLoading] = useState(true);
   const [delay, setDelay] = useState(false);
   const [quantity, setQuantity] = useState(1);
-  // NEW: состояние для текста заказа (арт / анимированный образ)
   const [customRequest, setCustomRequest] = useState("");
+  const [activeTab, setActiveTab] = useState("premium");
+  const [selectedWeapon, setSelectedWeapon] = useState("");
 
   // Состояния для пополнения
   const [showTopUpModal, setShowTopUpModal] = useState(false);
@@ -29,6 +30,13 @@ const DonationTab = observer(() => {
   const [checkingPayment, setCheckingPayment] = useState(false);
   const [pendingPaymentId, setPendingPaymentId] = useState(null);
   const paymentChecked = useRef(false);
+
+  // Список доступного оружия для набора новичка
+  const weaponOptions = [
+    "кинжал+2", "меч+2", "клеймор+2", "топор+2", "секира+2", "алебарда+2",
+    "молот+2", "кувалда+2", "метательные кинжалы+2", "пилум+2", "кастет+2",
+    "копьё+2", "короткий лук+2", "составной лук+2", "арбалет+2", "посох+2"
+  ];
 
   // Загрузка данных игрока
   const fetchPlayer = useCallback(async () => {
@@ -56,7 +64,7 @@ const DonationTab = observer(() => {
     }
   }, [playerData]);
 
-  // Подгружаем скрипт виджета Т-Банка (если нужен)
+  // Подгружаем скрипт виджета Т-Банка
   useEffect(() => {
     if (!document.querySelector('script[src*="tinkoff_v2.js"]')) {
       const script = document.createElement('script');
@@ -89,7 +97,6 @@ const DonationTab = observer(() => {
           } else if (data.status === 'failed' || data.status === 'cancelled') {
             setError('Платёж не прошёл. Попробуйте снова.');
           }
-          // Для статуса 'pending' ничего не показываем, ждём webhook
         } catch (err) {
           console.error('Ошибка проверки статуса платежа:', err);
           setError('Не удалось проверить статус платежа');
@@ -102,8 +109,9 @@ const DonationTab = observer(() => {
     }
   }, [pendingPaymentId, fetchPlayer, user]);
 
-  // NEW: Обновлённый список товаров с двумя новыми позициями (арт на заказ и анимированный образ)
+  // Список товаров с категориями
   const donationProducts = [
+    // Премиум товары (категория premium)
     {
       id: 1,
       name: "💰 Торговец",
@@ -112,7 +120,8 @@ const DonationTab = observer(() => {
       currency: "💎",
       features: ["Доступ к торговле вне аукциона"],
       purchased: playerData?.upgrades?.includes("Торговец") || false,
-      type: "permanent"
+      type: "permanent",
+      category: "premium"
     },
     {
       id: 2,
@@ -122,7 +131,8 @@ const DonationTab = observer(() => {
       currency: "💎",
       features: ["Быстрые перемещения"],
       purchased: playerData?.upgrades?.includes("Рысак") || false,
-      type: "permanent"
+      type: "permanent",
+      category: "premium"
     },
     {
       id: 3,
@@ -133,7 +143,8 @@ const DonationTab = observer(() => {
       features: ["+50% к опыту", "+50% к шансам выпадения предметов", "Отдых после боя"],
       purchased: false,
       type: "premium",
-      duration_days: 7
+      duration_days: 7,
+      category: "premium"
     },
     {
       id: 4,
@@ -144,7 +155,8 @@ const DonationTab = observer(() => {
       features: ["+50% к опыту", "+50% к шансам выпадения предметов", "Отдых после боя"],
       purchased: false,
       type: "premium", 
-      duration_days: 30
+      duration_days: 30,
+      category: "premium"
     },
     {
       id: 5,
@@ -155,7 +167,8 @@ const DonationTab = observer(() => {
       features: ["Сброс всех характеристик предмета"],
       purchased: false,
       type: "consumable",
-      maxQuantity: 100
+      maxQuantity: 100,
+      category: "premium"
     },
     {
       id: 6,
@@ -165,7 +178,8 @@ const DonationTab = observer(() => {
       currency: "💎",
       features: ["Автоматический сбор тайников и разделка"],
       purchased: playerData?.upgrades?.includes("Глаз добытчика") || false,
-      type: "permanent"
+      type: "permanent",
+      category: "premium"
     },
     {
       id: 7,
@@ -175,9 +189,9 @@ const DonationTab = observer(() => {
       currency: "💎",
       features: ["Взаимодействие со складом замка/поселения из любой локации"],
       purchased: playerData?.upgrades?.includes("Гильдейский посланник") || false,
-      type: "permanent"
+      type: "permanent",
+      category: "premium"
     },
-    // NEW: Арт персонажа на заказ (требует описания)
     {
       id: 8,
       name: "🎨 Арт персонажа на заказ",
@@ -189,9 +203,9 @@ const DonationTab = observer(() => {
       type: "custom",
       requiresSelection: true,
       selectionPlaceholder: "Опишите вашего персонажа: расу, пол, класс, одежду, позу, фон, детали...",
-      selectionMinLength: 20
+      selectionMinLength: 20,
+      category: "premium"
     },
-    // NEW: Анимированный образ персонажа
     {
       id: 9,
       name: "✨ Анимированный образ персонажа",
@@ -203,22 +217,181 @@ const DonationTab = observer(() => {
       type: "custom",
       requiresSelection: true,
       selectionPlaceholder: "Опишите желаемый образ для анимации: внешность, одежда, анимации, эффекты...",
-      selectionMinLength: 20
+      selectionMinLength: 20,
+      category: "premium"
+    },
+    // Новичковые товары (категория beginner)
+    {
+      id: 10,
+      name: "🎁 Набор новичка",
+      description: "Стартовый набор: оружие +2, броня +2 (4 предмета), улучшенный мул, 50 золота",
+      price: 100,
+      currency: "💎",
+      features: ["Оружие +2 на выбор", "Кольцо +2", "Кольчуга +2", "Шлем +2", "Кольцо +2", "Питомец: улучшенный мул", "50 золота"],
+      purchased: playerData?.upgrades?.includes("Набор новичка") || false,
+      type: "beginner_pack",
+      upgrade_key: "Набор новичка",
+      category: "beginner",
+      requiresWeaponSelection: true,
+      weaponOptions: weaponOptions
+    },
+    {
+      id: 11,
+      name: "🔥 Постижение Огня",
+      description: "Позволяет изучить заклинания огня",
+      price: 300,
+      currency: "💎",
+      features: ["Изучение магии огня", "+10 к знаку Огня"],
+      purchased: playerData?.upgrades?.includes("Постижение Огня") || false,
+      type: "beginner_pack",
+      upgrade_key: "Постижение Огня",
+      sign_key: "sign_fire",
+      category: "beginner"
+    },
+    {
+      id: 12,
+      name: "❄️ Постижение Льда",
+      description: "Позволяет изучить заклинания льда",
+      price: 300,
+      currency: "💎",
+      features: ["Изучение магии льда", "+10 к знаку Льда"],
+      purchased: playerData?.upgrades?.includes("Постижение Льда") || false,
+      type: "beginner_pack",
+      upgrade_key: "Постижение Льда",
+      sign_key: "sign_ice",
+      category: "beginner"
+    },
+    {
+      id: 13,
+      name: "⚡ Постижение Молнии",
+      description: "Позволяет изучить заклинания молнии",
+      price: 300,
+      currency: "💎",
+      features: ["Изучение магии молнии", "+10 к знаку Молнии"],
+      purchased: playerData?.upgrades?.includes("Постижение Молнии") || false,
+      type: "beginner_pack",
+      upgrade_key: "Постижение Молнии",
+      sign_key: "sign_electric",
+      category: "beginner"
+    },
+    {
+      id: 14,
+      name: "💨 Постижение Ветра",
+      description: "Позволяет изучить заклинания ветра",
+      price: 300,
+      currency: "💎",
+      features: ["Изучение магии ветра", "+10 к знаку Ветра"],
+      purchased: playerData?.upgrades?.includes("Постижение Ветра") || false,
+      type: "beginner_pack",
+      upgrade_key: "Постижение Ветра",
+      sign_key: "sign_wind",
+      category: "beginner"
+    },
+    {
+      id: 15,
+      name: "🗻 Постижение Камня",
+      description: "Позволяет изучить заклинания камня",
+      price: 300,
+      currency: "💎",
+      features: ["Изучение магии камня", "+10 к знаку Камня"],
+      purchased: playerData?.upgrades?.includes("Постижение Камня") || false,
+      type: "beginner_pack",
+      upgrade_key: "Постижение Камня",
+      sign_key: "sign_stone",
+      category: "beginner"
+    },
+    {
+      id: 16,
+      name: "👑 Постижение Власти",
+      description: "Позволяет изучить заклинания власти",
+      price: 300,
+      currency: "💎",
+      features: ["Изучение магии власти", "+10 к знаку Власти"],
+      purchased: playerData?.upgrades?.includes("Постижение Власти") || false,
+      type: "beginner_pack",
+      upgrade_key: "Постижение Власти",
+      sign_key: "sign_power",
+      category: "beginner"
+    },
+    {
+      id: 17,
+      name: "🎵 Постижение Звука",
+      description: "Позволяет изучить заклинания звука",
+      price: 300,
+      currency: "💎",
+      features: ["Изучение магии звука", "+10 к знаку Звука"],
+      purchased: playerData?.upgrades?.includes("Постижение Звука") || false,
+      type: "beginner_pack",
+      upgrade_key: "Постижение Звука",
+      sign_key: "sign_sound",
+      category: "beginner"
+    },
+    {
+      id: 18,
+      name: "🌿 Постижение Жизни",
+      description: "Позволяет изучить заклинания жизни",
+      price: 300,
+      currency: "💎",
+      features: ["Изучение магии жизни", "+10 к знаку Жизни"],
+      purchased: playerData?.upgrades?.includes("Постижение Жизни") || false,
+      type: "beginner_pack",
+      upgrade_key: "Постижение Жизни",
+      sign_key: "sign_life",
+      category: "beginner"
+    },
+    {
+      id: 19,
+      name: "✨ Постижение Света",
+      description: "Позволяет изучить заклинания света",
+      price: 300,
+      currency: "💎",
+      features: ["Изучение магии света", "+10 к знаку Света"],
+      purchased: playerData?.upgrades?.includes("Постижение Света") || false,
+      type: "beginner_pack",
+      upgrade_key: "Постижение Света",
+      sign_key: "sign_light",
+      category: "beginner"
+    },
+    {
+      id: 20,
+      name: "🌑 Постижение Тьмы",
+      description: "Позволяет изучить заклинания тьмы",
+      price: 300,
+      currency: "💎",
+      features: ["Изучение магии тьмы", "+10 к знаку Тьмы"],
+      purchased: playerData?.upgrades?.includes("Постижение Тьмы") || false,
+      type: "beginner_pack",
+      upgrade_key: "Постижение Тьмы",
+      sign_key: "sign_dark",
+      category: "beginner"
     }
   ];
+
+  // Фильтруем товары по активной вкладке и скрываем уже купленные новичковые
+  const filteredProducts = donationProducts.filter(product => {
+    if (activeTab === "premium") return product.category === "premium";
+    // Для вкладки beginner показываем только товары категории beginner, которые не куплены
+    if (activeTab === "beginner") {
+      if (product.category !== "beginner") return false;
+      // Если товар уже куплен (проверяем по upgrade_key), не показываем
+      if (product.upgrade_key && playerData?.upgrades?.includes(product.upgrade_key)) return false;
+      return true;
+    }
+    return false;
+  });
 
   const handlePurchaseClick = (product) => {
     setSelectedProduct(product);
     setQuantity(1);
-    setCustomRequest(""); // NEW: сбрасываем предыдущий запрос
+    setCustomRequest("");
+    setSelectedWeapon("");
     setShowConfirmModal(true);
     setError("");
   };
 
-  // NEW: Обновлённая функция подтверждения покупки с поддержкой extra данных
   const handleConfirmPurchase = async () => {
     try {
-      // Валидация для товаров с описанием
+      // Валидация для товаров с описанием (арт и анимация)
       if (selectedProduct.requiresSelection) {
         const minLength = selectedProduct.selectionMinLength || 10;
         if (!customRequest || customRequest.trim().length < minLength) {
@@ -227,17 +400,32 @@ const DonationTab = observer(() => {
         }
       }
 
-      // Формируем дополнительные данные, если нужно
-      const extraData = selectedProduct.requiresSelection 
-        ? { custom_request: customRequest.trim() } 
-        : {};
+      // Валидация для набора новичка: выбор оружия
+      if (selectedProduct.id === 10) {
+        if (!selectedWeapon) {
+          setError("Пожалуйста, выберите оружие из списка");
+          return;
+        }
+        if (!weaponOptions.includes(selectedWeapon)) {
+          setError("Выбранное оружие недоступно");
+          return;
+        }
+      }
 
-      // Вызов API (предполагается, что premiumPurchase теперь поддерживает четвёртый параметр extraData)
+      // Формируем дополнительные данные
+      let extraData = null;
+      if (selectedProduct.requiresSelection) {
+        extraData = { custom_request: customRequest.trim() };
+      } else if (selectedProduct.id === 10) {
+        extraData = { custom_request: selectedWeapon };
+      }
+
+      // Вызов API
       const result = await premiumPurchase(
         selectedProduct.id,
         selectedProduct.type === "premium" ? selectedProduct.duration_days : null,
         selectedProduct.type === "consumable" ? quantity : undefined,
-        extraData   // NEW: передаём описание для кастомных заказов
+        extraData
       );
 
       if (result.status === 200) {
@@ -246,6 +434,8 @@ const DonationTab = observer(() => {
           message = `Покупка "${selectedProduct.name}" x${quantity} успешна!`;
         } else if (selectedProduct.requiresSelection) {
           message = `Заказ "${selectedProduct.name}" отправлен! Администратор свяжется с вами.`;
+        } else if (selectedProduct.id === 10) {
+          message = `Набор новичка успешно приобретён! Оружие "${selectedWeapon}" выдано.`;
         } else {
           message = `Покупка "${selectedProduct.name}" успешна!`;
         }
@@ -265,7 +455,8 @@ const DonationTab = observer(() => {
 
     setShowConfirmModal(false);
     setSelectedProduct(null);
-    setCustomRequest(""); // NEW: очищаем
+    setCustomRequest("");
+    setSelectedWeapon("");
     
     setTimeout(() => {
       setSuccess("");
@@ -391,10 +582,21 @@ const DonationTab = observer(() => {
         </Card.Body>
       </Card>
 
+      {/* Вкладки */}
+      <Tabs
+        activeKey={activeTab}
+        onSelect={(k) => setActiveTab(k)}
+        className="mb-4 fantasy-tabs"
+        id="donation-tabs"
+      >
+        <Tab eventKey="premium" title="Премиум товары" />
+        <Tab eventKey="beginner" title="Для новичков" />
+      </Tabs>
+
       {/* Список товаров */}
       <Row>
-        {donationProducts.map((product) => {
-          // Для постоянных улучшений проверяем, куплено ли
+        {filteredProducts.map((product) => {
+          // Для постоянных улучшений проверяем, куплено ли (только для премиум товаров)
           const isPurchased = product.type === "permanent" ? product.purchased : false;
           const isDisabled = isPurchased || (playerData?.daleons || 0) < product.price;
           
@@ -414,10 +616,19 @@ const DonationTab = observer(() => {
                         ⭐ Активен
                       </Badge>
                     )}
-                    {/* NEW: для кастомных товаров можно добавить значок */}
                     {product.requiresSelection && (
                       <Badge bg="warning" className="mb-2">
                         ✨ На заказ
+                      </Badge>
+                    )}
+                    {product.id === 10 && (
+                      <Badge bg="info" className="mb-2">
+                        🎁 Только для новичков
+                      </Badge>
+                    )}
+                    {product.category === "beginner" && product.id !== 10 && (
+                      <Badge bg="secondary" className="mb-2">
+                        📜 Знак
                       </Badge>
                     )}
                   </div>
@@ -476,17 +687,18 @@ const DonationTab = observer(() => {
         })}
       </Row>
 
-      {/* Модальное окно подтверждения покупки (товары) */}
+      {/* Модальное окно подтверждения покупки */}
       <Modal 
         show={showConfirmModal} 
         onHide={() => {
           setShowConfirmModal(false);
           setSelectedProduct(null);
           setCustomRequest("");
+          setSelectedWeapon("");
         }}
         centered
         className="fantasy-modal"
-        size={selectedProduct?.requiresSelection ? "lg" : "md"} // NEW: для заказов окно побольше
+        size={selectedProduct?.requiresSelection || selectedProduct?.id === 10 ? "lg" : "md"}
       >
         <Modal.Header closeButton className="fantasy-card-header fantasy-card-header-primary">
           <Modal.Title className="fantasy-text-gold">
@@ -499,7 +711,7 @@ const DonationTab = observer(() => {
               <h4 className="fantasy-text-primary mb-3">{selectedProduct.name}</h4>
               <p className="fantasy-text-dark">{selectedProduct.description}</p>
               
-              {/* NEW: Поле ввода описания для кастомных товаров */}
+              {/* Поле ввода описания для кастомных товаров (арт/анимация) */}
               {selectedProduct.requiresSelection && (
                 <div className="my-4">
                   <Form.Group>
@@ -529,8 +741,42 @@ const DonationTab = observer(() => {
                 </div>
               )}
               
-              {/* Выбор количества для consumable (не для кастомных) */}
-              {selectedProduct.type === "consumable" && !selectedProduct.requiresSelection && (
+              {/* Выбор оружия для набора новичка */}
+              {selectedProduct.id === 10 && (
+                <div className="my-4">
+                  <Form.Group>
+                    <Form.Label className="fantasy-text-dark">
+                      <strong>Выберите оружие +2:</strong>
+                    </Form.Label>
+                    <Form.Select
+                      value={selectedWeapon}
+                      onChange={(e) => setSelectedWeapon(e.target.value)}
+                      className="fantasy-select"
+                    >
+                      <option value="">-- Выберите оружие --</option>
+                      {weaponOptions.map(weapon => (
+                        <option key={weapon} value={weapon}>{weapon}</option>
+                      ))}
+                    </Form.Select>
+                    <Form.Text className="fantasy-text-muted">
+                      Оружие будет выдано с уровнем +2. Выбранное оружие повлияет на ваш стиль боя.
+                    </Form.Text>
+                  </Form.Group>
+                  <Alert variant="warning" className="mt-3 fantasy-alert">
+                    <strong>⚠️ Внимание!</strong> При покупке набора ваш текущий мул будет заменён на улучшенного осла (грузоподъёмность 175 вместо 150).
+                  </Alert>
+                </div>
+              )}
+
+              {/* Предупреждение для свитков (постижений) */}
+              {selectedProduct.category === "beginner" && selectedProduct.id !== 10 && (
+                <Alert variant="warning" className="my-4 fantasy-alert">
+                  <strong>⚠️ Внимание!</strong> Магия подходит не всем классам. Убедитесь, что ваш класс может изучать эту стихию. Приобретение знака даст +10 к соответствующему навыку.
+                </Alert>
+              )}
+              
+              {/* Выбор количества для consumable (не для кастомных и не для новичковых) */}
+              {selectedProduct.type === "consumable" && !selectedProduct.requiresSelection && selectedProduct.id !== 10 && (
                 <div className="my-4">
                   <Form.Label className="fantasy-text-dark">Количество:</Form.Label>
                   <div className="d-flex align-items-center justify-content-center">
@@ -570,12 +816,12 @@ const DonationTab = observer(() => {
               
               <div className="fantasy-price-display mb-3">
                 <span className="fantasy-text-gold fs-2 fw-bold">
-                  {selectedProduct.type === "consumable" && !selectedProduct.requiresSelection
+                  {selectedProduct.type === "consumable" && !selectedProduct.requiresSelection && selectedProduct.id !== 10
                     ? `${formatPrice(calculateTotalPrice(), selectedProduct.currency)} (${quantity} шт.)`
                     : formatPrice(selectedProduct.price, selectedProduct.currency)
                   }
                 </span>
-                {selectedProduct.type === "consumable" && !selectedProduct.requiresSelection && (
+                {selectedProduct.type === "consumable" && !selectedProduct.requiresSelection && selectedProduct.id !== 10 && (
                   <div className="mt-1">
                     <small className="fantasy-text-muted">
                       {selectedProduct.price} 💎 за штуку
@@ -588,11 +834,13 @@ const DonationTab = observer(() => {
                 <small>
                   {selectedProduct.requiresSelection
                     ? 'После подтверждения заявка будет отправлена администратору. С вашего счета будет списана указанная сумма.'
-                    : `С вашего счета будет списано ${
-                        selectedProduct.type === "consumable" && !selectedProduct.requiresSelection
-                          ? calculateTotalPrice()
-                          : selectedProduct.price
-                      } далеонов`
+                    : selectedProduct.id === 10
+                      ? `С вашего счета будет списано ${selectedProduct.price} далеонов. Вы получите выбранное оружие, комплект брони +2, улучшенного осла и 50 золота.`
+                      : `С вашего счета будет списано ${
+                          selectedProduct.type === "consumable" && !selectedProduct.requiresSelection
+                            ? calculateTotalPrice()
+                            : selectedProduct.price
+                        } далеонов`
                   }
                 </small>
               </Alert>
@@ -606,6 +854,7 @@ const DonationTab = observer(() => {
               setShowConfirmModal(false);
               setSelectedProduct(null);
               setCustomRequest("");
+              setSelectedWeapon("");
             }}
           >
             Отмена
@@ -614,10 +863,12 @@ const DonationTab = observer(() => {
             className="fantasy-btn fantasy-btn-gold"
             onClick={handleConfirmPurchase}
             disabled={
-              selectedProduct?.type === "consumable" && !selectedProduct.requiresSelection
+              selectedProduct?.type === "consumable" && !selectedProduct.requiresSelection && selectedProduct.id !== 10
                 ? (playerData?.daleons || 0) < calculateTotalPrice()
                 : selectedProduct?.requiresSelection
                 ? !customRequest || customRequest.length < (selectedProduct.selectionMinLength || 10)
+                : selectedProduct?.id === 10
+                ? !selectedWeapon || (playerData?.daleons || 0) < selectedProduct.price
                 : (playerData?.daleons || 0) < (selectedProduct?.price || 0)
             }
           >
@@ -625,7 +876,9 @@ const DonationTab = observer(() => {
               ? 'Отправить заявку'
               : selectedProduct?.type === "consumable"
                 ? `Купить ${quantity} шт.`
-                : 'Подтвердить покупку'
+                : selectedProduct?.id === 10
+                  ? 'Приобрести набор'
+                  : 'Подтвердить покупку'
             }
           </Button>
         </Modal.Footer>
