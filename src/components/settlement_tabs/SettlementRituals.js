@@ -28,12 +28,19 @@ const SettlementRituals = observer(() => {
     const userMoney = useMemo(() => userData?.money || 0, [userData]);
     const userDaleons = useMemo(() => userData?.daleons || 0, [userData]);
     
+    // Используем правильный геттер из стора
     const settlementData = useMemo(() => {
-        return settlement?.currentSettlement || settlement?._settlementData || {};
+        return settlement?.settlementData || null;
     }, [settlement]);
 
+    // Отладка структуры settlementData
+    useEffect(() => {
+        console.log('🔍 [SettlementRituals] settlementData keys:', Object.keys(settlementData || {}));
+        console.log('🔍 [SettlementRituals] settlementData full:', settlementData);
+    }, [settlementData]);
+
     const buildings = useMemo(() => {
-        return settlementData?.buildings || settlementData || {};
+        return settlementData?.buildings || {};
     }, [settlementData]);
 
     const totem = useMemo(() => buildings?.totem || null, [buildings]);
@@ -66,13 +73,34 @@ const SettlementRituals = observer(() => {
         return 'member';
     }, [guild, user]);
 
+    // guildId может быть 0 – пробуем оба варианта названия поля
     const guildId = useMemo(() => {
-        const id = guild?.guildData?.id || settlementData?.guild_id || userData?.guild_id;
-        // Убедимся, что это число
-        return Number(id) || null;
+        const fromGuild = guild?.guildData?.id;
+        const fromSettlement = settlementData?.guild_id ?? settlementData?.guildId;
+        const fromUser = userData?.guild_id;
+        
+        console.log('🔍 [SettlementRituals] guildId sources:', { fromGuild, fromSettlement, fromUser });
+        
+        const id = fromGuild ?? fromSettlement ?? fromUser;
+        console.log('🔍 [SettlementRituals] computed id:', id);
+        
+        return id !== undefined && id !== null ? Number(id) : null;
     }, [guild, settlementData, userData]);
 
     const playerId = useMemo(() => userData?.id, [userData]);
+
+    // Загружаем данные, если их нет
+    useEffect(() => {
+        console.log('🔍 [SettlementRituals] useEffect: guildId=', guildId, 'settlementData=', settlementData);
+        if (guildId !== null && guildId !== undefined && settlementData === null) {
+            console.log('🚀 [SettlementRituals] Загружаем данные для гильдии', guildId);
+            settlement.fetchSettlementData(guildId);
+        } else if (guildId === null || guildId === undefined) {
+            console.log('⚠️ [SettlementRituals] guildId не определён, ждём...');
+        } else if (settlementData !== null) {
+            console.log('✅ [SettlementRituals] Данные уже есть, загрузка не нужна');
+        }
+    }, [guildId, settlement, settlementData]);
 
     const showNotification = useCallback((type, message) => {
         setNotification({ show: true, type, message });
@@ -115,7 +143,7 @@ const SettlementRituals = observer(() => {
         return baseDuration * (1 + bonus / 100);
     }, [getMaxFaithTouch]);
     
-    // ФИКС: фиксированная цена ритуала - 50 далеонов и 10000 монет
+    // Фиксированная цена ритуала
     const RITUAL_COST = useMemo(() => ({
         money: 10000,
         daleons: 50
@@ -151,22 +179,17 @@ const SettlementRituals = observer(() => {
         }));
     }, [ritualPlace, getRitualInfo, calculateBuffDuration, RITUAL_COST]);
     
-    // Упрощенная проверка - только проверяем наличие ритуального места и отсутствие активного баффа
+    // Проверка возможности проведения ритуала
     const canPerformRitual = useCallback((ritual) => {
         if (!ritual) return false;
-        
-        // Проверяем наличие активного баффа
         if (currentBuff) return false;
-        
-        // Проверяем наличие ритуального места
         if (!ritualPlace) return false;
-        
         return true;
     }, [currentBuff, ritualPlace]);
     
-    // ЭНДПОЙНТ: Проведение ритуала - ИСПРАВЛЕННЫЙ ВЫЗОВ
+    // Проведение ритуала
     const handlePerformRitual = useCallback(async (ritual) => {
-        if (!guildId || !playerId) {
+        if (guildId === null || guildId === undefined || !playerId) {
             showNotification('error', 'Не удалось определить гильдию или игрока');
             return;
         }
@@ -184,7 +207,6 @@ const SettlementRituals = observer(() => {
         setLoading(true);
         
         try {
-            // ИСПРАВЛЕННЫЙ ВЫЗОВ - передаем аргументы отдельно, а не объект
             const result = await settlementService.performRitual(
                 guildId,
                 playerId,
@@ -198,12 +220,10 @@ const SettlementRituals = observer(() => {
                 setShowRitualModal(false);
                 setSelectedRitual(null);
                 
-                // Обновляем данные пользователя
                 if (user?.fetchData) {
                     await user.fetchData();
                 }
                 
-                // Обновляем данные поселения для получения нового баффа
                 if (settlement?.fetchData) {
                     await settlement.fetchData();
                 }
@@ -252,12 +272,11 @@ const SettlementRituals = observer(() => {
         return recipes;
     }, [settlementType, getMaxAbbot]);
     
-    // Получение ресурсов для подношения (согласно логике бота)
+    // Получение ресурсов для подношения
     const getOfferingResources = useCallback(() => {
         const resources = [];
         const specialRecipes = getSpecialRecipes();
         
-        // Основные реагенты (аналогично боту)
         const baseReagents = [
             { code: "112", name: "Железная руда", value: 0.1, type: "reagent" },
             { code: "114", name: "Бревно", value: 0.1, type: "reagent" },
@@ -281,7 +300,6 @@ const SettlementRituals = observer(() => {
             }
         });
         
-        // Специальные рецепты
         specialRecipes.forEach(recipe => {
             Object.entries(recipe.ingredients).forEach(([itemId, requiredCount]) => {
                 const amount = storage[itemId] || 0;
@@ -292,7 +310,7 @@ const SettlementRituals = observer(() => {
                     resources.push({
                         code: itemId,
                         name: resourceName,
-                        value: 0.1, // базовая энергия за единицу
+                        value: 0.1,
                         type: "special_reagent",
                         recipeLevel: recipe.level,
                         requiredCount,
@@ -307,14 +325,14 @@ const SettlementRituals = observer(() => {
         return resources.sort((a, b) => b.totalEnergy - a.totalEnergy);
     }, [storage, getSpecialRecipes]);
     
-    // ЭНДПОЙНТ: Подношение всех ресурсов - ИСПРАВЛЕННЫЙ ВЫЗОВ
+    // Подношение всех ресурсов
     const handleMakeOfferingAll = useCallback(async () => {
         if (!totem) {
             showNotification('error', 'Для подношений необходим тотем');
             return;
         }
         
-        if (!guildId || !playerId) {
+        if (guildId === null || guildId === undefined || !playerId) {
             showNotification('error', 'Не удалось определить гильдию или игрока');
             return;
         }
@@ -333,11 +351,7 @@ const SettlementRituals = observer(() => {
         setLoading(true);
         
         try {
-            // ИСПРАВЛЕННЫЙ ВЫЗОВ - только guildId и playerId
-            const result = await settlementService.makeOfferingAll(
-                guildId,
-                playerId
-            );
+            const result = await settlementService.makeOfferingAll(guildId, playerId);
             
             if (result.success) {
                 showNotification('success', result.message || 'Подношение всех ресурсов успешно совершено');
@@ -357,14 +371,14 @@ const SettlementRituals = observer(() => {
         }
     }, [totem, obtainedRewardToday, guildId, playerId, settlement, showNotification, getOfferingResources]);
     
-    // ЭНДПОЙНТ: Подношение по рецепту (новый метод)
+    // Подношение по рецепту
     const handleMakeRecipeOffering = useCallback(async (recipeLevel) => {
         if (!totem) {
             showNotification('error', 'Для подношений необходим тотем');
             return;
         }
         
-        if (!guildId || !playerId) {
+        if (guildId === null || guildId === undefined || !playerId) {
             showNotification('error', 'Не удалось определить гильдию или игрока');
             return;
         }
@@ -377,13 +391,7 @@ const SettlementRituals = observer(() => {
         setLoading(true);
         
         try {
-            // Вызываем подношение по рецепту
-            const result = await settlementService.makeRecipeOffering(
-                guildId,
-                playerId,
-                recipeLevel,
-                1 // количество рецептов
-            );
+            const result = await settlementService.makeRecipeOffering(guildId, playerId, recipeLevel, 1);
             
             if (result.success) {
                 showNotification('success', result.message || 'Подношение по рецепту успешно совершено');
@@ -475,7 +483,6 @@ const SettlementRituals = observer(() => {
         return { totalAmount, totalEnergy };
     }, [getOfferingResources]);
     
-    // Функция для проверки доступности рецепта
     const canPrepareRecipe = useCallback((recipe) => {
         if (!recipe || !recipe.ingredients) return false;
         
@@ -488,16 +495,19 @@ const SettlementRituals = observer(() => {
         const mainCount = storage[mainIngredientId] || 0;
         const additionalCount = storage[additionalIngredientId] || 0;
         
-        // Согласно логике бота: 8 основного и 2 дополнительного ингредиента
         return mainCount >= 8 && additionalCount >= 2;
     }, [storage]);
     
-    if (!settlementData || !guildId) {
+    // Показываем спиннер, если данные ещё не загружены или guildId не определён
+    if (settlementData === null || guildId === null || guildId === undefined) {
         return (
             <Card className="fantasy-card">
                 <Card.Body className="text-center py-5">
                     <Spinner animation="border" variant="primary" />
                     <p className="mt-3">Загрузка данных о ритуалах...</p>
+                    <small className="text-muted">
+                        guildId: {guildId}, settlementData: {settlementData === null ? 'null' : 'loaded'}
+                    </small>
                 </Card.Body>
             </Card>
         );
