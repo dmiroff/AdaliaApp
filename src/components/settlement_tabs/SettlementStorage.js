@@ -874,14 +874,17 @@ const SettlementStorage = observer(() => {
     return { construction, hides, leatherTier, other, all: resources };
   }, [storageData]);
   
+  // Изменённая часть: ёмкость склада берётся из settlement.settlementData.buildings.storage.max_capacity
   const storageUsage = useMemo(() => {
     if (!storageData || typeof storageData !== 'object') {
-      return { used: 0, capacity: 10000, percentage: 0 };
+      return { used: 0, capacity: 1000, percentage: 0 };
     }
+    
+    // Получаем максимальную ёмкость из buildings (или fallback 1000)
+    const maxCapacity = settlement.settlementData?.buildings?.storage?.max_capacity ?? 1000;
     
     // Используем только строительные материалы для расчета использования склада
     let used = 0;
-    
     Object.entries(storageData).forEach(([key, value]) => {
       if (CONSTRUCTION_CODES.includes(key)) {
         const numVal = Number(value);
@@ -891,11 +894,10 @@ const SettlementStorage = observer(() => {
       }
     });
     
-    const capacity = 10000;
-    const percentage = capacity > 0 ? (used / capacity) * 100 : 0;
+    const percentage = maxCapacity > 0 ? (used / maxCapacity) * 100 : 0;
     
-    return { used, capacity, percentage };
-  }, [storageData]);
+    return { used, capacity: maxCapacity, percentage };
+  }, [storageData, settlement.settlementData]); // Добавляем зависимость от settlementData
   
   const handleOpenTakeModal = (resource) => {
     if (!canTakeResources) {
