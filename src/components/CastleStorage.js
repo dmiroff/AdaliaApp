@@ -37,10 +37,7 @@ const useDebounce = (value, delay) => {
     const handler = setTimeout(() => {
       setDebouncedValue(value);
     }, delay);
-    
-    return () => {
-      clearTimeout(handler);
-    };
+    return () => clearTimeout(handler);
   }, [value, delay]);
   
   return debouncedValue;
@@ -116,12 +113,6 @@ const CastleStorageItem = ({
     if (onToggleSelect && itemId) {
       onToggleSelect(itemId);
     }
-  };
-
-  const handleMenuToggle = (e) => {
-    e.stopPropagation();
-    e.preventDefault();
-    setShowMenu(prev => !prev);
   };
 
   const getItemType = () => {
@@ -213,66 +204,11 @@ const CastleStorageItem = ({
           )}
         </div>
       </div>
-
-      {showMenu && (
-        <div className="item-menu">
-          <div className="menu-content">
-            <button className="menu-item">
-              <i className="fas fa-info-circle"></i>
-              Подробнее
-            </button>
-            <button className="menu-item">
-              <i className="fas fa-search"></i>
-              Осмотреть
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
 
-// Кастомный компонент Select
-const CustomSelect = ({ 
-  size = "sm", 
-  value, 
-  onChange, 
-  children, 
-  className = "",
-  disabled = false,
-  ...props 
-}) => {
-  const handleChange = (e) => {
-    e.stopPropagation();
-    if (onChange) {
-      onChange(e);
-    }
-  };
-
-  const handleClick = (e) => {
-    e.stopPropagation();
-  };
-
-  return (
-    <div className={`custom-select-wrapper ${className}`}>
-      <select 
-        className={`form-select form-select-${size} mobile-friendly-select`}
-        value={value}
-        onChange={handleChange}
-        onClick={handleClick}
-        disabled={disabled}
-        {...props}
-      >
-        {children}
-      </select>
-      <div className="select-arrow">
-        <i className="fas fa-chevron-down"></i>
-      </div>
-    </div>
-  );
-};
-
-// Компонент FilterCard для отображения одного фильтра
+// Компонент FilterCard – теперь без кастомного селекта
 const FilterCard = ({ 
   filter, 
   index, 
@@ -336,7 +272,7 @@ const FilterCard = ({
       <div className="filter-controls" onClick={handleFormClick}>
         <Form.Group className="mb-2">
           <Form.Label size="sm" className="text-dark">Поле</Form.Label>
-          <CustomSelect
+          <Form.Select
             size="sm"
             value={filter.field}
             onChange={handleFieldChange}
@@ -348,13 +284,13 @@ const FilterCard = ({
                 {field.name}
               </option>
             ))}
-          </CustomSelect>
+          </Form.Select>
         </Form.Group>
         
         {fieldConfig?.type === "number" && filter.field && (
           <Form.Group className="mb-2">
             <Form.Label size="sm" className="text-dark">Условие</Form.Label>
-            <CustomSelect
+            <Form.Select
               size="sm"
               value={filter.operator}
               onChange={handleOperatorChange}
@@ -365,7 +301,7 @@ const FilterCard = ({
                   {op.name}
                 </option>
               ))}
-            </CustomSelect>
+            </Form.Select>
           </Form.Group>
         )}
         
@@ -374,7 +310,7 @@ const FilterCard = ({
             <Form.Label size="sm" className="text-dark">Значение</Form.Label>
             
             {fieldConfig?.type === "select" && (
-              <CustomSelect
+              <Form.Select
                 size="sm"
                 value={filter.value}
                 onChange={handleValueChange}
@@ -386,11 +322,11 @@ const FilterCard = ({
                     {opt.label}
                   </option>
                 ))}
-              </CustomSelect>
+              </Form.Select>
             )}
             
             {fieldConfig?.type === "boolean" && (
-              <CustomSelect
+              <Form.Select
                 size="sm"
                 value={filter.value}
                 onChange={handleValueChange}
@@ -402,7 +338,7 @@ const FilterCard = ({
                     {opt.label}
                   </option>
                 ))}
-              </CustomSelect>
+              </Form.Select>
             )}
             
             {fieldConfig?.type === "number" && (
@@ -462,7 +398,7 @@ const CastleStorage = observer(() => {
     { field: "", operator: "equals", value: "" }
   ]);
 
-  // UPDATED: Проверка наличия улучшения "Гильдейский посланник"
+  // Проверка наличия улучшения "Гильдейский посланник"
   const hasMessenger = useMemo(() => {
     return playerData?.upgrades?.includes("Гильдейский посланник") || false;
   }, [playerData]);
@@ -584,6 +520,7 @@ const CastleStorage = observer(() => {
     ];
   }, [uniqueTypes, uniqueAddedBy, getTranslatedType]);
 
+  // Загрузка данных
   useEffect(() => {
     if (guild.selectedCastle) {
       setActiveCastle(guild.selectedCastle);
@@ -613,11 +550,9 @@ const CastleStorage = observer(() => {
     }
   }, [activeCastle]);
 
-  // UPDATED: Функция проверки доступа теперь учитывает Гильдейского посланника
   const checkAccess = useCallback((playerData) => {
     if (!activeCastle) return;
     
-    // Если есть апгрейд, доступ всегда есть
     if (playerData?.upgrades?.includes("Гильдейский посланник")) {
       setHasAccess(true);
       setAccessReason("Доступ разрешен благодаря Гильдейскому посланнику");
@@ -635,7 +570,6 @@ const CastleStorage = observer(() => {
     }
   }, [activeCastle]);
 
-  // UPDATED: При загрузке данных хранилища также учитываем апгрейд
   const fetchCastleStorage = useCallback(async (castleId) => {
     if (castleId === undefined || castleId === null) return;
     
@@ -655,6 +589,7 @@ const CastleStorage = observer(() => {
               return {
                 id: itemId,
                 ...value,
+                // Улучшенное определение нераспознанного
                 undefined: value.undefined === true || value.undefined === "true" ? true : false
               };
             });
@@ -673,7 +608,6 @@ const CastleStorage = observer(() => {
           max: storageData.storage_capacity || 1000
         });
         
-        // Проверяем апгрейд (данные playerData могут быть ещё не загружены, но у нас есть hasMessenger из useMemo)
         if (hasMessenger) {
           setHasAccess(true);
           setAccessReason("Доступ разрешен благодаря Гильдейскому посланнику");
@@ -701,7 +635,7 @@ const CastleStorage = observer(() => {
     } finally {
       setLoading(false);
     }
-  }, [playerData, hasMessenger]);
+  }, [playerData, hasMessenger, hasAccess]);
 
   useEffect(() => {
     if (activeCastle) {
@@ -713,6 +647,7 @@ const CastleStorage = observer(() => {
     fetchPlayerData();
   }, [fetchPlayerData]);
 
+  // Функция применения фильтров
   const applyFiltersToItems = useCallback((items, filters, isArray = false) => {
     return items.filter(itemData => {
       if (!isArray) {
@@ -726,8 +661,8 @@ const CastleStorage = observer(() => {
           let itemValue = item[filter.field];
           
           if (filter.field === "undefined") {
-            itemValue = item.undefined === true ? true : false;
-            itemValue = String(itemValue);
+            const isUndefined = item.undefined === true || item.undefined === "true";
+            itemValue = String(isUndefined);
           } else if (filter.field === "corrupted") {
             itemValue = item.corrupted || false;
           } else if (filter.field === "junk") {
@@ -770,6 +705,12 @@ const CastleStorage = observer(() => {
         });
       } else {
         const item = itemData;
+        // Логи для отладки фильтра undefined
+        const filterUndefined = filters.find(f => f.field === "undefined");
+        if (filterUndefined && filterUndefined.value !== "") {
+          console.log(`[Фильтр undefined] Предмет: ${item.name}, item.undefined: ${item.undefined} (${typeof item.undefined}), filter.value: ${filterUndefined.value}`);
+        }
+        
         return filters.every(filter => {
           if (!filter.field || filter.value === "") return true;
           
@@ -779,8 +720,8 @@ const CastleStorage = observer(() => {
           let itemValue = item[filter.field];
           
           if (filter.field === "undefined") {
-            itemValue = item.undefined === true ? true : false;
-            itemValue = String(itemValue);
+            const isUndefined = item.undefined === true || item.undefined === "true";
+            itemValue = String(isUndefined);
           } else if (filter.field === "corrupted") {
             itemValue = item.corrupted || false;
           } else if (filter.field === "junk") {
@@ -793,7 +734,11 @@ const CastleStorage = observer(() => {
           
           switch (fieldConfig.type) {
             case "boolean":
-              return String(itemValue) === filter.value;
+              const result = String(itemValue) === filter.value;
+              if (filter.field === "undefined") {
+                console.log(`[undefined filter] item: ${item.name}, itemValue: ${itemValue}, filter.value: ${filter.value}, result: ${result}`);
+              }
+              return result;
               
             case "number":
               const numValue = parseFloat(itemValue) || 0;
@@ -825,6 +770,7 @@ const CastleStorage = observer(() => {
     });
   }, [filterFields]);
 
+  // Фильтрация предметов (общая)
   const filterItems = useCallback((items, query, filters, isArray = false) => {
     const hasActiveFilters = filters.some(f => f.field && f.value !== "");
     
@@ -895,14 +841,17 @@ const CastleStorage = observer(() => {
     return filteredItems;
   }, [applyFiltersToItems]);
 
+  // Отфильтрованные списки
   const filteredInventory = useMemo(() => {
     return filterItems(playerInventory, debouncedInventorySearch, inventoryFilters, false);
   }, [playerInventory, debouncedInventorySearch, inventoryFilters, filterItems]);
 
   const filteredStorage = useMemo(() => {
+    console.log('[filteredStorage] storageItems:', storageItems.map(i => ({ name: i.name, undefined: i.undefined })));
     return filterItems(storageItems, debouncedStorageSearch, storageFilters, true);
   }, [storageItems, debouncedStorageSearch, storageFilters, filterItems]);
 
+  // Обновление фильтров
   const updateInventoryFilter = (index, field, value) => {
     setInventoryFilters(prev => {
       const newFilters = [...prev];
@@ -937,6 +886,7 @@ const CastleStorage = observer(() => {
   };
 
   const updateStorageFilter = (index, field, value) => {
+    console.log('[updateStorageFilter]', { index, field, value });
     setStorageFilters(prev => {
       const newFilters = [...prev];
       if (field === "field") {
@@ -949,6 +899,7 @@ const CastleStorage = observer(() => {
       } else {
         newFilters[index] = { ...newFilters[index], [field]: value };
       }
+      console.log('[updateStorageFilter] newFilters:', newFilters);
       return newFilters;
     });
   };
@@ -977,6 +928,7 @@ const CastleStorage = observer(() => {
     return storageFilters.filter(f => f.field && f.value !== "").length;
   }, [storageFilters]);
 
+  // Вспомогательные функции
   const handleCastleSelect = (castle) => {
     setActiveCastle(castle);
     setSelectedInventoryItems(new Set());
@@ -989,28 +941,20 @@ const CastleStorage = observer(() => {
 
   const toggleInventoryItem = (itemId) => {
     if (!itemId) return;
-    
     setSelectedInventoryItems(prev => {
       const newSet = new Set(prev);
-      if (newSet.has(itemId)) {
-        newSet.delete(itemId);
-      } else {
-        newSet.add(itemId);
-      }
+      if (newSet.has(itemId)) newSet.delete(itemId);
+      else newSet.add(itemId);
       return newSet;
     });
   };
 
   const toggleStorageItem = (itemId) => {
     if (!itemId) return;
-    
     setSelectedStorageItems(prev => {
       const newSet = new Set(prev);
-      if (newSet.has(itemId)) {
-        newSet.delete(itemId);
-      } else {
-        newSet.add(itemId);
-      }
+      if (newSet.has(itemId)) newSet.delete(itemId);
+      else newSet.add(itemId);
       return newSet;
     });
   };
@@ -1043,15 +987,12 @@ const CastleStorage = observer(() => {
       alert("Выберите предметы для изъятия из замка");
       return;
     }
-    
     const playerRole = guild.guildData?.player_role;
     const canTakeItems = playerRole === 'leader' || playerRole === 'officer';
-    
     if (!canTakeItems) {
       alert("Только офицеры и лидер гильдии могут забирать предметы из хранилища замка!");
       return;
     }
-    
     setShowTransferFromCastle(true);
   };
 
@@ -1073,7 +1014,6 @@ const CastleStorage = observer(() => {
     fetchPlayerData();
   };
 
-  // UPDATED: Предупреждение показываем только если нет апгрейда и нет события
   const renderEventWarning = () => {
     if (!isCastleEventActive && !hasMessenger && playerData) {
       return (
