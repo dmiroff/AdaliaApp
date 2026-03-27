@@ -1,4 +1,3 @@
-// Character.js
 import { useState, useContext, useEffect, useMemo } from "react";
 import { Container, Spinner, Tabs, Tab, Card, Row, Col, Badge, OverlayTrigger, Tooltip } from "react-bootstrap";
 import { Context } from "../index";
@@ -55,11 +54,20 @@ const usePlayerData = (userId) => {
 const Character = observer(() => {
   const { user } = useContext(Context);
   const user_id = user?.user?.id;
-  const { playerData, loading, error } = usePlayerData(user_id);
-
+  const { playerData: loadedData, loading, error } = usePlayerData(user_id);
+  
+  // Локальный стейт для данных, чтобы можно было обновлять через UpgradeTab
+  const [playerData, setPlayerData] = useState(null);
   const [delay, setDelay] = useState(false);
   const [useBlueTheme, setUseBlueTheme] = useState(true);
   const [canUpgrade, setCanUpgrade] = useState(false);
+
+  // Синхронизация загруженных данных с локальным стейтом
+  useEffect(() => {
+    if (loadedData) {
+      setPlayerData(loadedData);
+    }
+  }, [loadedData]);
 
   // Обновляем store при получении данных
   useEffect(() => {
@@ -85,7 +93,7 @@ const Character = observer(() => {
     return true;
   };
 
-  // Вспомогательные функции
+  // Вспомогательные функции (те же, что и ранее, оставляем без изменений)
   const arrToCountedDict = (arr) => {
     const countedDict = {};
     if (!Array.isArray(arr)) return countedDict;
