@@ -13,89 +13,107 @@ import {
 import UpgradeTab from "../components/UpgradeTab";
 import GetDataById from "../http/GetData";
 
+// Хук для загрузки данных персонажа
 const usePlayerData = (userId) => {
-  const [playerData, setPlayerData] = useState(null);
+  const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    // Если userId отсутствует, устанавливаем loading в false и не делаем запрос
+    console.log("[usePlayerData] userId changed:", userId);
     if (!userId) {
+      console.log("[usePlayerData] userId is falsy, setting loading false");
       setLoading(false);
       return;
     }
 
     let cancelled = false;
     const fetchData = async () => {
+      console.log("[usePlayerData] starting fetch for userId:", userId);
       try {
         setLoading(true);
         setError(null);
         const response = await GetDataById(userId);
+        console.log("[usePlayerData] fetch response:", response);
         if (!cancelled) {
-          setPlayerData(response?.data);
+          if (response?.data) {
+            console.log("[usePlayerData] data received, setting data");
+            setData(response.data);
+          } else {
+            console.warn("[usePlayerData] no data in response");
+            setData(null);
+          }
         }
       } catch (err) {
         if (!cancelled) {
-          console.error("Failed to fetch character data:", err);
+          console.error("[usePlayerData] fetch error:", err);
           setError(err.message || "Failed to load character data");
         }
       } finally {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) {
+          console.log("[usePlayerData] fetch finished, setting loading false");
+          setLoading(false);
+        }
       }
     };
 
     fetchData();
     return () => {
+      console.log("[usePlayerData] cleanup, cancelled true");
       cancelled = true;
     };
   }, [userId]);
 
-  return { playerData, loading, error };
+  return { data, loading, error };
 };
 
 const Character = observer(() => {
   const { user } = useContext(Context);
   const user_id = user?.user?.id;
-  const { playerData: loadedData, loading, error } = usePlayerData(user_id);
-  
-  // Локальный стейт для данных, чтобы можно было обновлять через UpgradeTab
+  console.log("[Character] user_id:", user_id);
+
+  const { data: initialData, loading: initialLoading, error: initialError } = usePlayerData(user_id);
+  console.log("[Character] initialData:", initialData, "initialLoading:", initialLoading, "initialError:", initialError);
+
   const [playerData, setPlayerData] = useState(null);
   const [delay, setDelay] = useState(false);
   const [useBlueTheme, setUseBlueTheme] = useState(true);
   const [canUpgrade, setCanUpgrade] = useState(false);
 
-  // Синхронизация загруженных данных с локальным стейтом
+  // Синхронизация загруженных данных с локальным стейтом и store
   useEffect(() => {
-    if (loadedData) {
-      setPlayerData(loadedData);
+    console.log("[Character] sync effect triggered, initialData:", initialData);
+    if (initialData) {
+      console.log("[Character] setting playerData and updating store");
+      setPlayerData(initialData);
+      user.setPlayer(initialData);
+      setCanUpgrade(hasSpecialItem(initialData));
+    } else {
+      console.log("[Character] initialData is falsy, not updating");
     }
-  }, [loadedData]);
+  }, [initialData, user]);
 
-  // Обновляем store при получении данных
+  // Искусственная задержка для плавности UI
   useEffect(() => {
+    console.log("[Character] delay effect triggered, playerData:", playerData);
     if (playerData) {
-      user.setPlayer(playerData);
-      setCanUpgrade(hasSpecialItem(playerData));
-    }
-  }, [playerData, user]);
-
-  // Искусственная задержка для плавного UI
-  useEffect(() => {
-    if (playerData) {
-      const timer = setTimeout(() => setDelay(true), 500);
+      const timer = setTimeout(() => {
+        console.log("[Character] setting delay to true");
+        setDelay(true);
+      }, 500);
       return () => clearTimeout(timer);
     } else {
+      console.log("[Character] playerData falsy, setting delay false");
       setDelay(false);
     }
   }, [playerData]);
 
-  // Проверка, есть ли предмет для прокачки
   const hasSpecialItem = (data) => {
-    // TODO: реализовать проверку по инвентарю
+    // TODO: реализовать проверку
     return true;
   };
 
-  // Вспомогательные функции (те же, что и ранее, оставляем без изменений)
+  // ... (все вспомогательные функции остаются без изменений)
   const arrToCountedDict = (arr) => {
     const countedDict = {};
     if (!Array.isArray(arr)) return countedDict;
@@ -206,24 +224,11 @@ const Character = observer(() => {
         type: "Атрибуты",
         displayType: "keyValue",
         data: {
-          "Восприятие 👁": prepareAttString(
-            playerData.perception,
-            playerData.perception_increase
-          ),
+          "Восприятие 👁": prepareAttString(playerData.perception, playerData.perception_increase),
           "Сила 🏋️": prepareAttString(playerData.strength, playerData.strength_increase),
-          "Ловкость 🤸": prepareAttString(
-            playerData.agility,
-            playerData.agility_increase,
-            true
-          ),
-          "Телосложение 🫀": prepareAttString(
-            playerData.constitution,
-            playerData.constitution_increase
-          ),
-          "Интеллект 🎓": prepareAttString(
-            playerData.intelligence,
-            playerData.intelligence_increase
-          ),
+          "Ловкость 🤸": prepareAttString(playerData.agility, playerData.agility_increase, true),
+          "Телосложение 🫀": prepareAttString(playerData.constitution, playerData.constitution_increase),
+          "Интеллект 🎓": prepareAttString(playerData.intelligence, playerData.intelligence_increase),
           "Харизма 🤝": prepareAttString(playerData.charisma, playerData.charisma_increase),
           "Мудрость 🧙": prepareAttString(playerData.wisdom, playerData.wisdom_increase),
           "Удача 🍀": prepareAttString(playerData.luck, playerData.luck_increase),
@@ -331,11 +336,7 @@ const Character = observer(() => {
   const AttributeWithTooltip = ({ category, itemKey, value }) => {
     const description = getDescription(category, itemKey);
     return (
-      <OverlayTrigger
-        placement="top"
-        delay={{ show: 250, hide: 400 }}
-        overlay={renderTooltip(description)}
-      >
+      <OverlayTrigger placement="top" delay={{ show: 250, hide: 400 }} overlay={renderTooltip(description)}>
         <div className="fantasy-attribute-item">
           <div className="attribute-content">
             <span className="fantasy-attribute-key">{itemKey}</span>
@@ -366,8 +367,7 @@ const Character = observer(() => {
                   <div key={key} className="fantasy-stat-row">
                     <span className="fantasy-text-muted">{getTranslation(key)}:</span>
                     <span className="fantasy-text-bold text-muted">
-                      {Array.isArray(value) &&
-                      (key === "influencing" || key === "влияющие")
+                      {Array.isArray(value) && (key === "influencing" || key === "влияющие")
                         ? translateArray(value).join(", ")
                         : prepareDataValues(value, key)}
                     </span>
@@ -385,11 +385,7 @@ const Character = observer(() => {
     const description = getDescription("Умения", abilityKey);
     return (
       <Col xs={12} sm={6} md={4} lg={3} className="mb-3">
-        <OverlayTrigger
-          placement="top"
-          delay={{ show: 250, hide: 400 }}
-          overlay={renderTooltip(description)}
-        >
+        <OverlayTrigger placement="top" delay={{ show: 250, hide: 400 }} overlay={renderTooltip(description)}>
           <Card className="h-100 fantasy-card">
             <Card.Header className="fantasy-card-header fantasy-card-header-info">
               <h6 className="mb-0">{abilityData?.name || getTranslation(abilityKey)}</h6>
@@ -401,8 +397,7 @@ const Character = observer(() => {
                   <div key={key} className="fantasy-stat-row">
                     <span className="fantasy-text-muted">{getTranslation(key)}:</span>
                     <span className="fantasy-text-bold text-muted">
-                      {Array.isArray(value) &&
-                      (key === "influencing" || key === "влияющие")
+                      {Array.isArray(value) && (key === "influencing" || key === "влияющие")
                         ? translateArray(value).join(", ")
                         : prepareDataValues(value, key)}
                     </span>
@@ -420,17 +415,9 @@ const Character = observer(() => {
     const description = getDescription(category, title);
     return (
       <Col xs={12} sm={6} md={4} lg={3} className="mb-3">
-        <OverlayTrigger
-          placement="top"
-          delay={{ show: 250, hide: 400 }}
-          overlay={renderTooltip(description)}
-        >
+        <OverlayTrigger placement="top" delay={{ show: 250, hide: 400 }} overlay={renderTooltip(description)}>
           <Card className="h-100 fantasy-card">
-            <Card.Header
-              className={`fantasy-card-header fantasy-card-header-${getCategoryColor(
-                category
-              )}`}
-            >
+            <Card.Header className={`fantasy-card-header fantasy-card-header-${getCategoryColor(category)}`}>
               <h6 className="mb-0">
                 {title}
                 {count !== null && <Badge className="ms-2">x{count}</Badge>}
@@ -444,8 +431,7 @@ const Character = observer(() => {
                       <div key={key} className="fantasy-stat-row">
                         <span className="fantasy-text-muted">{getTranslation(key)}:</span>
                         <span className="fantasy-text-bold text-muted">
-                          {Array.isArray(value) &&
-                          (key === "influencing" || key === "влияющие")
+                          {Array.isArray(value) && (key === "influencing" || key === "влияющие")
                             ? translateArray(value).join(", ")
                             : prepareDataValues(value, key)}
                         </span>
@@ -453,9 +439,7 @@ const Character = observer(() => {
                     )
                 )
               ) : (
-                <div className="text-center fantasy-text-muted">
-                  {prepareDataValues(content)}
-                </div>
+                <div className="text-center fantasy-text-muted">{prepareDataValues(content)}</div>
               )}
             </Card.Body>
           </Card>
@@ -473,12 +457,7 @@ const Character = observer(() => {
         return (
           <div className="fantasy-attributes-grid">
             {Object.entries(categoryData.data).map(([key, value]) => (
-              <AttributeWithTooltip
-                key={key}
-                category={category}
-                itemKey={key}
-                value={value}
-              />
+              <AttributeWithTooltip key={key} category={category} itemKey={key} value={value} />
             ))}
           </div>
         );
@@ -529,9 +508,7 @@ const Character = observer(() => {
           {Object.entries(data).map(([key, value]) => (
             <div key={key} className="fantasy-stat-row">
               <span>{key}:</span>
-              <Badge className={`fantasy-badge fantasy-badge-muted`}>
-                {value ?? "—"}
-              </Badge>
+              <Badge className="fantasy-badge fantasy-badge-muted">{value ?? "—"}</Badge>
             </div>
           ))}
           {title === "Основная информация" && (
@@ -542,15 +519,11 @@ const Character = observer(() => {
                     <span className="health-icon">❤️</span>
                     <span>Здоровье</span>
                   </div>
-                  <div className="progress-label-right">
-                    {Math.round(calculateHealthProgress())}%
-                  </div>
+                  <div className="progress-label-right">{Math.round(calculateHealthProgress())}%</div>
                 </div>
                 <div className="health-progress">
                   <div
-                    className={`health-fill ${
-                      calculateHealthProgress() < 30 ? "low-health" : ""
-                    }`}
+                    className={`health-fill ${calculateHealthProgress() < 30 ? "low-health" : ""}`}
                     style={{ width: `${calculateHealthProgress()}%` }}
                   />
                   <div className="progress-text">
@@ -561,16 +534,12 @@ const Character = observer(() => {
               <div className="progress-section">
                 <div className="progress-label">
                   <div className="progress-label-left">
-                    <span
-                      className={`experience-icon ${useBlueTheme ? "blue" : ""}`}
-                    >
+                    <span className={`experience-icon ${useBlueTheme ? "blue" : ""}`}>
                       {useBlueTheme ? "🔷" : "📈"}
                     </span>
                     <span>Опыт</span>
                   </div>
-                  <div className="progress-label-right">
-                    {Math.round(calculateLevelProgress())}%
-                  </div>
+                  <div className="progress-label-right">{Math.round(calculateLevelProgress())}%</div>
                 </div>
                 <div className="experience-progress">
                   <div
@@ -578,8 +547,7 @@ const Character = observer(() => {
                     style={{ width: `${calculateLevelProgress()}%` }}
                   />
                   <div className="progress-text">
-                    {playerData?.experience ?? 0} /{" "}
-                    {playerData?.experience_next_level ?? 1}
+                    {playerData?.experience ?? 0} / {playerData?.experience_next_level ?? 1}
                   </div>
                 </div>
               </div>
@@ -590,17 +558,15 @@ const Character = observer(() => {
     </Col>
   );
 
-  // Состояния загрузки
-  if (loading || !delay) {
+  // Определяем, показывать ли спиннер
+  const isLoading = initialLoading || !delay || !playerData;
+  console.log("[Character] render: isLoading =", isLoading, "initialLoading:", initialLoading, "delay:", delay, "playerData:", playerData);
+
+  if (isLoading) {
     return (
       <div className="d-flex justify-content-center align-items-center min-vh-50">
         <div className="text-center">
-          <Spinner
-            animation="border"
-            variant="secondary"
-            role="status"
-            style={{ width: "3rem", height: "3rem" }}
-          >
+          <Spinner animation="border" variant="secondary" role="status" style={{ width: "3rem", height: "3rem" }}>
             <span className="visually-hidden">Loading...</span>
           </Spinner>
           <p className="fantasy-text-gold">Загрузка данных персонажа...</p>
@@ -609,27 +575,14 @@ const Character = observer(() => {
     );
   }
 
-  if (error) {
+  if (initialError) {
     return (
       <div className="d-flex justify-content-center align-items-center min-vh-50">
         <div className="text-center">
-          <p className="text-danger">Ошибка загрузки данных: {error}</p>
-          <button
-            className="btn btn-secondary"
-            onClick={() => window.location.reload()}
-          >
+          <p className="text-danger">Ошибка загрузки данных: {initialError}</p>
+          <button className="btn btn-secondary" onClick={() => window.location.reload()}>
             Повторить
           </button>
-        </div>
-      </div>
-    );
-  }
-
-  if (!playerData) {
-    return (
-      <div className="d-flex justify-content-center align-items-center min-vh-50">
-        <div className="text-center">
-          <p className="fantasy-text-gold">Данные персонажа не найдены</p>
         </div>
       </div>
     );
@@ -638,13 +591,7 @@ const Character = observer(() => {
   // Основной рендер
   return (
     <div className="character-container">
-      <Tabs
-        defaultActiveKey="Параметры"
-        transition={false}
-        id="playerInfo"
-        className="fantasy-tabs mb-3"
-        justify
-      >
+      <Tabs defaultActiveKey="Параметры" transition={false} id="playerInfo" className="fantasy-tabs mb-3" justify>
         <Tab eventKey="Параметры" title="📊 Параметры">
           <Container fluid>
             <Row className="g-3">
@@ -729,38 +676,31 @@ const Character = observer(() => {
           </Container>
         </Tab>
 
-        {["Атрибуты", "Навыки", "Магия", "Таланты", "Умения", "Эффекты"].map(
-          (category) => (
-            <Tab key={category} eventKey={category} title={getTabTitle(category)}>
-              <Container fluid>
-                <Row>
-                  <Col>
-                    <Card className="fantasy-card">
-                      <Card.Header className="fantasy-card-header">
-                        <h5 className="fantasy-text-gold">{category}</h5>
-                      </Card.Header>
-                      <Card.Body>{renderSectionData(category)}</Card.Body>
-                    </Card>
-                  </Col>
-                </Row>
-              </Container>
-            </Tab>
-          )
-        )}
+        {["Атрибуты", "Навыки", "Магия", "Таланты", "Умения", "Эффекты"].map((category) => (
+          <Tab key={category} eventKey={category} title={getTabTitle(category)}>
+            <Container fluid>
+              <Row>
+                <Col>
+                  <Card className="fantasy-card">
+                    <Card.Header className="fantasy-card-header">
+                      <h5 className="fantasy-text-gold">{category}</h5>
+                    </Card.Header>
+                    <Card.Body>{renderSectionData(category)}</Card.Body>
+                  </Card>
+                </Col>
+              </Row>
+            </Container>
+          </Tab>
+        ))}
 
         <Tab eventKey="Прокачка" title="📈 Прокачка">
-          <UpgradeTab
-            playerData={playerData}
-            setPlayerData={setPlayerData}
-            canUpgrade={canUpgrade}
-          />
+          <UpgradeTab playerData={playerData} setPlayerData={setPlayerData} canUpgrade={canUpgrade} />
         </Tab>
       </Tabs>
     </div>
   );
 });
 
-// Вспомогательные функции
 const getTabTitle = (category) => {
   const icons = {
     Параметры: "📊",
