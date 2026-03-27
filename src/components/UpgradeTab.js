@@ -8,6 +8,7 @@ import {
   TestSpell,
 } from "../http/apiClient";
 import { fetchBirzhaRate } from "../http/birzha";
+import { TALENTS_LIST } from "../utils/Helpers"; // импорт полного списка
 
 // Формула стоимости навыка (калька с бэкенда)
 const computeSkillCost = (skillValue) => {
@@ -70,14 +71,8 @@ const SKILLS = [
   { key: "shield", label: "Щиты 🛡️" },
 ];
 
-const TALENTS = [
-  { key: "MasterOfBlades", label: "Мастер клинка" },
-  { key: "IronWill", label: "Железная воля" },
-  { key: "QuickReflexes", label: "Быстрые рефлексы" },
-  { key: "SpellCraft", label: "Изучение магии" },
-  { key: "AnimalFriend", label: "Друг животных" },
-  { key: "Merchant", label: "Торговец" },
-];
+// Таланты теперь берутся из TALENTS_LIST, формируем массив объектов для удобства
+const TALENTS = TALENTS_LIST.map(key => ({ key, label: key }));
 
 const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
   const { user } = useContext(Context);
@@ -397,17 +392,12 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
     }
   };
   
-  // Получение списка заклинаний (из prepared_magic или abilities)
+  // Получение списка заклинаний (только из prepared_magic)
   const getSpellsList = () => {
     const spells = [];
     if (tempPlayerData?.prepared_magic) {
       Object.keys(tempPlayerData.prepared_magic).forEach(key => {
         spells.push({ id: key, name: tempPlayerData.prepared_magic[key]?.name || key });
-      });
-    }
-    if (tempPlayerData?.abilities) {
-      Object.keys(tempPlayerData.abilities).forEach(key => {
-        spells.push({ id: key, name: tempPlayerData.abilities[key]?.name || key });
       });
     }
     return spells;
@@ -667,7 +657,7 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
               {selectedType === "talent" && (
                 <>
                   <h6>Выберите талант:</h6>
-                  <div className="d-flex flex-wrap gap-2 mb-3">
+                  <div className="d-flex flex-wrap gap-2 mb-3" style={{ maxHeight: "300px", overflowY: "auto" }}>
                     {TALENTS.map(talent => (
                       <Button
                         key={talent.key}
@@ -776,7 +766,11 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
             <Modal.Title>Результат тестирования</Modal.Title>
           </Modal.Header>
           <Modal.Body>
-            <pre>{JSON.stringify(testResult.data, null, 2)}</pre>
+            {typeof testResult.data === "string" ? (
+              <pre>{testResult.data}</pre>
+            ) : (
+              <pre>{JSON.stringify(testResult.data, null, 2)}</pre>
+            )}
           </Modal.Body>
           <Modal.Footer>
             <Button variant="secondary" onClick={() => setTestResult(null)}>
