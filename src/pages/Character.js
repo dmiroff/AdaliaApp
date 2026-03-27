@@ -1,75 +1,91 @@
-import GetDataById from "../http/GetData";
-import { useState, useContext, useEffect, useMemo, useRef } from "react";
+// Character.js
+import { useState, useContext, useEffect, useMemo } from "react";
 import { Container, Spinner, Tabs, Tab, Card, Row, Col, Badge, OverlayTrigger, Tooltip } from "react-bootstrap";
 import { Context } from "../index";
 import { observer } from "mobx-react-lite";
 import { dict_translator } from "../utils/Helpers";
-
-import { attributesDescDict, skillsDescDict, talentsDescDict, abilitiesDescDict, keyMappingDict } from "../utils/descriptions";
+import {
+  attributesDescDict,
+  skillsDescDict,
+  talentsDescDict,
+  abilitiesDescDict,
+  keyMappingDict,
+} from "../utils/descriptions";
 import UpgradeTab from "../components/UpgradeTab";
+import GetDataById from "../http/GetData";
 
-const Character = observer(() => {
-  const { user } = useContext(Context);
+// Хук для загрузки данных персонажа, изолированный от store
+const usePlayerData = (userId) => {
   const [playerData, setPlayerData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [delay, setDelay] = useState(false);
-  const user_id = user?.user?.id;
-  const [useBlueTheme, setUseBlueTheme] = useState(true);
-  const [canUpgrade, setCanUpgrade] = useState(false);
 
-  // Флаг, чтобы запрос выполнялся только один раз для каждого user_id
-  const hasLoaded = useRef(false);
-  const lastUserId = useRef(null);
+  useEffect(() => {
+    if (!userId) return;
 
-  useEffect(() => {x
-    const fetchPlayer = async () => {
-      if (!user_id) return;
-      // Если мы уже загружали для этого user_id, выходим
-      if (hasLoaded.current && lastUserId.current === user_id) return;
-      
-      hasLoaded.current = true;
-      lastUserId.current = user_id;
+    let cancelled = false;
 
+    const fetchData = async () => {
       try {
         setLoading(true);
         setError(null);
-        const response = await GetDataById(user_id);
-        const data = response?.data;
-
-        if (data) {
-          setPlayerData(data);
-          user.setPlayer(data);
-          setCanUpgrade(hasSpecialItem(data));
-        } else {
-          throw new Error("No data received");
+        const response = await GetDataById(userId);
+        if (!cancelled) {
+          setPlayerData(response?.data);
         }
       } catch (err) {
-        console.error("Failed to fetch character data:", err);
-        setError(err.message || "Failed to load character data");
+        if (!cancelled) {
+          console.error("Failed to fetch character data:", err);
+          setError(err.message || "Failed to load character data");
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
 
-    fetchPlayer();
-    }, [user_id]); // Зависимость только от user_id
+    fetchData();
+    return () => {
+      cancelled = true;
+    };
+  }, [userId]);
 
-  // Задержка для плавного UI
+  return { playerData, loading, error };
+};
+
+const Character = observer(() => {
+  const { user } = useContext(Context);
+  const user_id = user?.user?.id;
+  const { playerData, loading, error } = usePlayerData(user_id);
+
+  const [delay, setDelay] = useState(false);
+  const [useBlueTheme, setUseBlueTheme] = useState(true);
+  const [canUpgrade, setCanUpgrade] = useState(false);
+
+  // Обновляем store при получении данных
+  useEffect(() => {
+    if (playerData) {
+      user.setPlayer(playerData);
+      setCanUpgrade(hasSpecialItem(playerData));
+    }
+  }, [playerData, user]);
+
+  // Искусственная задержка для плавного UI
   useEffect(() => {
     if (playerData) {
       const timer = setTimeout(() => setDelay(true), 500);
       return () => clearTimeout(timer);
+    } else {
+      setDelay(false);
     }
   }, [playerData]);
 
-  // Проверка наличия предмета для прокачки
+  // Проверка, есть ли предмет для прокачки
   const hasSpecialItem = (data) => {
-    // TODO: реализовать проверку
+    // TODO: реализовать проверку по инвентарю
     return true;
   };
 
-  // Остальные вспомогательные функции и рендер остаются без изменений
+  // Вспомогательные функции
   const arrToCountedDict = (arr) => {
     const countedDict = {};
     if (!Array.isArray(arr)) return countedDict;
@@ -83,15 +99,15 @@ const Character = observer(() => {
 
   const translateArray = (arr) => {
     if (!Array.isArray(arr)) return arr;
-    return arr.map(item => dict_translator[item] || item);
+    return arr.map((item) => dict_translator[item] || item);
   };
 
   const prepareDataValues = (value, key = null) => {
     if (value === null || value === undefined) return "";
 
     if (Array.isArray(value)) {
-      if (key === 'influencing' || key === 'влияющие') {
-        return translateArray(value).join(', ');
+      if (key === "influencing" || key === "влияющие") {
+        return translateArray(value).join(", ");
       }
 
       let valueString = "";
@@ -103,12 +119,12 @@ const Character = observer(() => {
       return valueString;
     }
 
-    if (value && typeof value === 'object') {
+    if (value && typeof value === "object") {
       let valueString = "";
       for (const [k, v] of Object.entries(value)) {
         if (valueString) valueString += ", ";
-        if (k === 'influencing' || k === 'влияющие') {
-          const translated = Array.isArray(v) ? translateArray(v).join(', ') : v;
+        if (k === "influencing" || k === "влияющие") {
+          const translated = Array.isArray(v) ? translateArray(v).join(", ") : v;
           valueString += `${getTranslation(k)}: ${translated}`;
         } else {
           valueString += `${getTranslation(k)}: ${prepareDataValues(v, k)}`;
@@ -171,25 +187,39 @@ const Character = observer(() => {
     return max > 0 ? (current / max) * 100 : 0;
   };
 
+  // Мемоизированные данные секций
   const sectionData = useMemo(() => {
     if (!playerData) return {};
 
     return {
-      "Атрибуты": {
+      Атрибуты: {
         type: "Атрибуты",
         displayType: "keyValue",
         data: {
-          "Восприятие 👁": prepareAttString(playerData.perception, playerData.perception_increase),
+          "Восприятие 👁": prepareAttString(
+            playerData.perception,
+            playerData.perception_increase
+          ),
           "Сила 🏋️": prepareAttString(playerData.strength, playerData.strength_increase),
-          "Ловкость 🤸": prepareAttString(playerData.agility, playerData.agility_increase, true),
-          "Телосложение 🫀": prepareAttString(playerData.constitution, playerData.constitution_increase),
-          "Интеллект 🎓": prepareAttString(playerData.intelligence, playerData.intelligence_increase),
+          "Ловкость 🤸": prepareAttString(
+            playerData.agility,
+            playerData.agility_increase,
+            true
+          ),
+          "Телосложение 🫀": prepareAttString(
+            playerData.constitution,
+            playerData.constitution_increase
+          ),
+          "Интеллект 🎓": prepareAttString(
+            playerData.intelligence,
+            playerData.intelligence_increase
+          ),
           "Харизма 🤝": prepareAttString(playerData.charisma, playerData.charisma_increase),
           "Мудрость 🧙": prepareAttString(playerData.wisdom, playerData.wisdom_increase),
           "Удача 🍀": prepareAttString(playerData.luck, playerData.luck_increase),
         },
       },
-      "Навыки": {
+      Навыки: {
         type: "Навыки",
         displayType: "keyValue",
         data: {
@@ -218,22 +248,22 @@ const Character = observer(() => {
           "Щиты 🛡️": playerData.shield,
         },
       },
-      "Магия": {
+      Магия: {
         type: "Магия",
         displayType: "magicCards",
         data: playerData.prepared_magic || {},
       },
-      "Таланты": {
+      Таланты: {
         type: "Таланты",
         displayType: "cards",
         data: arrToCountedDict(playerData.talents),
       },
-      "Умения": {
+      Умения: {
         type: "Умения",
         displayType: "abilityCards",
         data: playerData.abilities || {},
       },
-      "Эффекты": {
+      Эффекты: {
         type: "Эффекты",
         displayType: "cards",
         data: playerData.temporary_effects || {},
@@ -241,7 +271,7 @@ const Character = observer(() => {
     };
   }, [playerData]);
 
-  // Остальные функции (getDescription, renderTooltip, компоненты карточек и т.д.) остаются без изменений
+  // Описания и тултипы
   const getDescription = (category, key) => {
     const mappedKey = keyMappingDict[key];
     const searchKey = mappedKey || key;
@@ -265,7 +295,7 @@ const Character = observer(() => {
     }
 
     const reverseMapping = {};
-    Object.keys(keyMappingDict).forEach(keyWithEmoji => {
+    Object.keys(keyMappingDict).forEach((keyWithEmoji) => {
       const cleanKey = keyMappingDict[keyWithEmoji];
       reverseMapping[cleanKey] = keyWithEmoji;
     });
@@ -274,7 +304,7 @@ const Character = observer(() => {
       searchKey,
       keyMappingDict[searchKey],
       reverseMapping[searchKey],
-      searchKey?.replace(/[^\w\s]/g, '').trim(),
+      searchKey?.replace(/[^\w\s]/g, "").trim(),
     ].filter(Boolean);
 
     for (const testKey of possibleKeys) {
@@ -287,10 +317,15 @@ const Character = observer(() => {
     <Tooltip className="fantasy-tooltip">{description}</Tooltip>
   );
 
+  // Компоненты карточек
   const AttributeWithTooltip = ({ category, itemKey, value }) => {
     const description = getDescription(category, itemKey);
     return (
-      <OverlayTrigger placement="top" delay={{ show: 250, hide: 400 }} overlay={renderTooltip(description)}>
+      <OverlayTrigger
+        placement="top"
+        delay={{ show: 250, hide: 400 }}
+        overlay={renderTooltip(description)}
+      >
         <div className="fantasy-attribute-item">
           <div className="attribute-content">
             <span className="fantasy-attribute-key">{itemKey}</span>
@@ -305,20 +340,25 @@ const Character = observer(() => {
     const description = getDescription("Магия", spellKey);
     return (
       <Col xs={12} sm={6} md={4} lg={3} className="mb-3">
-        <OverlayTrigger placement="top" delay={{ show: 250, hide: 400 }} overlay={renderTooltip(description)}>
+        <OverlayTrigger
+          placement="top"
+          delay={{ show: 250, hide: 400 }}
+          overlay={renderTooltip(description)}
+        >
           <Card className="h-100 fantasy-card">
             <Card.Header className="fantasy-card-header fantasy-card-header-magic">
               <h6 className="mb-0">{spellData?.name || getTranslation(spellKey)}</h6>
             </Card.Header>
             <Card.Body>
               {Object.entries(spellData || {}).map(([key, value]) => {
-                if (key === 'name') return null;
+                if (key === "name") return null;
                 return (
                   <div key={key} className="fantasy-stat-row">
                     <span className="fantasy-text-muted">{getTranslation(key)}:</span>
                     <span className="fantasy-text-bold text-muted">
-                      {Array.isArray(value) && (key === 'influencing' || key === 'влияющие')
-                        ? translateArray(value).join(', ')
+                      {Array.isArray(value) &&
+                      (key === "influencing" || key === "влияющие")
+                        ? translateArray(value).join(", ")
                         : prepareDataValues(value, key)}
                     </span>
                   </div>
@@ -335,20 +375,25 @@ const Character = observer(() => {
     const description = getDescription("Умения", abilityKey);
     return (
       <Col xs={12} sm={6} md={4} lg={3} className="mb-3">
-        <OverlayTrigger placement="top" delay={{ show: 250, hide: 400 }} overlay={renderTooltip(description)}>
+        <OverlayTrigger
+          placement="top"
+          delay={{ show: 250, hide: 400 }}
+          overlay={renderTooltip(description)}
+        >
           <Card className="h-100 fantasy-card">
             <Card.Header className="fantasy-card-header fantasy-card-header-info">
               <h6 className="mb-0">{abilityData?.name || getTranslation(abilityKey)}</h6>
             </Card.Header>
             <Card.Body>
               {Object.entries(abilityData || {}).map(([key, value]) => {
-                if (key === 'name') return null;
+                if (key === "name") return null;
                 return (
                   <div key={key} className="fantasy-stat-row">
                     <span className="fantasy-text-muted">{getTranslation(key)}:</span>
                     <span className="fantasy-text-bold text-muted">
-                      {Array.isArray(value) && (key === 'influencing' || key === 'влияющие')
-                        ? translateArray(value).join(', ')
+                      {Array.isArray(value) &&
+                      (key === "influencing" || key === "влияющие")
+                        ? translateArray(value).join(", ")
                         : prepareDataValues(value, key)}
                     </span>
                   </div>
@@ -365,30 +410,42 @@ const Character = observer(() => {
     const description = getDescription(category, title);
     return (
       <Col xs={12} sm={6} md={4} lg={3} className="mb-3">
-        <OverlayTrigger placement="top" delay={{ show: 250, hide: 400 }} overlay={renderTooltip(description)}>
+        <OverlayTrigger
+          placement="top"
+          delay={{ show: 250, hide: 400 }}
+          overlay={renderTooltip(description)}
+        >
           <Card className="h-100 fantasy-card">
-            <Card.Header className={`fantasy-card-header fantasy-card-header-${getCategoryColor(category)}`}>
+            <Card.Header
+              className={`fantasy-card-header fantasy-card-header-${getCategoryColor(
+                category
+              )}`}
+            >
               <h6 className="mb-0">
                 {title}
                 {count !== null && <Badge className="ms-2">x{count}</Badge>}
               </h6>
             </Card.Header>
             <Card.Body>
-              {typeof content === 'object' && content !== null ? (
-                Object.entries(content).map(([key, value]) =>
-                  key !== 'name' && (
-                    <div key={key} className="fantasy-stat-row">
-                      <span className="fantasy-text-muted">{getTranslation(key)}:</span>
-                      <span className="fantasy-text-bold text-muted">
-                        {Array.isArray(value) && (key === 'influencing' || key === 'влияющие')
-                          ? translateArray(value).join(', ')
-                          : prepareDataValues(value, key)}
-                      </span>
-                    </div>
-                  )
+              {typeof content === "object" && content !== null ? (
+                Object.entries(content).map(
+                  ([key, value]) =>
+                    key !== "name" && (
+                      <div key={key} className="fantasy-stat-row">
+                        <span className="fantasy-text-muted">{getTranslation(key)}:</span>
+                        <span className="fantasy-text-bold text-muted">
+                          {Array.isArray(value) &&
+                          (key === "influencing" || key === "влияющие")
+                            ? translateArray(value).join(", ")
+                            : prepareDataValues(value, key)}
+                        </span>
+                      </div>
+                    )
                 )
               ) : (
-                <div className="text-center fantasy-text-muted">{prepareDataValues(content)}</div>
+                <div className="text-center fantasy-text-muted">
+                  {prepareDataValues(content)}
+                </div>
               )}
             </Card.Body>
           </Card>
@@ -402,15 +459,20 @@ const Character = observer(() => {
     if (!categoryData) return null;
 
     switch (categoryData.displayType) {
-      case 'keyValue':
+      case "keyValue":
         return (
           <div className="fantasy-attributes-grid">
             {Object.entries(categoryData.data).map(([key, value]) => (
-              <AttributeWithTooltip key={key} category={category} itemKey={key} value={value} />
+              <AttributeWithTooltip
+                key={key}
+                category={category}
+                itemKey={key}
+                value={value}
+              />
             ))}
           </div>
         );
-      case 'magicCards':
+      case "magicCards":
         return (
           <Row>
             {Object.entries(categoryData.data).map(([key, value]) => (
@@ -418,7 +480,7 @@ const Character = observer(() => {
             ))}
           </Row>
         );
-      case 'abilityCards':
+      case "abilityCards":
         return (
           <Row>
             {Object.entries(categoryData.data).map(([key, value]) => (
@@ -426,7 +488,7 @@ const Character = observer(() => {
             ))}
           </Row>
         );
-      case 'cards':
+      case "cards":
         return (
           <Row>
             {Object.entries(categoryData.data).map(([key, value]) => (
@@ -449,13 +511,17 @@ const Character = observer(() => {
     <Col md={6} lg={4} className="mb-3">
       <Card className="h-100 fantasy-card">
         <Card.Header className={`fantasy-card-header fantasy-card-header-${color}`}>
-          <h6 className="fantasy-text-gold">{icon} {title}</h6>
+          <h6 className="fantasy-text-gold">
+            {icon} {title}
+          </h6>
         </Card.Header>
         <Card.Body>
           {Object.entries(data).map(([key, value]) => (
             <div key={key} className="fantasy-stat-row">
               <span>{key}:</span>
-              <Badge className={`fantasy-badge fantasy-badge-muted`}>{value ?? "—"}</Badge>
+              <Badge className={`fantasy-badge fantasy-badge-muted`}>
+                {value ?? "—"}
+              </Badge>
             </div>
           ))}
           {title === "Основная информация" && (
@@ -466,11 +532,15 @@ const Character = observer(() => {
                     <span className="health-icon">❤️</span>
                     <span>Здоровье</span>
                   </div>
-                  <div className="progress-label-right">{Math.round(calculateHealthProgress())}%</div>
+                  <div className="progress-label-right">
+                    {Math.round(calculateHealthProgress())}%
+                  </div>
                 </div>
                 <div className="health-progress">
                   <div
-                    className={`health-fill ${calculateHealthProgress() < 30 ? 'low-health' : ''}`}
+                    className={`health-fill ${
+                      calculateHealthProgress() < 30 ? "low-health" : ""
+                    }`}
                     style={{ width: `${calculateHealthProgress()}%` }}
                   />
                   <div className="progress-text">
@@ -481,20 +551,25 @@ const Character = observer(() => {
               <div className="progress-section">
                 <div className="progress-label">
                   <div className="progress-label-left">
-                    <span className={`experience-icon ${useBlueTheme ? 'blue' : ''}`}>
-                      {useBlueTheme ? '🔷' : '📈'}
+                    <span
+                      className={`experience-icon ${useBlueTheme ? "blue" : ""}`}
+                    >
+                      {useBlueTheme ? "🔷" : "📈"}
                     </span>
                     <span>Опыт</span>
                   </div>
-                  <div className="progress-label-right">{Math.round(calculateLevelProgress())}%</div>
+                  <div className="progress-label-right">
+                    {Math.round(calculateLevelProgress())}%
+                  </div>
                 </div>
                 <div className="experience-progress">
                   <div
-                    className={`experience-fill ${useBlueTheme ? 'blue-theme' : ''}`}
+                    className={`experience-fill ${useBlueTheme ? "blue-theme" : ""}`}
                     style={{ width: `${calculateLevelProgress()}%` }}
                   />
                   <div className="progress-text">
-                    {playerData?.experience ?? 0} / {playerData?.experience_next_level ?? 1}
+                    {playerData?.experience ?? 0} /{" "}
+                    {playerData?.experience_next_level ?? 1}
                   </div>
                 </div>
               </div>
@@ -505,12 +580,17 @@ const Character = observer(() => {
     </Col>
   );
 
-  // Состояния загрузки и ошибок
+  // Состояния загрузки
   if (loading || !delay) {
     return (
       <div className="d-flex justify-content-center align-items-center min-vh-50">
         <div className="text-center">
-          <Spinner animation="border" variant="secondary" role="status" style={{ width: '3rem', height: '3rem' }}>
+          <Spinner
+            animation="border"
+            variant="secondary"
+            role="status"
+            style={{ width: "3rem", height: "3rem" }}
+          >
             <span className="visually-hidden">Loading...</span>
           </Spinner>
           <p className="fantasy-text-gold">Загрузка данных персонажа...</p>
@@ -524,7 +604,10 @@ const Character = observer(() => {
       <div className="d-flex justify-content-center align-items-center min-vh-50">
         <div className="text-center">
           <p className="text-danger">Ошибка загрузки данных: {error}</p>
-          <button className="btn btn-secondary" onClick={() => window.location.reload()}>
+          <button
+            className="btn btn-secondary"
+            onClick={() => window.location.reload()}
+          >
             Повторить
           </button>
         </div>
@@ -545,82 +628,115 @@ const Character = observer(() => {
   // Основной рендер
   return (
     <div className="character-container">
-      <Tabs defaultActiveKey="Параметры" transition={false} id="playerInfo" className="fantasy-tabs mb-3" justify>
+      <Tabs
+        defaultActiveKey="Параметры"
+        transition={false}
+        id="playerInfo"
+        className="fantasy-tabs mb-3"
+        justify
+      >
         <Tab eventKey="Параметры" title="📊 Параметры">
           <Container fluid>
             <Row className="g-3">
-              {renderStatCard("Основная информация", "👤", {
-                "Имя": playerData.name,
-                "Раса": playerData.Race,
-                "Класс": playerData.Character_class,
-                "Очки навыков": playerData.points_per_level,
-                "Скидка": `${playerData.discount}%`,
-                "Уровень": playerData.level || 1,
-              }, "primary")}
+              {renderStatCard(
+                "Основная информация",
+                "👤",
+                {
+                  Имя: playerData.name,
+                  Раса: playerData.Race,
+                  Класс: playerData.Character_class,
+                  "Очки навыков": playerData.points_per_level,
+                  Скидка: `${playerData.discount}%`,
+                  Уровень: playerData.level || 1,
+                },
+                "primary"
+              )}
 
-              {renderStatCard("Особенности", "⚡", {
-                "Кровожадность": playerData.bloodlust || 0,
-                "Ярость": playerData.rage || 0,
-                "Регенерация": playerData.regeneration || 0,
-                "Воскрешение": playerData.ressurect || 0,
-                "Доп. очки передвижения": playerData.move_OP,
-                "Зелья за бой": playerData.consumable_items,
-                "Модификатор скрытности": playerData.sneak_check,
-                "Очки действия 🏃": playerData.action_points,
-                "Инициатива ⏳": playerData.initiative,
-              }, "success")}
+              {renderStatCard(
+                "Особенности",
+                "⚡",
+                {
+                  Кровожадность: playerData.bloodlust || 0,
+                  Ярость: playerData.rage || 0,
+                  Регенерация: playerData.regeneration || 0,
+                  Воскрешение: playerData.ressurect || 0,
+                  "Доп. очки передвижения": playerData.move_OP,
+                  "Зелья за бой": playerData.consumable_items,
+                  "Модификатор скрытности": playerData.sneak_check,
+                  "Очки действия 🏃": playerData.action_points,
+                  "Инициатива ⏳": playerData.initiative,
+                },
+                "success"
+              )}
 
-              {renderStatCard("Атака", "🗡️", {
-                "Ближняя атака": playerData.melee_attack,
-                "Ближний урон": playerData.melee_damage,
-                "Дальняя атака": playerData.range_attack,
-                "Дальний урон": playerData.range_damage,
-                "Магическая атака": playerData.magic_attack || 0,
-                "Магический урон": playerData.magic_damage || 0,
-                "Атака духа": playerData.pray_attack || 0,
-                "Урон духа": playerData.pray_damage || 0,
-                "Шанс критического удара": `${playerData.crit_chance}%`,
-              }, "warning")}
+              {renderStatCard(
+                "Атака",
+                "🗡️",
+                {
+                  "Ближняя атака": playerData.melee_attack,
+                  "Ближний урон": playerData.melee_damage,
+                  "Дальняя атака": playerData.range_attack,
+                  "Дальний урон": playerData.range_damage,
+                  "Магическая атака": playerData.magic_attack || 0,
+                  "Магический урон": playerData.magic_damage || 0,
+                  "Атака духа": playerData.pray_attack || 0,
+                  "Урон духа": playerData.pray_damage || 0,
+                  "Шанс критического удара": `${playerData.crit_chance}%`,
+                },
+                "warning"
+              )}
 
-              {renderStatCard("Физическая защита", "🛡️", {
-                "Класс защиты": playerData.current_defence,
-                "От колющего": playerData.piercing_deduction,
-                "От дробящего": playerData.bludge_deduction,
-                "От рубящего": playerData.slashing_deduction,
-              }, "info")}
+              {renderStatCard(
+                "Физическая защита",
+                "🛡️",
+                {
+                  "Класс защиты": playerData.current_defence,
+                  "От колющего": playerData.piercing_deduction,
+                  "От дробящего": playerData.bludge_deduction,
+                  "От рубящего": playerData.slashing_deduction,
+                },
+                "info"
+              )}
 
-              {renderStatCard("Магическая защита", "🪄", {
-                "Магическое сопротивление": playerData.magic_resist,
-                "Огонь": playerData.fire_deduction,
-                "Лёд": playerData.ice_deduction,
-                "Молния": playerData.electric_deduction,
-                "Тьма": playerData.dark_deduction,
-                "Свет": playerData.light_deduction,
-                "Жизнь": playerData.life_deduction,
-                "Звук": playerData.sound_deduction,
-                "Воздух": playerData.wind_deduction,
-                "Смерть": playerData.death_deduction,
-              }, "magic")}
+              {renderStatCard(
+                "Магическая защита",
+                "🪄",
+                {
+                  "Магическое сопротивление": playerData.magic_resist,
+                  Огонь: playerData.fire_deduction,
+                  Лёд: playerData.ice_deduction,
+                  Молния: playerData.electric_deduction,
+                  Тьма: playerData.dark_deduction,
+                  Свет: playerData.light_deduction,
+                  Жизнь: playerData.life_deduction,
+                  Звук: playerData.sound_deduction,
+                  Воздух: playerData.wind_deduction,
+                  Смерть: playerData.death_deduction,
+                },
+                "magic"
+              )}
             </Row>
           </Container>
         </Tab>
 
-        {["Атрибуты", "Навыки", "Магия", "Таланты", "Умения", "Эффекты"].map((category) => (
-          <Tab key={category} eventKey={category} title={getTabTitle(category)}>
-            <Container fluid>
-              <Row>
-                <Col>
-                  <Card className="fantasy-card">
-                    <Card.Header className="fantasy-card-header">
-                      <h5 className="fantasy-text-gold">{category}</h5>
-                    </Card.Header>
-                    <Card.Body>{renderSectionData(category)}</Card.Body>
-                  </Card>
-                </Col>
-              </Row>
-            </Container>
-          </Tab>
-        ))}
+        {["Атрибуты", "Навыки", "Магия", "Таланты", "Умения", "Эффекты"].map(
+          (category) => (
+            <Tab key={category} eventKey={category} title={getTabTitle(category)}>
+              <Container fluid>
+                <Row>
+                  <Col>
+                    <Card className="fantasy-card">
+                      <Card.Header className="fantasy-card-header">
+                        <h5 className="fantasy-text-gold">{category}</h5>
+                      </Card.Header>
+                      <Card.Body>{renderSectionData(category)}</Card.Body>
+                    </Card>
+                  </Col>
+                </Row>
+              </Container>
+            </Tab>
+          )
+        )}
 
         <Tab eventKey="Прокачка" title="📈 Прокачка">
           <UpgradeTab
@@ -634,29 +750,30 @@ const Character = observer(() => {
   );
 });
 
+// Вспомогательные функции
 const getTabTitle = (category) => {
   const icons = {
-    "Параметры": "📊",
-    "Атрибуты": "⭐",
-    "Навыки": "🎯",
-    "Магия": "🔮",
-    "Таланты": "💫",
-    "Умения": "⚡",
-    "Эффекты": "🕒",
-    "Прокачка": "📈",
+    Параметры: "📊",
+    Атрибуты: "⭐",
+    Навыки: "🎯",
+    Магия: "🔮",
+    Таланты: "💫",
+    Умения: "⚡",
+    Эффекты: "🕒",
+    Прокачка: "📈",
   };
   return `${icons[category]} ${category}`;
 };
 
 const getCategoryColor = (category) => {
   const colors = {
-    "Параметры": "primary",
-    "Атрибуты": "primary",
-    "Навыки": "success",
-    "Магия": "magic",
-    "Таланты": "warning",
-    "Умения": "info",
-    "Эффекты": "secondary",
+    Параметры: "primary",
+    Атрибуты: "primary",
+    Навыки: "success",
+    Магия: "magic",
+    Таланты: "warning",
+    Умения: "info",
+    Эффекты: "secondary",
   };
   return colors[category] || "primary";
 };
