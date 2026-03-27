@@ -8,7 +8,34 @@ import {
   TestSpell,
 } from "../http/apiClient";
 import { fetchBirzhaRate } from "../http/birzha";
-import { talents_dict } from "../utils/Helpers"; // импорт полного списка
+import { talents_dict } from "../utils/Helpers"; // импорт словаря талантов
+
+// Константы для выбора знака (можно вынести в отдельный файл)
+const MAGIC_ELEMENTS = [
+  { key: "sign_fire", label: "Огонь 🔥" },
+  { key: "sign_ice", label: "Лёд ❄️" },
+  { key: "sign_electric", label: "Молния ⚡" },
+  { key: "sign_wind", label: "Ветер 💨" },
+  { key: "sign_stone", label: "Камень 🪨" },
+  { key: "sign_power", label: "Власть 👑" },
+  { key: "sign_sound", label: "Звук 🔊" },
+  { key: "sign_light", label: "Свет ☀️" },
+  { key: "sign_dark", label: "Тьма 🌑" },
+  { key: "sign_life", label: "Жизнь 🌿" },
+  { key: "sign_death", label: "Смерть 💀" },
+];
+
+const MAGIC_TYPES = [
+  { key: "sign_touch", label: "Длань" },
+  { key: "sign_distant", label: "Сгусток" },
+  { key: "sign_ray", label: "Поток" },
+  { key: "sign_weapon_enchant", label: "Улучшение оружия" },
+  { key: "sign_armor_enchant", label: "Сфера" },
+  { key: "sign_dash", label: "Рывок" },
+  { key: "sign_magic_effect", label: "Аугментация Мощи" },
+  { key: "sign_magic_accuracy", label: "Аугментация Точности" },
+  { key: "sign_magic_range", label: "Аугментация Дальности" },
+];
 
 // Формула стоимости навыка (калька с бэкенда)
 const computeSkillCost = (skillValue) => {
@@ -71,9 +98,6 @@ const SKILLS = [
   { key: "shield", label: "Щиты 🛡️" },
 ];
 
-// Таланты теперь берутся из TALENTS_LIST, формируем массив объектов для удобства
-const TALENTS = talents_dict.map(key => ({ key, label: key }));
-
 const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
   const { user } = useContext(Context);
   const [loading, setLoading] = useState(false);
@@ -89,7 +113,7 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
   const [changes, setChanges] = useState({
     attributes: {},    // { agility: 2, strength: 1 }
     skills: {},        // { swords: { amount: 3, currency: "money" } }
-    talents: []        // ["MasterOfBlades"]
+    talents: []        // [{ talent: "MasterOfBlades", chosenSign: null }]
   });
   
   // Состояние выбора для добавления изменения
@@ -104,6 +128,11 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
   const [selectedSpell, setSelectedSpell] = useState(null);
   const [testResult, setTestResult] = useState(null);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  
+  // Модалка выбора знака для таланта "Изучение магии"
+  const [showSignSelector, setShowSignSelector] = useState(false);
+  const [selectedElement, setSelectedElement] = useState(null);
+  const [selectedMagicType, setSelectedMagicType] = useState(null);
   
   // Загрузка курса биржи
   useEffect(() => {
@@ -176,6 +205,48 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
     return { money: totalMoney, points: totalPoints, daleons: totalDaleons };
   };
   
+  // Проверка доступности таланта с учётом требований и текущих изменений
+  const isTalentAvailable = (talentName, talentData) => {
+    if (!tempPlayerData) return false;
+    
+    // Уже взято в базе
+    const currentCount = (tempPlayerData.talents || []).filter(t => t === talentName).length;
+    // Добавлено в изменения
+    const addedCount = changes.talents.filter(t => t.talent === talentName).length;
+    if (currentCount + addedCount >= talentData.take_times) return false;
+    
+    // Проверка требований
+    const requirements = talentData.requirements;
+    for (const [attr, reqValue] of Object.entries(requirements)) {
+      if (attr === "Character_class") {
+        // Проверка класса
+        if (Array.isArray(reqValue) && !reqValue.includes(tempPlayerData.Character_class)) return false;
+        if (typeof reqValue === "string" && tempPlayerData.Character_class !== reqValue) return false;
+      } else {
+        // Атрибуты: число или массив (для многоуровневых талантов)
+        let required = reqValue;
+        if (Array.isArray(reqValue)) {
+          const index = currentCount + addedCount; // следующий уровень
+          if (index >= reqValue.length) return false;
+          required = reqValue[index];
+        }
+        if ((tempPlayerData[attr] || 0) < required) return false;
+      }
+    }
+    return true;
+  };
+  
+  // Получение списка доступных талантов
+  const getAvailableTalents = () => {
+    const available = [];
+    for (const [name, data] of Object.entries(talents_dict)) {
+      if (isTalentAvailable(name, data)) {
+        available.push({ name, data });
+      }
+    }
+    return available;
+  };
+  
   // Проверка возможности добавления изменения (на основе текущих ресурсов в tempPlayerData)
   const canAddChange = () => {
     if (!selectedKey || !tempPlayerData) return false;
@@ -208,17 +279,20 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
         return currentDaleons >= total.daleons + daleonsNeeded;
       }
     } else if (selectedType === "talent") {
-      const alreadyHas = (tempPlayerData.talents || []).includes(selectedKey);
-      const alreadyAdded = changes.talents.includes(selectedKey);
-      if (alreadyHas || alreadyAdded) return false;
+      const talentData = talents_dict[selectedKey];
+      if (!talentData) return false;
+      // Проверяем доступность с учётом уже добавленных в изменения
+      const currentCount = (tempPlayerData.talents || []).filter(t => t === selectedKey).length;
+      const addedCount = changes.talents.filter(t => t.talent === selectedKey).length;
+      if (currentCount + addedCount >= talentData.take_times) return false;
       const currentPoints = tempPlayerData.free_talent_points || 0;
-      const addedCount = changes.talents.length;
-      return currentPoints - addedCount >= 1;
+      const addedTotal = changes.talents.length;
+      return currentPoints - addedTotal >= 1;
     }
     return false;
   };
   
-  // Добавление изменения в список
+  // Добавление изменения в список (для атрибутов и навыков)
   const addChange = () => {
     if (!canAddChange()) return;
     
@@ -238,10 +312,6 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
         amount: (current.amount || 0) + amount,
         currency: paymentMethod
       };
-    } else if (selectedType === "talent") {
-      if (!newChanges.talents.includes(selectedKey)) {
-        newChanges.talents.push(selectedKey);
-      }
     }
     
     setChanges(newChanges);
@@ -249,6 +319,42 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
     setSelectedKey(null);
     setAmount(1);
     setError("");
+  };
+  
+  // Добавление таланта (вызывается после выбора таланта, возможно с выбором знака)
+  const addTalentChange = (talentName, chosenSign = null) => {
+    const newChanges = JSON.parse(JSON.stringify(changes));
+    // Проверка, не добавлен ли уже этот талант в изменения
+    const alreadyAdded = newChanges.talents.some(t => t.talent === talentName);
+    if (alreadyAdded) {
+      setError("Этот талант уже добавлен в список изменений");
+      return;
+    }
+    newChanges.talents.push({ talent: talentName, chosenSign });
+    setChanges(newChanges);
+    setSelectedKey(null);
+    setError("");
+  };
+  
+  // Обработчик выбора таланта
+  const onSelectTalent = (talentName) => {
+    if (talentName === "Изучение магии") {
+      setShowSignSelector(true);
+    } else {
+      addTalentChange(talentName);
+    }
+  };
+  
+  // Подтверждение выбора знака для "Изучения магии"
+  const handleSignConfirm = () => {
+    if (!selectedElement || !selectedMagicType) {
+      setError("Выберите элемент и тип воздействия");
+      return;
+    }
+    addTalentChange("Изучение магии", { element: selectedElement, type: selectedMagicType });
+    setShowSignSelector(false);
+    setSelectedElement(null);
+    setSelectedMagicType(null);
   };
   
   // Удаление изменения
@@ -259,7 +365,7 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
     } else if (type === "skill") {
       delete newChanges.skills[key];
     } else if (type === "talent") {
-      newChanges.talents = newChanges.talents.filter(t => t !== key);
+      newChanges.talents = newChanges.talents.filter(t => t.talent !== key);
     }
     setChanges(newChanges);
   };
@@ -303,7 +409,12 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
     const payload = {
       attributes: Object.entries(changes.attributes).map(([attr, amount]) => ({ attribute: attr, amount })),
       skills: Object.entries(changes.skills).map(([skill, data]) => ({ skill, amount: data.amount, currency: data.currency })),
-      talents: changes.talents.map(talent => ({ talent }))
+      talents: changes.talents.map(t => {
+        if (t.talent === "Изучение магии" && t.chosenSign) {
+          return { talent: t.talent, chosen_sign: t.chosenSign };
+        }
+        return { talent: t.talent };
+      })
     };
     
     try {
@@ -324,7 +435,12 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
         for (const [skill, data] of Object.entries(changes.skills)) {
           newPlayerData[skill] = (newPlayerData[skill] || 0) + data.amount;
         }
-        newPlayerData.talents = [...(newPlayerData.talents || []), ...changes.talents];
+        // Добавляем таланты
+        for (const t of changes.talents) {
+          if (!newPlayerData.talents.includes(t.talent)) {
+            newPlayerData.talents.push(t.talent);
+          }
+        }
         
         setTempPlayerData(newPlayerData);
         setOriginalPlayerData(newPlayerData);
@@ -494,7 +610,7 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
   const renderTalentControls = () => (
     <div className="mt-3">
       <div className="d-flex justify-content-end">
-        <Button variant="primary" onClick={addChange} disabled={!canAddChange()}>
+        <Button variant="primary" onClick={() => onSelectTalent(selectedKey)} disabled={!canAddChange()}>
           Изучить талант
         </Button>
       </div>
@@ -536,14 +652,23 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
                     </ListGroup.Item>
                   );
                 })}
-                {changes.talents.map(talent => (
-                  <ListGroup.Item key={talent} className="d-flex justify-content-between align-items-center">
-                    <span>{TALENTS.find(t => t.key === talent)?.label}</span>
-                    <Button variant="outline-danger" size="sm" onClick={() => removeChange("talent", talent)}>
-                      Удалить
-                    </Button>
-                  </ListGroup.Item>
-                ))}
+                {changes.talents.map(talentObj => {
+                  const talentName = talentObj.talent;
+                  let displayName = talentName;
+                  if (talentName === "Изучение магии" && talentObj.chosenSign) {
+                    const elementLabel = MAGIC_ELEMENTS.find(e => e.key === talentObj.chosenSign.element)?.label || talentObj.chosenSign.element;
+                    const typeLabel = MAGIC_TYPES.find(t => t.key === talentObj.chosenSign.type)?.label || talentObj.chosenSign.type;
+                    displayName = `${talentName} (${elementLabel}, ${typeLabel})`;
+                  }
+                  return (
+                    <ListGroup.Item key={talentName} className="d-flex justify-content-between align-items-center">
+                      <span>{displayName}</span>
+                      <Button variant="outline-danger" size="sm" onClick={() => removeChange("talent", talentName)}>
+                        Удалить
+                      </Button>
+                    </ListGroup.Item>
+                  );
+                })}
               </ListGroup>
               <div className="mt-2">
                 <div>💰 Золота потребуется: {total.money}</div>
@@ -560,6 +685,8 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
   };
   
   if (!tempPlayerData) return <div>Загрузка...</div>;
+  
+  const availableTalents = getAvailableTalents();
   
   return (
     <Container fluid>
@@ -658,13 +785,13 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
                 <>
                   <h6>Выберите талант:</h6>
                   <div className="d-flex flex-wrap gap-2 mb-3" style={{ maxHeight: "300px", overflowY: "auto" }}>
-                    {TALENTS.map(talent => (
+                    {availableTalents.map(talent => (
                       <Button
-                        key={talent.key}
-                        variant={selectedKey === talent.key ? "success" : "light"}
-                        onClick={() => setSelectedKey(talent.key)}
+                        key={talent.name}
+                        variant={selectedKey === talent.name ? "success" : "light"}
+                        onClick={() => setSelectedKey(talent.name)}
                       >
-                        {talent.label}
+                        {talent.name}
                       </Button>
                     ))}
                   </div>
@@ -721,7 +848,15 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
             <ul>
               {Object.keys(changes.attributes).length > 0 && <li>Атрибуты: +{Object.values(changes.attributes).join(", ")}</li>}
               {Object.keys(changes.skills).length > 0 && <li>Навыки: {Object.entries(changes.skills).map(([k, v]) => `${SKILLS.find(s => s.key === k)?.label}+${v.amount} (${v.currency === 'money' ? 'золото' : (v.currency === 'daleons' ? 'далеоны' : 'очки')})`).join(", ")}</li>}
-              {changes.talents.length > 0 && <li>Таланты: {changes.talents.map(t => TALENTS.find(tl => tl.key === t)?.label).join(", ")}</li>}
+              {changes.talents.length > 0 && <li>Таланты: {changes.talents.map(t => {
+                let name = t.talent;
+                if (t.talent === "Изучение магии" && t.chosenSign) {
+                  const elementLabel = MAGIC_ELEMENTS.find(e => e.key === t.chosenSign.element)?.label || t.chosenSign.element;
+                  const typeLabel = MAGIC_TYPES.find(typ => typ.key === t.chosenSign.type)?.label || t.chosenSign.type;
+                  name = `${t.talent} (${elementLabel}, ${typeLabel})`;
+                }
+                return name;
+              }).join(", ")}</li>}
             </ul>
           </div>
         </Modal.Body>
@@ -756,6 +891,37 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
           <Button variant="primary" onClick={() => { setShowSpellSelector(false); handleTestSpell(); }}>
             Тестировать
           </Button>
+        </Modal.Footer>
+      </Modal>
+      
+      {/* Модалка выбора знака для таланта "Изучение магии" */}
+      <Modal show={showSignSelector} onHide={() => setShowSignSelector(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Выбор знака для таланта "Изучение магии"</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form.Group className="mb-3">
+            <Form.Label>Элемент:</Form.Label>
+            <Form.Select value={selectedElement || ""} onChange={(e) => setSelectedElement(e.target.value)}>
+              <option value="">-- Выберите элемент --</option>
+              {MAGIC_ELEMENTS.map(el => (
+                <option key={el.key} value={el.key}>{el.label}</option>
+              ))}
+            </Form.Select>
+          </Form.Group>
+          <Form.Group className="mb-3">
+            <Form.Label>Тип воздействия:</Form.Label>
+            <Form.Select value={selectedMagicType || ""} onChange={(e) => setSelectedMagicType(e.target.value)}>
+              <option value="">-- Выберите тип --</option>
+              {MAGIC_TYPES.map(t => (
+                <option key={t.key} value={t.key}>{t.label}</option>
+              ))}
+            </Form.Select>
+          </Form.Group>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowSignSelector(false)}>Отмена</Button>
+          <Button variant="primary" onClick={handleSignConfirm}>Подтвердить</Button>
         </Modal.Footer>
       </Modal>
       
