@@ -6,6 +6,7 @@ import { observer } from "mobx-react-lite";
 import { dict_translator } from "../utils/Helpers";
 
 import { attributesDescDict, skillsDescDict, talentsDescDict, abilitiesDescDict, keyMappingDict } from "../utils/descriptions";
+import UpgradeTab from "../components/UpgradeTab"; // Import the separate component
 
 const Character = observer(() => {
   const { user } = useContext(Context);
@@ -15,6 +16,7 @@ const Character = observer(() => {
   const [delay, setDelay] = useState(false);
   const user_id = user?.user?.id;
   const [useBlueTheme, setUseBlueTheme] = useState(true);
+  const [canUpgrade, setCanUpgrade] = useState(false); // Whether player has the special upgrade item
 
   // Fetch player data
   useEffect(() => {
@@ -30,6 +32,8 @@ const Character = observer(() => {
         if (data) {
           setPlayerData(data);
           user.setPlayer(data);
+          // Check if player has the special upgrade item
+          setCanUpgrade(hasSpecialItem(data));
         } else {
           throw new Error("No data received");
         }
@@ -51,6 +55,13 @@ const Character = observer(() => {
       return () => clearTimeout(timer);
     }
   }, [playerData]);
+
+  // Helper to check if player has the special item that enables upgrading
+  const hasSpecialItem = (data) => {
+    // TODO: implement actual check, e.g., data.inventory.includes("upgrade_token")
+    // For now, always true for demonstration
+    return true;
+  };
 
   // Helper functions (unchanged)
   const arrToCountedDict = (arr) => {
@@ -227,7 +238,6 @@ const Character = observer(() => {
 
   // Tooltip & description helpers (unchanged)
   const getDescription = (category, key) => {
-    // ... same as original, but ensure key is string
     const mappedKey = keyMappingDict[key];
     const searchKey = mappedKey || key;
 
@@ -607,6 +617,15 @@ const Character = observer(() => {
             </Container>
           </Tab>
         ))}
+
+        {/* New Upgrade Tab */}
+        <Tab eventKey="Прокачка" title="📈 Прокачка">
+          <UpgradeTab
+            playerData={playerData}
+            setPlayerData={setPlayerData}
+            canUpgrade={canUpgrade}
+          />
+        </Tab>
       </Tabs>
     </div>
   );
@@ -622,6 +641,7 @@ const getTabTitle = (category) => {
     "Таланты": "💫",
     "Умения": "⚡",
     "Эффекты": "🕒",
+    "Прокачка": "📈", // Added for the new tab
   };
   return `${icons[category]} ${category}`;
 };

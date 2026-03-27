@@ -87,3 +87,109 @@ apiClient.interceptors.response.use(
 );
 
 export default apiClient;
+
+
+/**
+ * Применить улучшения персонажа (атрибуты, навыки, таланты)
+ * @param {Object} upgrades - Объект с улучшениями
+ * @param {Array} upgrades.attributes - Список улучшений атрибутов: [{ attribute: "strength", amount: 2 }]
+ * @param {Array} upgrades.skills - Список улучшений навыков: [{ skill: "swords", amount: 1, currency: "points" }]
+ * @param {Array} upgrades.talents - Список изученных талантов: [{ talent: "MasterOfBlades" }]
+ * @returns {Promise<Object>} Результат операции
+ */
+ export const CommitUpgrades = async (upgrades) => {
+  try {
+    const response = await apiClient.post(`/character/upgrade/commit`, upgrades);
+    
+    return {
+      status: response.data.status || response.status,
+      data: response.data.data,
+      message: response.data.message || "Улучшения успешно применены"
+    };
+  } catch (error) {
+    console.error("Error committing upgrades:", error);
+    return {
+      status: error.response?.status || 500,
+      message: error.response?.data?.message || "Ошибка применения улучшений",
+      data: error.response?.data?.data || {}
+    };
+  }
+};
+
+/**
+ * Выполнить тестовую атаку с временными характеристиками
+ * @param {Object} tempStats - Объект с изменёнными характеристиками персонажа (полная копия playerData)
+ * @returns {Promise<Object>} Результат атаки (диапазон урона, попадание и т.д.)
+ */
+export const TestAttack = async (tempStats) => {
+  try {
+    const response = await apiClient.post(`/character/test/attack`, {
+      character_data: tempStats
+    });
+    
+    return {
+      status: response.data.status || response.status,
+      data: response.data.data,
+      message: response.data.message || "Тестовая атака выполнена"
+    };
+  } catch (error) {
+    console.error("Error testing attack:", error);
+    return {
+      status: error.response?.status || 500,
+      message: error.response?.data?.message || "Ошибка тестирования атаки",
+      data: error.response?.data?.data || {}
+    };
+  }
+};
+
+/**
+ * Выполнить тестовое заклинание с временными характеристиками
+ * @param {string|number} spellId - Идентификатор заклинания (название или id)
+ * @param {Object} tempStats - Объект с изменёнными характеристиками персонажа (полная копия playerData)
+ * @returns {Promise<Object>} Результат заклинания (диапазон урона, эффекты)
+ */
+export const TestSpell = async (spellId, tempStats) => {
+  try {
+    const response = await apiClient.post(`/character/test/spell`, {
+      spell_id: spellId,
+      character_data: tempStats
+    });
+    
+    return {
+      status: response.data.status || response.status,
+      data: response.data.data,
+      message: response.data.message || "Тестовое заклинание выполнено"
+    };
+  } catch (error) {
+    console.error("Error testing spell:", error);
+    return {
+      status: error.response?.status || 500,
+      message: error.response?.data?.message || "Ошибка тестирования заклинания",
+      data: error.response?.data?.data || {}
+    };
+  }
+};
+
+/**
+ * Получить предварительный расчёт стоимости улучшений (без применения)
+ * @param {Object} upgrades - Те же улучшения, что и в CommitUpgrades
+ * @returns {Promise<Object>} Информация о стоимости и возможностях
+ */
+export const PreviewUpgrades = async (upgrades) => {
+  try {
+    const response = await apiClient.post(`/character/upgrade/preview`, upgrades);
+    
+    return {
+      status: response.data.status || response.status,
+      data: response.data.data,
+      message: response.data.message || "Расчёт выполнен"
+    };
+  } catch (error) {
+    console.error("Error previewing upgrades:", error);
+    return {
+      status: error.response?.status || 500,
+      message: error.response?.data?.message || "Ошибка расчёта улучшений",
+      data: error.response?.data?.data || {}
+    };
+  }
+};
