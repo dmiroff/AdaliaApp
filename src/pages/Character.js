@@ -13,17 +13,19 @@ import {
 import UpgradeTab from "../components/UpgradeTab";
 import GetDataById from "../http/GetData";
 
-// Хук для загрузки данных персонажа, изолированный от store
 const usePlayerData = (userId) => {
   const [playerData, setPlayerData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (!userId) return;
+    // Если userId отсутствует, устанавливаем loading в false и не делаем запрос
+    if (!userId) {
+      setLoading(false);
+      return;
+    }
 
     let cancelled = false;
-
     const fetchData = async () => {
       try {
         setLoading(true);
