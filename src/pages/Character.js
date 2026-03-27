@@ -19,15 +19,17 @@ const Character = observer(() => {
   const [canUpgrade, setCanUpgrade] = useState(false);
 
   // Флаг, чтобы запрос выполнялся только один раз для каждого user_id
-  const fetchedUserId = useRef(null);
+  const hasLoaded = useRef(false);
+  const lastUserId = useRef(null);
 
-  useEffect(() => {
+  useEffect(() => {x
     const fetchPlayer = async () => {
       if (!user_id) return;
-
-      // Если для этого user_id уже был запрос, ничего не делаем
-      if (fetchedUserId.current === user_id) return;
-      fetchedUserId.current = user_id;
+      // Если мы уже загружали для этого user_id, выходим
+      if (hasLoaded.current && lastUserId.current === user_id) return;
+      
+      hasLoaded.current = true;
+      lastUserId.current = user_id;
 
       try {
         setLoading(true);
@@ -51,7 +53,7 @@ const Character = observer(() => {
     };
 
     fetchPlayer();
-  }, [user_id, user]); // user оставляем, но флаг защитит от повторных запросов
+    }, [user_id]); // Зависимость только от user_id
 
   // Задержка для плавного UI
   useEffect(() => {
