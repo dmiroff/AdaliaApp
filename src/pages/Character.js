@@ -46,7 +46,7 @@ const Character = observer(() => {
     };
 
     fetchPlayer();
-  }, [user_id, user]);
+  }, [user_id]);
 
   // Simulate a slight delay for a smoother UI (optional)
   useEffect(() => {
