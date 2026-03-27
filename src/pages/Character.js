@@ -1,12 +1,12 @@
 import GetDataById from "../http/GetData";
-import { useState, useContext, useEffect, useMemo } from "react";
+import { useState, useContext, useEffect, useMemo, useRef } from "react";
 import { Container, Spinner, Tabs, Tab, Card, Row, Col, Badge, OverlayTrigger, Tooltip } from "react-bootstrap";
 import { Context } from "../index";
 import { observer } from "mobx-react-lite";
 import { dict_translator } from "../utils/Helpers";
 
 import { attributesDescDict, skillsDescDict, talentsDescDict, abilitiesDescDict, keyMappingDict } from "../utils/descriptions";
-import UpgradeTab from "../components/UpgradeTab"; // Import the separate component
+import UpgradeTab from "../components/UpgradeTab";
 
 const Character = observer(() => {
   const { user } = useContext(Context);
@@ -16,23 +16,28 @@ const Character = observer(() => {
   const [delay, setDelay] = useState(false);
   const user_id = user?.user?.id;
   const [useBlueTheme, setUseBlueTheme] = useState(true);
-  const [canUpgrade, setCanUpgrade] = useState(false); // Whether player has the special upgrade item
+  const [canUpgrade, setCanUpgrade] = useState(false);
 
-  // Fetch player data
+  // Флаг, чтобы запрос выполнялся только один раз для каждого user_id
+  const fetchedUserId = useRef(null);
+
   useEffect(() => {
     const fetchPlayer = async () => {
-      if (!user_id) return; // Wait for user_id to be available
+      if (!user_id) return;
+
+      // Если для этого user_id уже был запрос, ничего не делаем
+      if (fetchedUserId.current === user_id) return;
+      fetchedUserId.current = user_id;
 
       try {
         setLoading(true);
         setError(null);
-        const response = await GetDataById(user_id); // ✅ Pass the ID
-        const data = response?.data; // Safely access data
+        const response = await GetDataById(user_id);
+        const data = response?.data;
 
         if (data) {
           setPlayerData(data);
           user.setPlayer(data);
-          // Check if player has the special upgrade item
           setCanUpgrade(hasSpecialItem(data));
         } else {
           throw new Error("No data received");
@@ -46,9 +51,9 @@ const Character = observer(() => {
     };
 
     fetchPlayer();
-  }, [user_id]);
+  }, [user_id, user]); // user оставляем, но флаг защитит от повторных запросов
 
-  // Simulate a slight delay for a smoother UI (optional)
+  // Задержка для плавного UI
   useEffect(() => {
     if (playerData) {
       const timer = setTimeout(() => setDelay(true), 500);
@@ -56,14 +61,13 @@ const Character = observer(() => {
     }
   }, [playerData]);
 
-  // Helper to check if player has the special item that enables upgrading
+  // Проверка наличия предмета для прокачки
   const hasSpecialItem = (data) => {
-    // TODO: implement actual check, e.g., data.inventory.includes("upgrade_token")
-    // For now, always true for demonstration
+    // TODO: реализовать проверку
     return true;
   };
 
-  // Helper functions (unchanged)
+  // Остальные вспомогательные функции и рендер остаются без изменений
   const arrToCountedDict = (arr) => {
     const countedDict = {};
     if (!Array.isArray(arr)) return countedDict;
@@ -165,7 +169,6 @@ const Character = observer(() => {
     return max > 0 ? (current / max) * 100 : 0;
   };
 
-  // Memoized section data with fallbacks
   const sectionData = useMemo(() => {
     if (!playerData) return {};
 
@@ -236,7 +239,7 @@ const Character = observer(() => {
     };
   }, [playerData]);
 
-  // Tooltip & description helpers (unchanged)
+  // Остальные функции (getDescription, renderTooltip, компоненты карточек и т.д.) остаются без изменений
   const getDescription = (category, key) => {
     const mappedKey = keyMappingDict[key];
     const searchKey = mappedKey || key;
@@ -282,7 +285,6 @@ const Character = observer(() => {
     <Tooltip className="fantasy-tooltip">{description}</Tooltip>
   );
 
-  // Render components for different sections
   const AttributeWithTooltip = ({ category, itemKey, value }) => {
     const description = getDescription(category, itemKey);
     return (
@@ -501,7 +503,7 @@ const Character = observer(() => {
     </Col>
   );
 
-  // Loading and error states
+  // Состояния загрузки и ошибок
   if (loading || !delay) {
     return (
       <div className="d-flex justify-content-center align-items-center min-vh-50">
@@ -538,7 +540,7 @@ const Character = observer(() => {
     );
   }
 
-  // Main render – now playerData is guaranteed to exist
+  // Основной рендер
   return (
     <div className="character-container">
       <Tabs defaultActiveKey="Параметры" transition={false} id="playerInfo" className="fantasy-tabs mb-3" justify>
@@ -618,7 +620,6 @@ const Character = observer(() => {
           </Tab>
         ))}
 
-        {/* New Upgrade Tab */}
         <Tab eventKey="Прокачка" title="📈 Прокачка">
           <UpgradeTab
             playerData={playerData}
@@ -631,7 +632,6 @@ const Character = observer(() => {
   );
 });
 
-// Helper functions
 const getTabTitle = (category) => {
   const icons = {
     "Параметры": "📊",
@@ -641,7 +641,7 @@ const getTabTitle = (category) => {
     "Таланты": "💫",
     "Умения": "⚡",
     "Эффекты": "🕒",
-    "Прокачка": "📈", // Added for the new tab
+    "Прокачка": "📈",
   };
   return `${icons[category]} ${category}`;
 };
