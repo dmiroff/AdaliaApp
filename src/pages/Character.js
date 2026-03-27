@@ -21,8 +21,8 @@ const usePlayerData = (userId) => {
 
   useEffect(() => {
     console.log("[usePlayerData] userId changed:", userId);
-    if (!userId) {
-      console.log("[usePlayerData] userId is falsy, setting loading false");
+    if (userId === undefined || userId === null) {
+      console.log("[usePlayerData] userId is undefined or null, setting loading false");
       setLoading(false);
       return;
     }
