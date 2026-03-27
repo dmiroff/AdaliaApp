@@ -105,8 +105,6 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
   const [paymentMethod, setPaymentMethod] = useState('points');
   
   // Модалки
-  const [showConvertModal, setShowConvertModal] = useState(false);
-  const [convertAmount, setConvertAmount] = useState(1);
   const [showSpellSelector, setShowSpellSelector] = useState(false);
   const [selectedSpell, setSelectedSpell] = useState(null);
   const [testResult, setTestResult] = useState(null);
@@ -346,44 +344,6 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
     } catch (err) {
       console.error(err);
       setError("Ошибка сети");
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  // Конвертация далеонов в золото (отдельная операция – не используется в прокачке, но оставлена)
-  const handleConvert = async () => {
-    if (convertAmount <= 0) return;
-    if (!birzhaRate) {
-      setError("Курс биржи не загружен");
-      return;
-    }
-    const goldPerDaleon = birzhaRate.sell_rate / 100;
-    const goldToReceive = Math.floor(convertAmount * goldPerDaleon);
-    if ((tempPlayerData.daleons || 0) < convertAmount) {
-      setError("Недостаточно далеонов");
-      return;
-    }
-    
-    setLoading(true);
-    try {
-      const result = await convertDaleonsToGold(convertAmount);
-      if (result.status === 200) {
-        const newData = JSON.parse(JSON.stringify(tempPlayerData));
-        newData.daleons -= convertAmount;
-        newData.money += goldToReceive;
-        setTempPlayerData(newData);
-        setShowConvertModal(false);
-        setConvertAmount(1);
-        setSuccess(`Получено ${goldToReceive} золота`);
-        setTimeout(() => setSuccess(""), 3000);
-        await loadBirzhaRate(); // обновить курс после операции
-      } else {
-        setError(result.message || "Ошибка конвертации");
-      }
-    } catch (err) {
-      console.error(err);
-      setError("Ошибка сети при конвертации");
     } finally {
       setLoading(false);
     }
@@ -634,15 +594,6 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
                   Курс продажи далеонов: {birzhaRate.sell_rate} 🌕 за 100 💎
                 </div>
               )}
-              <Button
-                variant="outline-info"
-                size="sm"
-                className="mt-3"
-                onClick={() => setShowConvertModal(true)}
-                disabled={loading}
-              >
-                Конвертировать далеоны в золото
-              </Button>
             </Card.Body>
           </Card>
           
@@ -788,49 +739,6 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
           <Button variant="secondary" onClick={() => setShowConfirmModal(false)}>Отмена</Button>
           <Button variant="primary" onClick={handleCommit} disabled={loading}>
             {loading ? "Применяю..." : "Применить"}
-          </Button>
-        </Modal.Footer>
-      </Modal>
-      
-      {/* Модалка конвертации далеонов */}
-      <Modal show={showConvertModal} onHide={() => setShowConvertModal(false)} centered>
-        <Modal.Header closeButton>
-          <Modal.Title>Конвертация далеонов в золото</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          {birzhaRate ? (
-            <>
-              <p>Текущий курс продажи: <strong>{birzhaRate.sell_rate} 🌕</strong> за 100 💎</p>
-              <Form.Group>
-                <Form.Label>Количество далеонов:</Form.Label>
-                <InputGroup>
-                  <Form.Control
-                    type="number"
-                    min={1}
-                    max={tempPlayerData.daleons || 0}
-                    value={convertAmount}
-                    onChange={(e) => setConvertAmount(Math.max(1, parseInt(e.target.value) || 1))}
-                  />
-                  <InputGroup.Text>💎</InputGroup.Text>
-                </InputGroup>
-              </Form.Group>
-              <p className="mt-2">
-                Вы получите: <strong>{Math.floor(convertAmount * (birzhaRate.sell_rate / 100))} 🌕</strong>
-              </p>
-              <p className="text-muted">Доступно далеонов: {tempPlayerData.daleons || 0}</p>
-            </>
-          ) : (
-            <p>Загрузка курса...</p>
-          )}
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowConvertModal(false)}>Отмена</Button>
-          <Button
-            variant="primary"
-            onClick={handleConvert}
-            disabled={loading || !birzhaRate || convertAmount <= 0 || convertAmount > (tempPlayerData.daleons || 0)}
-          >
-            {loading ? "Конвертирую..." : "Конвертировать"}
           </Button>
         </Modal.Footer>
       </Modal>
