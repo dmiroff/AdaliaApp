@@ -8,7 +8,7 @@ import {
   TestSpell,
 } from "../http/apiClient";
 import { fetchBirzhaRate } from "../http/birzha";
-import { TALENTS_LIST } from "../utils/Helpers"; // импорт полного списка
+import { talents_dict } from "../utils/Helpers"; // импорт полного списка
 
 // Формула стоимости навыка (калька с бэкенда)
 const computeSkillCost = (skillValue) => {
@@ -72,7 +72,7 @@ const SKILLS = [
 ];
 
 // Таланты теперь берутся из TALENTS_LIST, формируем массив объектов для удобства
-const TALENTS = TALENTS_LIST.map(key => ({ key, label: key }));
+const TALENTS = talents_dict.map(key => ({ key, label: key }));
 
 const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
   const { user } = useContext(Context);
