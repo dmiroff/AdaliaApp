@@ -668,7 +668,7 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
         </InputGroup>
       </Form.Group>
       <div className="d-flex justify-content-end">
-        <Button variant="primary" onClick={addChange} disabled={!canAddChange()} className="fantasy-btn">
+        <Button variant="primary" onClick={addChange} disabled={!canAddChange()}>
           Добавить
         </Button>
       </div>
@@ -731,7 +731,7 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
           </InputGroup>
         </Form.Group>
         <div className="d-flex justify-content-end">
-          <Button variant="primary" onClick={addChange} disabled={!canAddChange()} className="fantasy-btn">
+          <Button variant="primary" onClick={addChange} disabled={!canAddChange()}>
             Добавить
           </Button>
         </div>
@@ -742,7 +742,7 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
   const renderTalentControls = () => (
     <div className="mt-3">
       <div className="d-flex justify-content-end">
-        <Button variant="primary" onClick={() => onSelectTalent(selectedKey)} disabled={!canAddChange()} className="fantasy-btn">
+        <Button variant="primary" onClick={() => onSelectTalent(selectedKey)} disabled={!canAddChange()}>
           Изучить талант
         </Button>
       </div>
@@ -768,7 +768,7 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
                 {Object.entries(changes.attributes).map(([attr, amount]) => (
                   <ListGroup.Item key={attr} className="d-flex justify-content-between align-items-center">
                     <span>{ATTRIBUTES.find(a => a.key === attr)?.label} +{amount}</span>
-                    <Button variant="outline-danger" size="sm" onClick={() => removeChange("attribute", attr)} className="fantasy-btn">
+                    <Button variant="outline-danger" size="sm" onClick={() => removeChange("attribute", attr)}>
                       Удалить
                     </Button>
                   </ListGroup.Item>
@@ -778,7 +778,7 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
                   return (
                     <ListGroup.Item key={skill} className="d-flex justify-content-between align-items-center">
                       <span>{SKILLS.find(s => s.key === skill)?.label} +{data.amount} ({currencyLabel})</span>
-                      <Button variant="outline-danger" size="sm" onClick={() => removeChange("skill", skill)} className="fantasy-btn">
+                      <Button variant="outline-danger" size="sm" onClick={() => removeChange("skill", skill)}>
                         Удалить
                       </Button>
                     </ListGroup.Item>
@@ -794,7 +794,7 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
                   return (
                     <ListGroup.Item key={`${talentName}-${idx}`} className="d-flex justify-content-between align-items-center">
                       <span>{displayName}</span>
-                      <Button variant="outline-danger" size="sm" onClick={() => removeChange("talent", talentName, idx)} className="fantasy-btn">
+                      <Button variant="outline-danger" size="sm" onClick={() => removeChange("talent", talentName, idx)}>
                         Удалить
                       </Button>
                     </ListGroup.Item>
@@ -820,137 +820,12 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
   const availableTalents = getAvailableTalents();
   
   return (
-    <Container fluid className="px-2 px-md-3">
+    <Container fluid>
       {error && <Alert variant="danger" dismissible onClose={() => setError("")}>{error}</Alert>}
       {success && <Alert variant="success" dismissible onClose={() => setSuccess("")}>{success}</Alert>}
       
       <Row>
-        {/* Блок выбора категорий и прокачки - на мобильных сверху */}
-        <Col xs={12} md={8} className="order-2 order-md-1 mb-4 mb-md-0">
-          <Card className="fantasy-card h-100">
-            <Card.Header className="fantasy-card-header">
-              <h6 className="mb-0">Выберите категорию для прокачки</h6>
-            </Card.Header>
-            <Card.Body>
-              <div className="d-flex flex-wrap gap-2 mb-3">
-                <Button
-                  variant={selectedType === "attribute" ? "primary" : "outline-secondary"}
-                  onClick={() => { setSelectedType("attribute"); setSelectedKey(null); setError(""); }}
-                  className="fantasy-btn"
-                >
-                  Атрибуты
-                </Button>
-                <Button
-                  variant={selectedType === "skill" ? "primary" : "outline-secondary"}
-                  onClick={() => { setSelectedType("skill"); setSelectedKey(null); setError(""); }}
-                  className="fantasy-btn"
-                >
-                  Навыки
-                </Button>
-                <Button
-                  variant={selectedType === "talent" ? "primary" : "outline-secondary"}
-                  onClick={() => { setSelectedType("talent"); setSelectedKey(null); setError(""); }}
-                  className="fantasy-btn"
-                >
-                  Таланты
-                </Button>
-              </div>
-              
-              {selectedType === "attribute" && (
-                <>
-                  <h6>Выберите атрибут:</h6>
-                  <div className="d-flex flex-wrap gap-2 mb-3">
-                    {ATTRIBUTES.map(attr => (
-                      <Button
-                        key={attr.key}
-                        variant={selectedKey === attr.key ? "success" : "light"}
-                        onClick={() => setSelectedKey(attr.key)}
-                        className="fantasy-btn"
-                      >
-                        {attr.label}
-                      </Button>
-                    ))}
-                  </div>
-                  {selectedKey && renderAttributeControls()}
-                </>
-              )}
-              
-              {selectedType === "skill" && (
-                <>
-                  <h6>Выберите навык:</h6>
-                  <div className="d-flex flex-wrap gap-2 mb-3" style={{ maxHeight: "200px", overflowY: "auto" }}>
-                    {SKILLS.map(skill => (
-                      <Button
-                        key={skill.key}
-                        variant={selectedKey === skill.key ? "success" : "light"}
-                        onClick={() => setSelectedKey(skill.key)}
-                        className="fantasy-btn"
-                      >
-                        {skill.label}
-                      </Button>
-                    ))}
-                  </div>
-                  {selectedKey && renderSkillControls()}
-                </>
-              )}
-              
-              {selectedType === "talent" && (
-                <>
-                  <h6>Выберите талант:</h6>
-                  <div className="d-flex flex-wrap gap-2 mb-3" style={{ maxHeight: "300px", overflowY: "auto" }}>
-                    {availableTalents.map(talent => (
-                      <Button
-                        key={talent.name}
-                        variant={selectedKey === talent.name ? "success" : "light"}
-                        onClick={() => setSelectedKey(talent.name)}
-                        className="fantasy-btn"
-                      >
-                        {talent.name}
-                      </Button>
-                    ))}
-                  </div>
-                  {selectedKey && renderTalentControls()}
-                </>
-              )}
-              
-              <hr />
-              <div className="d-flex flex-column flex-md-row justify-content-between mt-3 gap-2">
-                <Button variant="outline-secondary" onClick={resetChanges} disabled={loading} className="fantasy-btn w-100 w-md-auto">
-                  Сбросить всё
-                </Button>
-                <div className="d-flex flex-column flex-md-row gap-2 w-100 w-md-auto">
-                  <Button
-                    variant="outline-info"
-                    onClick={handleTestAttack}
-                    disabled={loading}
-                    className="fantasy-btn w-100 w-md-auto"
-                  >
-                    Тест атаки
-                  </Button>
-                  <Button
-                    variant="outline-info"
-                    onClick={() => setShowSpellSelector(true)}
-                    disabled={loading}
-                    className="fantasy-btn w-100 w-md-auto"
-                  >
-                    Тест заклинания
-                  </Button>
-                  <Button
-                    variant="success"
-                    onClick={() => setShowConfirmModal(true)}
-                    disabled={!canUpgrade || loading || (Object.keys(changes.attributes).length === 0 && Object.keys(changes.skills).length === 0 && changes.talents.length === 0)}
-                    className="fantasy-btn w-100 w-md-auto"
-                  >
-                    Применить
-                  </Button>
-                </div>
-              </div>
-            </Card.Body>
-          </Card>
-        </Col>
-        
-        {/* Блок ресурсов и накопленных изменений - на мобильных снизу */}
-        <Col xs={12} md={4} className="order-1 order-md-2">
+        <Col md={4}>
           {/* Блок ресурсов */}
           <Card className="fantasy-card mb-3">
             <Card.Header className="fantasy-card-header">
@@ -973,10 +848,126 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
           {/* Список накопленных изменений */}
           {renderPendingChanges()}
         </Col>
+        
+        <Col md={8}>
+          <Card className="fantasy-card">
+            <Card.Header className="fantasy-card-header">
+              <h6 className="mb-0">Выберите категорию для прокачки</h6>
+            </Card.Header>
+            <Card.Body>
+              <div className="d-flex gap-2 mb-3">
+                <Button
+                  variant={selectedType === "attribute" ? "primary" : "outline-secondary"}
+                  onClick={() => { setSelectedType("attribute"); setSelectedKey(null); setError(""); }}
+                >
+                  Атрибуты
+                </Button>
+                <Button
+                  variant={selectedType === "skill" ? "primary" : "outline-secondary"}
+                  onClick={() => { setSelectedType("skill"); setSelectedKey(null); setError(""); }}
+                >
+                  Навыки
+                </Button>
+                <Button
+                  variant={selectedType === "talent" ? "primary" : "outline-secondary"}
+                  onClick={() => { setSelectedType("talent"); setSelectedKey(null); setError(""); }}
+                >
+                  Таланты
+                </Button>
+              </div>
+              
+              {selectedType === "attribute" && (
+                <>
+                  <h6>Выберите атрибут:</h6>
+                  <div className="d-flex flex-wrap gap-2 mb-3">
+                    {ATTRIBUTES.map(attr => (
+                      <Button
+                        key={attr.key}
+                        variant={selectedKey === attr.key ? "success" : "light"}
+                        onClick={() => setSelectedKey(attr.key)}
+                      >
+                        {attr.label}
+                      </Button>
+                    ))}
+                  </div>
+                  {selectedKey && renderAttributeControls()}
+                </>
+              )}
+              
+              {selectedType === "skill" && (
+                <>
+                  <h6>Выберите навык:</h6>
+                  <div className="d-flex flex-wrap gap-2 mb-3" style={{ maxHeight: "200px", overflowY: "auto" }}>
+                    {SKILLS.map(skill => (
+                      <Button
+                        key={skill.key}
+                        variant={selectedKey === skill.key ? "success" : "light"}
+                        onClick={() => setSelectedKey(skill.key)}
+                      >
+                        {skill.label}
+                      </Button>
+                    ))}
+                  </div>
+                  {selectedKey && renderSkillControls()}
+                </>
+              )}
+              
+              {selectedType === "talent" && (
+                <>
+                  <h6>Выберите талант:</h6>
+                  <div className="d-flex flex-wrap gap-2 mb-3" style={{ maxHeight: "300px", overflowY: "auto" }}>
+                    {availableTalents.map(talent => (
+                      <Button
+                        key={talent.name}
+                        variant={selectedKey === talent.name ? "success" : "light"}
+                        onClick={() => setSelectedKey(talent.name)}
+                      >
+                        {talent.name}
+                      </Button>
+                    ))}
+                  </div>
+                  {selectedKey && renderTalentControls()}
+                </>
+              )}
+              
+              <hr />
+              <div className="d-flex justify-content-between mt-3">
+                <Button variant="outline-secondary" onClick={resetChanges} disabled={loading}>
+                  Сбросить всё
+                </Button>
+                <div>
+                  <Button
+                    variant="outline-info"
+                    onClick={handleTestAttack}
+                    disabled={loading}
+                    className="me-2"
+                  >
+                    Тест атаки
+                  </Button>
+                  <Button
+                    variant="outline-info"
+                    onClick={() => setShowSpellSelector(true)}
+                    disabled={loading}
+                    className="me-2"
+                  >
+                    Тест заклинания
+                  </Button>
+                  <Button
+                    variant="success"
+                    onClick={() => setShowConfirmModal(true)}
+                    disabled={!canUpgrade || loading || (Object.keys(changes.attributes).length === 0 && Object.keys(changes.skills).length === 0 && changes.talents.length === 0)}
+                  >
+                    Применить
+                  </Button>
+                </div>
+              </div>
+            </Card.Body>
+          </Card>
+        </Col>
       </Row>
       
       {/* Модалка подтверждения */}
-      <Modal show={showConfirmModal} onHide={() => setShowConfirmModal(false)} centered dialogClassName="fantasy-modal">
+      <Modal show={showConfirmModal} onHide={() => setShowConfirmModal(false)} centered>
         <Modal.Header closeButton>
           <Modal.Title>Подтверждение улучшений</Modal.Title>
         </Modal.Header>
@@ -1000,17 +991,15 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
           </div>
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowConfirmModal(false)} className="fantasy-btn">
-            Отмена
-          </Button>
-          <Button variant="primary" onClick={handleCommit} disabled={loading} className="fantasy-btn">
+          <Button variant="secondary" onClick={() => setShowConfirmModal(false)}>Отмена</Button>
+          <Button variant="primary" onClick={handleCommit} disabled={loading}>
             {loading ? "Применяю..." : "Применить"}
           </Button>
         </Modal.Footer>
       </Modal>
       
       {/* Модалка выбора заклинания */}
-      <Modal show={showSpellSelector} onHide={() => setShowSpellSelector(false)} centered dialogClassName="fantasy-modal">
+      <Modal show={showSpellSelector} onHide={() => setShowSpellSelector(false)} centered>
         <Modal.Header closeButton>
           <Modal.Title>Выберите заклинание</Modal.Title>
         </Modal.Header>
@@ -1026,17 +1015,17 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
           </Form.Select>
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowSpellSelector(false)} className="fantasy-btn">
+          <Button variant="secondary" onClick={() => setShowSpellSelector(false)}>
             Отмена
           </Button>
-          <Button variant="primary" onClick={() => { setShowSpellSelector(false); handleTestSpell(); }} className="fantasy-btn">
+          <Button variant="primary" onClick={() => { setShowSpellSelector(false); handleTestSpell(); }}>
             Тестировать
           </Button>
         </Modal.Footer>
       </Modal>
       
       {/* Модалка выбора знаков для таланта "Изучение магии" */}
-      <Modal show={showSignSelector} onHide={() => setShowSignSelector(false)} centered dialogClassName="fantasy-modal">
+      <Modal show={showSignSelector} onHide={() => setShowSignSelector(false)} centered>
         <Modal.Header closeButton>
           <Modal.Title>Выбор знаков для таланта "Изучение магии"</Modal.Title>
         </Modal.Header>
@@ -1069,10 +1058,8 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
           </Form.Group>
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowSignSelector(false)} className="fantasy-btn">
-            Отмена
-          </Button>
-          <Button variant="primary" onClick={handleSignConfirm} disabled={selectedSigns.length === 0} className="fantasy-btn">
+          <Button variant="secondary" onClick={() => setShowSignSelector(false)}>Отмена</Button>
+          <Button variant="primary" onClick={handleSignConfirm} disabled={selectedSigns.length === 0}>
             Подтвердить
           </Button>
         </Modal.Footer>
@@ -1080,7 +1067,7 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
       
       {/* Модалка отображения результата теста */}
       {testResult && (
-        <Modal show={!!testResult} onHide={() => setTestResult(null)} centered dialogClassName="fantasy-modal">
+        <Modal show={!!testResult} onHide={() => setTestResult(null)} centered>
           <Modal.Header closeButton>
             <Modal.Title>Результат тестирования</Modal.Title>
           </Modal.Header>
@@ -1092,7 +1079,7 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
             )}
           </Modal.Body>
           <Modal.Footer>
-            <Button variant="secondary" onClick={() => setTestResult(null)} className="fantasy-btn">
+            <Button variant="secondary" onClick={() => setTestResult(null)}>
               Закрыть
             </Button>
           </Modal.Footer>
