@@ -8,7 +8,7 @@ import {
   TestSpell,
 } from "../http/apiClient";
 import { fetchBirzhaRate } from "../http/birzha";
-import { talents_dict } from "../utils/Helpers"; // импорт словаря талантов
+import { talents_dict } from "../utils/Helpers";
 
 // Константы для выбора знака (можно вынести в отдельный файл)
 const MAGIC_ELEMENTS = [
@@ -36,6 +36,82 @@ const MAGIC_TYPES = [
   { key: "sign_magic_accuracy", label: "Аугментация Точности" },
   { key: "sign_magic_range", label: "Аугментация Дальности" },
 ];
+
+// Словарь доступных знаков для классов
+const learnable_signs_dict = {
+    "Плут": ["sign_fire", "sign_ice", "sign_electric", "sign_wind", "sign_stone", "sign_sound", "sign_weapon_enchant",
+             "sign_armor_enchant", "sign_dash", "sign_magic_effect", "sign_magic_accuracy", "sign_magic_range"],
+    "Бард": ["sign_fire", "sign_ice", "sign_electric", "sign_wind", "sign_stone", "sign_sound", "sign_weapon_enchant",
+             "sign_armor_enchant", "sign_dash", "sign_magic_effect", "sign_magic_accuracy", "sign_magic_range"],
+    "Маг": ["sign_fire", "sign_ice", "sign_electric", "sign_wind", "sign_stone", "sign_power", "sign_sound",
+            "sign_touch", "sign_distant", "sign_ray", "sign_weapon_enchant", "sign_armor_enchant", "sign_dash",
+            "sign_magic_effect", "sign_magic_accuracy", "sign_magic_range"],
+    "Жрец": ["sign_life", "sign_dark", "sign_light", "sign_touch", "sign_distant", "sign_ray",
+             "sign_weapon_enchant", "sign_armor_enchant", "sign_dash", "sign_magic_effect", "sign_magic_accuracy",
+             "sign_magic_range"],
+    "Воин": ["sign_fire", "sign_ice", "sign_electric", "sign_wind", "sign_stone", "sign_sound", "sign_weapon_enchant",
+             "sign_armor_enchant", "sign_dash", "sign_magic_effect", "sign_magic_accuracy", "sign_magic_range"],
+    "Монах": ["sign_fire", "sign_ice", "sign_electric", "sign_wind", "sign_stone", "sign_sound", "sign_weapon_enchant",
+              "sign_armor_enchant", "sign_dash", "sign_magic_effect", "sign_magic_accuracy", "sign_magic_range"],
+    "Мастер битвы": ["sign_fire", "sign_ice", "sign_electric", "sign_wind", "sign_stone", "sign_sound",
+                     "sign_weapon_enchant",
+                     "sign_armor_enchant", "sign_dash", "sign_magic_effect", "sign_magic_accuracy", "sign_magic_range"],
+    "Убийца": ["sign_fire", "sign_ice", "sign_electric", "sign_wind", "sign_stone", "sign_sound", "sign_weapon_enchant",
+               "sign_armor_enchant", "sign_dash", "sign_magic_effect", "sign_magic_accuracy", "sign_magic_range"],
+    "Расхититель": ["sign_fire", "sign_ice", "sign_electric", "sign_wind", "sign_stone", "sign_sound",
+                    "sign_weapon_enchant",
+                    "sign_armor_enchant", "sign_dash", "sign_magic_effect", "sign_magic_accuracy", "sign_magic_range"],
+    "Алхимик": ["sign_fire", "sign_ice", "sign_electric", "sign_wind", "sign_stone", "sign_sound",
+                "sign_weapon_enchant",
+                "sign_armor_enchant", "sign_dash", "sign_magic_effect", "sign_magic_accuracy", "sign_magic_range"],
+    "Адепт Огня": ["sign_fire", "sign_ice", "sign_electric", "sign_wind", "sign_stone", "sign_power", "sign_sound",
+                   "sign_touch", "sign_distant", "sign_ray", "sign_weapon_enchant", "sign_armor_enchant", "sign_dash",
+                   "sign_magic_effect", "sign_magic_accuracy", "sign_magic_range"],
+    "Адепт Льда": ["sign_fire", "sign_ice", "sign_electric", "sign_wind", "sign_stone", "sign_power", "sign_sound",
+                   "sign_touch", "sign_distant", "sign_ray", "sign_weapon_enchant", "sign_armor_enchant", "sign_dash",
+                   "sign_magic_effect", "sign_magic_accuracy", "sign_magic_range"],
+    "Адепт Молнии": ["sign_fire", "sign_ice", "sign_electric", "sign_wind", "sign_stone", "sign_power", "sign_sound",
+                     "sign_touch", "sign_distant", "sign_ray", "sign_weapon_enchant", "sign_armor_enchant", "sign_dash",
+                     "sign_magic_effect", "sign_magic_accuracy", "sign_magic_range"],
+    "Адепт Камня": ["sign_fire", "sign_ice", "sign_electric", "sign_wind", "sign_stone", "sign_power", "sign_sound",
+                    "sign_touch", "sign_distant", "sign_ray", "sign_weapon_enchant", "sign_armor_enchant", "sign_dash",
+                    "sign_magic_effect", "sign_magic_accuracy", "sign_magic_range"],
+    "Адепт Ветра": ["sign_fire", "sign_ice", "sign_electric", "sign_wind", "sign_stone", "sign_power", "sign_sound",
+                    "sign_touch", "sign_distant", "sign_ray", "sign_weapon_enchant", "sign_armor_enchant", "sign_dash",
+                    "sign_magic_effect", "sign_magic_accuracy", "sign_magic_range"],
+    "Адепт Звука": ["sign_fire", "sign_ice", "sign_electric", "sign_wind", "sign_stone", "sign_power", "sign_sound",
+                    "sign_touch", "sign_distant", "sign_ray", "sign_weapon_enchant", "sign_armor_enchant", "sign_dash",
+                    "sign_magic_effect", "sign_magic_accuracy", "sign_magic_range"],
+    "Адепт Власти": ["sign_fire", "sign_ice", "sign_electric", "sign_wind", "sign_stone", "sign_power", "sign_sound",
+                     "sign_touch", "sign_distant", "sign_ray", "sign_weapon_enchant", "sign_armor_enchant", "sign_dash",
+                     "sign_magic_effect", "sign_magic_accuracy", "sign_magic_range"],
+    "Жрец Света": ["sign_life", "sign_dark", "sign_light", "sign_touch", "sign_distant", "sign_ray",
+                   "sign_weapon_enchant", "sign_armor_enchant", "sign_dash", "sign_magic_effect", "sign_magic_accuracy",
+                   "sign_magic_range"],
+    "Жрец Тьмы": ["sign_life", "sign_dark", "sign_light", "sign_touch", "sign_distant", "sign_ray",
+                  "sign_weapon_enchant", "sign_armor_enchant", "sign_dash", "sign_magic_effect", "sign_magic_accuracy",
+                  "sign_magic_range"],
+    "Жрец Смерти": ["sign_life", "sign_dark", "sign_light", "sign_touch", "sign_distant", "sign_ray",
+                    "sign_weapon_enchant", "sign_armor_enchant", "sign_dash", "sign_magic_effect",
+                    "sign_magic_accuracy",
+                    "sign_magic_range"],
+    "Жрец Жизни": ["sign_life", "sign_dark", "sign_light", "sign_touch", "sign_distant", "sign_ray",
+                   "sign_weapon_enchant", "sign_armor_enchant", "sign_dash", "sign_magic_effect", "sign_magic_accuracy",
+                   "sign_magic_range"],
+    "Варвар": ["sign_fire", "sign_ice", "sign_electric", "sign_wind", "sign_stone", "sign_sound", "sign_weapon_enchant",
+               "sign_armor_enchant", "sign_dash", "sign_magic_effect", "sign_magic_accuracy", "sign_magic_range"],
+    "Страж": ["sign_fire", "sign_ice", "sign_electric", "sign_wind", "sign_stone", "sign_sound", "sign_weapon_enchant",
+              "sign_armor_enchant", "sign_dash", "sign_magic_effect", "sign_magic_accuracy", "sign_magic_range"],
+    "Паладин": ["sign_fire", "sign_ice", "sign_electric", "sign_wind", "sign_stone", "sign_sound",
+                "sign_weapon_enchant", "sign_touch", "sign_armor_enchant", "sign_dash", "sign_magic_effect",
+                "sign_magic_accuracy", "sign_magic_range"],
+};
+
+// Объединяем все знаки в один словарь для отображения
+const signLabelMap = {
+  ...Object.fromEntries(MAGIC_ELEMENTS.map(e => [e.key, e.label])),
+  ...Object.fromEntries(MAGIC_TYPES.map(t => [t.key, t.label]))
+};
 
 // Формула стоимости навыка (калька с бэкенда)
 const computeSkillCost = (skillValue) => {
@@ -113,7 +189,7 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
   const [changes, setChanges] = useState({
     attributes: {},    // { agility: 2, strength: 1 }
     skills: {},        // { swords: { amount: 3, currency: "money" } }
-    talents: []        // [{ talent: "MasterOfBlades", chosenSign: null }]
+    talents: []        // [{ talent: "MasterOfBlades", chosenSigns: null }] или [{ talent: "Изучение магии", chosenSigns: ["sign_fire", "sign_touch"] }]
   });
   
   // Состояние выбора для добавления изменения
@@ -129,10 +205,11 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
   const [testResult, setTestResult] = useState(null);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   
-  // Модалка выбора знака для таланта "Изучение магии"
+  // Модалка выбора знаков для таланта "Изучение магии"
   const [showSignSelector, setShowSignSelector] = useState(false);
-  const [selectedElement, setSelectedElement] = useState(null);
-  const [selectedMagicType, setSelectedMagicType] = useState(null);
+  const [availableSignsForSelection, setAvailableSignsForSelection] = useState([]);
+  const [selectedSigns, setSelectedSigns] = useState([]);
+  const [maxSelectableSigns, setMaxSelectableSigns] = useState(1);
   
   // Загрузка курса биржи
   useEffect(() => {
@@ -247,6 +324,20 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
     return available;
   };
   
+  // Функция для получения доступных знаков для таланта "Изучение магии"
+  const getAvailableSignsForMagicStudy = () => {
+    if (!tempPlayerData) return [];
+    const playerClass = tempPlayerData.Character_class;
+    const classSigns = learnable_signs_dict[playerClass] || [];
+    const alreadyOpened = tempPlayerData.available_signs || [];
+    // Знаки, уже выбранные в текущих изменениях (для любых копий "Изучение магии")
+    const pendingSigns = changes.talents
+      .filter(t => t.talent === "Изучение магии" && t.chosenSigns)
+      .flatMap(t => t.chosenSigns);
+    // Доступные знаки: из классовых, не открытые, не выбранные в текущих изменениях
+    return classSigns.filter(sign => !alreadyOpened.includes(sign) && !pendingSigns.includes(sign));
+  };
+  
   // Проверка возможности добавления изменения (на основе текущих ресурсов в tempPlayerData)
   const canAddChange = () => {
     if (!selectedKey || !tempPlayerData) return false;
@@ -287,6 +378,13 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
       if (currentCount + addedCount >= talentData.take_times) return false;
       const currentPoints = tempPlayerData.free_talent_points || 0;
       const addedTotal = changes.talents.length;
+      
+      // Дополнительная проверка для "Изучение магии": должны быть доступные знаки
+      if (selectedKey === "Изучение магии") {
+        const availableSigns = getAvailableSignsForMagicStudy();
+        if (availableSigns.length === 0) return false;
+      }
+      
       return currentPoints - addedTotal >= 1;
     }
     return false;
@@ -321,16 +419,20 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
     setError("");
   };
   
-  // Добавление таланта (вызывается после выбора таланта, возможно с выбором знака)
-  const addTalentChange = (talentName, chosenSign = null) => {
+  // Добавление таланта (вызывается после выбора таланта, возможно с выбором знаков)
+  const addTalentChange = (talentName, chosenSigns = null) => {
     const newChanges = JSON.parse(JSON.stringify(changes));
-    // Проверка, не добавлен ли уже этот талант в изменения
-    const alreadyAdded = newChanges.talents.some(t => t.talent === talentName);
-    if (alreadyAdded) {
-      setError("Этот талант уже добавлен в список изменений");
+    // Проверка, не превышен ли лимит взятий (делается в canAddChange, но ещё раз проверим)
+    const talentData = talents_dict[talentName];
+    if (!talentData) return;
+    const currentCount = (tempPlayerData.talents || []).filter(t => t === talentName).length;
+    const addedCount = newChanges.talents.filter(t => t.talent === talentName).length;
+    if (currentCount + addedCount >= talentData.take_times) {
+      setError("Лимит взятий этого таланта исчерпан");
       return;
     }
-    newChanges.talents.push({ talent: talentName, chosenSign });
+    
+    newChanges.talents.push({ talent: talentName, chosenSigns });
     setChanges(newChanges);
     setSelectedKey(null);
     setError("");
@@ -339,33 +441,57 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
   // Обработчик выбора таланта
   const onSelectTalent = (talentName) => {
     if (talentName === "Изучение магии") {
+      const availableSigns = getAvailableSignsForMagicStudy();
+      if (availableSigns.length === 0) {
+        setError("Нет доступных знаков для изучения");
+        return;
+      }
+      // Определяем, сколько знаков можно получить
+      const openCount = tempPlayerData.available_signs?.length || 0;
+      const maxNew = openCount > 3 ? 1 : 2;
+      const maxSelectable = Math.min(maxNew, availableSigns.length);
+      if (maxSelectable === 0) {
+        setError("Нет доступных знаков для изучения");
+        return;
+      }
+      setAvailableSignsForSelection(availableSigns);
+      setMaxSelectableSigns(maxSelectable);
+      setSelectedSigns([]);
       setShowSignSelector(true);
     } else {
       addTalentChange(talentName);
     }
   };
   
-  // Подтверждение выбора знака для "Изучения магии"
+  // Подтверждение выбора знаков для "Изучения магии"
   const handleSignConfirm = () => {
-    if (!selectedElement || !selectedMagicType) {
-      setError("Выберите элемент и тип воздействия");
+    if (selectedSigns.length === 0) {
+      setError("Выберите хотя бы один знак");
       return;
     }
-    addTalentChange("Изучение магии", { element: selectedElement, type: selectedMagicType });
+    if (selectedSigns.length > maxSelectableSigns) {
+      setError(`Можно выбрать не более ${maxSelectableSigns} знаков`);
+      return;
+    }
+    addTalentChange("Изучение магии", selectedSigns);
     setShowSignSelector(false);
-    setSelectedElement(null);
-    setSelectedMagicType(null);
+    setSelectedSigns([]);
   };
   
   // Удаление изменения
-  const removeChange = (type, key) => {
+  const removeChange = (type, key, talentIndex = -1) => {
     const newChanges = JSON.parse(JSON.stringify(changes));
     if (type === "attribute") {
       delete newChanges.attributes[key];
     } else if (type === "skill") {
       delete newChanges.skills[key];
     } else if (type === "talent") {
-      newChanges.talents = newChanges.talents.filter(t => t.talent !== key);
+      if (talentIndex >= 0) {
+        newChanges.talents.splice(talentIndex, 1);
+      } else {
+        // для обратной совместимости: удаляем по названию (но лучше по индексу)
+        newChanges.talents = newChanges.talents.filter(t => t.talent !== key);
+      }
     }
     setChanges(newChanges);
   };
@@ -410,8 +536,8 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
       attributes: Object.entries(changes.attributes).map(([attr, amount]) => ({ attribute: attr, amount })),
       skills: Object.entries(changes.skills).map(([skill, data]) => ({ skill, amount: data.amount, currency: data.currency })),
       talents: changes.talents.map(t => {
-        if (t.talent === "Изучение магии" && t.chosenSign) {
-          return { talent: t.talent, chosen_sign: t.chosenSign };
+        if (t.talent === "Изучение магии" && t.chosenSigns && t.chosenSigns.length > 0) {
+          return { talent: t.talent, chosen_signs: t.chosenSigns };
         }
         return { talent: t.talent };
       })
@@ -435,10 +561,16 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
         for (const [skill, data] of Object.entries(changes.skills)) {
           newPlayerData[skill] = (newPlayerData[skill] || 0) + data.amount;
         }
-        // Добавляем таланты
+        // Добавляем таланты (и знаки для "Изучение магии")
         for (const t of changes.talents) {
           if (!newPlayerData.talents.includes(t.talent)) {
             newPlayerData.talents.push(t.talent);
+          }
+          // Если талант "Изучение магии", добавляем знаки в available_signs
+          if (t.talent === "Изучение магии" && t.chosenSigns && t.chosenSigns.length > 0) {
+            const currentSigns = newPlayerData.available_signs || [];
+            const newSigns = t.chosenSigns.filter(sign => !currentSigns.includes(sign));
+            newPlayerData.available_signs = [...currentSigns, ...newSigns];
           }
         }
         
@@ -536,7 +668,7 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
         </InputGroup>
       </Form.Group>
       <div className="d-flex justify-content-end">
-        <Button variant="primary" onClick={addChange} disabled={!canAddChange()}>
+        <Button variant="primary" onClick={addChange} disabled={!canAddChange()} className="fantasy-btn">
           Добавить
         </Button>
       </div>
@@ -599,7 +731,7 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
           </InputGroup>
         </Form.Group>
         <div className="d-flex justify-content-end">
-          <Button variant="primary" onClick={addChange} disabled={!canAddChange()}>
+          <Button variant="primary" onClick={addChange} disabled={!canAddChange()} className="fantasy-btn">
             Добавить
           </Button>
         </div>
@@ -610,7 +742,7 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
   const renderTalentControls = () => (
     <div className="mt-3">
       <div className="d-flex justify-content-end">
-        <Button variant="primary" onClick={() => onSelectTalent(selectedKey)} disabled={!canAddChange()}>
+        <Button variant="primary" onClick={() => onSelectTalent(selectedKey)} disabled={!canAddChange()} className="fantasy-btn">
           Изучить талант
         </Button>
       </div>
@@ -636,7 +768,7 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
                 {Object.entries(changes.attributes).map(([attr, amount]) => (
                   <ListGroup.Item key={attr} className="d-flex justify-content-between align-items-center">
                     <span>{ATTRIBUTES.find(a => a.key === attr)?.label} +{amount}</span>
-                    <Button variant="outline-danger" size="sm" onClick={() => removeChange("attribute", attr)}>
+                    <Button variant="outline-danger" size="sm" onClick={() => removeChange("attribute", attr)} className="fantasy-btn">
                       Удалить
                     </Button>
                   </ListGroup.Item>
@@ -646,24 +778,23 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
                   return (
                     <ListGroup.Item key={skill} className="d-flex justify-content-between align-items-center">
                       <span>{SKILLS.find(s => s.key === skill)?.label} +{data.amount} ({currencyLabel})</span>
-                      <Button variant="outline-danger" size="sm" onClick={() => removeChange("skill", skill)}>
+                      <Button variant="outline-danger" size="sm" onClick={() => removeChange("skill", skill)} className="fantasy-btn">
                         Удалить
                       </Button>
                     </ListGroup.Item>
                   );
                 })}
-                {changes.talents.map(talentObj => {
+                {changes.talents.map((talentObj, idx) => {
                   const talentName = talentObj.talent;
                   let displayName = talentName;
-                  if (talentName === "Изучение магии" && talentObj.chosenSign) {
-                    const elementLabel = MAGIC_ELEMENTS.find(e => e.key === talentObj.chosenSign.element)?.label || talentObj.chosenSign.element;
-                    const typeLabel = MAGIC_TYPES.find(t => t.key === talentObj.chosenSign.type)?.label || talentObj.chosenSign.type;
-                    displayName = `${talentName} (${elementLabel}, ${typeLabel})`;
+                  if (talentName === "Изучение магии" && talentObj.chosenSigns && talentObj.chosenSigns.length > 0) {
+                    const signsStr = talentObj.chosenSigns.map(s => signLabelMap[s] || s).join(", ");
+                    displayName = `${talentName} (${signsStr})`;
                   }
                   return (
-                    <ListGroup.Item key={talentName} className="d-flex justify-content-between align-items-center">
+                    <ListGroup.Item key={`${talentName}-${idx}`} className="d-flex justify-content-between align-items-center">
                       <span>{displayName}</span>
-                      <Button variant="outline-danger" size="sm" onClick={() => removeChange("talent", talentName)}>
+                      <Button variant="outline-danger" size="sm" onClick={() => removeChange("talent", talentName, idx)} className="fantasy-btn">
                         Удалить
                       </Button>
                     </ListGroup.Item>
@@ -689,12 +820,137 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
   const availableTalents = getAvailableTalents();
   
   return (
-    <Container fluid>
+    <Container fluid className="px-2 px-md-3">
       {error && <Alert variant="danger" dismissible onClose={() => setError("")}>{error}</Alert>}
       {success && <Alert variant="success" dismissible onClose={() => setSuccess("")}>{success}</Alert>}
       
       <Row>
-        <Col md={4}>
+        {/* Блок выбора категорий и прокачки - на мобильных сверху */}
+        <Col xs={12} md={8} className="order-2 order-md-1 mb-4 mb-md-0">
+          <Card className="fantasy-card h-100">
+            <Card.Header className="fantasy-card-header">
+              <h6 className="mb-0">Выберите категорию для прокачки</h6>
+            </Card.Header>
+            <Card.Body>
+              <div className="d-flex flex-wrap gap-2 mb-3">
+                <Button
+                  variant={selectedType === "attribute" ? "primary" : "outline-secondary"}
+                  onClick={() => { setSelectedType("attribute"); setSelectedKey(null); setError(""); }}
+                  className="fantasy-btn"
+                >
+                  Атрибуты
+                </Button>
+                <Button
+                  variant={selectedType === "skill" ? "primary" : "outline-secondary"}
+                  onClick={() => { setSelectedType("skill"); setSelectedKey(null); setError(""); }}
+                  className="fantasy-btn"
+                >
+                  Навыки
+                </Button>
+                <Button
+                  variant={selectedType === "talent" ? "primary" : "outline-secondary"}
+                  onClick={() => { setSelectedType("talent"); setSelectedKey(null); setError(""); }}
+                  className="fantasy-btn"
+                >
+                  Таланты
+                </Button>
+              </div>
+              
+              {selectedType === "attribute" && (
+                <>
+                  <h6>Выберите атрибут:</h6>
+                  <div className="d-flex flex-wrap gap-2 mb-3">
+                    {ATTRIBUTES.map(attr => (
+                      <Button
+                        key={attr.key}
+                        variant={selectedKey === attr.key ? "success" : "light"}
+                        onClick={() => setSelectedKey(attr.key)}
+                        className="fantasy-btn"
+                      >
+                        {attr.label}
+                      </Button>
+                    ))}
+                  </div>
+                  {selectedKey && renderAttributeControls()}
+                </>
+              )}
+              
+              {selectedType === "skill" && (
+                <>
+                  <h6>Выберите навык:</h6>
+                  <div className="d-flex flex-wrap gap-2 mb-3" style={{ maxHeight: "200px", overflowY: "auto" }}>
+                    {SKILLS.map(skill => (
+                      <Button
+                        key={skill.key}
+                        variant={selectedKey === skill.key ? "success" : "light"}
+                        onClick={() => setSelectedKey(skill.key)}
+                        className="fantasy-btn"
+                      >
+                        {skill.label}
+                      </Button>
+                    ))}
+                  </div>
+                  {selectedKey && renderSkillControls()}
+                </>
+              )}
+              
+              {selectedType === "talent" && (
+                <>
+                  <h6>Выберите талант:</h6>
+                  <div className="d-flex flex-wrap gap-2 mb-3" style={{ maxHeight: "300px", overflowY: "auto" }}>
+                    {availableTalents.map(talent => (
+                      <Button
+                        key={talent.name}
+                        variant={selectedKey === talent.name ? "success" : "light"}
+                        onClick={() => setSelectedKey(talent.name)}
+                        className="fantasy-btn"
+                      >
+                        {talent.name}
+                      </Button>
+                    ))}
+                  </div>
+                  {selectedKey && renderTalentControls()}
+                </>
+              )}
+              
+              <hr />
+              <div className="d-flex flex-column flex-md-row justify-content-between mt-3 gap-2">
+                <Button variant="outline-secondary" onClick={resetChanges} disabled={loading} className="fantasy-btn w-100 w-md-auto">
+                  Сбросить всё
+                </Button>
+                <div className="d-flex flex-column flex-md-row gap-2 w-100 w-md-auto">
+                  <Button
+                    variant="outline-info"
+                    onClick={handleTestAttack}
+                    disabled={loading}
+                    className="fantasy-btn w-100 w-md-auto"
+                  >
+                    Тест атаки
+                  </Button>
+                  <Button
+                    variant="outline-info"
+                    onClick={() => setShowSpellSelector(true)}
+                    disabled={loading}
+                    className="fantasy-btn w-100 w-md-auto"
+                  >
+                    Тест заклинания
+                  </Button>
+                  <Button
+                    variant="success"
+                    onClick={() => setShowConfirmModal(true)}
+                    disabled={!canUpgrade || loading || (Object.keys(changes.attributes).length === 0 && Object.keys(changes.skills).length === 0 && changes.talents.length === 0)}
+                    className="fantasy-btn w-100 w-md-auto"
+                  >
+                    Применить
+                  </Button>
+                </div>
+              </div>
+            </Card.Body>
+          </Card>
+        </Col>
+        
+        {/* Блок ресурсов и накопленных изменений - на мобильных снизу */}
+        <Col xs={12} md={4} className="order-1 order-md-2">
           {/* Блок ресурсов */}
           <Card className="fantasy-card mb-3">
             <Card.Header className="fantasy-card-header">
@@ -717,126 +973,10 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
           {/* Список накопленных изменений */}
           {renderPendingChanges()}
         </Col>
-        
-        <Col md={8}>
-          <Card className="fantasy-card">
-            <Card.Header className="fantasy-card-header">
-              <h6 className="mb-0">Выберите категорию для прокачки</h6>
-            </Card.Header>
-            <Card.Body>
-              <div className="d-flex gap-2 mb-3">
-                <Button
-                  variant={selectedType === "attribute" ? "primary" : "outline-secondary"}
-                  onClick={() => { setSelectedType("attribute"); setSelectedKey(null); setError(""); }}
-                >
-                  Атрибуты
-                </Button>
-                <Button
-                  variant={selectedType === "skill" ? "primary" : "outline-secondary"}
-                  onClick={() => { setSelectedType("skill"); setSelectedKey(null); setError(""); }}
-                >
-                  Навыки
-                </Button>
-                <Button
-                  variant={selectedType === "talent" ? "primary" : "outline-secondary"}
-                  onClick={() => { setSelectedType("talent"); setSelectedKey(null); setError(""); }}
-                >
-                  Таланты
-                </Button>
-              </div>
-              
-              {selectedType === "attribute" && (
-                <>
-                  <h6>Выберите атрибут:</h6>
-                  <div className="d-flex flex-wrap gap-2 mb-3">
-                    {ATTRIBUTES.map(attr => (
-                      <Button
-                        key={attr.key}
-                        variant={selectedKey === attr.key ? "success" : "light"}
-                        onClick={() => setSelectedKey(attr.key)}
-                      >
-                        {attr.label}
-                      </Button>
-                    ))}
-                  </div>
-                  {selectedKey && renderAttributeControls()}
-                </>
-              )}
-              
-              {selectedType === "skill" && (
-                <>
-                  <h6>Выберите навык:</h6>
-                  <div className="d-flex flex-wrap gap-2 mb-3" style={{ maxHeight: "200px", overflowY: "auto" }}>
-                    {SKILLS.map(skill => (
-                      <Button
-                        key={skill.key}
-                        variant={selectedKey === skill.key ? "success" : "light"}
-                        onClick={() => setSelectedKey(skill.key)}
-                      >
-                        {skill.label}
-                      </Button>
-                    ))}
-                  </div>
-                  {selectedKey && renderSkillControls()}
-                </>
-              )}
-              
-              {selectedType === "talent" && (
-                <>
-                  <h6>Выберите талант:</h6>
-                  <div className="d-flex flex-wrap gap-2 mb-3" style={{ maxHeight: "300px", overflowY: "auto" }}>
-                    {availableTalents.map(talent => (
-                      <Button
-                        key={talent.name}
-                        variant={selectedKey === talent.name ? "success" : "light"}
-                        onClick={() => setSelectedKey(talent.name)}
-                      >
-                        {talent.name}
-                      </Button>
-                    ))}
-                  </div>
-                  {selectedKey && renderTalentControls()}
-                </>
-              )}
-              
-              <hr />
-              <div className="d-flex justify-content-between mt-3">
-                <Button variant="outline-secondary" onClick={resetChanges} disabled={loading}>
-                  Сбросить всё
-                </Button>
-                <div>
-                  <Button
-                    variant="outline-info"
-                    onClick={handleTestAttack}
-                    disabled={loading}
-                    className="me-2"
-                  >
-                    Тест атаки
-                  </Button>
-                  <Button
-                    variant="outline-info"
-                    onClick={() => setShowSpellSelector(true)}
-                    disabled={loading}
-                    className="me-2"
-                  >
-                    Тест заклинания
-                  </Button>
-                  <Button
-                    variant="success"
-                    onClick={() => setShowConfirmModal(true)}
-                    disabled={!canUpgrade || loading || (Object.keys(changes.attributes).length === 0 && Object.keys(changes.skills).length === 0 && changes.talents.length === 0)}
-                  >
-                    Применить
-                  </Button>
-                </div>
-              </div>
-            </Card.Body>
-          </Card>
-        </Col>
       </Row>
       
       {/* Модалка подтверждения */}
-      <Modal show={showConfirmModal} onHide={() => setShowConfirmModal(false)} centered>
+      <Modal show={showConfirmModal} onHide={() => setShowConfirmModal(false)} centered dialogClassName="fantasy-modal">
         <Modal.Header closeButton>
           <Modal.Title>Подтверждение улучшений</Modal.Title>
         </Modal.Header>
@@ -850,10 +990,9 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
               {Object.keys(changes.skills).length > 0 && <li>Навыки: {Object.entries(changes.skills).map(([k, v]) => `${SKILLS.find(s => s.key === k)?.label}+${v.amount} (${v.currency === 'money' ? 'золото' : (v.currency === 'daleons' ? 'далеоны' : 'очки')})`).join(", ")}</li>}
               {changes.talents.length > 0 && <li>Таланты: {changes.talents.map(t => {
                 let name = t.talent;
-                if (t.talent === "Изучение магии" && t.chosenSign) {
-                  const elementLabel = MAGIC_ELEMENTS.find(e => e.key === t.chosenSign.element)?.label || t.chosenSign.element;
-                  const typeLabel = MAGIC_TYPES.find(typ => typ.key === t.chosenSign.type)?.label || t.chosenSign.type;
-                  name = `${t.talent} (${elementLabel}, ${typeLabel})`;
+                if (t.talent === "Изучение магии" && t.chosenSigns && t.chosenSigns.length > 0) {
+                  const signsStr = t.chosenSigns.map(s => signLabelMap[s] || s).join(", ");
+                  name = `${t.talent} (${signsStr})`;
                 }
                 return name;
               }).join(", ")}</li>}
@@ -861,15 +1000,17 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
           </div>
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowConfirmModal(false)}>Отмена</Button>
-          <Button variant="primary" onClick={handleCommit} disabled={loading}>
+          <Button variant="secondary" onClick={() => setShowConfirmModal(false)} className="fantasy-btn">
+            Отмена
+          </Button>
+          <Button variant="primary" onClick={handleCommit} disabled={loading} className="fantasy-btn">
             {loading ? "Применяю..." : "Применить"}
           </Button>
         </Modal.Footer>
       </Modal>
       
       {/* Модалка выбора заклинания */}
-      <Modal show={showSpellSelector} onHide={() => setShowSpellSelector(false)} centered>
+      <Modal show={showSpellSelector} onHide={() => setShowSpellSelector(false)} centered dialogClassName="fantasy-modal">
         <Modal.Header closeButton>
           <Modal.Title>Выберите заклинание</Modal.Title>
         </Modal.Header>
@@ -885,49 +1026,61 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
           </Form.Select>
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowSpellSelector(false)}>
+          <Button variant="secondary" onClick={() => setShowSpellSelector(false)} className="fantasy-btn">
             Отмена
           </Button>
-          <Button variant="primary" onClick={() => { setShowSpellSelector(false); handleTestSpell(); }}>
+          <Button variant="primary" onClick={() => { setShowSpellSelector(false); handleTestSpell(); }} className="fantasy-btn">
             Тестировать
           </Button>
         </Modal.Footer>
       </Modal>
       
-      {/* Модалка выбора знака для таланта "Изучение магии" */}
-      <Modal show={showSignSelector} onHide={() => setShowSignSelector(false)} centered>
+      {/* Модалка выбора знаков для таланта "Изучение магии" */}
+      <Modal show={showSignSelector} onHide={() => setShowSignSelector(false)} centered dialogClassName="fantasy-modal">
         <Modal.Header closeButton>
-          <Modal.Title>Выбор знака для таланта "Изучение магии"</Modal.Title>
+          <Modal.Title>Выбор знаков для таланта "Изучение магии"</Modal.Title>
         </Modal.Header>
         <Modal.Body>
+          <p>Можно выбрать <strong>{maxSelectableSigns}</strong> знак(а/ов).</p>
           <Form.Group className="mb-3">
-            <Form.Label>Элемент:</Form.Label>
-            <Form.Select value={selectedElement || ""} onChange={(e) => setSelectedElement(e.target.value)}>
-              <option value="">-- Выберите элемент --</option>
-              {MAGIC_ELEMENTS.map(el => (
-                <option key={el.key} value={el.key}>{el.label}</option>
+            <Form.Label>Доступные знаки:</Form.Label>
+            <div style={{ maxHeight: "300px", overflowY: "auto" }}>
+              {availableSignsForSelection.map(sign => (
+                <Form.Check
+                  key={sign}
+                  type="checkbox"
+                  label={signLabelMap[sign] || sign}
+                  checked={selectedSigns.includes(sign)}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      if (selectedSigns.length < maxSelectableSigns) {
+                        setSelectedSigns([...selectedSigns, sign]);
+                      } else {
+                        setError(`Можно выбрать не более ${maxSelectableSigns} знаков`);
+                      }
+                    } else {
+                      setSelectedSigns(selectedSigns.filter(s => s !== sign));
+                    }
+                  }}
+                  disabled={selectedSigns.length >= maxSelectableSigns && !selectedSigns.includes(sign)}
+                />
               ))}
-            </Form.Select>
-          </Form.Group>
-          <Form.Group className="mb-3">
-            <Form.Label>Тип воздействия:</Form.Label>
-            <Form.Select value={selectedMagicType || ""} onChange={(e) => setSelectedMagicType(e.target.value)}>
-              <option value="">-- Выберите тип --</option>
-              {MAGIC_TYPES.map(t => (
-                <option key={t.key} value={t.key}>{t.label}</option>
-              ))}
-            </Form.Select>
+            </div>
           </Form.Group>
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowSignSelector(false)}>Отмена</Button>
-          <Button variant="primary" onClick={handleSignConfirm}>Подтвердить</Button>
+          <Button variant="secondary" onClick={() => setShowSignSelector(false)} className="fantasy-btn">
+            Отмена
+          </Button>
+          <Button variant="primary" onClick={handleSignConfirm} disabled={selectedSigns.length === 0} className="fantasy-btn">
+            Подтвердить
+          </Button>
         </Modal.Footer>
       </Modal>
       
       {/* Модалка отображения результата теста */}
       {testResult && (
-        <Modal show={!!testResult} onHide={() => setTestResult(null)} centered>
+        <Modal show={!!testResult} onHide={() => setTestResult(null)} centered dialogClassName="fantasy-modal">
           <Modal.Header closeButton>
             <Modal.Title>Результат тестирования</Modal.Title>
           </Modal.Header>
@@ -939,7 +1092,7 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
             )}
           </Modal.Body>
           <Modal.Footer>
-            <Button variant="secondary" onClick={() => setTestResult(null)}>
+            <Button variant="secondary" onClick={() => setTestResult(null)} className="fantasy-btn">
               Закрыть
             </Button>
           </Modal.Footer>
