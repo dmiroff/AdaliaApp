@@ -137,6 +137,42 @@ const calculateTotalSkillCost = (currentLevel, levelsToAdd) => {
   return total;
 };
 
+// Расчёт количества далеонов для повышения навыка на levelsToAdd уровней, начиная с currentLevel,
+// с учётом динамики курса (курс уменьшается на 1% после каждой полной сотни потраченных далеонов)
+// startRate - начальный курс (золота за 100 далеонов)
+// Возвращает объект { totalDaleons, finalRate }
+const calculateDaleonsForSkill = (currentLevel, levelsToAdd, startRate) => {
+  let rate = startRate;
+  let totalDaleons = 0;
+  for (let i = 0; i < levelsToAdd; i++) {
+    const goldCost = computeSkillCost(currentLevel + i);
+    const daleonsNeeded = Math.floor((goldCost * 100) / rate);
+    totalDaleons += daleonsNeeded;
+    const hundreds = Math.floor(daleonsNeeded / 100);
+    for (let j = 0; j < hundreds; j++) {
+      rate = Math.floor(rate * 0.99);
+    }
+  }
+  return { totalDaleons, finalRate: rate };
+};
+
+// Расчёт общей суммы далеонов для всех навыков в changes.skills, с учётом динамики курса
+// playerData - исходные данные игрока (для получения начальных уровней)
+// changesSkills - массив { skill, amount, currency } (только с currency='daleons')
+// initialRate - начальный курс
+const calculateTotalDaleonsNeeded = (playerData, changesSkills, initialRate) => {
+  let currentRate = initialRate;
+  let total = 0;
+  for (const item of changesSkills) {
+    if (item.currency !== 'daleons') continue;
+    const currentLevel = playerData[item.skill] || 0;
+    const { totalDaleons, finalRate } = calculateDaleonsForSkill(currentLevel, item.amount, currentRate);
+    total += totalDaleons;
+    currentRate = finalRate;
+  }
+  return total;
+};
+
 const ATTRIBUTES = [
   { key: "perception", label: "Восприятие 👁" },
   { key: "strength", label: "Сила 🏋️" },
@@ -188,7 +224,7 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
   // Накопленные изменения
   const [changes, setChanges] = useState({
     attributes: {},    // { agility: 2, strength: 1 }
-    skills: {},        // { swords: { amount: 3, currency: "money" } }
+    skills: [],        // [{ skill: "swords", amount: 3, currency: "money" }]
     talents: []        // [{ talent: "MasterOfBlades", chosenSigns: null }] или [{ talent: "Изучение магии", chosenSigns: ["sign_fire", "sign_touch"] }]
   });
   
@@ -240,7 +276,7 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
   
   // Сброс накопленных изменений
   const resetChanges = () => {
-    setChanges({ attributes: {}, skills: {}, talents: [] });
+    setChanges({ attributes: {}, skills: [], talents: [] });
     setSelectedType(null);
     setSelectedKey(null);
     setAmount(1);
@@ -248,34 +284,32 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
     setPaymentMethod('points');
   };
   
-  // Вспомогательная функция для расчёта стоимости в далеонах
-  const calculateDaleonsNeeded = (goldCost) => {
-    if (!birzhaRate) return Infinity;
-    const sellRate = birzhaRate.sell_rate; // золота за 100 далеонов
-    return Math.ceil(goldCost * 100 / sellRate);
-  };
-  
   // Подсчёт общей стоимости изменений (золото, очки, далеоны)
   const getTotalCost = () => {
+    if (!tempPlayerData) return { money: 0, points: 0, daleons: 0 };
+    
     let totalMoney = 0;
     let totalPoints = 0;
     let totalDaleons = 0;
     
-    // Атрибуты требуют очки атрибутов
+    // Атрибуты
     totalPoints += Object.values(changes.attributes).reduce((a, b) => a + b, 0);
     
-    // Навыки
-    for (const [skill, data] of Object.entries(changes.skills)) {
-      const currentLevel = (tempPlayerData?.[skill] || 0);
-      const addedLevels = data.amount;
-      const goldCost = calculateTotalSkillCost(currentLevel, addedLevels);
-      if (data.currency === "money") {
+    // Навыки (золото и очки суммируем просто)
+    for (const item of changes.skills) {
+      const currentLevel = tempPlayerData[item.skill] || 0;
+      const goldCost = calculateTotalSkillCost(currentLevel, item.amount);
+      if (item.currency === "money") {
         totalMoney += goldCost;
-      } else if (data.currency === "points") {
-        totalPoints += addedLevels;
-      } else if (data.currency === "daleons") {
-        totalDaleons += calculateDaleonsNeeded(goldCost);
+      } else if (item.currency === "points") {
+        totalPoints += item.amount;
       }
+    }
+    
+    // Далеоны - используем динамический расчёт
+    if (birzhaRate) {
+      const daleonSkills = changes.skills.filter(s => s.currency === 'daleons');
+      totalDaleons = calculateTotalDaleonsNeeded(tempPlayerData, daleonSkills, birzhaRate.sell_rate);
     }
     
     // Таланты (каждый талант стоит 1 очко таланта)
@@ -350,50 +384,50 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
       const alreadyAdded = changes.attributes[selectedKey] || 0;
       return currentPoints - alreadyAdded >= amount;
     } else if (selectedType === "skill") {
+      const total = getTotalCost();
       const currentLevel = tempPlayerData[selectedKey] || 0;
-      const addedLevels = (changes.skills[selectedKey]?.amount || 0);
+      const addedLevels = changes.skills.find(s => s.skill === selectedKey)?.amount || 0;
       const newLevel = currentLevel + addedLevels;
       const goldCost = calculateTotalSkillCost(newLevel, amount);
-      const remainingPoints = (tempPlayerData.free_skill_points || 0) - (changes.skills[selectedKey]?.amount || 0);
+      const pointsNeeded = amount;
       
       if (paymentMethod === "points") {
-        return remainingPoints >= amount;
+        // Проверяем, хватит ли очков навыков с учётом уже добавленных
+        const availablePoints = tempPlayerData.free_skill_points || 0;
+        return total.points + pointsNeeded <= availablePoints;
       } else if (paymentMethod === "money") {
-        const currentMoney = tempPlayerData.money || 0;
-        const total = getTotalCost();
-        // Проверяем, хватит ли золота с учётом уже добавленных изменений
-        return currentMoney >= total.money + goldCost;
+        const availableMoney = tempPlayerData.money || 0;
+        return total.money + goldCost <= availableMoney;
       } else if (paymentMethod === "daleons") {
         if (!birzhaRate) return false;
-        const daleonsNeeded = calculateDaleonsNeeded(goldCost);
+        // Создаём копию массива навыков за далеоны с добавленным новым навыком
+        const daleonSkillsCopy = changes.skills
+          .filter(s => s.currency === 'daleons')
+          .map(s => ({ ...s }));
+        const existingIndex = daleonSkillsCopy.findIndex(s => s.skill === selectedKey);
+        if (existingIndex !== -1) {
+          daleonSkillsCopy[existingIndex].amount += amount;
+        } else {
+          daleonSkillsCopy.push({ skill: selectedKey, amount, currency: 'daleons' });
+        }
+        const totalDaleonsNeeded = calculateTotalDaleonsNeeded(tempPlayerData, daleonSkillsCopy, birzhaRate.sell_rate);
         const currentDaleons = tempPlayerData.daleons || 0;
-        const total = getTotalCost();
-        // Проверяем, хватит ли далеонов с учётом уже добавленных изменений
-        return currentDaleons >= total.daleons + daleonsNeeded;
+        return currentDaleons >= totalDaleonsNeeded;
       }
     } else if (selectedType === "talent") {
       const talentData = talents_dict[selectedKey];
       if (!talentData) return false;
-      // Проверяем доступность с учётом уже добавленных в изменения
       const currentCount = (tempPlayerData.talents || []).filter(t => t === selectedKey).length;
       const addedCount = changes.talents.filter(t => t.talent === selectedKey).length;
-      // Проверка лимита с учётом запрашиваемого количества
-      if (currentCount + addedCount + talentAmount > talentData.take_times) return false;
+      const totalAfter = currentCount + addedCount + talentAmount;
+      if (totalAfter > talentData.take_times) return false;
       const currentPoints = tempPlayerData.free_talent_points || 0;
       const addedTotal = changes.talents.length;
-      // Должно хватить очков на все копии
       if (currentPoints - addedTotal < talentAmount) return false;
-      
-      // Дополнительная проверка для "Изучение магии": должны быть доступные знаки
       if (selectedKey === "Изучение магии") {
-        // Для "Изучение магии" мы игнорируем talentAmount и добавляем только одну копию за раз,
-        // поэтому проверка здесь должна быть на одну копию.
         const availableSigns = getAvailableSignsForMagicStudy();
         if (availableSigns.length === 0) return false;
-        // Дополнительно: если игрок может взять несколько копий подряд, каждая требует новых знаков.
-        // Упрощённо проверяем только первую копию.
       }
-      
       return true;
     }
     return false;
@@ -409,16 +443,17 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
       const current = newChanges.attributes[selectedKey] || 0;
       newChanges.attributes[selectedKey] = current + amount;
     } else if (selectedType === "skill") {
-      const current = newChanges.skills[selectedKey] || { amount: 0, currency: paymentMethod };
-      // Если способ оплаты не совпадает с предыдущим для этого навыка, запрещаем
-      if (current.amount > 0 && current.currency !== paymentMethod) {
-        setError("Нельзя смешивать способы оплаты для одного навыка");
-        return;
+      const existingIndex = newChanges.skills.findIndex(s => s.skill === selectedKey);
+      if (existingIndex !== -1) {
+        const existing = newChanges.skills[existingIndex];
+        if (existing.currency !== paymentMethod) {
+          setError("Нельзя смешивать способы оплаты для одного навыка");
+          return;
+        }
+        existing.amount += amount;
+      } else {
+        newChanges.skills.push({ skill: selectedKey, amount, currency: paymentMethod });
       }
-      newChanges.skills[selectedKey] = {
-        amount: (current.amount || 0) + amount,
-        currency: paymentMethod
-      };
     }
     
     setChanges(newChanges);
@@ -497,7 +532,10 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
     if (type === "attribute") {
       delete newChanges.attributes[key];
     } else if (type === "skill") {
-      delete newChanges.skills[key];
+      const index = newChanges.skills.findIndex(s => s.skill === key);
+      if (index !== -1) {
+        newChanges.skills.splice(index, 1);
+      }
     } else if (type === "talent") {
       if (talentIndex >= 0) {
         newChanges.talents.splice(talentIndex, 1);
@@ -547,7 +585,7 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
     // Формируем объект в формате, ожидаемом бэкендом
     const payload = {
       attributes: Object.entries(changes.attributes).map(([attr, amount]) => ({ attribute: attr, amount })),
-      skills: Object.entries(changes.skills).map(([skill, data]) => ({ skill, amount: data.amount, currency: data.currency })),
+      skills: changes.skills.map(item => ({ skill: item.skill, amount: item.amount, currency: item.currency })),
       talents: changes.talents.map(t => {
         if (t.talent === "Изучение магии" && t.chosenSigns && t.chosenSigns.length > 0) {
           return { talent: t.talent, chosen_signs: t.chosenSigns };
@@ -571,8 +609,8 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
         for (const [attr, amount] of Object.entries(changes.attributes)) {
           newPlayerData[attr] = (newPlayerData[attr] || 0) + amount;
         }
-        for (const [skill, data] of Object.entries(changes.skills)) {
-          newPlayerData[skill] = (newPlayerData[skill] || 0) + data.amount;
+        for (const item of changes.skills) {
+          newPlayerData[item.skill] = (newPlayerData[item.skill] || 0) + item.amount;
         }
         // Добавляем таланты (и знаки для "Изучение магии")
         for (const t of changes.talents) {
@@ -690,23 +728,24 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
   
   const renderSkillControls = () => {
     const currentLevel = tempPlayerData?.[selectedKey] || 0;
-    const addedLevels = changes.skills[selectedKey]?.amount || 0;
+    const addedLevels = changes.skills.find(s => s.skill === selectedKey)?.amount || 0;
     const newLevel = currentLevel + addedLevels;
     const goldCost = calculateTotalSkillCost(newLevel, amount);
     const pointsNeeded = amount;
-    const remainingPoints = (tempPlayerData?.free_skill_points || 0) - (changes.skills[selectedKey]?.amount || 0);
-    const daleonsNeeded = birzhaRate ? calculateDaleonsNeeded(goldCost) : Infinity;
     const total = getTotalCost(); // для проверки доступности ресурсов с учётом уже добавленных изменений
+    
+    // Приблизительная стоимость в далеонах (для отображения) – без учёта динамики курса
+    const approxDaleonsNeeded = birzhaRate ? Math.ceil(goldCost * 100 / birzhaRate.sell_rate) : Infinity;
     
     return (
       <div className="mt-3">
         <div className="mb-2">
           <Form.Check
             type="radio"
-            label={`За очки навыков (доступно: ${remainingPoints})`}
+            label={`За очки навыков (доступно: ${tempPlayerData?.free_skill_points - total.points})`}
             checked={paymentMethod === 'points'}
             onChange={() => setPaymentMethod('points')}
-            disabled={pointsNeeded > remainingPoints}
+            disabled={pointsNeeded > (tempPlayerData?.free_skill_points - total.points)}
           />
           <Form.Check
             type="radio"
@@ -718,10 +757,10 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
           {birzhaRate && (
             <Form.Check
               type="radio"
-              label={`За далеоны (стоимость: ${daleonsNeeded} 💎, доступно: ${tempPlayerData?.daleons - total.daleons})`}
+              label={`За далеоны (≈${approxDaleonsNeeded} 💎, доступно: ${tempPlayerData?.daleons - total.daleons})`}
               checked={paymentMethod === 'daleons'}
               onChange={() => setPaymentMethod('daleons')}
-              disabled={daleonsNeeded > (tempPlayerData?.daleons - total.daleons)}
+              disabled={approxDaleonsNeeded > (tempPlayerData?.daleons - total.daleons)}
             />
           )}
         </div>
@@ -732,9 +771,9 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
               type="number"
               min={1}
               max={
-                paymentMethod === 'points' ? remainingPoints :
+                paymentMethod === 'points' ? tempPlayerData?.free_skill_points - total.points :
                 paymentMethod === 'money' ? Math.floor((tempPlayerData?.money - total.money) / computeSkillCost(newLevel)) :
-                paymentMethod === 'daleons' ? Math.floor((tempPlayerData?.daleons - total.daleons) / (daleonsNeeded / amount)) :
+                paymentMethod === 'daleons' ? Math.floor((tempPlayerData?.daleons - total.daleons) / approxDaleonsNeeded) :
                 0
               }
               value={amount}
@@ -819,7 +858,7 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
         </Card.Header>
         <Card.Body>
           {Object.keys(changes.attributes).length === 0 &&
-           Object.keys(changes.skills).length === 0 &&
+           changes.skills.length === 0 &&
            changes.talents.length === 0 ? (
             <p className="text-muted">Нет изменений</p>
           ) : (
@@ -833,12 +872,12 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
                     </Button>
                   </ListGroup.Item>
                 ))}
-                {Object.entries(changes.skills).map(([skill, data]) => {
-                  const currencyLabel = data.currency === "money" ? "золото" : (data.currency === "daleons" ? "далеоны" : "очки");
+                {changes.skills.map((item, idx) => {
+                  const currencyLabel = item.currency === "money" ? "золото" : (item.currency === "daleons" ? "далеоны" : "очки");
                   return (
-                    <ListGroup.Item key={skill} className="d-flex justify-content-between align-items-center">
-                      <span>{SKILLS.find(s => s.key === skill)?.label} +{data.amount} ({currencyLabel})</span>
-                      <Button variant="outline-danger" size="sm" onClick={() => removeChange("skill", skill)} className="fantasy-btn">
+                    <ListGroup.Item key={`${item.skill}-${idx}`} className="d-flex justify-content-between align-items-center">
+                      <span>{SKILLS.find(s => s.key === item.skill)?.label} +{item.amount} ({currencyLabel})</span>
+                      <Button variant="outline-danger" size="sm" onClick={() => removeChange("skill", item.skill)} className="fantasy-btn">
                         Удалить
                       </Button>
                     </ListGroup.Item>
@@ -1002,7 +1041,7 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
                   <Button
                     variant="success"
                     onClick={() => setShowConfirmModal(true)}
-                    disabled={!canUpgrade || loading || (Object.keys(changes.attributes).length === 0 && Object.keys(changes.skills).length === 0 && changes.talents.length === 0)}
+                    disabled={!canUpgrade || loading || (Object.keys(changes.attributes).length === 0 && changes.skills.length === 0 && changes.talents.length === 0)}
                     className="fantasy-btn w-100 w-md-auto"
                   >
                     Применить
@@ -1057,7 +1096,7 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
                       }).join(", ")}
                         </li>
                         )}
-              {Object.keys(changes.skills).length > 0 && <li>Навыки: {Object.entries(changes.skills).map(([k, v]) => `${SKILLS.find(s => s.key === k)?.label}+${v.amount} (${v.currency === 'money' ? 'золото' : (v.currency === 'daleons' ? 'далеоны' : 'очки')})`).join(", ")}</li>}
+              {changes.skills.length > 0 && <li>Навыки: {changes.skills.map(item => `${SKILLS.find(s => s.key === item.skill)?.label}+${item.amount} (${item.currency === 'money' ? 'золото' : (item.currency === 'daleons' ? 'далеоны' : 'очки')})`).join(", ")}</li>}
               {changes.talents.length > 0 && (
                 <li>Таланты: {
                   Object.values(changes.talents.reduce((acc, t) => {
