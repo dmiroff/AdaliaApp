@@ -366,7 +366,7 @@ const DonationTab = observer(() => {
       category: "beginner"
     },
     {
-      id: 7,
+      id: 21,
       name: "📚 Конспекты тренера",
       description: "Доступ к развитию персонажа из любой локации",
       price: 500,
