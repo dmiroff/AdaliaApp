@@ -1050,14 +1050,13 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
           <div className="mt-2">
             <strong>Сводка:</strong>
             <ul>
-            {Object.keys(changes.attributes).length > 0 && (
-  <li>
-    Атрибуты: {Object.entries(changes.attributes).map(([attr, amount]) => {
-      const attrLabel = ATTRIBUTES.find(a => a.key === attr)?.label || attr;
-      return `${attrLabel} +${amount}`;
-    }).join(", ")}
-  </li>
-)}
+            {Object.keys(changes.attributes).length > 0 && (  <li>
+              Атрибуты: {Object.entries(changes.attributes).map(([attr, amount]) => {
+                  const attrLabel = ATTRIBUTES.find(a => a.key === attr)?.label || attr;
+                  return `${attrLabel} +${amount}`;
+                      }).join(", ")}
+                        </li>
+                        )}
               {Object.keys(changes.skills).length > 0 && <li>Навыки: {Object.entries(changes.skills).map(([k, v]) => `${SKILLS.find(s => s.key === k)?.label}+${v.amount} (${v.currency === 'money' ? 'золото' : (v.currency === 'daleons' ? 'далеоны' : 'очки')})`).join(", ")}</li>}
               {changes.talents.length > 0 && (
                 <li>Таланты: {
