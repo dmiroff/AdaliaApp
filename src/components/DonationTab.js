@@ -364,7 +364,18 @@ const DonationTab = observer(() => {
       upgrade_key: "Постижение Тьмы",
       sign_key: "sign_dark",
       category: "beginner"
-    }
+    },
+    {
+      id: 7,
+      name: "📚 Конспекты тренера",
+      description: "Доступ к развитию персонажа из любой локации",
+      price: 500,
+      currency: "💎",
+      features: ["Доступ к развитию персонажа из любой локации"],
+      purchased: playerData?.upgrades?.includes("Конспекты тренера") || false,
+      type: "permanent",
+      category: "premium"
+    },
   ];
 
   // Фильтруем товары по активной вкладке и скрываем уже купленные новичковые
