@@ -293,7 +293,6 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
     let totalDaleons = 0;
     
     // Атрибуты
-    totalPoints += Object.values(changes.attributes).reduce((a, b) => a + b, 0);
     
     // Навыки (золото и очки суммируем просто)
     for (const item of changes.skills) {
@@ -313,7 +312,6 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
     }
     
     // Таланты (каждый талант стоит 1 очко таланта)
-    totalPoints += changes.talents.length;
     
     return { money: totalMoney, points: totalPoints, daleons: totalDaleons };
   };
