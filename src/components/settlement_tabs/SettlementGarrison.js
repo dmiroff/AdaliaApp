@@ -607,12 +607,22 @@ const SettlementGarrison = observer(() => {
         }
     };
 
+    // ========== ИСПРАВЛЕННЫЙ ОБРАБОТЧИК СЛОЖЕНИЯ В ГАРНИЗОН ==========
     const handleStoreUnit = async () => {
         if (!selectedPartyUnit || !playerId) return;
         if (!hasGuildData) {
             showNotification('error', 'Вы не состоите в гильдии');
             return;
         }
+
+        // Проверка: можно складывать только юнитов, чьи имена известны системе
+        const parsed = parseUnitId(selectedPartyUnit.fullId);
+        if (!UNIT_ID_TO_NAME[parsed.baseId]) {
+            showNotification('error', `Нельзя сложить юнита "${selectedPartyUnit.name}": неизвестный тип юнита.`);
+            setShowStoreModal(false);
+            return;
+        }
+
         setStoreLoading(true);
         try {
             const result = await settlementService.storeToGarrison(
@@ -1088,7 +1098,7 @@ const SettlementGarrison = observer(() => {
                 </Card.Body>
             </Card>
 
-            {/* Модальные окна (без изменений, кроме вызова handleTakeUnit) */}
+            {/* Модальные окна */}
             <Modal show={showTakeModal} onHide={() => setShowTakeModal(false)} backdrop="static" centered className="fantasy-modal mass-operation-modal">
                 <Modal.Header closeButton className="fantasy-card-header fantasy-card-header-primary">
                     <Modal.Title className="d-flex align-items-center fantasy-text-gold">
@@ -1192,7 +1202,6 @@ const SettlementGarrison = observer(() => {
                 </Modal.Footer>
             </Modal>
 
-            {/* Остальные модальные окна (Hire, Discharge, Store) без изменений – они уже используют ID */}
             <Modal show={showHireModal} onHide={() => setShowHireModal(false)} backdrop="static" centered className="fantasy-modal mass-operation-modal" size="lg">
                 <Modal.Header closeButton className="fantasy-card-header fantasy-card-header-success">
                     <Modal.Title className="d-flex align-items-center fantasy-text-gold">
