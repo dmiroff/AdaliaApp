@@ -86,6 +86,19 @@ apiClient.interceptors.response.use(
   }
 );
 
+// api.js — дополняем существующий код
+
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    // Если в ответе есть поле detail, копируем его в message
+    if (error.response?.data?.detail) {
+      error.response.data.message = error.response.data.detail;
+    }
+    return Promise.reject(error);
+  }
+);
+
 export default apiClient;
 
 
