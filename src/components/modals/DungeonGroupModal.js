@@ -1,5 +1,5 @@
-import { Row, Col, Modal, Button, Alert, Badge, Card, Spinner } from 'react-bootstrap';
-import '../settlement_tabs/SettlementMissions.css'; // если классы определены там, иначе импортируйте свой CSS
+import { Row, Col, Modal, Button, Alert, Badge, Card, Spinner, ListGroup } from 'react-bootstrap';
+import '../settlement_tabs/SettlementMissions.css';
 
 const DungeonGroupModal = ({
   show,
@@ -16,7 +16,8 @@ const DungeonGroupModal = ({
   handleStartDungeon,
   loading,
   setLoading,
-  showNotification
+  showNotification,
+  onReorderPlayers,          // новая функция для изменения порядка выбранных игроков
 }) => {
   console.log('DungeonGroupModal debug:', {
     show,
@@ -29,6 +30,23 @@ const DungeonGroupModal = ({
   const hasMissionLimits = missionLimits && typeof missionLimits.available !== 'undefined';
   const canStartMission = hasMissionLimits ? missionLimits.available > 0 : true;
   const noMissionsAvailable = hasMissionLimits && missionLimits.available <= 0;
+
+  // Функция для назначения игрока лидером (перемещает в начало массива)
+  const makeLeader = (playerId) => {
+    const index = selectedPlayers.findIndex(p => p.id === playerId);
+    if (index <= 0) return; // уже лидер или не найден
+    const newOrder = [
+      selectedPlayers[index],
+      ...selectedPlayers.slice(0, index),
+      ...selectedPlayers.slice(index + 1)
+    ];
+    onReorderPlayers(newOrder);
+  };
+
+  // Удаление игрока (обёртка над togglePlayerSelection)
+  const removePlayer = (player) => {
+    togglePlayerSelection(player);
+  };
 
   const handleStartClick = async () => {
     if (selectedPlayers.length === 0) {
@@ -93,7 +111,7 @@ const DungeonGroupModal = ({
         {/* Подсказка */}
         <Alert variant="info" className="fantasy-alert mb-3">
           <i className="fas fa-info-circle me-2"></i>
-          Группа может состоять от 1 до 5 игроков. Сила группы зависит от количества и уровня игроков.
+          Группа может состоять от 1 до 5 игроков. Первый игрок в списке будет лидером группы.
         </Alert>
 
         {/* Список доступных игроков */}
@@ -157,30 +175,51 @@ const DungeonGroupModal = ({
           </h6>
 
           {selectedPlayers.length > 0 ? (
-            <div className="selected-players mb-3">
-              <div className="d-flex flex-wrap gap-2 mb-3">
-                {selectedPlayers.map(player => (
-                  <Badge 
-                    key={player.id} 
-                    bg="primary" 
-                    className="p-2 d-flex align-items-center fantasy-badge"
-                    style={{ fontSize: '0.9rem' }}
-                  >
-                    <i className="fas fa-user me-1"></i>
-                    {player.name} (ур. {player.level || 1})
-                    <button 
-                      className="btn-close btn-close-white btn-close-sm ms-2"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        togglePlayerSelection(player);
-                      }}
-                      aria-label="Удалить"
-                      style={{ padding: '0.25rem' }}
-                    ></button>
-                  </Badge>
-                ))}
-              </div>
-              
+            <>
+              <Card className="fantasy-card mb-3">
+                <Card.Header className="fantasy-card-header">
+                  <h6 className="fantasy-text-gold mb-0">
+                    <i className="fas fa-crown me-2"></i>
+                    Состав группы
+                  </h6>
+                </Card.Header>
+                <ListGroup variant="flush" className="bg-dark">
+                  {selectedPlayers.map((player, idx) => (
+                    <ListGroup.Item key={player.id} className="bg-dark text-light border-secondary d-flex justify-content-between align-items-center">
+                      <div>
+                        {idx === 0 && (
+                          <Badge bg="warning" className="me-2 fantasy-badge">
+                            <i className="fas fa-crown me-1"></i> Лидер
+                          </Badge>
+                        )}
+                        <strong>{player.name}</strong>
+                        <span className="ms-2 text-muted">(ур. {player.level || 1})</span>
+                      </div>
+                      <div className="d-flex gap-2">
+                        {idx !== 0 && (
+                          <Button 
+                            variant="outline-warning" 
+                            size="sm"
+                            onClick={() => makeLeader(player.id)}
+                            title="Сделать лидером"
+                          >
+                            <i className="fas fa-crown me-1"></i> Лидер
+                          </Button>
+                        )}
+                        <Button 
+                          variant="outline-danger" 
+                          size="sm"
+                          onClick={() => removePlayer(player)}
+                          title="Удалить из группы"
+                        >
+                          <i className="fas fa-times"></i>
+                        </Button>
+                      </div>
+                    </ListGroup.Item>
+                  ))}
+                </ListGroup>
+              </Card>
+
               <Card className="fantasy-card">
                 <Card.Header className="fantasy-card-header">
                   <h6 className="fantasy-text-gold mb-0">
@@ -203,11 +242,11 @@ const DungeonGroupModal = ({
                   <div className="text-center">
                     <div className="fantasy-text-dark small">Подземелье:</div>
                     <div className="fantasy-text-dark">
-                      <i className="fantasy-text-dark fa-dungeon me-2"></i>
+                      <i className="fas fa-dungeon me-2"></i>
                       {selectedDungeon ? selectedDungeon.name : 'Будет выбрано случайное'}
                     </div>
                     <div className="small text-info mt-1">
-                      <i className="fantasy-text-gold me-1"></i>
+                      <i className="fas fa-chart-line me-1"></i>
                       Сложность и время будут определены автоматически
                     </div>
                   </div>
@@ -220,7 +259,7 @@ const DungeonGroupModal = ({
                   )}
                 </Card.Body>
               </Card>
-            </div>
+            </>
           ) : (
             <Alert variant="secondary" className="fantasy-alert">
               <i className="fas fa-user-slash me-2"></i>

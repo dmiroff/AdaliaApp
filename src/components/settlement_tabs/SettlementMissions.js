@@ -1364,6 +1364,7 @@ const SettlementMissions = observer(() => {
         loading={loading}
         setLoading={setLoading}
         showNotification={showNotification}
+        onReorderPlayers={setSelectedPlayers}
       />
 
       <AgentMissionModal
