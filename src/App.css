@@ -2874,3 +2874,20 @@ html body .birzha-btn:hover {
   /* при желании можно оставить тень и изменение цвета */
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
+
+/* Адаптивная таблица для мобильных */
+@media (max-width: 768px) {
+  .fantasy-table {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch; /* плавная прокрутка на iOS */
+  }
+  
+  /* Дополнительно уменьшаем размер шрифта и отступы для удобства чтения */
+  .fantasy-table th,
+  .fantasy-table td {
+    padding: 0.5rem;
+    font-size: 0.85rem;
+  }
+}
