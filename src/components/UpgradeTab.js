@@ -115,6 +115,7 @@ const signLabelMap = {
 
 // Формула стоимости навыка (калька с бэкенда)
 const computeSkillCost = (skillValue) => {
+  if (skillValue <= 0) return 100; // стоимость первого уровня
   let cost;
   if (skillValue <= 50) {
     cost = 100 * Math.pow(1.09, skillValue - 1);
@@ -286,7 +287,23 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
     setTalentAmount(1);
     setPaymentMethod('points');
   };
-  
+ 
+  // Вычисляем точную стоимость для выбранного количества уровней с учётом текущих изменений
+  const exactDaleonsNeeded = useMemo(() => {
+    if (!birzhaRate || !selectedKey) return Infinity;
+    // Копируем текущие навыки за далеоны
+    const daleonSkillsCopy = changes.skills
+      .filter(s => s.currency === 'daleons')
+      .map(s => ({ ...s }));
+    const existing = daleonSkillsCopy.find(s => s.skill === selectedKey);
+    if (existing) {
+      existing.amount += amount;
+    } else {
+      daleonSkillsCopy.push({ skill: selectedKey, amount, currency: 'daleons' });
+    }
+    return calculateTotalDaleonsNeeded(tempPlayerData, daleonSkillsCopy, birzhaRate.sell_rate);
+  }, [selectedKey, amount, changes.skills, birzhaRate, tempPlayerData]);
+    
   // Мемоизированный подсчёт общей стоимости изменений (золото, очки, далеоны)
   const totalCost = useMemo(() => {
     if (!tempPlayerData) return { money: 0, points: 0, daleons: 0 };
@@ -749,10 +766,10 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
           {birzhaRate && (
             <Form.Check
               type="radio"
-              label={`За далеоны (≈${approxDaleonsNeeded} 💎, доступно: ${tempPlayerData?.daleons - totalCost.daleons})`}
+              label={`За далеоны (≈${exactDaleonsNeeded} 💎, доступно: ${tempPlayerData?.daleons - totalCost.daleons})`}
               checked={paymentMethod === 'daleons'}
               onChange={() => setPaymentMethod('daleons')}
-              disabled={approxDaleonsNeeded > (tempPlayerData?.daleons - totalCost.daleons)}
+              disabled={exactDaleonsNeeded > (tempPlayerData?.daleons - totalCost.daleons)}
             />
           )}
         </div>
