@@ -463,38 +463,6 @@ const SettlementMissions = observer(() => {
     }
   };
 
-  const handleCompleteAgentMission = async (missionId) => {
-    if (!hasGuild) {
-      showNotification('error', 'Вы не состоите в гильдии');
-      return;
-    }
-    if (guildId === undefined) {
-      showNotification('error', 'Ошибка идентификатора гильдии');
-      return;
-    }
-    try {
-      if (typeof SettlementMissionsService.completeHeroMission !== 'function') {
-        showNotification('error', 'Функция завершения миссии временно недоступна');
-        return;
-      }
-
-      const response = await SettlementMissionsService.completeHeroMission(guildId, missionId);
-      if (response.success) {
-        showNotification('success', 'Миссия завершена!');
-        await loadMissionData();
-        
-        if (settlement?.fetchData) {
-          await settlement.fetchData();
-        }
-      } else {
-        showNotification('error', response.message);
-      }
-    } catch (error) {
-      console.error('Error completing agent mission:', error);
-      showNotification('error', 'Ошибка завершения миссии');
-    }
-  };
-
   const handleAbandonDungeon = async (dungeonRunId) => {
     if (!hasGuild) {
       showNotification('error', 'Вы не состоите в гильдии');
@@ -1217,17 +1185,6 @@ const SettlementMissions = observer(() => {
                                 )}
                               </td>
                               <td>
-                                {result.status === 'active' && (
-                                  <Button 
-                                    variant="outline-success" 
-                                    size="sm"
-                                    onClick={() => handleCompleteAgentMission(result.id)}
-                                    disabled={loading}
-                                  >
-                                    <i className="fas fa-check me-1"></i>
-                                    Завершить
-                                  </Button>
-                                )}
                               </td>
                             </tr>
                           );

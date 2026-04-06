@@ -265,40 +265,58 @@ const SettlementBuildings = observer(() => {
     
     const getAvailableBuildings = useMemo(() => {
         const available = [];
-        
+    
         if (!buildingsData || typeof buildingsData !== 'object') {
             return available;
         }
-        
+    
         Object.entries(buildingsData).forEach(([buildingKey, buildingInfo]) => {
             const currentLevel = buildings[buildingKey]?.level || 0;
             const buildingData = buildings[buildingKey];
             const buildingName = getBuildingName(buildingKey, buildingInfo);
-            
+    
+            // Новый уровень, который будет после завершения строительства
             const targetLevel = currentLevel === 0 ? 1 : currentLevel + 1;
-            
-            const { canBuild, reasons, targetLevelInfo, requiredEssence } = checkBuildingRequirements(
-                buildingKey, 
-                currentLevel, 
-                targetLevel, 
-                buildingData
+    
+            // Ключ, по которому лежат ТРЕБОВАНИЯ (ресурсы, эссенция, время)
+            // - для постройки (0→1) -> ключ 0
+            // - для улучшения (1→2) -> ключ 1, (2→3) -> ключ 2 и т.д.
+            const requirementsLevel = currentLevel === 0 ? 0 : currentLevel;
+    
+            // Проверяем, существуют ли данные для этого ключа
+            const requirementsData = buildingInfo[requirementsLevel];
+            if (!requirementsData) {
+                // Нет данных – здание нельзя построить/улучшить
+                return;
+            }
+    
+            // Вызываем функцию проверки требований, передавая отдельно:
+            // - текущий уровень здания
+            // - целевой уровень (для валидации на бэке)
+            // - данные требований (resources, essence, construction_time и т.д.)
+            const { canBuild, reasons, requiredEssence } = checkBuildingRequirements(
+                buildingKey,
+                currentLevel,
+                targetLevel,
+                buildingData,
+                requirementsData   // передаём готовые требования
             );
-            
+    
             if (canBuild) {
                 const { hasEnoughResources, missingResources, progressPercentage } = checkResourcesAvailability(
-                    targetLevelInfo?.resources || {},
-                    requiredEssence
+                    requirementsData?.resources || {},
+                    requirementsData?.essence || 0
                 );
-                
+    
                 available.push({
                     key: buildingKey,
                     name: buildingName,
                     currentLevel,
                     targetLevel,
-                    resources: targetLevelInfo?.resources || {},
-                    essence: requiredEssence,
-                    constructionTime: targetLevelInfo?.construction_time || 60,
-                    targetLevelInfo,
+                    resources: requirementsData?.resources || {},
+                    essence: requirementsData?.essence || 0,
+                    constructionTime: requirementsData?.construction_time || 60,
+                    targetLevelInfo: requirementsData,      // для отображения требований
                     isNewConstruction: currentLevel === 0,
                     buildingData,
                     buildingInfo,
@@ -309,7 +327,7 @@ const SettlementBuildings = observer(() => {
                 });
             }
         });
-        
+    
         return available.sort((a, b) => {
             if (a.progressPercentage === b.progressPercentage) {
                 return a.name.localeCompare(b.name);
