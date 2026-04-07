@@ -292,12 +292,14 @@ const DungeonGroupModal = ({
           {loading ? (
             <>
               <Spinner animation="border" size="sm" className="me-2" />
-              Отправка...
+              <span className="fantasy-text-black">Отправка...</span>
             </>
           ) : (
             <>
               <i className="fas fa-dungeon me-2"></i>
-              {noMissionsAvailable ? "Лимит исчерпан" : `Отправить группу (${selectedPlayers.length} игроков)`}
+              <span className="fantasy-text-black">
+                {noMissionsAvailable ? "Лимит исчерпан" : `Отправить группу (${selectedPlayers.length} игроков)`}
+              </span>
             </>
           )}
         </Button>
