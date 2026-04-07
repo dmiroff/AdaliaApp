@@ -17,16 +17,11 @@ const getResourceAmount = (storage, resourceId) => {
     return 0;
 };
 
-// Вспомогательная функция для безопасного доступа к currentResources
 const getCurrentResourceAmount = (currentResources, resourceKey) => {
     if (!currentResources) return 0;
-    
-    // Пробуем несколько вариантов ключа, так как могут быть разные форматы
     const keyStr = String(resourceKey);
     const keyNum = Number(resourceKey);
-    
-    return currentResources[keyStr] || currentResources[keyNum] || 
-           currentResources[resourceKey] || 0;
+    return currentResources[keyStr] || currentResources[keyNum] || currentResources[resourceKey] || 0;
 };
 
 const ConstructionTab = ({ 
@@ -42,7 +37,8 @@ const ConstructionTab = ({
     currentEssence,
     userRole,
     setLocalConstruction,
-    localConstruction
+    localConstruction,
+    onUpdate   // ← новый пропс для обновления данных
 }) => {
     const [loading, setLoading] = useState({});
     const [addResourcesLoading, setAddResourcesLoading] = useState({});
@@ -70,7 +66,6 @@ const ConstructionTab = ({
         });
         
         const essenceCollected = constrData.current_essence >= (constrData.required.essence || 0);
-        
         return allResourcesCollected && essenceCollected;
     };
     
@@ -78,7 +73,6 @@ const ConstructionTab = ({
         return constrData?.status === 'building' || constrData?.construction_started;
     };
     
-    // Функция для расчета прогресса строительства
     const calculateConstructionProgress = (constrData) => {
         const requiredResources = constrData?.required || {};
         const currentResources = constrData?.current || {};
@@ -118,15 +112,11 @@ const ConstructionTab = ({
             
             Object.entries(required).forEach(([resourceKey, requiredAmount]) => {
                 if (resourceKey === 'essence') {
-                    const currentEssence = current_essence || 0;
-                    if (currentEssence < requiredAmount) {
-                        const availableEssence = currentEssence;
-                        const missingEssence = requiredAmount - currentEssence;
-                        if (availableEssence >= missingEssence) {
-                            essenceToAdd = missingEssence;
-                        } else {
-                            essenceToAdd = availableEssence;
-                        }
+                    const currentEssenceAmount = current_essence || 0;
+                    if (currentEssenceAmount < requiredAmount) {
+                        const availableEssence = getResourceAmount(storage, 'essence') || currentEssence;
+                        const missingEssence = requiredAmount - currentEssenceAmount;
+                        essenceToAdd = Math.min(availableEssence, missingEssence);
                     }
                 } else {
                     const currentAmount = getCurrentResourceAmount(current, resourceKey);
@@ -134,7 +124,6 @@ const ConstructionTab = ({
                         const availableAmount = getResourceAmount(storage, resourceKey);
                         const missingAmount = requiredAmount - currentAmount;
                         const amountToAdd = Math.min(availableAmount, missingAmount);
-                        
                         if (amountToAdd > 0) {
                             resourcesToAdd[resourceKey] = amountToAdd;
                         }
@@ -156,20 +145,8 @@ const ConstructionTab = ({
             
             if (result.status === 200) {
                 showNotification('success', result.message || 'Ресурсы успешно добавлены');
-                
-                // Локально обновляем состояние с добавленными ресурсами
-                const updatedConstructionData = result.data || constrData;
-                if (setLocalConstruction && localConstruction) {
-                    setLocalConstruction({
-                        ...localConstruction,
-                        [buildingKey]: updatedConstructionData
-                    });
-                }
-                
-                // Обновляем данные поселения
-                if (settlement?.fetchData) {
-                    await settlement.fetchData();
-                }
+                // Вызываем обновление данных из родителя (перезапрос с сервера)
+                if (onUpdate) await onUpdate();
             } else {
                 showNotification('error', result.message || 'Ошибка при добавлении ресурсов');
             }
@@ -194,23 +171,7 @@ const ConstructionTab = ({
             
             if (result.status === 200) {
                 showNotification('success', result.message || 'Строительство начато!');
-                
-                // Локально обновляем статус строительства
-                const updatedConstructionData = result.data || construction[buildingKey];
-                if (setLocalConstruction && localConstruction) {
-                    setLocalConstruction({
-                        ...localConstruction,
-                        [buildingKey]: {
-                            ...updatedConstructionData,
-                            status: 'building',
-                            construction_started: new Date().toISOString()
-                        }
-                    });
-                }
-                
-                if (settlement?.fetchData) {
-                    await settlement.fetchData();
-                }
+                if (onUpdate) await onUpdate();
             } else {
                 showNotification('error', result.message || 'Ошибка при запуске строительства');
             }
@@ -239,16 +200,7 @@ const ConstructionTab = ({
             
             if (result.status === 200) {
                 showNotification('success', result.message || 'Строительство отменено');
-                
-                // Локально удаляем строительство
-                if (setLocalConstruction && localConstruction) {
-                    const { [buildingKey]: removed, ...rest } = localConstruction;
-                    setLocalConstruction(rest);
-                }
-                
-                if (settlement?.fetchData) {
-                    await settlement.fetchData();
-                }
+                if (onUpdate) await onUpdate();
             } else {
                 showNotification('error', result.message || 'Ошибка при отмене строительства');
             }
@@ -288,7 +240,6 @@ const ConstructionTab = ({
                         const buildingInProgress = isBuildingInProgress(constrData);
                         const canStartBuilding = allResourcesCollected && !buildingInProgress;
                         
-                        // Рассчитываем прогресс
                         const progress = calculateConstructionProgress(constrData);
                         const overallProgress = progress.percentage;
                         const totalRequired = progress.totalRequired;
@@ -495,7 +446,8 @@ const CurrentConstructionsModal = ({
     currentEssence,
     userRole,
     setLocalConstruction,
-    localConstruction
+    localConstruction,
+    onUpdate   // ← принимаем onUpdate от родителя
 }) => {
     return (
         <Modal 
@@ -545,6 +497,7 @@ const CurrentConstructionsModal = ({
                                 userRole={userRole}
                                 setLocalConstruction={setLocalConstruction}
                                 localConstruction={localConstruction}
+                                onUpdate={onUpdate}   // ← передаём дальше
                             />
                         </div>
                     </Tab>

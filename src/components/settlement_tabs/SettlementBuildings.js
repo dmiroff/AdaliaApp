@@ -407,16 +407,23 @@ const SettlementBuildings = observer(() => {
         );
     }, [storage, currentEssence]);
     
+    const refreshSettlementData = useCallback(async () => {
+        if (!guildId) return;
+        await settlement.fetchSettlementData(guildId);
+        // Синхронизируем локальные стейты (если они используются)
+        setLocalBuildings(prev => ({ ...prev, current: settlement._settlementData?.buildings || {} }));
+        setLocalConstruction(prev => ({ ...prev, current: settlement._settlementData?.construction || {} }));
+    }, [settlement, guildId]);
+    
+    // В обработчике handleStartConstruction уже есть вызов settlement.fetchData()? 
+    // Убедитесь, что он заменён на refreshSettlementData или просто вызовите refreshSettlementData.
     const handleStartConstruction = useCallback(async (building) => {
         if (!building || !guildId) {
             showNotification('error', 'Ошибка: не указаны необходимые данные');
             return;
         }
         
-        setConstructionLoading(prev => ({
-            ...prev,
-            [building.key]: true
-        }));
+        setConstructionLoading(prev => ({ ...prev, [building.key]: true }));
         
         try {
             const result = await settlementService.startConstruction(
@@ -430,21 +437,7 @@ const SettlementBuildings = observer(() => {
                 setShowUpgradeModal(false);
                 setSelectedBuilding(null);
                 
-                // Локально обновляем состояние строительства
-                const newConstructionData = result.data || {};
-                setLocalConstruction(prev => ({
-                    current: {
-                        ...prev.current,
-                        [building.key]: newConstructionData
-                    }
-                }));
-                
-                // Обновляем данные поселения
-                if (settlement?.fetchData) {
-                    await settlement.fetchData();
-                }
-                
-                // Автоматически открываем модалку текущих строек
+                await refreshSettlementData();  // ← Обновляем данные после начала стройки
                 setShowCurrentConstructionsModal(true);
             } else {
                 showNotification('error', result.message || 'Ошибка начала строительства');
@@ -453,12 +446,9 @@ const SettlementBuildings = observer(() => {
             console.error('Ошибка начала строительства:', error);
             showNotification('error', 'Ошибка начала строительства');
         } finally {
-            setConstructionLoading(prev => ({
-                ...prev,
-                [building.key]: false
-            }));
+            setConstructionLoading(prev => ({ ...prev, [building.key]: false }));
         }
-    }, [showNotification, settlement, guildId]);
+    }, [showNotification, refreshSettlementData, guildId]);
     
     const handleQuickConstruction = useCallback(async (building) => {
         if (!building || !guildId) {
@@ -928,6 +918,7 @@ const SettlementBuildings = observer(() => {
                 userRole={userRole}
                 setLocalConstruction={setLocalConstruction}
                 localConstruction={localConstruction.current}
+                onUpdate={refreshSettlementData}
             />
             
             <UpgradeBuildingModal
@@ -948,6 +939,7 @@ const SettlementBuildings = observer(() => {
                 settlementService={settlementService}
                 guildId={guildId}
                 userRole={userRole}
+                onUpdate={refreshSettlementData}
             />
         </div>
     );

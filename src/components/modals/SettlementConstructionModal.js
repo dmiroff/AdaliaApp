@@ -8,6 +8,7 @@ const SettlementConstructionModal = observer(() => {
     const [resourcesSource, setResourcesSource] = useState('storage');
     const [requirements, setRequirements] = useState(null);
     const [loadingRequirements, setLoadingRequirements] = useState(false);
+    const [submitting, setSubmitting] = useState(false);
     
     useEffect(() => {
         if (settlement.modal.type === 'construction' && settlement.modal.data) {
@@ -22,8 +23,6 @@ const SettlementConstructionModal = observer(() => {
         try {
             const buildingKey = settlement.modal.data.building;
             const targetLevel = settlement.modal.data.level;
-            
-            // Получаем требования из store
             const req = settlement.getBuildingRequirements(buildingKey, targetLevel);
             setRequirements(req);
         } catch (error) {
@@ -37,6 +36,13 @@ const SettlementConstructionModal = observer(() => {
         settlement.closeModal();
         setResourcesSource('storage');
         setRequirements(null);
+        setSubmitting(false);
+    };
+    
+    const refreshSettlementData = async () => {
+        if (guild.guildData?.id) {
+            await settlement.fetchSettlementData(guild.guildData.id);
+        }
     };
     
     const handleSubmit = async () => {
@@ -45,15 +51,31 @@ const SettlementConstructionModal = observer(() => {
         const buildingKey = settlement.modal.data.building;
         const targetLevel = settlement.modal.data.level;
         
-        const result = await settlement.constructBuilding(
-            guild.guildData.id,
-            buildingKey,
-            targetLevel,
-            resourcesSource
-        );
-        
-        if (result.success) {
-            handleClose();
+        setSubmitting(true);
+        try {
+            const result = await settlement.constructBuilding(
+                guild.guildData.id,
+                buildingKey,
+                targetLevel,
+                resourcesSource
+            );
+            
+            if (result.success) {
+                await refreshSettlementData();
+                handleClose();
+            } else {
+                console.error('Construction error:', result.message);
+                if (settlement.showNotification) {
+                    settlement.showNotification('error', result.message || 'Ошибка начала строительства');
+                }
+            }
+        } catch (error) {
+            console.error('Error in handleSubmit:', error);
+            if (settlement.showNotification) {
+                settlement.showNotification('error', 'Произошла ошибка при начале строительства');
+            }
+        } finally {
+            setSubmitting(false);
         }
     };
     
@@ -89,7 +111,6 @@ const SettlementConstructionModal = observer(() => {
                         
                         <h5>Требуемые ресурсы:</h5>
                         <ListGroup className="mb-3">
-                            {/* Воплощения */}
                             {requirements.essence > 0 && (
                                 <ListGroup.Item className="d-flex justify-content-between align-items-center">
                                     <div>
@@ -107,7 +128,6 @@ const SettlementConstructionModal = observer(() => {
                                 </ListGroup.Item>
                             )}
                             
-                            {/* Ресурсы */}
                             {Object.entries(requirements.resources || {}).map(([resourceId, amount]) => {
                                 const available = settlement.storage[resourceId] || 0;
                                 const hasEnough = available >= amount;
@@ -131,7 +151,6 @@ const SettlementConstructionModal = observer(() => {
                             })}
                         </ListGroup>
                         
-                        {/* Время строительства */}
                         {requirements.construction_time && (
                             <div className="mb-3">
                                 <h6>Время строительства:</h6>
@@ -142,7 +161,6 @@ const SettlementConstructionModal = observer(() => {
                             </div>
                         )}
                         
-                        {/* Требуемые здания */}
                         {requirements.required_buildings && Object.keys(requirements.required_buildings).length > 0 && (
                             <div className="mb-3">
                                 <h6>Требуемые здания:</h6>
@@ -171,7 +189,7 @@ const SettlementConstructionModal = observer(() => {
                                 <Form.Select 
                                     value={resourcesSource} 
                                     onChange={(e) => setResourcesSource(e.target.value)}
-                                    disabled={!canConstruct}
+                                    disabled={!canConstruct || submitting}
                                 >
                                     <option value="storage">Со склада поселения</option>
                                     <option value="inventory">Из моего инвентаря</option>
@@ -190,15 +208,15 @@ const SettlementConstructionModal = observer(() => {
                 )}
             </Modal.Body>
             <Modal.Footer>
-                <Button variant="secondary" onClick={handleClose}>
+                <Button variant="secondary" onClick={handleClose} disabled={submitting}>
                     Отмена
                 </Button>
                 <Button 
                     variant={canConstruct ? "primary" : "danger"}
                     onClick={handleSubmit}
-                    disabled={settlement.loading || !canConstruct}
+                    disabled={submitting || settlement.loading || !canConstruct}
                 >
-                    {settlement.loading ? (
+                    {submitting ? (
                         <>
                             <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
                             Обработка...
