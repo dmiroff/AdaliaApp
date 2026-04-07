@@ -536,7 +536,8 @@ const SettlementBuildings = observer(() => {
             }
             
             const targetLevel = currentLevel + 1;
-            const targetLevelInfo = data[targetLevel] || data[String(targetLevel)];
+            const targetLevelInfo = data[currentLevel] || data[String(targetLevel)];
+            const reqsLevelInfo = data[targetLevel] || data[String(targetLevel)];
             
             const building = {
                 key,
