@@ -388,39 +388,48 @@ const AuctionTab = observer(() => {
   );
 });
 
-// Компонент карточки лота
-// Компонент карточки лота
 const AuctionLotCard = ({ lot, onBidClick, onBuyoutClick, onViewHistory, currentUserId }) => {
-  const timeLeft = new Date(lot.end_time) - new Date();
-  const hoursLeft = Math.max(0, Math.floor(timeLeft / (1000 * 60 * 60)));
+  const now = new Date();
+  const end = new Date(lot.end_time);
+  const diffMs = end - now;
+
+  let timeDisplay = '';
+  let badgeVariant = 'success';
+
+  if (diffMs <= 0) {
+    timeDisplay = 'Завершён';
+    badgeVariant = 'secondary';
+  } else {
+    const totalMinutes = Math.floor(diffMs / (1000 * 60));
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+
+    if (hours >= 1) {
+      timeDisplay = `${hours}ч ${minutes}м`;
+      badgeVariant = hours < 24 ? 'warning' : 'success';
+    } else {
+      const seconds = Math.floor((diffMs % (1000 * 60)) / 1000);
+      timeDisplay = `${minutes}м ${seconds}с`;
+      badgeVariant = 'danger';
+    }
+  }
+
   const isMyLot = lot.user_id === currentUserId;
-  const isMyBid = lot.last_stake_user_id === currentUserId; // <-- новая проверка
+  const isMyBid = lot.last_stake_user_id === currentUserId;
 
   return (
     <Card className={`fantasy-card h-100 ${isMyLot ? 'border-warning' : ''}`}>
       <Card.Body className="d-flex flex-column">
         <div className="d-flex justify-content-between align-items-start mb-2">
-          {/* Отображаем ID лота */}
           <Card.Title className="fantasy-text-primary">
             №{lot.id} {lot.name}
           </Card.Title>
           <div className="d-flex flex-column align-items-end">
-            <Badge bg={hoursLeft < 1 ? "danger" : hoursLeft < 24 ? "warning" : "success"}>
-              {hoursLeft}ч
-            </Badge>
-            {isMyLot && (
-              <Badge bg="warning" className="mt-1">
-                Мой лот
-              </Badge>
-            )}
-            {isMyBid && !isMyLot && ( // Не показываем, если это мой лот (чтобы не дублировать)
-              <Badge bg="info" className="mt-1">
-                Моя ставка
-              </Badge>
-            )}
+            <Badge bg={badgeVariant}>{timeDisplay}</Badge>
+            {isMyLot && <Badge bg="warning" className="mt-1">Мой лот</Badge>}
+            {isMyBid && !isMyLot && <Badge bg="info" className="mt-1">Моя ставка</Badge>}
           </div>
         </div>
-        
         <Card.Text className="flex-grow-1">
           <small className="fantasy-text-muted">
             Текущая цена: <strong>{lot.start_price} 🌕</strong><br/>
@@ -429,31 +438,30 @@ const AuctionLotCard = ({ lot, onBidClick, onBuyoutClick, onViewHistory, current
             <br/>Шаг ставки: {lot.price_step} 🌕
           </small>
         </Card.Text>
-
         <div className="mt-auto">
-            <Row className="g-2">
-                <Col>
+          <Row className="g-2">
+            <Col>
+              <Button 
+                size="sm" 
+                className={`fantasy-btn fantasy-btn-gold w-100 ${isMyLot ? 'fantasy-btn-disabled' : ''}`}
+                onClick={onBidClick}
+                disabled={isMyLot}
+              >
+                <span className="fantasy-btn-text">Ставка</span>
+              </Button>
+            </Col>
+            {lot.buyout_price > 0 && (
+              <Col>
                 <Button 
-                    size="sm" 
-                    className={`fantasy-btn fantasy-btn-gold w-100 ${isMyLot ? 'fantasy-btn-disabled' : ''}`}
-                    onClick={onBidClick}
-                    disabled={isMyLot}
+                  size="sm" 
+                  className="fantasy-btn fantasy-btn-gold w-100"
+                  onClick={onBuyoutClick}
                 >
-                    <span className="fantasy-btn-text">Ставка</span>
+                  <span className="fantasy-btn-text">Выкупить</span>
                 </Button>
-                </Col>
-                {lot.buyout_price > 0 && (
-                <Col>
-                    <Button 
-                    size="sm" 
-                    className="fantasy-btn fantasy-btn-gold w-100"
-                    onClick={onBuyoutClick}
-                    >
-                    <span className="fantasy-btn-text">Выкупить</span>
-                    </Button>
-                </Col>
-                )}
-            </Row>
+              </Col>
+            )}
+          </Row>
         </div>
       </Card.Body>
     </Card>
