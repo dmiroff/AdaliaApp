@@ -333,15 +333,14 @@ const AuctionTab = observer(() => {
         </div>
       )}
 
-      {/* Модальное окно ставки */}
       <Modal show={showBidModal} onHide={() => setShowBidModal(false)} centered className="fantasy-modal">
         <Modal.Header closeButton className="fantasy-card-header fantasy-card-header-primary">
-          <Modal.Title>Сделать ставку</Modal.Title>
+          <Modal.Title>Сделать ставку на лот №{selectedLot?.id}</Modal.Title> {/* добавили ID */}
         </Modal.Header>
         <Modal.Body>
           {selectedLot && (
             <>
-              <p>Лот: <strong>{selectedLot.name}</strong></p>
+              <p>Лот: <strong>№{selectedLot.id} {selectedLot.name}</strong></p> {/* добавили ID */}
               <p>Текущая цена: <strong>{selectedLot.start_price} 🌕</strong></p>
               <p>Минимальная ставка: <strong>{selectedLot.start_price + selectedLot.price_step} 🌕</strong></p>
               <Form.Group>
@@ -390,16 +389,21 @@ const AuctionTab = observer(() => {
 });
 
 // Компонент карточки лота
+// Компонент карточки лота
 const AuctionLotCard = ({ lot, onBidClick, onBuyoutClick, onViewHistory, currentUserId }) => {
   const timeLeft = new Date(lot.end_time) - new Date();
   const hoursLeft = Math.max(0, Math.floor(timeLeft / (1000 * 60 * 60)));
   const isMyLot = lot.user_id === currentUserId;
+  const isMyBid = lot.last_stake_user_id === currentUserId; // <-- новая проверка
 
   return (
     <Card className={`fantasy-card h-100 ${isMyLot ? 'border-warning' : ''}`}>
       <Card.Body className="d-flex flex-column">
         <div className="d-flex justify-content-between align-items-start mb-2">
-          <Card.Title className="fantasy-text-primary">{lot.name}</Card.Title>
+          {/* Отображаем ID лота */}
+          <Card.Title className="fantasy-text-primary">
+            №{lot.id} {lot.name}
+          </Card.Title>
           <div className="d-flex flex-column align-items-end">
             <Badge bg={hoursLeft < 1 ? "danger" : hoursLeft < 24 ? "warning" : "success"}>
               {hoursLeft}ч
@@ -407,6 +411,11 @@ const AuctionLotCard = ({ lot, onBidClick, onBuyoutClick, onViewHistory, current
             {isMyLot && (
               <Badge bg="warning" className="mt-1">
                 Мой лот
+              </Badge>
+            )}
+            {isMyBid && !isMyLot && ( // Не показываем, если это мой лот (чтобы не дублировать)
+              <Badge bg="info" className="mt-1">
+                Моя ставка
               </Badge>
             )}
           </div>
