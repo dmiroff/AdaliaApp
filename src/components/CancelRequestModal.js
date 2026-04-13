@@ -44,7 +44,9 @@ const CancelRequestModal = ({
           onClick={onCancel}
           disabled={loading}
         >
+        <span className="fantasy-text-gold">
           {loading ? "Отмена..." : "Да, отменить заявку"}
+        </span>
         </Button>
       </Modal.Footer>
     </Modal>
