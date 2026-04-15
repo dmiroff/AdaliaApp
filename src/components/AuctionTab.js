@@ -10,6 +10,26 @@ import CreateAuctionModal from "./CreateAuctionModal";
 import { fetchAuctionLots, createAuctionLot, placeBid, buyoutLot } from "../http/auction";
 import GetDataById from "../http/GetData";
 
+// ---------- Вспомогательные функции для работы с московским временем (UTC+3) ----------
+// Преобразует строку времени (предполагается московское время) в timestamp (миллисекунды UTC)
+const parseMoscowTimeToTimestamp = (dateStr) => {
+  // Нормализуем формат: заменяем пробел на T, если есть
+  let normalized = dateStr.replace(' ', 'T');
+  // Добавляем явное указание московского часового пояса, если его нет
+  if (!normalized.includes('+') && !normalized.endsWith('Z')) {
+    normalized += '+03:00';
+  }
+  return Date.parse(normalized);
+};
+
+// Возвращает текущий timestamp в московском времени (миллисекунды UTC)
+const getCurrentMoscowTimestamp = () => {
+  const now = new Date();
+  const utcTimestamp = now.getTime() + (now.getTimezoneOffset() * 60000);
+  return utcTimestamp + (3 * 3600000); // UTC+3
+};
+// ------------------------------------------------------------------------------------
+
 const AuctionTab = observer(() => {
   const { user } = useContext(Context);
   const [auctionLots, setAuctionLots] = useState([]);
@@ -18,25 +38,22 @@ const AuctionTab = observer(() => {
   const [selectedLot, setSelectedLot] = useState(null);
   const [showBidModal, setShowBidModal] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showErrorModal, setShowErrorModal] = useState(false); // Новое состояние для модального окна ошибок
-  const [modalError, setModalError] = useState(""); // Текст ошибки для модалки
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [modalError, setModalError] = useState("");
   const [bidAmount, setBidAmount] = useState("");
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  // Добавляем состояния как в InventoryList
   const [playerData, setPlayerData] = useState(null);
   const [userInventory, setUserInventory] = useState({});
   const [dataLoaded, setDataLoaded] = useState(false);
 
-  // Функция для показа ошибки в модальном окне
   const showErrorInModal = (errorMessage) => {
     setModalError(errorMessage);
     setShowErrorModal(true);
   };
 
-  // Функция закрытия модального окна ошибок
   const handleCloseErrorModal = () => {
     setShowErrorModal(false);
     setModalError("");
@@ -50,8 +67,6 @@ const AuctionTab = observer(() => {
         
         if (playerDataResponse && playerDataResponse.data) {
           setPlayerData(playerDataResponse.data);
-          
-          // Защищенная установка инвентаря как в InventoryList
           const safeInventory = playerDataResponse.data.inventory_new || {};
           user.setPlayerInventory(safeInventory);
           setUserInventory(safeInventory);
@@ -71,7 +86,6 @@ const AuctionTab = observer(() => {
     fetchPlayer();
   }, [user, refreshTrigger]);
 
-  // Загружаем лоты аукциона после загрузки данных игрока
   useEffect(() => {
     const loadAuctionLots = async () => {
       if (!dataLoaded) return;
@@ -176,7 +190,6 @@ const AuctionTab = observer(() => {
     }
   };
 
-  // Обработчик клика по кнопке "Выставить предмет"
   const handleCreateButtonClick = () => {
     if (inventoryArray.length === 0) {
       const errorMessage = "У вас нет предметов для выставления на аукцион";
@@ -186,7 +199,6 @@ const AuctionTab = observer(() => {
     setShowCreateModal(true);
   };
 
-  // Поиск по лотам
   let filteredLots = auctionLots;
   if (query && auctionLots.length > 0) {
     try {
@@ -198,34 +210,26 @@ const AuctionTab = observer(() => {
       filteredLots = searchResults.map(result => result.item);
     } catch (error) {
       console.error("Search error:", error);
-      // В случае ошибки поиска оставляем исходный список
       filteredLots = auctionLots;
     }
   }
 
-  // ПРЕОБРАЗОВАНИЕ ИНВЕНТАРЯ В МАССИВ С ПОДРОБНОЙ ОТЛАДКОЙ
   const inventoryArray = React.useMemo(() => {
-    
     if (!userInventory || Object.keys(userInventory).length === 0) {
-        return [];
+      return [];
     }
-
-    // Используем ту же логику, что и в InventoryList
     const filteredItemsWithKeys = Object.entries(userInventory).filter(
-        ([key, item]) => {
-        // Проверяем что item существует и имеет тип
+      ([key, item]) => {
         if (!item || typeof item !== 'object') return false;
-        return true; // Показываем все предметы без фильтрации по типу
-        }
+        return true;
+      }
     );
-
     const itemObjects = filteredItemsWithKeys.map(([id, data]) => ({ 
-        id: parseInt(id), 
-        ...(data || {}) // Защита от undefined data
+      id: parseInt(id), 
+      ...(data || {})
     }));
-
     return itemObjects;
-    }, [userInventory]);
+  }, [userInventory]);
 
   if (loading) {
     return (
@@ -247,7 +251,6 @@ const AuctionTab = observer(() => {
 
   return (
     <div className="fantasy-paper content-overlay bulk-purchase-tab">
-      {/* Уведомления */}
       {error && (
         <Alert variant="danger" onClose={() => setError("")} dismissible>
           {error}
@@ -259,7 +262,6 @@ const AuctionTab = observer(() => {
         </Alert>
       )}
 
-      {/* Модальное окно для ошибок */}
       <Modal 
         show={showErrorModal} 
         onHide={handleCloseErrorModal}
@@ -286,7 +288,6 @@ const AuctionTab = observer(() => {
         </Modal.Footer>
       </Modal>
 
-      {/* Панель управления */}
       <Row className="mb-4">
         <Col md={8}>
           <Form.Control
@@ -308,7 +309,6 @@ const AuctionTab = observer(() => {
         </Col>
       </Row>
 
-      {/* Список лотов */}
       <Row>
         {filteredLots.map((lot) => (
           <Col key={lot.id} md={6} lg={4} className="mb-3">
@@ -335,12 +335,12 @@ const AuctionTab = observer(() => {
 
       <Modal show={showBidModal} onHide={() => setShowBidModal(false)} centered className="fantasy-modal">
         <Modal.Header closeButton className="fantasy-card-header fantasy-card-header-primary">
-          <Modal.Title>Сделать ставку на лот №{selectedLot?.id}</Modal.Title> {/* добавили ID */}
+          <Modal.Title>Сделать ставку на лот №{selectedLot?.id}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           {selectedLot && (
             <>
-              <p>Лот: <strong>№{selectedLot.id} {selectedLot.name}</strong></p> {/* добавили ID */}
+              <p>Лот: <strong>№{selectedLot.id} {selectedLot.name}</strong></p>
               <p>Текущая цена: <strong>{selectedLot.start_price} 🌕</strong></p>
               <p>Минимальная ставка: <strong>{selectedLot.start_price + selectedLot.price_step} 🌕</strong></p>
               <Form.Group>
@@ -376,7 +376,6 @@ const AuctionTab = observer(() => {
         </Modal.Footer>
       </Modal>
 
-      {/* Модальное окно создания лота */}
       <CreateAuctionModal 
         show={showCreateModal}
         onHide={() => setShowCreateModal(false)}
@@ -388,10 +387,12 @@ const AuctionTab = observer(() => {
   );
 });
 
+// ---------- Компонент карточки лота с учётом московского времени ----------
 const AuctionLotCard = ({ lot, onBidClick, onBuyoutClick, onViewHistory, currentUserId }) => {
-  const now = new Date();
-  const end = new Date(lot.end_time);
-  const diffMs = end - now;
+  // Используем функции для работы с московским временем
+  const endTimestamp = parseMoscowTimeToTimestamp(lot.end_time);
+  const nowTimestamp = getCurrentMoscowTimestamp();
+  const diffMs = endTimestamp - nowTimestamp;
 
   let timeDisplay = '';
   let badgeVariant = 'success';

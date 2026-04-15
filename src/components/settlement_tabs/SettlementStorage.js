@@ -303,15 +303,12 @@ const getResourceBadgeColor = (resourceId) => {
 
 // Функция для преобразования ID ресурса для API
 const getResourceIdForApi = (resourceId) => {
-  // Если это строка кожи, преобразуем в числовой ID
   if (LEATHER_ID_MAPPING[resourceId]) {
     return LEATHER_ID_MAPPING[resourceId];
   }
-  // Если это уже числовой ID кожи
   if (isLeatherResource(resourceId)) {
     return parseInt(resourceId) || resourceId;
   }
-  // Для других ресурсов пробуем преобразовать в число
   const numId = parseInt(resourceId);
   return isNaN(numId) ? resourceId : numId;
 };
@@ -321,19 +318,15 @@ const safeToString = (value) => {
   if (value == null) return '';
   
   if (typeof value === 'object') {
-    // Если это объект ошибки Pydantic с полем msg
     if (value.msg) {
       return value.msg;
     }
-    // Если это объект с полем message
     else if (value.message) {
       return value.message;
     }
-    // Если это массив
     else if (Array.isArray(value)) {
       return value.map(item => safeToString(item)).join(', ');
     }
-    // В противном случае преобразуем в JSON строку
     else {
       try {
         return JSON.stringify(value);
@@ -345,6 +338,31 @@ const safeToString = (value) => {
   
   return String(value);
 };
+
+// ========== FIXED: 2 formats support ==========
+// Функция для безопасного получения количества ресурса из форматов:
+// 1) число: 12
+// 2) объект: { count: 12 }
+const getResourceCount = (value) => {
+  if (value === null || value === undefined) return 0;
+  if (typeof value === 'number') return value;
+  if (typeof value === 'string') {
+    const num = Number(value);
+    return isNaN(num) ? 0 : num;
+  }
+  if (typeof value === 'object') {
+    // Прямое поле count
+    if ('count' in value) {
+      const count = Number(value.count);
+      return isNaN(count) ? 0 : count;
+    }
+    // Если объект, но count нет, пробуем привести к числу (маловероятно)
+    const num = Number(value);
+    if (!isNaN(num)) return num;
+  }
+  return 0;
+};
+// ===============================================
 
 const TakeResourceModal = ({ 
   show, 
@@ -391,7 +409,6 @@ const TakeResourceModal = ({
   const handleSubmit = async () => {
     if (!resource || !canTake) return;
     
-    // Дополнительная проверка для кожи
     if (isLeatherResource(resource.id)) {
       setAlert({
         type: 'danger',
@@ -401,7 +418,6 @@ const TakeResourceModal = ({
     }
     
     try {
-      // Преобразуем ID ресурса для API
       const resourceIdForApi = getResourceIdForApi(resource.id);
       await onTake(resourceIdForApi, quantity);
     } catch (error) {
@@ -711,7 +727,6 @@ const SettlementStorage = observer(() => {
   
   const storageData = useMemo(() => {
     if (!settlement.settlementData) return {};
-    
     const data = settlement.settlementData;
     return data.resources || data.storage || {};
   }, [settlement.settlementData]);
@@ -731,12 +746,10 @@ const SettlementStorage = observer(() => {
     return 'member';
   }, [guild.guildData]);
 
-  // Проверка наличия улучшения "Гильдейский посланник" (только для отображения и будущего использования)
   const hasMessenger = useMemo(() => {
     return playerData?.upgrades?.includes("Гильдейский посланник") || false;
   }, [playerData]);
   
-  // FIXED: Право забирать ресурсы – только офицеры и лидер (посланник не даёт этого права)
   const canTakeResources = useMemo(() => {
     return playerRole === 'leader' || playerRole === 'officer';
   }, [playerRole]);
@@ -752,13 +765,10 @@ const SettlementStorage = observer(() => {
   const refreshAllData = async () => {
     setRefreshing(true);
     try {
-      // Проверяем, что есть данные гильдии и ID определён (даже если 0)
       if (settlement.fetchSettlementData && hasGuildData && guildId !== undefined) {
         await settlement.fetchSettlementData(guildId);
       }
-      
       await fetchInventoryData();
-      
       showNotification('success', 'Данные обновлены');
     } catch (error) {
       console.error('Error refreshing data:', error);
@@ -773,9 +783,7 @@ const SettlementStorage = observer(() => {
   }, []);
   
   const getPlayerResourcesByType = useMemo(() => {
-    
     if (!playerInventory || typeof playerInventory !== 'object' || Object.keys(playerInventory).length === 0) {
-      console.log('Инвентарь пуст или не является объектом');
       return { construction: [], hides: [], leatherTier: [], other: [], all: [] };
     }
     
@@ -798,7 +806,6 @@ const SettlementStorage = observer(() => {
             amount = value.quantity;
             resourceId = key;
           } else {
-            console.log('Объект без поля количества:', key, value);
             return;
           }
         }
@@ -809,13 +816,9 @@ const SettlementStorage = observer(() => {
         else if (typeof value === 'string') {
           resourceId = key;
           amount = parseInt(value);
-          if (isNaN(amount)) {
-            console.log('Невозможно преобразовать строку в число:', key, value);
-            return;
-          }
+          if (isNaN(amount)) return;
         }
         else {
-          console.log('Неподдерживаемый тип данных для ресурса:', key, typeof value, value);
           return;
         }
         
@@ -845,6 +848,7 @@ const SettlementStorage = observer(() => {
     return { construction, hides, leatherTier, other, all: resources };
   }, [playerInventory]);
   
+  // FIXED: 2 formats support for storage data
   const getStorageResourcesByType = useMemo(() => {
     if (!storageData || typeof storageData !== 'object') {
       return { construction: [], hides: [], leatherTier: [], other: [], all: [] };
@@ -852,12 +856,11 @@ const SettlementStorage = observer(() => {
     
     const resources = Object.entries(storageData)
       .filter(([key, value]) => {
-        const amount = Number(value);
-        return !isNaN(amount) && amount > 0;
+        const amount = getResourceCount(value);
+        return amount > 0;
       })
       .map(([key, value]) => {
-        const amount = Number(value);
-        
+        const amount = getResourceCount(value);
         return {
           id: key,
           name: getResourceName(key),
@@ -874,30 +877,25 @@ const SettlementStorage = observer(() => {
     return { construction, hides, leatherTier, other, all: resources };
   }, [storageData]);
   
-  // Изменённая часть: ёмкость склада берётся из settlement.settlementData.buildings.storage.max_capacity
+  // FIXED: 2 formats support for storage usage calculation
   const storageUsage = useMemo(() => {
     if (!storageData || typeof storageData !== 'object') {
       return { used: 0, capacity: 1000, percentage: 0 };
     }
     
-    // Получаем максимальную ёмкость из buildings (или fallback 1000)
     const maxCapacity = settlement.settlementData?.buildings?.storage?.max_capacity ?? 1000;
     
-    // Используем только строительные материалы для расчета использования склада
     let used = 0;
     Object.entries(storageData).forEach(([key, value]) => {
       if (CONSTRUCTION_CODES.includes(key)) {
-        const numVal = Number(value);
-        if (!isNaN(numVal)) {
-          used += numVal;
-        }
+        used += getResourceCount(value);
       }
     });
     
     const percentage = maxCapacity > 0 ? (used / maxCapacity) * 100 : 0;
     
     return { used, capacity: maxCapacity, percentage };
-  }, [storageData, settlement.settlementData]); // Добавляем зависимость от settlementData
+  }, [storageData, settlement.settlementData]);
   
   const handleOpenTakeModal = (resource) => {
     if (!canTakeResources) {
@@ -905,7 +903,6 @@ const SettlementStorage = observer(() => {
       return;
     }
     
-    // Проверяем, является ли ресурс кожей
     if (isLeatherResource(resource.id)) {
       showNotification('warning', 'Ресурсы кожи не могут быть забраны со склада');
       return;
@@ -924,11 +921,9 @@ const SettlementStorage = observer(() => {
       showNotification('error', 'Не удалось определить ID игрока');
       return;
     }
-    // guildId может быть 0
     
     setTakeLoading(true);
     try {
-      // Проверяем, является ли resourceId уже преобразованным для API
       const finalResourceId = resourceId;
       
       console.log('Забор ресурса:', {
@@ -942,9 +937,7 @@ const SettlementStorage = observer(() => {
       
       if (result.status === 200) {
         showNotification('success', result.message || 'Ресурс успешно забран');
-        
         await refreshAllData();
-        
         setShowTakeModal(false);
         setSelectedResource(null);
       } else {
@@ -980,7 +973,6 @@ const SettlementStorage = observer(() => {
       
       if (result.status === 200) {
         showNotification('success', result.message || 'Строительные материалы успешно сложены на склад');
-        
         await refreshAllData();
       } else {
         showNotification('error', result.message || 'Произошла ошибка при складывании материалов');
@@ -1018,7 +1010,6 @@ const SettlementStorage = observer(() => {
       
       if (result.status === 200) {
         showNotification('success', result.message || 'Шкуры успешно сложены на склад');
-        
         await refreshAllData();
       } else {
         showNotification('error', result.message || 'Произошла ошибка при складывании шкур');
@@ -1122,7 +1113,6 @@ const SettlementStorage = observer(() => {
                     {safeToString(isLeader ? "Лидер гильдии" : "Офицер гильдии")}
                   </Badge>
                 )}
-                {/* Значок для посланника (только информация) */}
                 {hasMessenger && !isOfficerOrLeader && (
                   <Badge bg="success" className="ms-2">
                     <i className="fas fa-crown me-1"></i>
@@ -1311,7 +1301,6 @@ const SettlementStorage = observer(() => {
             </Col>
           </Row>
           
-          {/* Информационные сообщения о доступе */}
           {!canTakeResources && (
             <Alert variant="warning" className="fantasy-alert mb-3">
               <i className="fas fa-exclamation-triangle me-2"></i>
@@ -1427,7 +1416,6 @@ const SettlementStorage = observer(() => {
                               </div>
                             </td>
                             <td className="text-center">
-                              {/* Показываем кнопку только если ресурс НЕ является кожей */}
                               {!isLeather && (
                                 <Button 
                                   variant="outline-primary" 
@@ -1442,7 +1430,6 @@ const SettlementStorage = observer(() => {
                                   Забрать
                                 </Button>
                               )}
-                              {/* Для кожи показываем сообщение или оставляем пустым */}
                               {isLeather && (
                                 <span className="text-muted" title="Ресурсы кожи не могут быть забраны">
                                   <i className="fas fa-ban me-1"></i>
