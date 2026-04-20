@@ -199,10 +199,10 @@ const SettlementBuildings = observer(() => {
         
         const durability = buildingData?.durability || 0;
         const maxDurability = buildingData?.max_durability || 100;
-        if (durability < maxDurability && currentLevel > 0) {
-            reasons.push(`Здание повреждено: ${durability}/${maxDurability}`);
-            canBuild = false;
-        }
+        //if (durability < maxDurability && currentLevel > 0) {
+        //    reasons.push(`Здание повреждено: ${durability}/${maxDurability}`);
+        //    canBuild = false;
+        //}
         
         if (isMaxLevel(buildingKey, currentLevel)) {
             reasons.push("Достигнут максимальный уровень");
