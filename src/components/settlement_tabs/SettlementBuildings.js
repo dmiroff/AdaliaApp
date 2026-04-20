@@ -168,7 +168,7 @@ const SettlementBuildings = observer(() => {
             return { canBuild: false, reasons: ["Информация о здании не найдена"] };
         }
         
-        const targetLevelInfo = buildingInfo[targetLevel] || buildingInfo[String(targetLevel)];
+        const targetLevelInfo = buildingInfo[currentLevel] || buildingInfo[String(currentLevel)];
         if (!targetLevelInfo) {
             return { canBuild: false, reasons: ["Информация об уровне не найдена"] };
         }
