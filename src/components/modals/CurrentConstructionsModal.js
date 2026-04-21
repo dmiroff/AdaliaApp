@@ -108,34 +108,6 @@ const ConstructionTab = ({
             const resourcesToAdd = {};
             let essenceToAdd = 0;
             
-            const { required = {}, current = {}, current_essence = 0 } = constrData;
-            
-            Object.entries(required).forEach(([resourceKey, requiredAmount]) => {
-                if (resourceKey === 'essence') {
-                    const currentEssenceAmount = current_essence || 0;
-                    if (currentEssenceAmount < requiredAmount) {
-                        const availableEssence = getResourceAmount(storage, 'essence') || currentEssence;
-                        const missingEssence = requiredAmount - currentEssenceAmount;
-                        essenceToAdd = Math.min(availableEssence, missingEssence);
-                    }
-                } else {
-                    const currentAmount = getCurrentResourceAmount(current, resourceKey);
-                    if (currentAmount < requiredAmount) {
-                        const availableAmount = getResourceAmount(storage, resourceKey);
-                        const missingAmount = requiredAmount - currentAmount;
-                        const amountToAdd = Math.min(availableAmount, missingAmount);
-                        if (amountToAdd > 0) {
-                            resourcesToAdd[resourceKey] = amountToAdd;
-                        }
-                    }
-                }
-            });
-            
-            if (Object.keys(resourcesToAdd).length === 0 && essenceToAdd === 0) {
-                showNotification('info', 'Все ресурсы уже собраны');
-                return;
-            }
-            
             const result = await settlementService.contributeToConstruction(
                 guildId, 
                 buildingKey, 
