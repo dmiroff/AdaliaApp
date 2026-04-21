@@ -688,28 +688,6 @@ const SettlementBuildings = observer(() => {
                                         )}
                                         Улучшить до {currentLevel + 1}
                                     </Button>
-                                    
-                                    {(userRole === 'leader' || userRole === 'officer') && (
-                                        <Button 
-                                            variant="outline-primary"
-                                            size="sm"
-                                            onClick={() => {
-                                                const buildingInfo = getAvailableBuildings.find(b => b.key === key);
-                                                if (buildingInfo) {
-                                                    handleQuickConstruction(buildingInfo);
-                                                }
-                                            }}
-                                            disabled={isLoading}
-                                            title="Начать строительство сразу"
-                                        >
-                                            {isLoading ? (
-                                                <Spinner animation="border" size="sm" className="me-1" />
-                                            ) : (
-                                                <i className="fas fa-bolt me-1"></i>
-                                            )}
-                                            Быстрое улучшение
-                                        </Button>
-                                    )}
                                 </>
                             ) : (
                                 <OverlayTrigger
