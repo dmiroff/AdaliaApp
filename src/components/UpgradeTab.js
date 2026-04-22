@@ -115,7 +115,7 @@ const signLabelMap = {
 
 // Формула стоимости навыка (калька с бэкенда)
 const computeSkillCost = (skillValue) => {
-  if (skillValue <= 0) return 100; // стоимость первого уровня
+  if (skillValue <= 0) return 100;
   let cost;
   if (skillValue <= 50) {
     cost = 100 * Math.pow(1.09, skillValue - 1);
@@ -129,7 +129,6 @@ const computeSkillCost = (skillValue) => {
   return Math.min(Math.floor(cost), 100000);
 };
 
-// Суммарная стоимость повышения навыка на несколько уровней
 const calculateTotalSkillCost = (currentLevel, levelsToAdd) => {
   let total = 0;
   for (let i = 0; i < levelsToAdd; i++) {
@@ -138,33 +137,22 @@ const calculateTotalSkillCost = (currentLevel, levelsToAdd) => {
   return total;
 };
 
-// Оптимизированный расчёт далеонов для прокачки навыка
-// startRate - начальный курс (золота за 100 далеонов)
-// Возвращает { totalDaleons, finalRate }
 const calculateDaleonsForSkill = (currentLevel, levelsToAdd, startRate) => {
   let rate = startRate;
   let totalDaleons = 0;
   for (let i = 0; i < levelsToAdd; i++) {
     const goldCost = computeSkillCost(currentLevel + i);
-    // Далеоны для этого уровня с текущим курсом (округляем вверх)
     const daleonsNeeded = Math.ceil((goldCost * 100) / rate);
     totalDaleons += daleonsNeeded;
-    // Количество полных сотен в потраченных далеонах
     const hundreds = Math.floor(daleonsNeeded / 100);
     if (hundreds > 0) {
-      // Применяем снижение курса сразу на hundreds раз
       rate = rate * Math.pow(0.99, hundreds);
-      // Округляем курс до целого (как на бэкенде)
       rate = Math.floor(rate);
     }
   }
   return { totalDaleons, finalRate: rate };
 };
 
-// Расчёт общей суммы далеонов для всех навыков в changes.skills, с учётом динамики курса
-// playerData - исходные данные игрока (для получения начальных уровней)
-// changesSkills - массив { skill, amount, currency } (только с currency='daleons')
-// initialRate - начальный курс
 const calculateTotalDaleonsNeeded = (playerData, changesSkills, initialRate) => {
   let currentRate = initialRate;
   let total = 0;
@@ -221,48 +209,39 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
   const [success, setSuccess] = useState("");
   const [birzhaRate, setBirzhaRate] = useState(null);
   
-  // Текущие данные игрока (оригинал и временная копия для ресурсов)
   const [originalPlayerData, setOriginalPlayerData] = useState(null);
   const [tempPlayerData, setTempPlayerData] = useState(null);
   
-  // Накопленные изменения
   const [changes, setChanges] = useState({
-    attributes: {},    // { agility: 2, strength: 1 }
-    skills: [],        // [{ skill: "swords", amount: 3, currency: "money" }]
-    talents: []        // [{ talent: "MasterOfBlades", chosenSigns: null }] или [{ talent: "Изучение магии", chosenSigns: ["sign_fire", "sign_touch"] }]
+    attributes: {},
+    skills: [],
+    talents: []
   });
   
-  // Состояние выбора для добавления изменения
   const [selectedType, setSelectedType] = useState(null);
   const [selectedKey, setSelectedKey] = useState(null);
   const [amount, setAmount] = useState(1);
-  const [talentAmount, setTalentAmount] = useState(1); // количество копий таланта
-  // Валюта оплаты навыка: 'points' | 'money' | 'daleons'
+  const [talentAmount, setTalentAmount] = useState(1);
   const [paymentMethod, setPaymentMethod] = useState('points');
   
-  // Модалки
   const [showSpellSelector, setShowSpellSelector] = useState(false);
   const [selectedSpell, setSelectedSpell] = useState(null);
   const [testResult, setTestResult] = useState(null);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   
-  // Модалка выбора знаков для таланта "Изучение магии"
   const [showSignSelector, setShowSignSelector] = useState(false);
   const [availableSignsForSelection, setAvailableSignsForSelection] = useState([]);
   const [selectedSigns, setSelectedSigns] = useState([]);
   const [maxSelectableSigns, setMaxSelectableSigns] = useState(1);
   
-  // Загрузка курса биржи
   useEffect(() => {
     loadBirzhaRate();
   }, []);
   
-  // Инициализация данных игрока
   useEffect(() => {
     if (playerData) {
       setOriginalPlayerData(playerData);
       setTempPlayerData(JSON.parse(JSON.stringify(playerData)));
-      // Сбрасываем накопленные изменения при смене игрока
       resetChanges();
     }
   }, [playerData]);
@@ -278,7 +257,6 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
     }
   };
   
-  // Сброс накопленных изменений
   const resetChanges = () => {
     setChanges({ attributes: {}, skills: [], talents: [] });
     setSelectedType(null);
@@ -288,10 +266,8 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
     setPaymentMethod('points');
   };
  
-  // Вычисляем точную стоимость для выбранного количества уровней с учётом текущих изменений
   const exactDaleonsNeeded = useMemo(() => {
     if (!birzhaRate || !selectedKey) return Infinity;
-    // Копируем текущие навыки за далеоны
     const daleonSkillsCopy = changes.skills
       .filter(s => s.currency === 'daleons')
       .map(s => ({ ...s }));
@@ -304,7 +280,6 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
     return calculateTotalDaleonsNeeded(tempPlayerData, daleonSkillsCopy, birzhaRate.sell_rate);
   }, [selectedKey, amount, changes.skills, birzhaRate, tempPlayerData]);
     
-  // Мемоизированный подсчёт общей стоимости изменений (золото, очки, далеоны)
   const totalCost = useMemo(() => {
     if (!tempPlayerData) return { money: 0, points: 0, daleons: 0 };
     
@@ -312,7 +287,6 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
     let totalPoints = 0;
     let totalDaleons = 0;
     
-    // Навыки (золото и очки суммируем просто)
     for (const item of changes.skills) {
       const currentLevel = tempPlayerData[item.skill] || 0;
       const goldCost = calculateTotalSkillCost(currentLevel, item.amount);
@@ -323,7 +297,6 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
       }
     }
     
-    // Далеоны - используем динамический расчёт
     if (birzhaRate) {
       const daleonSkills = changes.skills.filter(s => s.currency === 'daleons');
       totalDaleons = calculateTotalDaleonsNeeded(tempPlayerData, daleonSkills, birzhaRate.sell_rate);
@@ -332,38 +305,66 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
     return { money: totalMoney, points: totalPoints, daleons: totalDaleons };
   }, [changes, tempPlayerData, birzhaRate]);
   
-  // Проверка доступности таланта с учётом требований и текущих изменений
+  // ========== НОВАЯ ВСПОМОГАТЕЛЬНАЯ ФУНКЦИЯ ==========
+  const getEffectiveAttribute = (playerData, attrName) => {
+    const base = playerData[attrName] || 0;
+    const increase = playerData[`${attrName}_increase`] || 0;
+    return base + increase;
+  };
+  
+  // ========== ИСПРАВЛЕННАЯ ФУНКЦИЯ ПРОВЕРКИ ДОСТУПНОСТИ ТАЛАНТА ==========
   const isTalentAvailable = (talentName, talentData) => {
     if (!tempPlayerData) return false;
-    
-    // Уже взято в базе
-    const currentCount = (tempPlayerData.talents || []).filter(t => t === talentName).length;
-    // Добавлено в изменения
+  
+    // Активные и неактивные таланты
+    const activeTalents = tempPlayerData.talents || [];
+    const inactiveTalents = tempPlayerData.inactive_talents || [];
+    const currentCount = activeTalents.filter(t => t === talentName).length +
+                         inactiveTalents.filter(t => t === talentName).length;
     const addedCount = changes.talents.filter(t => t.talent === talentName).length;
+  
     if (currentCount + addedCount >= talentData.take_times) return false;
-    
-    // Проверка требований
+  
+    // Особый эффект "Первый раз - открывает возможность изучения"
+    if (talentData.effects && talentData.effects.startsWith("Первый раз - открывает возможность изучения")) {
+      if (talentName === "Изучение магии") {
+        const availableSigns = getAvailableSignsForMagicStudy();
+        if (availableSigns.length === 0) return false;
+      } else {
+        const playerClass = tempPlayerData.Character_class;
+        const classSigns = learnable_signs_dict[playerClass] || [];
+        const alreadyOpened = tempPlayerData.available_signs || [];
+        const pendingSigns = changes.talents
+          .filter(t => t.talent === talentName && t.chosenSigns)
+          .flatMap(t => t.chosenSigns);
+        const remainingSigns = classSigns.filter(sign => !alreadyOpened.includes(sign) && !pendingSigns.includes(sign));
+        if (remainingSigns.length === 0) return false;
+      }
+    }
+  
+    // Проверка требований (класс, атрибуты)
     const requirements = talentData.requirements;
-    for (const [attr, reqValue] of Object.entries(requirements)) {
-      if (attr === "Character_class") {
-        // Проверка класса
+    for (const [reqKey, reqValue] of Object.entries(requirements)) {
+      if (reqKey === "Character_class") {
         if (Array.isArray(reqValue) && !reqValue.includes(tempPlayerData.Character_class)) return false;
         if (typeof reqValue === "string" && tempPlayerData.Character_class !== reqValue) return false;
       } else {
-        // Атрибуты: число или массив (для многоуровневых талантов)
         let required = reqValue;
         if (Array.isArray(reqValue)) {
-          const index = currentCount + addedCount; // следующий уровень
-          if (index >= reqValue.length) return false;
-          required = reqValue[index];
+          // Для следующей копии используем текущее количество (без учёта addedCount)
+          const nextLevel = currentCount;
+          if (nextLevel >= reqValue.length) return false;
+          required = reqValue[nextLevel];
         }
-        if ((tempPlayerData[attr] || 0) < required) return false;
+        const currentAttrValue = getEffectiveAttribute(tempPlayerData, reqKey);
+        if (currentAttrValue < required) return false;
       }
     }
+  
     return true;
   };
   
-  // Получение списка доступных талантов
+  // ========== ИСПРАВЛЕННАЯ ФУНКЦИЯ ПОЛУЧЕНИЯ СПИСКА ДОСТУПНЫХ ТАЛАНТОВ ==========
   const getAvailableTalents = () => {
     const available = [];
     for (const [name, data] of Object.entries(talents_dict)) {
@@ -374,21 +375,61 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
     return available;
   };
   
+  // ========== НОВАЯ ФУНКЦИЯ: ПРОВЕРКА ВОЗМОЖНОСТИ ДОБАВИТЬ N КОПИЙ ТАЛАНТА ==========
+  const canAddTalentCopies = (talentName, talentData, copiesToAdd) => {
+    if (!tempPlayerData) return false;
+  
+    const activeTalents = tempPlayerData.talents || [];
+    const inactiveTalents = tempPlayerData.inactive_talents || [];
+    const currentCount = activeTalents.filter(t => t === talentName).length +
+                         inactiveTalents.filter(t => t === talentName).length;
+    const addedCount = changes.talents.filter(t => t.talent === talentName).length;
+    const totalAfter = currentCount + addedCount + copiesToAdd;
+  
+    if (totalAfter > talentData.take_times) return false;
+  
+    // Проверяем требования для каждой добавляемой копии (начиная с currentCount+addedCount)
+    for (let copyIndex = 0; copyIndex < copiesToAdd; copyIndex++) {
+      const level = currentCount + addedCount + copyIndex; // уровень копии (0-базовая)
+      const requirements = talentData.requirements;
+      for (const [reqKey, reqValue] of Object.entries(requirements)) {
+        if (reqKey === "Character_class") {
+          if (Array.isArray(reqValue) && !reqValue.includes(tempPlayerData.Character_class)) return false;
+          if (typeof reqValue === "string" && tempPlayerData.Character_class !== reqValue) return false;
+        } else {
+          let required = reqValue;
+          if (Array.isArray(reqValue)) {
+            if (level >= reqValue.length) return false;
+            required = reqValue[level];
+          }
+          const currentAttrValue = getEffectiveAttribute(tempPlayerData, reqKey);
+          if (currentAttrValue < required) return false;
+        }
+      }
+    }
+  
+    // Особый эффект для "Изучение магии"
+    if (talentName === "Изучение магии") {
+      const availableSigns = getAvailableSignsForMagicStudy();
+      if (availableSigns.length === 0) return false;
+    }
+  
+    return true;
+  };
+  
   // Функция для получения доступных знаков для таланта "Изучение магии"
   const getAvailableSignsForMagicStudy = () => {
     if (!tempPlayerData) return [];
     const playerClass = tempPlayerData.Character_class;
     const classSigns = learnable_signs_dict[playerClass] || [];
     const alreadyOpened = tempPlayerData.available_signs || [];
-    // Знаки, уже выбранные в текущих изменениях (для любых копий "Изучение магии")
     const pendingSigns = changes.talents
       .filter(t => t.talent === "Изучение магии" && t.chosenSigns)
       .flatMap(t => t.chosenSigns);
-    // Доступные знаки: из классовых, не открытые, не выбранные в текущих изменениях
     return classSigns.filter(sign => !alreadyOpened.includes(sign) && !pendingSigns.includes(sign));
   };
   
-  // Проверка возможности добавления изменения (на основе текущих ресурсов в tempPlayerData)
+  // Проверка возможности добавления изменения (общая)
   const canAddChange = () => {
     if (!selectedKey || !tempPlayerData) return false;
     if (!canUpgrade) return false;
@@ -412,7 +453,6 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
         return totalCost.money + goldCost <= availableMoney;
       } else if (paymentMethod === "daleons") {
         if (!birzhaRate) return false;
-        // Создаём копию массива навыков за далеоны с добавленным новым навыком
         const daleonSkillsCopy = changes.skills
           .filter(s => s.currency === 'daleons')
           .map(s => ({ ...s }));
@@ -429,13 +469,14 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
     } else if (selectedType === "talent") {
       const talentData = talents_dict[selectedKey];
       if (!talentData) return false;
-      const currentCount = (tempPlayerData.talents || []).filter(t => t === selectedKey).length;
-      const addedCount = changes.talents.filter(t => t.talent === selectedKey).length;
-      const totalAfter = currentCount + addedCount + talentAmount;
-      if (totalAfter > talentData.take_times) return false;
+      
+      // Проверка возможности добавить talentAmount копий с учётом требований
+      if (!canAddTalentCopies(selectedKey, talentData, talentAmount)) return false;
+      
       const currentPoints = tempPlayerData.free_talent_points || 0;
       const addedTotal = changes.talents.length;
       if (currentPoints - addedTotal < talentAmount) return false;
+      
       if (selectedKey === "Изучение магии") {
         const availableSigns = getAvailableSignsForMagicStudy();
         if (availableSigns.length === 0) return false;
@@ -445,7 +486,7 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
     return false;
   };
   
-  // Добавление изменения в список (для атрибутов и навыков)
+  // Добавление изменения (атрибут, навык)
   const addChange = () => {
     if (!canAddChange()) return;
     
@@ -469,25 +510,23 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
     }
     
     setChanges(newChanges);
-    // Сбрасываем выбор, чтобы можно было добавить следующее
     setSelectedKey(null);
     setAmount(1);
     setError("");
   };
   
-  // Добавление таланта (вызывается после выбора таланта, возможно с выбором знаков)
+  // Добавление таланта
   const addTalentChange = (talentName, chosenSigns = null, count = 1) => {
     const newChanges = JSON.parse(JSON.stringify(changes));
     const talentData = talents_dict[talentName];
     if (!talentData) return;
-    const currentCount = (tempPlayerData.talents || []).filter(t => t === talentName).length;
-    const addedCount = newChanges.talents.filter(t => t.talent === talentName).length;
-    const totalAfter = currentCount + addedCount + count;
-    if (totalAfter > talentData.take_times) {
-      setError(`Нельзя добавить ${count} копий, лимит таланта ${talentData.take_times}`);
+    
+    // Дополнительная проверка (дублируем canAddTalentCopies для безопасности)
+    if (!canAddTalentCopies(talentName, talentData, count)) {
+      setError("Не выполнены требования для добавления таланта");
       return;
     }
-    // Добавляем count записей
+    
     for (let i = 0; i < count; i++) {
       newChanges.talents.push({ talent: talentName, chosenSigns });
     }
@@ -497,10 +536,8 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
     setError("");
   };
   
-  // Обработчик добавления таланта с указанным количеством
   const addTalentWithAmount = () => {
     if (selectedKey === "Изучение магии") {
-      // Для "Изучение магии" игнорируем количество, открываем модалку для одной копии
       const availableSigns = getAvailableSignsForMagicStudy();
       if (availableSigns.length === 0) {
         setError("Нет доступных знаков для изучения");
@@ -518,12 +555,10 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
       setSelectedSigns([]);
       setShowSignSelector(true);
     } else {
-      // Проверяем лимиты и добавляем указанное количество копий
       addTalentChange(selectedKey, null, talentAmount);
     }
   };
   
-  // Подтверждение выбора знаков для "Изучения магии"
   const handleSignConfirm = () => {
     if (selectedSigns.length === 0) {
       setError("Выберите хотя бы один знак");
@@ -538,7 +573,6 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
     setSelectedSigns([]);
   };
   
-  // Удаление изменения
   const removeChange = (type, key, talentIndex = -1) => {
     const newChanges = JSON.parse(JSON.stringify(changes));
     if (type === "attribute") {
@@ -552,14 +586,12 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
       if (talentIndex >= 0) {
         newChanges.talents.splice(talentIndex, 1);
       } else {
-        // для обратной совместимости: удаляем по названию (но лучше по индексу)
         newChanges.talents = newChanges.talents.filter(t => t.talent !== key);
       }
     }
     setChanges(newChanges);
   };
   
-  // Проверка, хватает ли ресурсов с учётом накопленных изменений
   const canCommit = () => {
     if (!tempPlayerData) return false;
     const currentMoney = tempPlayerData.money || 0;
@@ -568,22 +600,15 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
     const currentTalentPoints = tempPlayerData.free_talent_points || 0;
     const currentDaleons = tempPlayerData.daleons || 0;
     
-    // Атрибуты используют отдельные очки
     const attrUsed = Object.values(changes.attributes).reduce((a, b) => a + b, 0);
     if (attrUsed > currentAttrPoints) return false;
-    
-    // Таланты используют очки талантов
     if (changes.talents.length > currentTalentPoints) return false;
-    
-    // Навыки используют очки навыков, золото или далеоны
     if (totalCost.money > currentMoney) return false;
     if (totalCost.points > currentPoints) return false;
     if (totalCost.daleons > currentDaleons) return false;
-    
     return true;
   };
   
-  // Отправка изменений на сервер
   const handleCommit = async () => {
     if (!canCommit()) {
       setError("Недостаточно ресурсов для применения изменений");
@@ -593,7 +618,6 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
     setLoading(true);
     setError("");
     
-    // Формируем объект в формате, ожидаемом бэкендом
     const payload = {
       attributes: Object.entries(changes.attributes).map(([attr, amount]) => ({ attribute: attr, amount })),
       skills: changes.skills.map(item => ({ skill: item.skill, amount: item.amount, currency: item.currency })),
@@ -608,26 +632,22 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
     try {
       const result = await CommitUpgrades(payload);
       if (result.status === 200) {
-        // Обновляем данные игрока локально
         const newPlayerData = JSON.parse(JSON.stringify(tempPlayerData));
         newPlayerData.money -= totalCost.money;
         newPlayerData.free_skill_points -= totalCost.points;
         newPlayerData.free_attribute_points -= Object.values(changes.attributes).reduce((a, b) => a + b, 0);
         newPlayerData.free_talent_points -= changes.talents.length;
         newPlayerData.daleons -= totalCost.daleons;
-        // Увеличиваем атрибуты и навыки
         for (const [attr, amount] of Object.entries(changes.attributes)) {
           newPlayerData[attr] = (newPlayerData[attr] || 0) + amount;
         }
         for (const item of changes.skills) {
           newPlayerData[item.skill] = (newPlayerData[item.skill] || 0) + item.amount;
         }
-        // Добавляем таланты (и знаки для "Изучение магии")
         for (const t of changes.talents) {
           if (!newPlayerData.talents.includes(t.talent)) {
             newPlayerData.talents.push(t.talent);
           }
-          // Если талант "Изучение магии", добавляем знаки в available_signs
           if (t.talent === "Изучение магии" && t.chosenSigns && t.chosenSigns.length > 0) {
             const currentSigns = newPlayerData.available_signs || [];
             const newSigns = t.chosenSigns.filter(sign => !currentSigns.includes(sign));
@@ -653,17 +673,13 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
     }
   };
   
-  // Тест атаки
   const handleTestAttack = async () => {
     if (!tempPlayerData) return;
     setLoading(true);
     try {
       const result = await TestAttack(tempPlayerData);
       if (result.status === 200) {
-        setTestResult({
-          type: "attack",
-          data: result.data
-        });
+        setTestResult({ type: "attack", data: result.data });
       } else {
         setError(result.message || "Ошибка тестирования");
       }
@@ -675,7 +691,6 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
     }
   };
   
-  // Тест заклинания
   const handleTestSpell = async () => {
     if (!selectedSpell) {
       setError("Выберите заклинание");
@@ -686,10 +701,7 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
     try {
       const result = await TestSpell(selectedSpell, tempPlayerData);
       if (result.status === 200) {
-        setTestResult({
-          type: "spell",
-          data: result.data
-        });
+        setTestResult({ type: "spell", data: result.data });
       } else {
         setError(result.message || "Ошибка тестирования");
       }
@@ -701,7 +713,6 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
     }
   };
   
-  // Получение списка заклинаний (только из prepared_magic)
   const getSpellsList = () => {
     const spells = [];
     if (tempPlayerData?.prepared_magic) {
@@ -712,7 +723,7 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
     return spells;
   };
   
-  // Вспомогательные рендеры для выбора изменения
+  // Вспомогательные рендеры
   const renderAttributeControls = () => (
     <div className="mt-3">
       <Form.Group className="mb-2">
@@ -742,8 +753,6 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
     const newLevel = currentLevel + addedLevels;
     const goldCost = calculateTotalSkillCost(newLevel, amount);
     const pointsNeeded = amount;
-    
-    // Приблизительная стоимость в далеонах (для отображения) – без учёта динамики курса
     const approxDaleonsNeeded = birzhaRate ? Math.ceil(goldCost * 100 / birzhaRate.sell_rate) : Infinity;
     
     return (
@@ -803,10 +812,26 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
   const renderTalentControls = () => {
     const isMagicStudy = selectedKey === "Изучение магии";
     const talentData = talents_dict[selectedKey];
-    const currentCount = (tempPlayerData?.talents || []).filter(t => t === selectedKey).length;
+    if (!talentData) return null;
+    
+    // Вычисляем максимальное количество копий, которое можно добавить с учётом требований
+    let maxByRequirements = 0;
+    for (let copies = 1; copies <= 10; copies++) {
+      if (canAddTalentCopies(selectedKey, talentData, copies)) {
+        maxByRequirements = copies;
+      } else {
+        break;
+      }
+    }
+    
+    const activeTalents = tempPlayerData?.talents || [];
+    const inactiveTalents = tempPlayerData?.inactive_talents || [];
+    const currentCount = activeTalents.filter(t => t === selectedKey).length +
+                         inactiveTalents.filter(t => t === selectedKey).length;
     const addedCount = changes.talents.filter(t => t.talent === selectedKey).length;
-    const remaining = talentData ? talentData.take_times - (currentCount + addedCount) : 0;
-    const maxAmount = Math.min(remaining, (tempPlayerData?.free_talent_points || 0) - changes.talents.length);
+    const remainingByLimit = talentData.take_times - (currentCount + addedCount);
+    const maxByPoints = (tempPlayerData?.free_talent_points || 0) - changes.talents.length;
+    const maxAmount = Math.min(maxByRequirements, remainingByLimit, maxByPoints);
     
     return (
       <div className="mt-3">
@@ -849,9 +874,7 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
     );
   };
   
-  // Отображение накопленных изменений
   const renderPendingChanges = () => {
-    // Группируем таланты по имени и считаем количество
     const talentCounts = changes.talents.reduce((acc, t) => {
       const key = t.talent + (t.chosenSigns ? `|${t.chosenSigns.join(',')}` : '');
       acc[key] = acc[key] || { talent: t.talent, chosenSigns: t.chosenSigns, count: 0 };
@@ -897,7 +920,6 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
                     const signsStr = group.chosenSigns.map(s => signLabelMap[s] || s).join(", ");
                     displayName = `${group.talent} (${signsStr})`;
                   }
-                  // Находим индекс первого элемента этой группы для удаления
                   const firstIndex = changes.talents.findIndex(t => 
                     t.talent === group.talent && 
                     (t.chosenSigns ? t.chosenSigns.join(',') === group.chosenSigns?.join(',') : !group.chosenSigns)
@@ -936,7 +958,6 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
       {success && <Alert variant="success" dismissible onClose={() => setSuccess("")}>{success}</Alert>}
       
       <Row>
-        {/* Блок выбора категорий и прокачки - на мобильных сверху */}
         <Col xs={12} md={8} className="order-2 order-md-1 mb-4 mb-md-0">
           <Card className="fantasy-card h-100">
             <Card.Header className="fantasy-card-header">
@@ -1060,9 +1081,7 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
           </Card>
         </Col>
         
-        {/* Блок ресурсов и накопленных изменений - на мобильных снизу */}
         <Col xs={12} md={4} className="order-1 order-md-2">
-          {/* Блок ресурсов */}
           <Card className="fantasy-card mb-3">
             <Card.Header className="fantasy-card-header">
               <h6 className="mb-0">Ваши ресурсы</h6>
@@ -1081,7 +1100,6 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
             </Card.Body>
           </Card>
           
-          {/* Список накопленных изменений */}
           {renderPendingChanges()}
         </Col>
       </Row>
@@ -1097,13 +1115,14 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
           <div className="mt-2">
             <strong>Сводка:</strong>
             <ul>
-            {Object.keys(changes.attributes).length > 0 && (  <li>
-              Атрибуты: {Object.entries(changes.attributes).map(([attr, amount]) => {
-                  const attrLabel = ATTRIBUTES.find(a => a.key === attr)?.label || attr;
-                  return `${attrLabel} +${amount}`;
-                      }).join(", ")}
-                        </li>
-                        )}
+              {Object.keys(changes.attributes).length > 0 && (
+                <li>
+                  Атрибуты: {Object.entries(changes.attributes).map(([attr, amount]) => {
+                    const attrLabel = ATTRIBUTES.find(a => a.key === attr)?.label || attr;
+                    return `${attrLabel} +${amount}`;
+                  }).join(", ")}
+                </li>
+              )}
               {changes.skills.length > 0 && <li>Навыки: {changes.skills.map(item => `${SKILLS.find(s => s.key === item.skill)?.label}+${item.amount} (${item.currency === 'money' ? 'золото' : (item.currency === 'daleons' ? 'далеоны' : 'очки')})`).join(", ")}</li>}
               {changes.talents.length > 0 && (
                 <li>Таланты: {
