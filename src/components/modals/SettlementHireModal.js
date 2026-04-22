@@ -2,8 +2,8 @@ import React, { useContext, useState, useEffect } from 'react';
 import { Modal, Button, Form, Alert, Row, Col, Badge, Card, InputGroup, Spinner } from 'react-bootstrap';
 import { observer } from "mobx-react-lite";
 import { Context } from "../../index";
-import { hireUnit } from '../../services/settlementApi'; // предположим, что функция уже есть
-import apiClient from '../../services/api'; // ваш apiClient
+import { hireUnit } from '../../services/SettlementService'; // предположим, что функция уже есть
+import apiClient from '../../http/apiClient'; // ваш apiClient
 
 const SettlementHireModal = observer(() => {
     const { settlement, guild, user } = useContext(Context);
