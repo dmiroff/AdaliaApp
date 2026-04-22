@@ -732,12 +732,6 @@ const SettlementGarrison = observer(() => {
                                 Время найма: {unit.hireTime} мин.
                             </small>
                             <small className="text-muted d-block mb-1">
-                                <i className="fas fa-gem me-1"></i>
-                                Стоимость: <span className={isUnitAvailable ? 'text-success fw-bold' : 'text-danger fw-bold'}>
-                                    {unit.cost} эссенции
-                                </span>
-                            </small>
-                            <small className="text-muted d-block mb-1">
                                 <i className="fas fa-star me-1"></i>
                                 Опыт за найм: {unit.hireExp}
                             </small>
