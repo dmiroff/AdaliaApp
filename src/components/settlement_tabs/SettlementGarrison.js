@@ -765,7 +765,7 @@ const SettlementGarrison = observer(() => {
                                 disabled={!isUnitAvailable}
                             >
                                 <i className="fas fa-user-plus me-2"></i>
-                                Нанять {unit.cost} <i className="fas fa-gem ms-1"></i>
+                                Нанять <i className="fas fa-gem ms-1"></i>
                             </Button>
                         </div>
                     </Card.Body>
