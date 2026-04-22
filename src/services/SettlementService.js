@@ -191,6 +191,24 @@ export const hireUnit = async (guildId, buildingKey, quantity, tier, unitName, u
   }
 };
 
+// services/SettlementService.js
+export const getHireCost = async (guildId, unitId, tier, quantity) => {
+  try {
+      const response = await apiClient.post(
+          `/guild/${guildId}/settlement/hire-cost`,
+          { unitId, tier, quantity },
+          { headers: getAuthHeaders() }
+      );
+      return { status: response.status, data: response.data };
+  } catch (error) {
+      console.error("Error fetching hire cost:", error);
+      return {
+          status: error.response?.status || 500,
+          message: error.response?.data?.detail || "Ошибка расчёта стоимости"
+      };
+  }
+}
+
 // Функция для взятия юнитов из гарнизона
 export const takeFromGarrison = async (guildId, unitId, amount = 1) => {
   try {
@@ -1478,6 +1496,7 @@ export const settlementService = {
   getGarrisonData,
   dischargeFromParty,
   storeToGarrison,
+  getHireCost,
   addItemsToSettlementStorage,
   takeResource,
   storeAllResources,

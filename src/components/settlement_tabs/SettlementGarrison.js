@@ -88,6 +88,8 @@ const SettlementGarrison = observer(() => {
     const [hireQuantity, setHireQuantity] = useState(1);
     const [selectedTier, setSelectedTier] = useState(0);
     const [hireLoading, setHireLoading] = useState(false);
+    const [hireCostData, setHireCostData] = useState(null);
+    const [hireCostLoading, setHireCostLoading] = useState(false);
     const [notification, setNotification] = useState({ show: false, type: '', message: '' });
     const [loadingPlayer, setLoadingPlayer] = useState(false);
     const [playerPartyData, setPlayerPartyData] = useState(null);
@@ -423,29 +425,34 @@ const SettlementGarrison = observer(() => {
         return tiers;
     }, [smithLevel]);
 
-    const calculateHireCost = useCallback((unit, tier, quantity) => {
-        const baseEssenceCost = unit.cost * quantity;
-        const tierResources = RESOURCE_PER_TIER[tier] || {};
-        const resourcesCost = {};
-        Object.entries(tierResources).forEach(([resourceCode, baseAmount]) => {
-            resourcesCost[resourceCode] = baseAmount * unit.buildingTier * quantity;
-        });
-        return { essence: baseEssenceCost, resources: resourcesCost };
-    }, []);
-
-    const checkResourcesAvailability = useCallback((cost) => {
-        if (cost.essence > currentEssence) {
-            return { available: false, missing: 'essence', amount: cost.essence - currentEssence };
-        }
-        for (const [resourceCode, requiredAmount] of Object.entries(cost.resources)) {
-            const resourceKey = String(resourceCode);
-            const currentAmount = currentResources[resourceKey] || 0;
-            if (currentAmount < requiredAmount) {
-                return { available: false, missing: 'resource', resourceCode: resourceKey, amount: requiredAmount - currentAmount };
+    // Новая функция получения стоимости найма с сервера
+    const fetchHireCost = useCallback(async (unitId, tier, quantity) => {
+        if (!guildId || !unitId) return;
+        setHireCostLoading(true);
+        try {
+            const result = await settlementService.getHireCost(guildId, unitId, tier, quantity);
+            if (result.status === 200) {
+                setHireCostData(result.data);
+            } else {
+                setHireCostData(null);
+                showNotification('error', result.message || 'Не удалось рассчитать стоимость');
             }
+        } catch (error) {
+            console.error(error);
+            setHireCostData(null);
+        } finally {
+            setHireCostLoading(false);
         }
-        return { available: true };
-    }, [currentEssence, currentResources]);
+    }, [guildId]);
+
+    // При изменении параметров найма пересчитываем стоимость
+    useEffect(() => {
+        if (selectedHireUnit && selectedHireUnit.unitId !== undefined && showHireModal) {
+            fetchHireCost(selectedHireUnit.unitId, selectedTier, hireQuantity);
+        } else {
+            setHireCostData(null);
+        }
+    }, [selectedHireUnit, selectedTier, hireQuantity, showHireModal]);
 
     const checkPartySpaceForTake = useCallback((unitId, quantity) => {
         if (remainingSlots <= 0) return { available: false, message: 'В отряде нет свободного места' };
@@ -502,7 +509,7 @@ const SettlementGarrison = observer(() => {
             originalName: unit.originalName,
             tier: unit.tier,
             amount: unit.amount,
-            unitId: unit.id // это числовой ID (например, "3030")
+            unitId: unit.id
         });
         setQuantity(1);
         setShowTakeModal(true);
@@ -512,10 +519,10 @@ const SettlementGarrison = observer(() => {
         setSelectedHireUnit(unit);
         setHireQuantity(1);
         setSelectedTier(0);
+        setHireCostData(null);
         setShowHireModal(true);
     };
 
-    // ========== ИСПРАВЛЕННЫЙ ОБРАБОТЧИК ВЗЯТИЯ ЮНИТОВ ==========
     const handleTakeUnit = async () => {
         if (!selectedUnit) return;
         if (!hasGuildData) {
@@ -527,7 +534,6 @@ const SettlementGarrison = observer(() => {
             showNotification('error', spaceCheck.message);
             return;
         }
-        // Используем числовой ID юнита
         const unitId = selectedUnit.unitId;
         try {
             const result = await settlementService.takeFromGarrison(guildId, unitId, quantity);
@@ -554,16 +560,16 @@ const SettlementGarrison = observer(() => {
             showNotification('error', 'Вы не состоите в гильдии');
             return;
         }
-        if (!selectedHireUnit) return;
-        const hireCost = calculateHireCost(selectedHireUnit, selectedTier, hireQuantity);
+        if (!selectedHireUnit || !hireCostData) return;
         setHireLoading(true);
         try {
             const result = await settlementService.hireUnit(
                 guildId,
-                selectedHireUnit.buildingKey,
+                hireCostData.buildingKey, // используем buildingKey из ответа сервера
                 hireQuantity,
                 selectedTier,
-                selectedHireUnit.name
+                selectedHireUnit.name,
+                selectedHireUnit.unitId
             );
             if (result.status === 200) {
                 showNotification('success', `${hireQuantity} юнит(ов) "${selectedHireUnit.name} T${selectedTier}" успешно добавлены в очередь найма!`);
@@ -572,6 +578,7 @@ const SettlementGarrison = observer(() => {
                 setSelectedHireUnit(null);
                 setHireQuantity(1);
                 setSelectedTier(0);
+                setHireCostData(null);
             } else {
                 showNotification('error', result.message || 'Ошибка при найме юнита');
             }
@@ -607,7 +614,6 @@ const SettlementGarrison = observer(() => {
         }
     };
 
-    // ========== ИСПРАВЛЕННЫЙ ОБРАБОТЧИК СЛОЖЕНИЯ В ГАРНИЗОН ==========
     const handleStoreUnit = async () => {
         if (!selectedPartyUnit || !playerId) return;
         if (!hasGuildData) {
@@ -615,7 +621,6 @@ const SettlementGarrison = observer(() => {
             return;
         }
 
-        // Проверка: можно складывать только юнитов, чьи имена известны системе
         const parsed = parseUnitId(selectedPartyUnit.fullId);
         if (!UNIT_ID_TO_NAME[parsed.baseId]) {
             showNotification('error', `Нельзя сложить юнита "${selectedPartyUnit.name}": неизвестный тип юнита.`);
@@ -789,8 +794,6 @@ const SettlementGarrison = observer(() => {
         }).length;
     }, [garrisonData]);
 
-    const hireCost = selectedHireUnit ? calculateHireCost(selectedHireUnit, selectedTier, hireQuantity) : { essence: 0, resources: {} };
-    const resourceCheck = selectedHireUnit ? checkResourcesAvailability(hireCost) : { available: true };
     const canTakeSelectedUnits = quantity <= remainingSlots;
 
     if (!hasGuildData) {
@@ -1098,7 +1101,7 @@ const SettlementGarrison = observer(() => {
                 </Card.Body>
             </Card>
 
-            {/* Модальные окна */}
+            {/* Модальное окно взятия юнитов */}
             <Modal show={showTakeModal} onHide={() => setShowTakeModal(false)} backdrop="static" centered className="fantasy-modal mass-operation-modal">
                 <Modal.Header closeButton className="fantasy-card-header fantasy-card-header-primary">
                     <Modal.Title className="d-flex align-items-center fantasy-text-gold">
@@ -1202,7 +1205,12 @@ const SettlementGarrison = observer(() => {
                 </Modal.Footer>
             </Modal>
 
-            <Modal show={showHireModal} onHide={() => setShowHireModal(false)} backdrop="static" centered className="fantasy-modal mass-operation-modal" size="lg">
+            {/* Модальное окно найма юнитов (переработано с использованием hireCostData) */}
+            <Modal show={showHireModal} onHide={() => {
+                setShowHireModal(false);
+                setHireCostData(null);
+                setHireCostLoading(false);
+            }} backdrop="static" centered className="fantasy-modal mass-operation-modal" size="lg">
                 <Modal.Header closeButton className="fantasy-card-header fantasy-card-header-success">
                     <Modal.Title className="d-flex align-items-center fantasy-text-gold">
                         <i className="fas fa-user-plus me-2"></i>
@@ -1247,7 +1255,7 @@ const SettlementGarrison = observer(() => {
                                             <Button key={tier} variant={selectedTier === tier ? "primary" : "outline-primary"} onClick={() => isAvailable && setSelectedTier(tier)} disabled={!isAvailable || hireLoading} className="tier-btn">
                                                 <div className="d-flex flex-column align-items-center">
                                                     <span className="fw-bold">T{tier}</span>
-                                                    <small className="opacity-75">{tier === 0 ? 'Базовая' : tier === 1 ? '+ Кожа' : tier === 2 ? '+ Кожа, Руда' : '+ Кожа, Сталь'}</small>
+                                                    <small className="opacity-75">{tier === 0 ? 'Базовая' : tier === 1 ? '+ Ресурсы' : tier === 2 ? '+ Ресурсы' : '+ Ресурсы'}</small>
                                                 </div>
                                             </Button>
                                         );
@@ -1297,68 +1305,66 @@ const SettlementGarrison = observer(() => {
                                 </div>
                             </div>
 
-                            <div className="mass-total-info p-3">
-                                <div className="row text-center">
-                                    <div className="col-6">
-                                        <div className="mb-2">
+                            {/* Блок стоимости с серверными данными */}
+                            {hireCostLoading ? (
+                                <div className="text-center p-3"><Spinner animation="border" size="sm" /> Расчёт стоимости...</div>
+                            ) : hireCostData ? (
+                                <Alert variant={hireCostData.canHire ? "success" : "danger"} className="mass-total-info">
+                                    <div className="row">
+                                        <div className="col-6">
                                             <div className="mass-total-label">Общая стоимость:</div>
-                                            <div className="mass-total-value">{hireCost.essence}<i className="fas fa-gem ms-1" style={{ fontSize: '0.8em' }}></i></div>
+                                            <div className="mass-total-value">
+                                                {hireCostData.essenceCost} <i className="fas fa-gem ms-1"></i>
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div className="col-6">
-                                        <div className="mb-2">
+                                        <div className="col-6">
                                             <div className="mass-total-label">Общее время:</div>
                                             <div className="mass-total-value">{selectedHireUnit.hireTime * hireQuantity} мин</div>
                                         </div>
                                     </div>
-                                </div>
-                            </div>
-
-                            {Object.keys(hireCost.resources).length > 0 && (
-                                <Alert variant="warning" className="mt-3">
-                                    <i className="fas fa-boxes me-2"></i>
-                                    <strong>Дополнительные ресурсы для T{selectedTier}:</strong>
-                                    <div className="mt-2">
-                                        {Object.entries(hireCost.resources).map(([resourceCode, amount]) => {
-                                            const resourceKey = String(resourceCode);
-                                            const resourceName = RESOURCE_NAMES[resourceKey] || `Ресурс ${resourceKey}`;
-                                            const currentAmount = currentResources[resourceKey] || 0;
-                                            const hasEnough = currentAmount >= amount;
-                                            return (
-                                                <div key={resourceKey} className="d-flex justify-content-between mb-1">
-                                                    <span className={hasEnough ? 'text-dark' : 'text-danger'}>{resourceName}:</span>
-                                                    <div>
-                                                        <Badge bg={hasEnough ? "secondary" : "danger"}>{amount} шт</Badge>
-                                                        <small className="ms-2 text-muted">(есть: {currentAmount})</small>
-                                                    </div>
-                                                </div>
-                                            );
-                                        })}
-                                        <small className="text-muted d-block mt-2">
-                                            <i className="fas fa-info-circle me-1"></i>
-                                            Ресурсы умножаются на уровень здания ({selectedHireUnit.buildingTier}) и количество ({hireQuantity})
-                                        </small>
-                                    </div>
+                                    {Object.keys(hireCostData.resourceCosts || {}).length > 0 && (
+                                        <Alert variant="warning" className="mt-3">
+                                            <i className="fas fa-boxes me-2"></i>
+                                            <strong>Дополнительные ресурсы для T{selectedTier}:</strong>
+                                            <div className="mt-2">
+                                                {Object.entries(hireCostData.resourceCosts).map(([resCode, amount]) => {
+                                                    const resourceName = RESOURCE_NAMES[resCode] || `Ресурс ${resCode}`;
+                                                    const currentAmount = currentResources[resCode] || 0;
+                                                    const hasEnough = currentAmount >= amount;
+                                                    return (
+                                                        <div key={resCode} className="d-flex justify-content-between mb-1">
+                                                            <span className={hasEnough ? 'text-dark' : 'text-danger'}>{resourceName}:</span>
+                                                            <div>
+                                                                <Badge bg={hasEnough ? "secondary" : "danger"}>{amount} шт</Badge>
+                                                                <small className="ms-2 text-muted">(есть: {currentAmount})</small>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </Alert>
+                                    )}
+                                    {!hireCostData.canHire && hireCostData.reasons && (
+                                        <Alert variant="danger" className="mt-3">
+                                            <i className="fas fa-exclamation-triangle me-2"></i>
+                                            {hireCostData.reasons}
+                                        </Alert>
+                                    )}
                                 </Alert>
-                            )}
-
-                            {!resourceCheck.available && (
-                                <Alert variant="danger" className="mt-3">
-                                    <i className="fas fa-exclamation-triangle me-2"></i>
-                                    {resourceCheck.missing === 'essence' ? 
-                                        `Недостаточно эссенции. Не хватает: ${resourceCheck.amount}` :
-                                        `Недостаточно ресурса ${RESOURCE_NAMES[resourceCheck.resourceCode] || `#${resourceCheck.resourceCode}`}. Не хватает: ${resourceCheck.amount}`
-                                    }
-                                </Alert>
+                            ) : (
+                                <Alert variant="info">Выберите параметры для расчёта стоимости</Alert>
                             )}
                         </>
                     )}
                 </Modal.Body>
                 <Modal.Footer className="d-flex justify-content-between">
-                    <Button variant="secondary" onClick={() => setShowHireModal(false)} disabled={hireLoading} className="mass-cancel-btn">Отмена</Button>
-                    <Button variant="success" onClick={handleHireUnit} disabled={hireLoading || !resourceCheck.available} className="mass-submit-btn mass-submit-gold">
+                    <Button variant="secondary" onClick={() => {
+                        setShowHireModal(false);
+                        setHireCostData(null);
+                    }} disabled={hireLoading} className="mass-cancel-btn">Отмена</Button>
+                    <Button variant="success" onClick={handleHireUnit} disabled={hireLoading || !hireCostData?.canHire} className="mass-submit-btn mass-submit-gold">
                         {hireLoading ? (
-                            <><span className="spinner-border spinner-border-sm me-2" role="status"></span>Наем...</>
+                            <><span className="spinner-border spinner-border-sm me-2" role="status"></span>Наём...</>
                         ) : (
                             <><i className="fas fa-user-plus me-2"></i>Нанять {hireQuantity} юнит(ов) T{selectedTier}</>
                         )}
@@ -1366,6 +1372,7 @@ const SettlementGarrison = observer(() => {
                 </Modal.Footer>
             </Modal>
 
+            {/* Модальное окно прогона юнитов */}
             <Modal show={showDischargeModal} onHide={() => setShowDischargeModal(false)} backdrop="static" centered className="fantasy-modal mass-operation-modal">
                 <Modal.Header closeButton className="fantasy-card-header fantasy-card-header-danger">
                     <Modal.Title className="d-flex align-items-center fantasy-text-gold">
@@ -1466,6 +1473,7 @@ const SettlementGarrison = observer(() => {
                 </Modal.Footer>
             </Modal>
 
+            {/* Модальное окно сложения в гарнизон */}
             <Modal show={showStoreModal} onHide={() => setShowStoreModal(false)} backdrop="static" centered className="fantasy-modal mass-operation-modal">
                 <Modal.Header closeButton className="fantasy-card-header fantasy-card-header-warning">
                     <Modal.Title className="d-flex align-items-center fantasy-text-gold">
