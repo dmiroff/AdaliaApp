@@ -84,7 +84,25 @@ const SettlementHeroes = observer(() => {
         return buildings?.main_building?.level || 0;
     }, [buildings]);
     
-    // Функция для получения доступных героев
+    // Функция проверки, нанят ли уже герой (по id или по имени)
+    const isHeroHired = useCallback((heroName, heroData) => {
+        // Собираем всех текущих героев (активные, раненые, в миссии) в массив объектов
+        const allCurrentHeroes = [
+            ...Object.values(heroes),
+            ...Object.values(woundedHeroes),
+            ...Object.values(heroesOnMission)
+        ];
+        
+        if (heroData.id) {
+            // У героя есть уникальный id – проверяем наличие такого же id среди нанятых
+            return allCurrentHeroes.some(h => h.id === heroData.id);
+        } else {
+            // Нет id – проверяем по имени (ключу в объекте)
+            return !!(heroes[heroName] || woundedHeroes[heroName] || heroesOnMission[heroName]);
+        }
+    }, [heroes, woundedHeroes, heroesOnMission]);
+    
+    // Функция для получения доступных героев (ещё не нанятых)
     const calculateAvailableHeroes = useCallback(() => {
         const available = [];
         
@@ -100,12 +118,10 @@ const SettlementHeroes = observer(() => {
             if (!heroesAtLevel) continue;
             
             Object.entries(heroesAtLevel).forEach(([heroName, heroData]) => {
-                // Проверяем, не нанят ли уже герой
-                const isAlreadyHired = heroes[heroName] || 
-                                     woundedHeroes[heroName] || 
-                                     heroesOnMission[heroName];
+                // Проверяем, не нанят ли уже герой (по id или имени)
+                const alreadyHired = isHeroHired(heroName, heroData);
                 
-                if (!isAlreadyHired) {
+                if (!alreadyHired) {
                     available.push({
                         name: heroName,
                         levelRequired: level,
@@ -128,7 +144,7 @@ const SettlementHeroes = observer(() => {
             }
             return a.levelRequired - b.levelRequired;
         });
-    }, [settlementType, mainBuildingLevel, heroes, woundedHeroes, heroesOnMission, currentEssence, hasAltar, userRole]);
+    }, [settlementType, mainBuildingLevel, currentEssence, hasAltar, userRole, isHeroHired]);
     
     // Обновляем список доступных героев при изменении зависимостей
     useEffect(() => {
@@ -225,7 +241,8 @@ const SettlementHeroes = observer(() => {
                 const newHeroData = result.data?.hero || {
                     name: hero.name,
                     skills: hero.skills,
-                    essence: hero.essence
+                    essence: hero.essence,
+                    id: hero.id // сохраняем id, если он есть
                 };
                 
                 setLocalHeroes(prev => ({
@@ -343,7 +360,7 @@ const SettlementHeroes = observer(() => {
                                     )}
                                 </Button>
                                 
-                                {(!hasAltar || userRole !== 'leader' && userRole !== 'officer' || currentEssence < heroData.essence) && (
+                                {(!hasAltar || (userRole !== 'leader' && userRole !== 'officer') || currentEssence < heroData.essence) && (
                                     <div className="mt-2">
                                         {!hasAltar && (
                                             <small className="fantasy-text-danger d-block">
@@ -400,25 +417,25 @@ const SettlementHeroes = observer(() => {
             if (!heroesAtLevel) continue;
             
             Object.entries(heroesAtLevel).forEach(([heroName, heroData]) => {
-                // Проверяем, не нанят ли уже герой на более раннем уровне
-                const isAlreadyHired = heroes[heroName] || 
-                                     woundedHeroes[heroName] || 
-                                     heroesOnMission[heroName];
+                // Проверяем, не нанят ли уже герой (по id или имени)
+                const alreadyHired = isHeroHired(heroName, heroData);
                 
-                if (!isAlreadyHired) {
+                if (!alreadyHired) {
                     requirements.push({
                         heroName,
                         levelRequired: level,
                         currentLevel: mainBuildingLevel,
                         essence: heroData.essence || 0,
-                        skills: heroData.skills || {}
+                        skills: heroData.skills || {},
+                        hasId: !!heroData.id,
+                        id: heroData.id
                     });
                 }
             });
         }
         
         return requirements.sort((a, b) => a.levelRequired - b.levelRequired);
-    }, [settlementType, mainBuildingLevel, heroes, woundedHeroes, heroesOnMission]);
+    }, [settlementType, mainBuildingLevel, isHeroHired]);
     
     if (!settlementData) {
         return (
