@@ -86,7 +86,6 @@ const SettlementBuildings = observer(() => {
         return 'member';
     }, [guild, user]);
     
-    // Инициализируем локальное состояние при загрузке данных
     useEffect(() => {
         if (settlementData?.buildings) {
             setLocalBuildings(prev => ({ ...prev, current: settlementData.buildings }));
@@ -275,31 +274,20 @@ const SettlementBuildings = observer(() => {
             const buildingData = buildings[buildingKey];
             const buildingName = getBuildingName(buildingKey, buildingInfo);
     
-            // Новый уровень, который будет после завершения строительства
             const targetLevel = currentLevel === 0 ? 1 : currentLevel + 1;
-    
-            // Ключ, по которому лежат ТРЕБОВАНИЯ (ресурсы, эссенция, время)
-            // - для постройки (0→1) -> ключ 0
-            // - для улучшения (1→2) -> ключ 1, (2→3) -> ключ 2 и т.д.
             const requirementsLevel = currentLevel === 0 ? 0 : currentLevel;
     
-            // Проверяем, существуют ли данные для этого ключа
             const requirementsData = buildingInfo[requirementsLevel];
             if (!requirementsData) {
-                // Нет данных – здание нельзя построить/улучшить
                 return;
             }
     
-            // Вызываем функцию проверки требований, передавая отдельно:
-            // - текущий уровень здания
-            // - целевой уровень (для валидации на бэке)
-            // - данные требований (resources, essence, construction_time и т.д.)
             const { canBuild, reasons, requiredEssence } = checkBuildingRequirements(
                 buildingKey,
                 currentLevel,
                 targetLevel,
                 buildingData,
-                requirementsData   // передаём готовые требования
+                requirementsData
             );
     
             if (canBuild) {
@@ -316,7 +304,7 @@ const SettlementBuildings = observer(() => {
                     resources: requirementsData?.resources || {},
                     essence: requirementsData?.essence || 0,
                     constructionTime: requirementsData?.construction_time || 60,
-                    targetLevelInfo: requirementsData,      // для отображения требований
+                    targetLevelInfo: requirementsData,
                     isNewConstruction: currentLevel === 0,
                     buildingData,
                     buildingInfo,
@@ -410,13 +398,10 @@ const SettlementBuildings = observer(() => {
     const refreshSettlementData = useCallback(async () => {
         if (!guildId) return;
         await settlement.fetchSettlementData(guildId);
-        // Синхронизируем локальные стейты (если они используются)
         setLocalBuildings(prev => ({ ...prev, current: settlement._settlementData?.buildings || {} }));
         setLocalConstruction(prev => ({ ...prev, current: settlement._settlementData?.construction || {} }));
     }, [settlement, guildId]);
     
-    // В обработчике handleStartConstruction уже есть вызов settlement.fetchData()? 
-    // Убедитесь, что он заменён на refreshSettlementData или просто вызовите refreshSettlementData.
     const handleStartConstruction = useCallback(async (building) => {
         if (!building || !guildId) {
             showNotification('error', 'Ошибка: не указаны необходимые данные');
@@ -437,7 +422,7 @@ const SettlementBuildings = observer(() => {
                 setShowUpgradeModal(false);
                 setSelectedBuilding(null);
                 
-                await refreshSettlementData();  // ← Обновляем данные после начала стройки
+                await refreshSettlementData();
                 setShowCurrentConstructionsModal(true);
             } else {
                 showNotification('error', result.message || 'Ошибка начала строительства');
@@ -527,7 +512,6 @@ const SettlementBuildings = observer(() => {
             
             const targetLevel = currentLevel + 1;
             const targetLevelInfo = data[currentLevel] || data[String(targetLevel)];
-            const reqsLevelInfo = data[targetLevel] || data[String(targetLevel)];
             
             const building = {
                 key,
@@ -578,9 +562,12 @@ const SettlementBuildings = observer(() => {
         const durability = currentData?.durability || 0;
         const maxDurability = currentData?.max_durability || 100;
         const durabilityPercentage = maxDurability > 0 ? (durability / maxDurability) * 100 : 100;
+        
+        // ИСПРАВЛЕНИЕ: используем статические данные для required exp
         const exp = currentData?.exp || 0;
-        const expForLevelup = currentData?.exp_for_levelup || 0;
+        const expForLevelup = buildingsData[building.key]?.[currentLevel]?.exp_for_levelup;
         const expPercentage = expForLevelup > 0 ? Math.min((exp / expForLevelup) * 100, 100) : 0;
+        
         const isLoading = constructionLoading[key] || false;
         const requirementsText = buildingRequirements?.reasons?.join(', ') || "Требования не выполнены";
         
@@ -611,7 +598,7 @@ const SettlementBuildings = observer(() => {
                             />
                         </div>
                         
-                        {expForLevelup > 0 && (
+                        {expForLevelup > 0 && !maxLevel && (
                             <div className="mb-3">
                                 <div className="d-flex justify-content-between mb-1">
                                     <span className="fantasy-text-muted">Опыт здания:</span>
