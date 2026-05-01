@@ -235,7 +235,7 @@ const CastleStorageItem = ({
   );
 };
 
-// Компонент FilterCard (без изменений)
+// Компонент FilterCard – теперь без кастомного селекта
 const FilterCard = ({ 
   filter, 
   index, 
@@ -430,16 +430,35 @@ const CastleStorage = observer(() => {
     return playerData?.upgrades?.includes("Гильдейский посланник") || false;
   }, [playerData]);
 
-  // Получение набора экипированных предметов (ID)
+  // Получение набора экипированных предметов (аналог InventoryItem)
   const equippedItemsSet = useMemo(() => {
-    if (!playerData?.equipment) return new Set();
-    // equipment может быть объектом { head, chest, weapon, ... } или массивом ID
-    if (Array.isArray(playerData.equipment)) {
-      return new Set(playerData.equipment.map(id => normalizeId(id)));
-    } else if (typeof playerData.equipment === 'object') {
-      return new Set(Object.values(playerData.equipment).map(id => normalizeId(id)));
+    if (!playerData) return new Set();
+    const equippedIds = new Set();
+    
+    // Список слотов, которые могут содержать предметы
+    const equipmentSlots = [
+      'head', 'right_hand', 'left_hand', 'breast_armor', 'cloak',
+      'ring_1', 'ring_2', 'ring_3', 'ring_4', 'ring_5',
+      'gloves', 'necklace', 'leg_armor', 'boots', 'secondary_weapon',
+      'belt', 'arm_armor'
+    ];
+    
+    for (const slot of equipmentSlots) {
+      const slotItem = playerData[slot];
+      if (slotItem && slotItem.id !== undefined && slotItem.id !== null) {
+        let id;
+        if (typeof slotItem.id === 'string') {
+          id = slotItem.id;
+        } else if (typeof slotItem.id === 'number') {
+          id = slotItem.id.toString();
+        } else {
+          continue;
+        }
+        equippedIds.add(id);
+      }
     }
-    return new Set();
+    
+    return equippedIds;
   }, [playerData]);
 
   const translateValue = useCallback((value) => {
@@ -476,7 +495,92 @@ const CastleStorage = observer(() => {
     return Array.from(addedBySet);
   }, [storageItems]);
 
-  const filterFields = useMemo(() => {
+  // Поля фильтров для инвентаря (включая "Экипирован")
+  const filterFieldsInventory = useMemo(() => {
+    return [
+      { 
+        id: "type", 
+        name: "Тип предмета", 
+        type: "select",
+        options: () => uniqueTypes.map(type => ({ 
+          value: type, 
+          label: getTranslatedType(type)
+        })).sort((a, b) => a.label.localeCompare(b.label))
+      },
+      { 
+        id: "is_equippable", 
+        name: "Можно надеть", 
+        type: "boolean",
+        options: [
+          { value: "true", label: "Да" },
+          { value: "false", label: "Нет" }
+        ]
+      },
+      { 
+        id: "equipped", 
+        name: "Экипирован", 
+        type: "boolean",
+        options: [
+          { value: "true", label: "Экипировано" },
+          { value: "false", label: "Не экипировано" }
+        ]
+      },
+      { 
+        id: "value", 
+        name: "Стоимость", 
+        type: "number",
+        operators: [
+          { id: "greater", name: ">" },
+          { id: "less", name: "<" },
+          { id: "equals", name: "=" },
+          { id: "greaterOrEquals", name: "≥" },
+          { id: "lessOrEquals", name: "≤" }
+        ]
+      },
+      { 
+        id: "weight", 
+        name: "Вес", 
+        type: "number",
+        operators: [
+          { id: "greater", name: ">" },
+          { id: "less", name: "<" },
+          { id: "equals", name: "=" },
+          { id: "greaterOrEquals", name: "≥" },
+          { id: "lessOrEquals", name: "≤" }
+        ]
+      },
+      { 
+        id: "undefined",
+        name: "Распознан", 
+        type: "boolean",
+        options: [
+          { value: "true", label: "Нераспознанный" },
+          { value: "false", label: "Распознанный" }
+        ]
+      },
+      { 
+        id: "junk", 
+        name: "Хлам", 
+        type: "boolean",
+        options: [
+          { value: "true", label: "Да" },
+          { value: "false", label: "Нет" }
+        ]
+      },
+      { 
+        id: "corrupted", 
+        name: "Проклят", 
+        type: "boolean",
+        options: [
+          { value: "true", label: "Да" },
+          { value: "false", label: "Нет" }
+        ]
+      }
+    ];
+  }, [uniqueTypes, getTranslatedType]);
+
+  // Поля фильтров для хранилища (без "Экипирован")
+  const filterFieldsStorage = useMemo(() => {
     return [
       { 
         id: "type", 
@@ -685,15 +789,18 @@ const CastleStorage = observer(() => {
     fetchPlayerData();
   }, [fetchPlayerData]);
 
-  // Функция применения фильтров
-  const applyFiltersToItems = useCallback((items, filters, isArray = false) => {
+  // Функция применения фильтров (общая)
+  const applyFiltersToItems = useCallback((items, filters, isArray = false, source = "inventory") => {
+    // Для инвентаря используем filterFieldsInventory, для хранилища - filterFieldsStorage
+    const fields = source === "inventory" ? filterFieldsInventory : filterFieldsStorage;
+    
     return items.filter(itemData => {
       if (!isArray) {
         const [key, item] = itemData;
         return filters.every(filter => {
           if (!filter.field || filter.value === "") return true;
           
-          const fieldConfig = filterFields.find(f => f.id === filter.field);
+          const fieldConfig = fields.find(f => f.id === filter.field);
           if (!fieldConfig) return true;
           
           let itemValue = item[filter.field];
@@ -707,6 +814,9 @@ const CastleStorage = observer(() => {
             itemValue = item.junk || false;
           } else if (filter.field === "is_equippable") {
             itemValue = item.is_equippable || false;
+          } else if (filter.field === "equipped") {
+            // Для поля "Экипирован" значение уже есть в item.equipped
+            itemValue = item.equipped || false;
           } else if (filter.field === "added_by") {
             itemValue = item.added_by || "";
           }
@@ -746,7 +856,7 @@ const CastleStorage = observer(() => {
         return filters.every(filter => {
           if (!filter.field || filter.value === "") return true;
           
-          const fieldConfig = filterFields.find(f => f.id === filter.field);
+          const fieldConfig = fields.find(f => f.id === filter.field);
           if (!fieldConfig) return true;
           
           let itemValue = item[filter.field];
@@ -796,10 +906,10 @@ const CastleStorage = observer(() => {
         });
       }
     });
-  }, [filterFields]);
+  }, [filterFieldsInventory, filterFieldsStorage]);
 
   // Фильтрация предметов
-  const filterItems = useCallback((items, query, filters, isArray = false) => {
+  const filterItems = useCallback((items, query, filters, isArray = false, source = "inventory") => {
     const hasActiveFilters = filters.some(f => f.field && f.value !== "");
     
     if (!hasActiveFilters && !query) {
@@ -813,7 +923,7 @@ const CastleStorage = observer(() => {
     );
 
     if (hasActiveFilters) {
-      filteredItems = applyFiltersToItems(filteredItems, filters, isArray);
+      filteredItems = applyFiltersToItems(filteredItems, filters, isArray, source);
     }
 
     if (query && filteredItems.length > 0) {
@@ -871,7 +981,7 @@ const CastleStorage = observer(() => {
 
   // Отфильтрованные списки с добавлением флага equipped для инвентаря
   const filteredInventory = useMemo(() => {
-    const rawFiltered = filterItems(playerInventory, debouncedInventorySearch, inventoryFilters, false);
+    const rawFiltered = filterItems(playerInventory, debouncedInventorySearch, inventoryFilters, false, "inventory");
     // Добавляем флаг equipped каждому предмету инвентаря
     return rawFiltered.map(([id, item]) => {
       const equipped = equippedItemsSet.has(normalizeId(id));
@@ -880,15 +990,15 @@ const CastleStorage = observer(() => {
   }, [playerInventory, debouncedInventorySearch, inventoryFilters, filterItems, equippedItemsSet]);
 
   const filteredStorage = useMemo(() => {
-    return filterItems(storageItems, debouncedStorageSearch, storageFilters, true);
+    return filterItems(storageItems, debouncedStorageSearch, storageFilters, true, "storage");
   }, [storageItems, debouncedStorageSearch, storageFilters, filterItems]);
 
-  // Обновление фильтров
+  // Обновление фильтров инвентаря
   const updateInventoryFilter = (index, field, value) => {
     setInventoryFilters(prev => {
       const newFilters = [...prev];
       if (field === "field") {
-        const fieldConfig = filterFields.find(f => f.id === value);
+        const fieldConfig = filterFieldsInventory.find(f => f.id === value);
         newFilters[index] = { 
           field: value, 
           operator: fieldConfig?.type === "number" ? "greater" : "equals",
@@ -917,11 +1027,12 @@ const CastleStorage = observer(() => {
     setSearchQueryInventory("");
   };
 
+  // Обновление фильтров хранилища
   const updateStorageFilter = (index, field, value) => {
     setStorageFilters(prev => {
       const newFilters = [...prev];
       if (field === "field") {
-        const fieldConfig = filterFields.find(f => f.id === value);
+        const fieldConfig = filterFieldsStorage.find(f => f.id === value);
         newFilters[index] = { 
           field: value, 
           operator: fieldConfig?.type === "number" ? "greater" : "equals",
@@ -1316,7 +1427,7 @@ const CastleStorage = observer(() => {
                                 <FilterCard
                                   filter={filter}
                                   index={index}
-                                  filterFields={filterFields}
+                                  filterFields={filterFieldsInventory}
                                   onUpdateFilter={updateInventoryFilter}
                                   onRemoveFilter={removeInventoryFilter}
                                   source="inventory"
@@ -1333,7 +1444,7 @@ const CastleStorage = observer(() => {
                                 {inventoryFilters.map((filter, index) => {
                                   if (!filter.field || filter.value === "") return null;
                                   
-                                  const fieldConfig = filterFields.find(f => f.id === filter.field);
+                                  const fieldConfig = filterFieldsInventory.find(f => f.id === filter.field);
                                   let displayValue = filter.value;
                                   
                                   if (fieldConfig?.type === "boolean") {
@@ -1532,7 +1643,7 @@ const CastleStorage = observer(() => {
                                 <FilterCard
                                   filter={filter}
                                   index={index}
-                                  filterFields={filterFields}
+                                  filterFields={filterFieldsStorage}
                                   onUpdateFilter={updateStorageFilter}
                                   onRemoveFilter={removeStorageFilter}
                                   source="storage"
@@ -1549,7 +1660,7 @@ const CastleStorage = observer(() => {
                                 {storageFilters.map((filter, index) => {
                                   if (!filter.field || filter.value === "") return null;
                                   
-                                  const fieldConfig = filterFields.find(f => f.id === filter.field);
+                                  const fieldConfig = filterFieldsStorage.find(f => f.id === filter.field);
                                   let displayValue = filter.value;
                                   
                                   if (fieldConfig?.type === "boolean") {
