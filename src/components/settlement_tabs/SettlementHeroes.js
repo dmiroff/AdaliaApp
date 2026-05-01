@@ -25,13 +25,13 @@ const getSkillIcon = (skillKey) => {
 const SettlementHeroes = observer(() => {
     const { settlement, user, guild } = useContext(Context);
     
-    const [loading, setLoading] = useState(false);
     const [hireLoading, setHireLoading] = useState({});
     const [notification, setNotification] = useState({ show: false, type: '', message: '' });
     const [selectedHero, setSelectedHero] = useState(null);
     const [showHireModal, setShowHireModal] = useState(false);
     const [localHeroes, setLocalHeroes] = useState({});
     const [availableHeroes, setAvailableHeroes] = useState([]);
+    const [garrisonHeroes, setGarrisonHeroes] = useState({}); // объект { id: { amount, name } }
     
     const settlementData = useMemo(() => {
         return settlement?._settlementData || settlement?.currentSettlement || {};
@@ -64,11 +64,17 @@ const SettlementHeroes = observer(() => {
         return 'member';
     }, [guild, user]);
     
-    // Инициализируем локальное состояние при загрузке данных
+    // Инициализация локального состояния героев поселения (для отображения)
     useEffect(() => {
         if (settlementData?.heroes?.active_heroes) {
             setLocalHeroes(prev => ({ ...prev, current: settlementData.heroes.active_heroes }));
         }
+    }, [settlementData]);
+    
+    // Загрузка гарнизона
+    useEffect(() => {
+        const garrison = settlementData?.garrison || {};
+        setGarrisonHeroes(garrison);
     }, [settlementData]);
     
     const showNotification = useCallback((type, message) => {
@@ -84,25 +90,20 @@ const SettlementHeroes = observer(() => {
         return buildings?.main_building?.level || 0;
     }, [buildings]);
     
-    // Функция проверки, нанят ли уже герой (по id или по имени)
+    // Функция проверки, нанят ли герой:
+    // - для героев с id (уникальные боевые) -> проверяем только гарнизон
+    // - для героев без id (обычные) -> проверяем active/wounded/mission по имени
     const isHeroHired = useCallback((heroName, heroData) => {
-        // Собираем всех текущих героев (активные, раненые, в миссии) в массив объектов
-        const allCurrentHeroes = [
-            ...Object.values(heroes),
-            ...Object.values(woundedHeroes),
-            ...Object.values(heroesOnMission)
-        ];
-        
         if (heroData.id) {
-            // У героя есть уникальный id – проверяем наличие такого же id среди нанятых
-            return allCurrentHeroes.some(h => h.id === heroData.id);
+            // Уникальный боевой герой: нанят, если есть в гарнизоне
+            return !!garrisonHeroes[heroData.id];
         } else {
-            // Нет id – проверяем по имени (ключу в объекте)
+            // Обычный герой без id: проверяем по имени в героях поселения
             return !!(heroes[heroName] || woundedHeroes[heroName] || heroesOnMission[heroName]);
         }
-    }, [heroes, woundedHeroes, heroesOnMission]);
+    }, [heroes, woundedHeroes, heroesOnMission, garrisonHeroes]);
     
-    // Функция для получения доступных героев (ещё не нанятых)
+    // Функция для получения доступных героев (ещё не нанятых по критерию выше)
     const calculateAvailableHeroes = useCallback(() => {
         const available = [];
         
@@ -112,13 +113,11 @@ const SettlementHeroes = observer(() => {
         
         const settlementHeroesDict = HEROES_DICT[settlementType];
         
-        // Проверяем все уровни от 1 до текущего уровня главного здания
         for (let level = 1; level <= mainBuildingLevel; level++) {
             const heroesAtLevel = settlementHeroesDict[level];
             if (!heroesAtLevel) continue;
             
             Object.entries(heroesAtLevel).forEach(([heroName, heroData]) => {
-                // Проверяем, не нанят ли уже герой (по id или имени)
                 const alreadyHired = isHeroHired(heroName, heroData);
                 
                 if (!alreadyHired) {
@@ -137,7 +136,6 @@ const SettlementHeroes = observer(() => {
             });
         }
         
-        // Сортируем по уровню главного здания и стоимости
         return available.sort((a, b) => {
             if (a.levelRequired === b.levelRequired) {
                 return a.essence - b.essence;
@@ -146,14 +144,12 @@ const SettlementHeroes = observer(() => {
         });
     }, [settlementType, mainBuildingLevel, currentEssence, hasAltar, userRole, isHeroHired]);
     
-    // Обновляем список доступных героев при изменении зависимостей
     useEffect(() => {
         setAvailableHeroes(calculateAvailableHeroes());
     }, [calculateAvailableHeroes]);
     
     const getHeroSkills = useCallback((heroData) => {
         const skills = [];
-        
         if (heroData.skills && typeof heroData.skills === 'object') {
             Object.entries(heroData.skills).forEach(([skillKey, skillLevel]) => {
                 skills.push({
@@ -164,12 +160,11 @@ const SettlementHeroes = observer(() => {
                 });
             });
         }
-        
-        // Сортируем навыки по алфавиту
         return skills.sort((a, b) => a.name.localeCompare(b.name));
     }, []);
     
     const getHeroState = useCallback((heroName) => {
+        // Состояние для обычных героев (без id) определяется по поселению
         if (heroesOnMission[heroName]) {
             return {
                 status: 'mission',
@@ -178,7 +173,6 @@ const SettlementHeroes = observer(() => {
                 icon: 'fas fa-running'
             };
         }
-        
         if (woundedHeroes[heroName]) {
             return {
                 status: 'wounded',
@@ -187,7 +181,6 @@ const SettlementHeroes = observer(() => {
                 icon: 'fas fa-heartbeat'
             };
         }
-        
         return {
             status: 'active',
             text: 'Активен',
@@ -201,35 +194,24 @@ const SettlementHeroes = observer(() => {
             showNotification('error', 'Ошибка: не указаны необходимые данные');
             return;
         }
-        
         if (!hasAltar) {
             showNotification('error', 'Для призыва героев необходим алтарь');
             return;
         }
-        
         if (userRole !== 'leader' && userRole !== 'officer') {
             showNotification('error', 'Только лидер и офицеры могут призывать героев');
             return;
         }
-        
         if (currentEssence < hero.essence) {
             showNotification('error', `Недостаточно воплощений: ${currentEssence}/${hero.essence}`);
             return;
         }
         
-        setHireLoading(prev => ({
-            ...prev,
-            [hero.name]: true
-        }));
+        setHireLoading(prev => ({ ...prev, [hero.name]: true }));
         
         try {
             console.log(`Попытка найма героя: ${hero.name} для гильдии ${guildId}`);
-            
-            const result = await settlementService.hireHero(
-                guildId,
-                hero.name
-            );
-            
+            const result = await settlementService.hireHero(guildId, hero.name);
             console.log('Результат найма героя:', result);
             
             if (result.status === 200) {
@@ -237,14 +219,13 @@ const SettlementHeroes = observer(() => {
                 setShowHireModal(false);
                 setSelectedHero(null);
                 
-                // Локально обновляем состояние героев
+                // Локально обновляем состояние героев поселения (для отображения)
                 const newHeroData = result.data?.hero || {
                     name: hero.name,
                     skills: hero.skills,
                     essence: hero.essence,
-                    id: hero.id // сохраняем id, если он есть
+                    id: hero.id
                 };
-                
                 setLocalHeroes(prev => ({
                     current: {
                         ...prev.current,
@@ -252,13 +233,24 @@ const SettlementHeroes = observer(() => {
                     }
                 }));
                 
-                // Убираем героя из списка доступных
-                setAvailableHeroes(prev => prev.filter(h => h.name !== hero.name));
+                // Обновляем гарнизон, если сервер вернул новые данные
+                if (result.data?.garrison) {
+                    setGarrisonHeroes(result.data.garrison);
+                } else if (hero.id) {
+                    // Если знаем id, добавляем героя в гарнизон локально (опционально)
+                    setGarrisonHeroes(prev => ({
+                        ...prev,
+                        [hero.id]: { amount: 1, name: hero.name }
+                    }));
+                }
                 
-                // Обновляем данные поселения
+                // Перезапрашиваем данные поселения для синхронизации
                 if (settlement?.fetchData) {
                     await settlement.fetchData();
                 }
+                
+                // Убираем героя из списка доступных
+                setAvailableHeroes(prev => prev.filter(h => h.name !== hero.name));
             } else {
                 showNotification('error', result.message || 'Ошибка призыва героя');
             }
@@ -266,10 +258,7 @@ const SettlementHeroes = observer(() => {
             console.error('Ошибка призыва героя:', error);
             showNotification('error', error.message || 'Ошибка призыва героя');
         } finally {
-            setHireLoading(prev => ({
-                ...prev,
-                [hero.name]: false
-            }));
+            setHireLoading(prev => ({ ...prev, [hero.name]: false }));
         }
     }, [showNotification, settlement, guildId, hasAltar, userRole, currentEssence]);
     
@@ -288,9 +277,12 @@ const SettlementHeroes = observer(() => {
     }, []);
     
     const renderHeroCard = useCallback((heroName, heroData, isAvailable = false) => {
-        const state = getHeroState(heroName);
+        // Для уникальных героев (с id) состояние не определяется по поселению, но для единообразия оставим active
+        const state = heroData.id ? { status: 'active', text: 'Активен', variant: 'success', icon: 'fas fa-check-circle' } : getHeroState(heroName);
         const skills = getHeroSkills(heroData);
         const isLoading = hireLoading[heroName] || false;
+        // Проверяем, есть ли герой в гарнизоне (только для уникальных)
+        const isInGarrison = heroData.id && !!garrisonHeroes[heroData.id];
         
         return (
             <Col xs={12} md={6} lg={4} className="mb-3">
@@ -385,7 +377,8 @@ const SettlementHeroes = observer(() => {
                             </div>
                         )}
                         
-                        {!isAvailable && heroData.id && (
+                        {/* Информационная надпись: если герой уникальный и уже в гарнизоне */}
+                        {!isAvailable && heroData.id && isInGarrison && (
                             <div className="mt-2">
                                 <small className="fantasy-text-info">
                                     <i className="fas fa-shield-alt me-1"></i>
@@ -397,7 +390,7 @@ const SettlementHeroes = observer(() => {
                 </Card>
             </Col>
         );
-    }, [getHeroState, getHeroSkills, hireLoading, currentEssence, hasAltar, userRole, availableHeroes, renderSkillBadge]);
+    }, [getHeroState, getHeroSkills, hireLoading, currentEssence, hasAltar, userRole, availableHeroes, renderSkillBadge, garrisonHeroes]);
     
     const renderAvailableHeroCard = useCallback((hero) => {
         return renderHeroCard(hero.name, hero, true);
@@ -407,19 +400,15 @@ const SettlementHeroes = observer(() => {
         if (!settlementType || !HEROES_DICT[settlementType]) {
             return [];
         }
-        
         const requirements = [];
         const settlementHeroesDict = HEROES_DICT[settlementType];
         
-        // Проверяем героев, которые еще не доступны из-за уровня главного здания
         for (let level = mainBuildingLevel + 1; level <= 10; level++) {
             const heroesAtLevel = settlementHeroesDict[level];
             if (!heroesAtLevel) continue;
             
             Object.entries(heroesAtLevel).forEach(([heroName, heroData]) => {
-                // Проверяем, не нанят ли уже герой (по id или имени)
                 const alreadyHired = isHeroHired(heroName, heroData);
-                
                 if (!alreadyHired) {
                     requirements.push({
                         heroName,
@@ -433,7 +422,6 @@ const SettlementHeroes = observer(() => {
                 }
             });
         }
-        
         return requirements.sort((a, b) => a.levelRequired - b.levelRequired);
     }, [settlementType, mainBuildingLevel, isHeroHired]);
     
@@ -524,7 +512,6 @@ const SettlementHeroes = observer(() => {
                     )}
                     
                     <Accordion defaultActiveKey={['active', 'available']} alwaysOpen className="mb-3">
-                        {/* Активные герои */}
                         <Accordion.Item eventKey="active">
                             <Accordion.Header className="fantasy-accordion-header">
                                 <i className="fas fa-check-circle me-2 text-success"></i>
@@ -546,7 +533,6 @@ const SettlementHeroes = observer(() => {
                             </Accordion.Body>
                         </Accordion.Item>
                         
-                        {/* Раненые герои */}
                         {Object.keys(woundedHeroes).length > 0 && (
                             <Accordion.Item eventKey="wounded">
                                 <Accordion.Header className="fantasy-accordion-header">
@@ -563,7 +549,6 @@ const SettlementHeroes = observer(() => {
                             </Accordion.Item>
                         )}
                         
-                        {/* Герои на миссии */}
                         {Object.keys(heroesOnMission).length > 0 && (
                             <Accordion.Item eventKey="mission">
                                 <Accordion.Header className="fantasy-accordion-header">
@@ -580,7 +565,6 @@ const SettlementHeroes = observer(() => {
                             </Accordion.Item>
                         )}
                         
-                        {/* Доступные для призыва герои */}
                         <Accordion.Item eventKey="available">
                             <Accordion.Header className="fantasy-accordion-header">
                                 <i className="fas fa-crown me-2 text-primary"></i>
@@ -602,7 +586,6 @@ const SettlementHeroes = observer(() => {
                             </Accordion.Body>
                         </Accordion.Item>
                         
-                        {/* Будущие герои (требуют повышения уровня) */}
                         {getHeroRequirements.length > 0 && (
                             <Accordion.Item eventKey="future">
                                 <Accordion.Header className="fantasy-accordion-header">
@@ -614,11 +597,9 @@ const SettlementHeroes = observer(() => {
                                         <i className="fas fa-info-circle me-2"></i>
                                         Эти герои станут доступны после повышения уровня главного здания.
                                     </Alert>
-                                    
                                     <Row>
                                         {getHeroRequirements.map((req, index) => {
                                             const skills = getHeroSkills(req);
-                                            
                                             return (
                                                 <Col xs={12} md={6} lg={4} key={index} className="mb-3">
                                                     <Card className="fantasy-card hero-card h-100">
@@ -630,7 +611,6 @@ const SettlementHeroes = observer(() => {
                                                                 </Badge>
                                                             </div>
                                                         </Card.Header>
-                                                        
                                                         <Card.Body>
                                                             <div className="mb-3">
                                                                 <div className="d-flex justify-content-between align-items-center mb-2">
@@ -647,7 +627,6 @@ const SettlementHeroes = observer(() => {
                                                                     className="mb-3"
                                                                 />
                                                             </div>
-                                                            
                                                             {req.essence > 0 && (
                                                                 <div className="mb-3">
                                                                     <small className="fantasy-text-muted">Стоимость призыва:</small>
@@ -662,7 +641,6 @@ const SettlementHeroes = observer(() => {
                                                                     </div>
                                                                 </div>
                                                             )}
-                                                            
                                                             {skills.length > 0 && (
                                                                 <div className="mb-3">
                                                                     <small className="fantasy-text-muted">Навыки:</small>
@@ -671,12 +649,7 @@ const SettlementHeroes = observer(() => {
                                                                     </div>
                                                                 </div>
                                                             )}
-                                                            
-                                                            <Button 
-                                                                variant="outline-secondary"
-                                                                className="w-100"
-                                                                disabled
-                                                            >
+                                                            <Button variant="outline-secondary" className="w-100" disabled>
                                                                 <i className="fas fa-lock me-2"></i>
                                                                 Доступен с {req.levelRequired} уровня
                                                             </Button>
@@ -693,7 +666,6 @@ const SettlementHeroes = observer(() => {
                 </Card.Body>
             </Card>
             
-            {/* Модальное окно подтверждения найма героя */}
             <Modal
                 show={showHireModal}
                 onHide={() => setShowHireModal(false)}
@@ -706,7 +678,6 @@ const SettlementHeroes = observer(() => {
                         Призвать героя
                     </Modal.Title>
                 </Modal.Header>
-                
                 <Modal.Body className="fantasy-modal-body">
                     {selectedHero && (
                         <>
@@ -715,7 +686,6 @@ const SettlementHeroes = observer(() => {
                                 Вы собираетесь призвать героя <strong>{selectedHero.name}</strong>.
                                 Убедитесь, что у вас достаточно воплощений и построен алтарь.
                             </Alert>
-                            
                             <div className="mb-3">
                                 <h6 className="fantasy-text-gold">Детали героя:</h6>
                                 <div className="d-flex justify-content-between mb-2">
@@ -731,7 +701,6 @@ const SettlementHeroes = observer(() => {
                                         </Badge>
                                     </div>
                                 </div>
-                                
                                 {selectedHero.skills && Object.keys(selectedHero.skills).length > 0 && (
                                     <div className="mt-3">
                                         <h6 className="fantasy-text-gold">Навыки:</h6>
@@ -746,7 +715,6 @@ const SettlementHeroes = observer(() => {
                                         ))}
                                     </div>
                                 )}
-                                
                                 {selectedHero.hasId && (
                                     <Alert variant="success" className="mt-3">
                                         <i className="fas fa-shield-alt me-2"></i>
@@ -754,7 +722,6 @@ const SettlementHeroes = observer(() => {
                                     </Alert>
                                 )}
                             </div>
-                            
                             <div className="mt-4 pt-3 border-top">
                                 <div className="row g-2">
                                     <div className="col-6">
