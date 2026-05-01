@@ -448,7 +448,7 @@ const CurrentConstructionsModal = ({
                                 <div className="fantasy-text-dark">
                                     <strong>Новая система строительства:</strong>
                                     <ul className="mt-2 mb-0">
-                                        <li><strong>Шаг 1:</strong> Офице может начать стройку (добавить в список)</li>
+                                        <li><strong>Шаг 1:</strong> Офицер может начать стройку (добавить в список)</li>
                                         <li><strong>Шаг 2:</strong> Участники постепенно добавляют ресурсы к стройке</li>
                                         <li><strong>Шаг 3:</strong> Когда все ресурсы собраны, начнётся строительство</li>
                                         <li><strong>Шаг 4:</strong> Только офицеры и глава могут отменять стройки</li>

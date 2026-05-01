@@ -49,14 +49,13 @@ const normalizeId = (id) => {
   return String(id);
 };
 
-// Компонент карточки предмета
+// Улучшенный компонент карточки предмета с иконкой и индикатором экипировки
 const CastleStorageItem = ({ 
   item, 
   isSelected = false, 
   onToggleSelect = null,
   source = "inventory"
 }) => {
-  const [showMenu, setShowMenu] = useState(false);
   const [itemId, setItemId] = useState("");
 
   useEffect(() => {
@@ -64,6 +63,7 @@ const CastleStorageItem = ({
     setItemId(normalizeId(id));
   }, [item]);
 
+  // Определение редкости
   const getRarityColor = () => {
     const name = item.name?.toLowerCase() || '';
     
@@ -92,6 +92,25 @@ const CastleStorageItem = ({
         badge: 'secondary'
       };
     }
+  };
+
+  // Иконка в зависимости от типа предмета
+  const getItemIcon = () => {
+    const type = item.type?.toLowerCase() || '';
+    
+    if (type.includes('weapon') || type === 'оружие') return 'fas fa-sword';
+    if (type.includes('armor') || type === 'броня') return 'fas fa-shield-alt';
+    if (type.includes('helmet') || type === 'шлем') return 'fas fa-helmet-battle';
+    if (type.includes('accessory') || type === 'аксессуар') return 'fas fa-gem';
+    if (type.includes('potion') || type === 'зелье') return 'fas fa-flask';
+    if (type.includes('food') || type === 'еда') return 'fas fa-apple-alt';
+    if (type.includes('material') || type === 'материал') return 'fas fa-cubes';
+    if (type.includes('scroll') || type === 'свиток') return 'fas fa-scroll';
+    if (type.includes('book') || type === 'книга') return 'fas fa-book';
+    if (type.includes('ring') || type === 'кольцо') return 'fas fa-ring';
+    if (type.includes('amulet') || type === 'амулет') return 'fas fa-medal';
+    
+    return 'fas fa-box';
   };
 
   const formatItemName = () => {
@@ -123,10 +142,11 @@ const CastleStorageItem = ({
   };
 
   const rarityColor = getRarityColor();
+  const isEquipped = item.equipped === true;
 
   return (
     <div 
-      className={`castle-storage-item-card ${isSelected ? 'selected' : ''} ${source}`}
+      className={`castle-storage-item-card ${isSelected ? 'selected' : ''} ${source} ${isEquipped ? 'equipped' : ''}`}
       onClick={handleClick}
       title={`ID: ${itemId}`}
     >
@@ -140,7 +160,7 @@ const CastleStorageItem = ({
       </div>
 
       <div className="item-icon">
-        <i className="fas fa-box"></i>
+        <i className={getItemIcon()}></i>
         {item.type && (
           <span className="item-type-badge">
             {getItemType()}
@@ -191,6 +211,13 @@ const CastleStorageItem = ({
             </Badge>
           )}
           
+          {isEquipped && (
+            <Badge bg="success" className="equipped-badge">
+              <i className="fas fa-check-circle me-1"></i>
+              Экипировано
+            </Badge>
+          )}
+          
           {source === "storage" && item.added_at && (
             <Badge bg="info" className="date-badge">
               {new Date(item.added_at).toLocaleDateString()}
@@ -208,7 +235,7 @@ const CastleStorageItem = ({
   );
 };
 
-// Компонент FilterCard – теперь без кастомного селекта
+// Компонент FilterCard (без изменений)
 const FilterCard = ({ 
   filter, 
   index, 
@@ -403,6 +430,18 @@ const CastleStorage = observer(() => {
     return playerData?.upgrades?.includes("Гильдейский посланник") || false;
   }, [playerData]);
 
+  // Получение набора экипированных предметов (ID)
+  const equippedItemsSet = useMemo(() => {
+    if (!playerData?.equipment) return new Set();
+    // equipment может быть объектом { head, chest, weapon, ... } или массивом ID
+    if (Array.isArray(playerData.equipment)) {
+      return new Set(playerData.equipment.map(id => normalizeId(id)));
+    } else if (typeof playerData.equipment === 'object') {
+      return new Set(Object.values(playerData.equipment).map(id => normalizeId(id)));
+    }
+    return new Set();
+  }, [playerData]);
+
   const translateValue = useCallback((value) => {
     if (value === null || value === undefined) return "";
     const strValue = String(value).toLowerCase();
@@ -589,7 +628,6 @@ const CastleStorage = observer(() => {
               return {
                 id: itemId,
                 ...value,
-                // Улучшенное определение нераспознанного
                 undefined: value.undefined === true || value.undefined === "true" ? true : false
               };
             });
@@ -705,12 +743,6 @@ const CastleStorage = observer(() => {
         });
       } else {
         const item = itemData;
-        // Логи для отладки фильтра undefined
-        const filterUndefined = filters.find(f => f.field === "undefined");
-        if (filterUndefined && filterUndefined.value !== "") {
-          console.log(`[Фильтр undefined] Предмет: ${item.name}, item.undefined: ${item.undefined} (${typeof item.undefined}), filter.value: ${filterUndefined.value}`);
-        }
-        
         return filters.every(filter => {
           if (!filter.field || filter.value === "") return true;
           
@@ -734,11 +766,7 @@ const CastleStorage = observer(() => {
           
           switch (fieldConfig.type) {
             case "boolean":
-              const result = String(itemValue) === filter.value;
-              if (filter.field === "undefined") {
-                console.log(`[undefined filter] item: ${item.name}, itemValue: ${itemValue}, filter.value: ${filter.value}, result: ${result}`);
-              }
-              return result;
+              return String(itemValue) === filter.value;
               
             case "number":
               const numValue = parseFloat(itemValue) || 0;
@@ -770,7 +798,7 @@ const CastleStorage = observer(() => {
     });
   }, [filterFields]);
 
-  // Фильтрация предметов (общая)
+  // Фильтрация предметов
   const filterItems = useCallback((items, query, filters, isArray = false) => {
     const hasActiveFilters = filters.some(f => f.field && f.value !== "");
     
@@ -841,13 +869,17 @@ const CastleStorage = observer(() => {
     return filteredItems;
   }, [applyFiltersToItems]);
 
-  // Отфильтрованные списки
+  // Отфильтрованные списки с добавлением флага equipped для инвентаря
   const filteredInventory = useMemo(() => {
-    return filterItems(playerInventory, debouncedInventorySearch, inventoryFilters, false);
-  }, [playerInventory, debouncedInventorySearch, inventoryFilters, filterItems]);
+    const rawFiltered = filterItems(playerInventory, debouncedInventorySearch, inventoryFilters, false);
+    // Добавляем флаг equipped каждому предмету инвентаря
+    return rawFiltered.map(([id, item]) => {
+      const equipped = equippedItemsSet.has(normalizeId(id));
+      return [id, { ...item, equipped }];
+    });
+  }, [playerInventory, debouncedInventorySearch, inventoryFilters, filterItems, equippedItemsSet]);
 
   const filteredStorage = useMemo(() => {
-    console.log('[filteredStorage] storageItems:', storageItems.map(i => ({ name: i.name, undefined: i.undefined })));
     return filterItems(storageItems, debouncedStorageSearch, storageFilters, true);
   }, [storageItems, debouncedStorageSearch, storageFilters, filterItems]);
 
@@ -886,7 +918,6 @@ const CastleStorage = observer(() => {
   };
 
   const updateStorageFilter = (index, field, value) => {
-    console.log('[updateStorageFilter]', { index, field, value });
     setStorageFilters(prev => {
       const newFilters = [...prev];
       if (field === "field") {
@@ -899,7 +930,6 @@ const CastleStorage = observer(() => {
       } else {
         newFilters[index] = { ...newFilters[index], [field]: value };
       }
-      console.log('[updateStorageFilter] newFilters:', newFilters);
       return newFilters;
     });
   };
