@@ -10,26 +10,6 @@ import CreateAuctionModal from "./CreateAuctionModal";
 import { fetchAuctionLots, createAuctionLot, placeBid, buyoutLot } from "../http/auction";
 import GetDataById from "../http/GetData";
 
-// ---------- Вспомогательные функции для работы с московским временем (UTC+3) ----------
-// Преобразует строку времени (предполагается московское время) в timestamp (миллисекунды UTC)
-const parseMoscowTimeToTimestamp = (dateStr) => {
-  // Нормализуем формат: заменяем пробел на T, если есть
-  let normalized = dateStr.replace(' ', 'T');
-  // Добавляем явное указание московского часового пояса, если его нет
-  if (!normalized.includes('+') && !normalized.endsWith('Z')) {
-    normalized += '+03:00';
-  }
-  return Date.parse(normalized);
-};
-
-// Возвращает текущий timestamp в московском времени (миллисекунды UTC)
-const getCurrentMoscowTimestamp = () => {
-  const now = new Date();
-  const utcTimestamp = now.getTime() + (now.getTimezoneOffset() * 60000);
-  return utcTimestamp + (3 * 3600000); // UTC+3
-};
-// ------------------------------------------------------------------------------------
-
 const AuctionTab = observer(() => {
   const { user } = useContext(Context);
   const [auctionLots, setAuctionLots] = useState([]);
@@ -387,34 +367,8 @@ const AuctionTab = observer(() => {
   );
 });
 
-// ---------- Компонент карточки лота с учётом московского времени ----------
+// Карточка лота – без таймера и проверки завершённости
 const AuctionLotCard = ({ lot, onBidClick, onBuyoutClick, onViewHistory, currentUserId }) => {
-  // Используем функции для работы с московским временем
-  const endTimestamp = parseMoscowTimeToTimestamp(lot.end_time);
-  const nowTimestamp = getCurrentMoscowTimestamp();
-  const diffMs = endTimestamp - nowTimestamp;
-
-  let timeDisplay = '';
-  let badgeVariant = 'success';
-
-  if (diffMs <= 0) {
-    timeDisplay = 'Завершён';
-    badgeVariant = 'secondary';
-  } else {
-    const totalMinutes = Math.floor(diffMs / (1000 * 60));
-    const hours = Math.floor(totalMinutes / 60);
-    const minutes = totalMinutes % 60;
-
-    if (hours >= 1) {
-      timeDisplay = `${hours}ч ${minutes}м`;
-      badgeVariant = hours < 24 ? 'warning' : 'success';
-    } else {
-      const seconds = Math.floor((diffMs % (1000 * 60)) / 1000);
-      timeDisplay = `${minutes}м ${seconds}с`;
-      badgeVariant = 'danger';
-    }
-  }
-
   const isMyLot = lot.user_id === currentUserId;
   const isMyBid = lot.last_stake_user_id === currentUserId;
 
@@ -426,7 +380,6 @@ const AuctionLotCard = ({ lot, onBidClick, onBuyoutClick, onViewHistory, current
             №{lot.id} {lot.name}
           </Card.Title>
           <div className="d-flex flex-column align-items-end">
-            <Badge bg={badgeVariant}>{timeDisplay}</Badge>
             {isMyLot && <Badge bg="warning" className="mt-1">Мой лот</Badge>}
             {isMyBid && !isMyLot && <Badge bg="info" className="mt-1">Моя ставка</Badge>}
           </div>
