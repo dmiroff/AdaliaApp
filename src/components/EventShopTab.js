@@ -314,7 +314,9 @@ const EventShopTab = observer(() => {
                       onClick={() => affordable && handlePurchaseClick(product)}
                       disabled={!affordable}
                     >
+                    <small className="fantasy-text-gold">
                       {!affordable ? 'Недостаточно трофеев пепла' : 'Обменять'}
+                    </small>
                     </Button>
                   </div>
                 </Card.Body>
@@ -325,7 +327,7 @@ const EventShopTab = observer(() => {
       </Row>
 
       {/* Как получить валюту */}
-      <Card className="fantasy-card mt-4">
+      <Card className="fantasy-card mt-3">
         <Card.Body>
           <h5 className="fantasy-text-fire text-center">🏆 Как получить трофеи пепла?</h5>
           <Row className="text-center">
