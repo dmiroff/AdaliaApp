@@ -69,9 +69,9 @@ const EventShopHistory = () => {
         {statistics && (
           <div className="mb-4">
             <h6>Статистика:</h6>
-            <p>Всего потрачено: {statistics.total_spent} ❄️</p>
+            <p>Всего потрачено: {statistics.total_spent}</p>
             <p>Всего покупок: {statistics.total_items}</p>
-            <p>Средний чек: {Math.round(statistics.average_spent)} ❄️</p>
+            <p>Средний чек: {Math.round(statistics.average_spent)}</p>
           </div>
         )}
 

@@ -233,7 +233,7 @@ const EventShopTab = observer(() => {
 
       {/* Заголовок */}
       <div className="text-center mb-4">
-        <h2 className="fantasy-text-fire">🔥 Алтарь Пепла</h2>
+        <h2 className="fantasy-text-gold">🔥 Алтарь Пепла</h2>
         <p className="fantasy-text-muted">
           Обменяйте трофеи пепла на могущественную награду пепла
         </p>
