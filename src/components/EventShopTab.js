@@ -234,9 +234,6 @@ const EventShopTab = observer(() => {
       {/* Заголовок */}
       <div className="text-center mb-4">
         <h2 className="fantasy-text-gold">🔥 Алтарь Пепла</h2>
-        <p className="fantasy-text-gold">
-          Обменяйте трофеи пепла на могущественную награду пепла
-        </p>
         <Badge bg="danger" className="fs-6 py-2 px-3">
           🔥 Событие активно до: 21 мая
         </Badge>
