@@ -336,18 +336,13 @@ const EventShopTab = observer(() => {
             </Col>
             <Col md={3} className="mb-3">
               <div className="fs-2">👹</div>
-              <h6>Демонические боссы</h6>
-              <small className="fantasy-text-muted">Уничтожайте боссов пепла</small>
+              <h6>Войска легиона</h6>
+              <small className="fantasy-text-muted">Уничтожайте отряды пепла</small>
             </Col>
             <Col md={3} className="mb-3">
               <div className="fs-2">⚔️</div>
-              <h6>Ежедневные испытания</h6>
-              <small className="fantasy-text-muted">Выполняйте задания гильдии огня</small>
-            </Col>
-            <Col md={3} className="mb-3">
-              <div className="fs-2">🎖️</div>
-              <h6>Ранговые награды</h6>
-              <small className="fantasy-text-muted">Занимайте места в турнирах</small>
+              <h6>Ежедневные задания</h6>
+              <small className="fantasy-text-muted">Выполняйте задания ремесленников</small>
             </Col>
           </Row>
         </Card.Body>
