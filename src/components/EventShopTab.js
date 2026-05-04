@@ -211,7 +211,7 @@ const EventShopTab = observer(() => {
   const safeProducts = Array.isArray(fireShopProducts) ? fireShopProducts : [];
 
   return (
-    <div className="fantasy-paper content-overlay" style={{ background: 'rgba(20, 10, 5, 0.95)' }}>
+    <div className="fantasy-paper content-overlay" style={{ background: 'rgba(20, 10, 5, 0.5)' }}>
       {/* Уведомления */}
       {success && (
         <Alert variant="success" className="fantasy-alert">
