@@ -1,4 +1,4 @@
-// EventShopTab.js - полная версия с защитными проверками
+// EventShopTab.js - Огненная версия (трофеи пепла -> награда пепла)
 import React, { useState, useContext, useEffect } from 'react';
 import { observer } from "mobx-react-lite";
 import { 
@@ -18,7 +18,6 @@ import { Context } from "../index";
 import GetDataById from "../http/GetData";
 import EventShopHistory from "../components/EventShopHistory";
 import { eventShopPurchase } from "../http/eventShopApi";
-import PlayerImages from "../components/PlayerImages";
 
 const EventShopTab = observer(() => {
   const { user } = useContext(Context);
@@ -29,9 +28,12 @@ const EventShopTab = observer(() => {
   const [playerData, setPlayerData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [delay, setDelay] = useState(false);
-  const [quantity, setQuantity] = useState(1);
-  const [activeShop, setActiveShop] = useState("winter");
-  const [selectedImage, setSelectedImage] = useState(null);
+  const [activeShop, setActiveShop] = useState("fire"); // "fire" - основной магазин
+
+  // ID предмета валюты (трофеи пепла)
+  const CURRENCY_ITEM_ID = '255'; // замените на реальный ID трофеев пепла
+  // ID выдаваемой награды (награда пепла)
+  const REWARD_ITEM_ID = '256';  // замените на реальный ID награды пепла
 
   // Загрузка данных игрока
   useEffect(() => {
@@ -61,122 +63,58 @@ const EventShopTab = observer(() => {
     }
   }, [playerData]);
 
-  // Функция для получения количества предмета в инвентаре
+  // Функция получения количества валюты (трофеев пепла)
   const getItemCount = (itemId) => {
     if (!playerData?.inventory_new) return 0;
     
     const inventory = playerData.inventory_new;
     
-    // Если инвентарь - объект с ключами как ID предметов
     if (typeof inventory === 'object' && !Array.isArray(inventory)) {
-        const itemKey = String(itemId);
-        const itemData = inventory[itemKey];
-        
-        if (!itemData) return 0;
-        
-        // Если это строка в формате "39765019 Снежок"
-        if (typeof itemData === 'string') {
-        // Пытаемся извлечь количество из строки
+      const itemKey = String(itemId);
+      const itemData = inventory[itemKey];
+      
+      if (!itemData) return 0;
+      
+      if (typeof itemData === 'string') {
         const match = itemData.match(/^(\d+)/);
-        if (match) {
-            return parseInt(match[1], 10);
-        }
-        return 1; // Если не нашли число, считаем что 1 предмет
-        }
-        
-        // Если это объект с полем count
-        if (typeof itemData === 'object' && itemData.count !== undefined) {
+        if (match) return parseInt(match[1], 10);
+        return 1;
+      }
+      
+      if (typeof itemData === 'object' && itemData.count !== undefined) {
         return parseInt(itemData.count, 10) || 0;
-        }
+      }
     }
     
-    // Если инвентарь - массив объектов
     if (Array.isArray(inventory)) {
-        const item = inventory.find(item => 
+      const item = inventory.find(item => 
         item && (item.item_id === itemId || item.id === itemId)
-        );
-        return item ? (parseInt(item.count, 10) || 0) : 0;
+      );
+      return item ? (parseInt(item.count, 10) || 0) : 0;
     }
     
     return 0;
-    };
+  };
 
-  // Количество снежков (ID 262)
-  const snowballCount = getItemCount('262');
+  const trophyCount = getItemCount(CURRENCY_ITEM_ID);
 
-  // Зимний магазин (основной)
-  const winterShopProducts = [
+  // Единственный продукт: награда пепла за 300 трофеев
+  const fireShopProducts = [
     {
-      id: 1,
-      name: "🎁 Мешок с подарками",
-      description: "Тайный мешок, содержащий различные сюрпризы и награды",
-      price: 200,
-      currency: "❄️",
-      currencyId: 262,
+      id: 101,
+      name: "🔥 Награда пепла",
+      description: "Заберите свою награду в обмен на трофеи пепла. Пепел можно использовать для усилений и особых крафтов.",
+      price: 300,
+      currency: "🏆",
+      currencyId: CURRENCY_ITEM_ID,
       features: [
-        "Случайные предметы разного качества",
+        "Вы получите 1 награду пепла",
+        "Требуется 300 трофеев пепла"
       ],
-      type: "consumable",
-      maxQuantity: 10,
-      image: "🎁"
-    },
-    {
-      id: 2,
-      name: "🎭 Случайный образ",
-      description: "Получите случайный уникальный образ для своего персонажа",
-      price: 1000,
-      currency: "❄️",
-      currencyId: 262,
-      features: [
-        "Уникальный визуальный новогодний образ"
-      ],
-      type: "cosmetic",
-      maxQuantity: 1,
-      image: "🎭"
-    },
-    {
-      id: 3,
-      name: "✨ Заказ образа",
-      description: "Закажите конкретный образ на заказ",
-      price: 2500,
-      currency: "❄️",
-      currencyId: 262,
-      features: [
-        "Заказ конкретного образа"
-      ],
-      type: "cosmetic_selectable",
-      maxQuantity: 1,
-      image: "✨",
-      requiresSelection: true
-    },
-    {
-      id: 4,
-      name: "⭐ Очко талантов",
-      description: "Дополнительное очко для развития талантов персонажа",
-      price: 5000,
-      currency: "❄️",
-      currencyId: 262,
-      features: [
-        "+1 очко талантов"
-      ],
-      type: "talent_point",
-      maxQuantity: 5,
-      image: "⭐"
+      type: "consumable",          // расходник, можно несколько раз
+      maxQuantity: 100,             // максимум за раз, можно поменять
+      image: "🔥"
     }
-  ];
-
-  // Список доступных образов для заказа
-  const availableImages = [
-    { id: 1, name: "Новогодний варвар", description: "Снежный варвар", rarity: "epic", filename: "newyear_barbarian.png" },
-    { id: 2, name: "Новогодний бард", description: "Праздничный бард", rarity: "legendary", filename: "newyear_bard.png" },
-    { id: 3, name: "Новогодний темный жрец", description: "Зимний темный жрец", rarity: "rare", filename: "newyear_darkpriest.png" },
-    { id: 4, name: "Новогодний дварф", description: "Снежный дварф", rarity: "epic", filename: "newyear_dwarf.png" },
-    { id: 5, name: "Новогодний маг огня", description: "Огненный маг в новогоднем стиле", rarity: "legendary", filename: "newyear_firemage.png" },
-    { id: 6, name: "Новогодний гоблин", description: "Праздничный гоблин", rarity: "rare", filename: "newyear_goblinrash.png" },
-    { id: 7, name: "Новогодний страж", description: "Ледяной страж", rarity: "epic", filename: "newyear_guardian.png" },
-    { id: 8, name: "Новогодний маг льда", description: "Морозный маг", rarity: "legendary", filename: "newyear_icemage.png" },
-    { id: 9, name: "Новогодняя жрица жизни", description: "Снежная жрица", rarity: "epic", filename: "newyear_lifepriestess.png" },
-    { id: 10, name: "Новогодний паладин", description: "Святой паладин в новогоднем облачении", rarity: "legendary", filename: "newyear_paladin.png" }
   ];
 
   const handlePurchaseClick = (product) => {
@@ -184,83 +122,65 @@ const EventShopTab = observer(() => {
       setError("Ошибка выбора товара");
       return;
     }
-    
     setSelectedProduct(product);
-    setQuantity(1);
-    
-    if (product.requiresSelection) {
-      setSelectedImage(null);
-    }
-    
     setShowConfirmModal(true);
     setError("");
   };
 
   const canAfford = (product, qty = 1) => {
-    // Защита от null/undefined
     if (!product || typeof product.price !== 'number') return false;
-    return snowballCount >= (product.price * qty);
+    return trophyCount >= (product.price * qty);
   };
 
   const calculateTotalPrice = () => {
     if (!selectedProduct || typeof selectedProduct.price !== 'number') return 0;
-    return selectedProduct.price * quantity;
+    return selectedProduct.price * (selectedProduct.type === "consumable" ? quantity : 1);
+  };
+
+  const [quantity, setQuantity] = useState(1);
+
+  const handleQuantityChange = (value) => {
+    const numValue = parseInt(value);
+    if (!selectedProduct || typeof selectedProduct.maxQuantity !== 'number') return;
+    if (numValue > 0 && numValue <= (selectedProduct.maxQuantity || 100)) {
+      setQuantity(numValue);
+    }
   };
 
   const handleConfirmPurchase = async () => {
     try {
-      // Проверяем, что selectedProduct существует
       if (!selectedProduct || !selectedProduct.id) {
         setError("Ошибка: товар не выбран");
         return;
       }
 
-      // Для заказа образа проверяем, выбран ли образ
-      if (selectedProduct.requiresSelection && !selectedImage) {
-        setError("Пожалуйста, выберите образ");
+      const finalQuantity = (selectedProduct.type === "consumable") ? quantity : 1;
+
+      if (!canAfford(selectedProduct, finalQuantity)) {
+        setError(`Недостаточно трофеев пепла. Нужно: ${selectedProduct.price * finalQuantity}, у вас: ${trophyCount}`);
         return;
       }
 
-      // Проверяем наличие средств
-      if (!canAfford(selectedProduct, quantity)) {
-        setError("Недостаточно снежков для покупки");
-        return;
-      }
-
-      // Подготавливаем дополнительные данные для покупки
-      const extraData = selectedProduct.requiresSelection 
-      ? { 
-          custom_image_request: selectedImage.trim()  // отправляем описание образа
-        }
-      : {};
-
-    const result = await eventShopPurchase(
-      selectedProduct.id,
-      selectedProduct.type,
-      quantity,
-      extraData
-    );
+      // Отправка запроса на сервер
+      const result = await eventShopPurchase(
+        selectedProduct.id,
+        selectedProduct.type,
+        finalQuantity,
+        {} // дополнительные данные не требуются
+      );
 
       if (result.status === 200) {
-        const message = selectedProduct.type === "consumable" 
-          ? `Покупка "${selectedProduct.name}" x${quantity} успешна!`
-          : `Покупка "${selectedProduct.name}" успешна!`;
-        setSuccess(message);
+        setSuccess(`Покупка "${selectedProduct.name}" x${finalQuantity} успешна! Вы получили награду пепла.`);
         
-        // Обновляем данные пользователя
-        if (user.updatePlayerData) {
-          user.updatePlayerData();
-        }
-        
-        // Перезагружаем данные игрока
+        // Обновляем данные игрока
+        if (user.updatePlayerData) user.updatePlayerData();
         const playerDataResponse = await GetDataById();
         setPlayerData(playerDataResponse.data);
         user.setPlayer(playerDataResponse.data);
         
-        // Закрываем модалку
         setShowConfirmModal(false);
         setSelectedProduct(null);
-        setSelectedImage(null);
+        setQuantity(1);
       } else {
         setError(result.detail || "Ошибка при покупке");
       }
@@ -274,50 +194,29 @@ const EventShopTab = observer(() => {
     }, 5000);
   };
 
-  const handleQuantityChange = (value) => {
-    const numValue = parseInt(value);
-    if (!selectedProduct || typeof selectedProduct.maxQuantity !== 'number') return;
-    
-    if (numValue > 0 && numValue <= (selectedProduct.maxQuantity || 10)) {
-      setQuantity(numValue);
-    }
-  };
-
   // Отображение загрузки
-  if (!delay) {
+  if (!delay || loading) {
     return (
       <div className="d-flex justify-content-center align-items-center min-vh-50">
         <div className="text-center">
-          <Spinner animation="border" variant="info" role="status" style={{ width: '3rem', height: '3rem' }}>
+          <Spinner animation="border" variant="danger" role="status" style={{ width: '3rem', height: '3rem' }}>
             <span className="visually-hidden">Loading...</span>
           </Spinner>
-          <p className="fantasy-text-gold">Загрузка магазина события...</p>
+          <p className="fantasy-text-gold mt-2">Загрузка магазина Пепла...</p>
         </div>
       </div>
     );
   }
 
-  if (loading) {
-    return (
-      <div className="d-flex justify-content-center align-items-center min-vh-50">
-        <div className="text-center">
-          <Spinner animation="border" variant="info" />
-          <p className="mt-2 text-muted">Загрузка магазина...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Проверяем, что winterShopProducts существует и является массивом
-  const safeWinterShopProducts = Array.isArray(winterShopProducts) ? winterShopProducts : [];
+  const safeProducts = Array.isArray(fireShopProducts) ? fireShopProducts : [];
 
   return (
-    <div className="fantasy-paper content-overlay">
+    <div className="fantasy-paper content-overlay" style={{ background: 'rgba(20, 10, 5, 0.95)' }}>
       {/* Уведомления */}
       {success && (
         <Alert variant="success" className="fantasy-alert">
           <div className="text-center">
-            <h5>🎉 Покупка успешна!</h5>
+            <h5>✅ Обмен успешен!</h5>
             <p className="mb-0">{success}</p>
           </div>
         </Alert>
@@ -334,116 +233,88 @@ const EventShopTab = observer(() => {
 
       {/* Заголовок */}
       <div className="text-center mb-4">
-        <h2 className="fantasy-text-dark">🎄 Зимняя Лавка Чудес</h2>
+        <h2 className="fantasy-text-fire">🔥 Алтарь Пепла</h2>
         <p className="fantasy-text-muted">
-          Особые товары доступные только во время зимнего события
+          Обменяйте трофеи пепла на могущественную награду пепла
         </p>
-        <Badge bg="info" className="fs-6 py-2 px-3">
-          ⏰ Активно до: 15 января
+        <Badge bg="danger" className="fs-6 py-2 px-3">
+          🔥 Событие активно до: 15 февраля
         </Badge>
       </div>
 
-      {/* Текущие магазины в ротации */}
+      {/* Вкладки */}
       <div className="mb-4">
         <Tabs
           activeKey={activeShop}
           onSelect={(k) => setActiveShop(k)}
-          className="fantasy-tabs"
+          className="fantasy-tabs fire-tabs"
         >
-          <Tab eventKey="winter" title="❄️ Зимний магазин">
-            {/* Контент зимнего магазина */}
-          </Tab>
-          <Tab eventKey="history" title="📜 История покупок">
-              <EventShopHistory />
+          <Tab eventKey="fire" title="🔥 Алтарь обмена" />
+          <Tab eventKey="history" title="📜 История">
+            <EventShopHistory />
           </Tab>
         </Tabs>
       </div>
 
-      {/* Баланс валюты события */}
-      <Card className="fantasy-card mb-4 border-info">
+      {/* Баланс валюты */}
+      <Card className="fantasy-card mb-4 border-danger">
         <Card.Body className="text-center">
-          <h5 className="fantasy-text-info">Ваши снежки</h5>
+          <h5 className="fantasy-text-fire">Ваши трофеи пепла</h5>
           <div className="d-flex justify-content-center align-items-center">
             <div className="fantasy-text-dark fs-3 fw-bold me-2">
-              {snowballCount.toLocaleString('ru-RU')}
+              {trophyCount.toLocaleString('ru-RU')}
             </div>
-            <div className="fs-3">❄️</div>
+            <div className="fs-3">🏆🔥</div>
           </div>
           <p className="fantasy-text-muted mt-2 mb-0">
-            Снежки можно получить в зимних активностях и событиях
+            Трофеи пепла добываются в огненных подземельях и за победу над демонами
           </p>
         </Card.Body>
       </Card>
 
       {/* Список товаров */}
       <Row>
-        {safeWinterShopProducts.map((product) => {
-          // Проверяем, что товар существует
-          if (!product || typeof product !== 'object') return null;
-          
+        {safeProducts.map((product) => {
+          if (!product) return null;
           const affordable = canAfford(product);
-          const isDisabled = !affordable;
-          
           return (
-            <Col key={product.id} lg={6} className="mb-4">
-              <Card className={`fantasy-card h-100 ${!affordable ? 'opacity-75' : ''}`}>
+            <Col key={product.id} md={6} lg={5} className="mx-auto mb-4">
+              <Card className={`fantasy-card h-100 text-center ${!affordable ? 'opacity-75' : 'glow-fire'}`}>
                 <Card.Body className="d-flex flex-column">
                   <div className="text-center mb-3">
-                    <div className="fs-1 mb-2">{product.image || "🎁"}</div>
-                    <h4 className="fantasy-text-info">{product.name || "Товар"}</h4>
-                    {product.type === "cosmetic" && (
-                      <Badge bg="warning" className="mb-2">
-                        🎭 Косметика
-                      </Badge>
-                    )}
+                    <div className="fs-1 mb-2">{product.image || "🔥"}</div>
+                    <h4 className="fantasy-text-fire">{product.name}</h4>
+                    <Badge bg="warning" className="mb-2">Огненная награда</Badge>
                   </div>
 
                   <Card.Text className="fantasy-text-dark flex-grow-1">
-                    {product.description || "Описание товара"}
+                    {product.description}
                   </Card.Text>
 
-                  {/* Список особенностей */}
-                  <ul className="fantasy-feature-list">
-                    {Array.isArray(product.features) 
-                      ? product.features.map((feature, index) => (
-                          <li key={index} className="fantasy-text-muted">
-                            {feature}
-                          </li>
-                        ))
-                      : <li className="fantasy-text-muted">Особенности не указаны</li>
-                    }
+                  <ul className="fantasy-feature-list text-start">
+                    {product.features.map((feature, idx) => (
+                      <li key={idx} className="fantasy-text-muted">{feature}</li>
+                    ))}
                   </ul>
 
-                  {/* Цена и кнопка */}
                   <div className="mt-auto">
                     <div className="text-center mb-3">
-                      <span className="fantasy-text-dark fs-3 fw-bold">
-                        {product.price ? product.price.toLocaleString('ru-RU') : "0"} {product.currency || "❄️"}
+                      <span className="fantasy-text-fire fs-3 fw-bold">
+                        {product.price} {product.currency}
                       </span>
-                      {product.type === "consumable" && (
-                        <div className="mt-1">
-                          <small className="fantasy-text-muted">
-                            Можно купить до {product.maxQuantity || 10} шт
-                          </small>
-                        </div>
-                      )}
+                      <div className="mt-1">
+                        <small className="fantasy-text-muted">
+                          Можно купить до {product.maxQuantity} раз
+                        </small>
+                      </div>
                     </div>
-                    
+
                     <Button
-                      className={`fantasy-btn w-100 ${
-                        isDisabled 
-                          ? 'fantasy-btn-secondary fantasy-btn-disabled' 
-                          : 'fantasy-btn-info'
-                      }`}
-                      onClick={() => !isDisabled && handlePurchaseClick(product)}
-                      disabled={isDisabled}
+                      className={`fantasy-btn w-100 ${!affordable ? 'fantasy-btn-secondary' : 'fantasy-btn-danger'}`}
+                      onClick={() => affordable && handlePurchaseClick(product)}
+                      disabled={!affordable}
                     >
-                      {!affordable 
-                        ? 'Недостаточно снежков'
-                        : product.type === "cosmetic_selectable"
-                          ? 'Выбрать и купить'
-                          : 'Купить'
-                      }
+                      {!affordable ? 'Недостаточно трофеев пепла' : 'Обменять'}
                     </Button>
                   </div>
                 </Card.Body>
@@ -453,229 +324,105 @@ const EventShopTab = observer(() => {
         })}
       </Row>
 
-      {/* Информация о получении валюты */}
+      {/* Как получить валюту */}
       <Card className="fantasy-card mt-4">
         <Card.Body>
-          <h5 className="fantasy-text-info text-center">❄️ Как получить снежки?</h5>
+          <h5 className="fantasy-text-fire text-center">🏆 Как получить трофеи пепла?</h5>
           <Row className="text-center">
             <Col md={3} className="mb-3">
-              <div className="fs-2">🎯</div>
-              <h6>Ежедневные задания</h6>
-              <small className="fantasy-text-muted">Выполняйте специальные зимние задания</small>
+              <div className="fs-2">🔥</div>
+              <h6>Огненные данжи</h6>
+              <small className="fantasy-text-muted">Проходите подземелья стихии огня</small>
+            </Col>
+            <Col md={3} className="mb-3">
+              <div className="fs-2">👹</div>
+              <h6>Демонические боссы</h6>
+              <small className="fantasy-text-muted">Уничтожайте боссов пепла</small>
             </Col>
             <Col md={3} className="mb-3">
               <div className="fs-2">⚔️</div>
-              <h6>Победы над боссами</h6>
-              <small className="fantasy-text-muted">Побеждайте зимних боссов в подземельях</small>
+              <h6>Ежедневные испытания</h6>
+              <small className="fantasy-text-muted">Выполняйте задания гильдии огня</small>
             </Col>
             <Col md={3} className="mb-3">
-              <div className="fs-2">🎁</div>
-              <h6>Праздничные награды</h6>
-              <small className="fantasy-text-muted">Получайте награды за активность в игре</small>
-            </Col>
-            <Col md={3} className="mb-3">
-              <div className="fs-2">🏆</div>
-              <h6>Событийные достижения</h6>
-              <small className="fantasy-text-muted">Выполняйте достижения зимнего события</small>
+              <div className="fs-2">🎖️</div>
+              <h6>Ранговые награды</h6>
+              <small className="fantasy-text-muted">Занимайте места в турнирах</small>
             </Col>
           </Row>
         </Card.Body>
       </Card>
 
-      {/* Модальное окно подтверждения покупки */}
+      {/* Модальное окно подтверждения */}
       <Modal 
         show={showConfirmModal} 
         onHide={() => {
-            setShowConfirmModal(false);
-            setSelectedImage(null);
+          setShowConfirmModal(false);
+          setQuantity(1);
         }}
         centered
-        className="fantasy-modal"
-        size={selectedProduct?.requiresSelection ? "lg" : "md"}
-        >
-        <Modal.Header closeButton className="fantasy-card-header fantasy-card-header-info">
-            <Modal.Title className="fantasy-text-gold">
-            {selectedProduct?.requiresSelection ? 'Индивидуальный заказ образа' : 'Подтверждение покупки'}
-            </Modal.Title>
+        className="fantasy-modal fire-modal"
+      >
+        <Modal.Header closeButton className="fantasy-card-header fantasy-card-header-danger">
+          <Modal.Title className="fantasy-text-gold">Обмен трофеев на награду пепла</Modal.Title>
         </Modal.Header>
         <Modal.Body className="fantasy-modal-body">
-            {selectedProduct ? (
+          {selectedProduct && (
             <div className="text-center">
-                <div className="fs-1 mb-3">{selectedProduct.image || "🎁"}</div>
-                <h4 className="fantasy-text-info mb-3">{selectedProduct.name || "Товар"}</h4>
-                <p className="fantasy-text-dark">{selectedProduct.description || "Описание товара"}</p>
-                
-                {/* Форма заказа кастомного образа */}
-                {selectedProduct.requiresSelection && (
-                <>
-                    <Alert variant="info" className="fantasy-alert mt-3 mb-4">
-                    <div className="d-flex align-items-center">
-                        <div className="fs-3 me-3">🎨</div>
-                        <div>
-                        <h6 className="fantasy-text-info mb-1">Индивидуальный заказ образа</h6>
-                        <p className="mb-0 fantasy-text-dark">
-                            Опишите администратору, какой образ вы хотите заказать. Будьте максимально подробны в описании.
-                            После покупки администратор свяжется с вами для уточнения деталей.
-                        </p>
-                        </div>
-                    </div>
-                    </Alert>
-                    
-                    <div className="mb-4">
-                    <Form>
-                        <Form.Group className="mb-3">
-                        <Form.Label className="fantasy-text-dark">
-                            <strong>Описание образа:</strong>
-                        </Form.Label>
-                        <Form.Control
-                            as="textarea"
-                            rows={4}
-                            placeholder="Опишите ваш желаемый образ: расу, пол, стиль одежды, оружие, элементы, цвета, идеи..."
-                            value={selectedImage || ''}
-                            onChange={(e) => setSelectedImage(e.target.value)}
-                            className="fantasy-textarea"
-                        />
-                        <Form.Text className="text-muted">
-                            Пример: "Хочу образ эльфа-мага в синих зимних одеждах с ледяным посохом и снежными эффектами"
-                        </Form.Text>
-                        </Form.Group>
-                        
-                        {selectedImage && selectedImage.length > 10 && (
-                        <Alert variant="success" className="fantasy-alert mt-3">
-                            <div className="d-flex align-items-center">
-                            <div className="fs-3 me-3">✅</div>
-                            <div>
-                                <h6 className="fantasy-text-success mb-1">Запрос сохранен:</h6>
-                                <p className="mb-0 fantasy-text-dark">
-                                {selectedImage.length > 100 ? selectedImage.substring(0, 100) + '...' : selectedImage}
-                                </p>
-                            </div>
-                            </div>
-                        </Alert>
-                        )}
-                    </Form>
-                    </div>
-                </>
-                )}
-                
-                {/* Поле выбора количества для consumable товаров */}
-                {selectedProduct.type === "consumable" && !selectedProduct.requiresSelection && (
+              <div className="fs-1 mb-3">{selectedProduct.image || "🔥"}</div>
+              <h4 className="fantasy-text-fire">{selectedProduct.name}</h4>
+              <p>{selectedProduct.description}</p>
+
+              {selectedProduct.type === "consumable" && (
                 <div className="my-4">
-                    <Form.Label className="fantasy-text-dark">Количество:</Form.Label>
-                    <div className="d-flex align-items-center justify-content-center">
-                    <Button 
-                        variant="outline-secondary" 
-                        onClick={() => handleQuantityChange(Math.max(1, quantity - 1))}
-                        disabled={quantity <= 1}
-                        className="fantasy-btn-outline"
-                    >
-                        -
-                    </Button>
-                    <Form.Control
-                        type="number"
-                        value={quantity}
-                        onChange={(e) => handleQuantityChange(e.target.value)}
-                        min="1"
-                        max={selectedProduct.maxQuantity || 10}
-                        className="mx-2 text-center"
-                        style={{ width: '100px' }}
-                    />
-                    <Button 
-                        variant="outline-secondary" 
-                        onClick={() => handleQuantityChange(Math.min(selectedProduct.maxQuantity || 10, quantity + 1))}
-                        disabled={quantity >= (selectedProduct.maxQuantity || 10)}
-                        className="fantasy-btn-outline"
-                    >
-                        +
-                    </Button>
-                    </div>
-                    <div className="mt-2">
-                    <small className="fantasy-text-muted">
-                        Максимальное количество: {selectedProduct.maxQuantity || 10}
-                    </small>
-                    </div>
+                  <Form.Label className="fantasy-text-dark">Количество обменов:</Form.Label>
+                  <div className="d-flex align-items-center justify-content-center">
+                    <Button variant="outline-secondary" onClick={() => handleQuantityChange(Math.max(1, quantity - 1))} disabled={quantity <= 1}>-</Button>
+                    <Form.Control type="number" value={quantity} onChange={(e) => handleQuantityChange(e.target.value)} min="1" max={selectedProduct.maxQuantity || 100} className="mx-2 text-center" style={{ width: '100px' }} />
+                    <Button variant="outline-secondary" onClick={() => handleQuantityChange(Math.min(selectedProduct.maxQuantity || 100, quantity + 1))} disabled={quantity >= (selectedProduct.maxQuantity || 100)}>+</Button>
+                  </div>
                 </div>
-                )}
-                
-                <div className="fantasy-price-display mb-3">
+              )}
+
+              <div className="fantasy-price-display mb-3">
                 <div className="d-flex justify-content-center align-items-center">
-                    <span className="fantasy-text-info fs-2 fw-bold me-2">
-                    {selectedProduct.type === "consumable" && !selectedProduct.requiresSelection
-                        ? `${calculateTotalPrice().toLocaleString('ru-RU')}`
-                        : (selectedProduct.price || 0).toLocaleString('ru-RU')
-                    }
-                    </span>
-                    <span className="fs-2">{selectedProduct.currency || "❄️"}</span>
+                  <span className="fantasy-text-fire fs-2 fw-bold me-2">
+                    {calculateTotalPrice().toLocaleString('ru-RU')}
+                  </span>
+                  <span className="fs-2">🏆</span>
                 </div>
-                {selectedProduct.type === "consumable" && !selectedProduct.requiresSelection && (
-                    <div className="mt-1">
-                    <small className="fantasy-text-muted">
-                        {selectedProduct.price || 0} {selectedProduct.currency || "❄️"} за штуку • {quantity} шт.
-                    </small>
-                    </div>
-                )}
+                <small className="fantasy-text-muted">
+                  {selectedProduct.price} трофеев за 1 награду × {quantity} = {calculateTotalPrice()}
+                </small>
+              </div>
+
+              <Alert variant="dark" className="fantasy-alert bg-dark text-warning">
+                <div className="d-flex justify-content-between">
+                  <span>Ваши трофеи:</span>
+                  <span>{trophyCount} 🏆</span>
                 </div>
-                
-                <Alert variant="info" className="fantasy-alert">
-                <div className="d-flex justify-content-between align-items-center">
-                    <small>
-                    У вас: {snowballCount.toLocaleString('ru-RU')} {selectedProduct.currency || "❄️"}
-                    </small>
-                    <small>
-                    Будет списано: {selectedProduct.type === "consumable" && !selectedProduct.requiresSelection
-                        ? calculateTotalPrice()
-                        : selectedProduct.price || 0
-                    } {selectedProduct.currency || "❄️"}
-                    </small>
+                <div className="d-flex justify-content-between">
+                  <span>Будет списано:</span>
+                  <span>{calculateTotalPrice()} 🏆</span>
                 </div>
-                <div className="mt-2">
-                    <small>
-                    Останется: {Math.max(0, snowballCount - (
-                        selectedProduct.type === "consumable" && !selectedProduct.requiresSelection
-                        ? calculateTotalPrice()
-                        : selectedProduct.price || 0
-                    ))} {selectedProduct.currency || "❄️"}
-                    </small>
+                <div className="d-flex justify-content-between">
+                  <span>Останется:</span>
+                  <span>{Math.max(0, trophyCount - calculateTotalPrice())} 🏆</span>
                 </div>
-                </Alert>
+                <div className="mt-2 text-success">
+                  Вы получите: {quantity} x 🔥 награда пепла
+                </div>
+              </Alert>
             </div>
-            ) : (
-            <div className="text-center">
-                <p className="fantasy-text-dark">Товар не найден</p>
-            </div>
-            )}
+          )}
         </Modal.Body>
-        <Modal.Footer className="fantasy-modal-footer">
-            <Button 
-            className="fantasy-btn fantasy-btn-secondary"
-            onClick={() => {
-                setShowConfirmModal(false);
-                setSelectedImage(null);
-            }}
-            >
-            Отмена
-            </Button>
-            <Button 
-            className="fantasy-btn fantasy-btn-info"
-            onClick={handleConfirmPurchase}
-            disabled={
-                !selectedProduct ||
-                (selectedProduct?.requiresSelection ? (!selectedImage || selectedImage.length < 10) :
-                selectedProduct?.type === "consumable" ? !canAfford(selectedProduct, quantity) :
-                !canAfford(selectedProduct))
-            }
-            >
-            {selectedProduct?.type === "consumable" 
-                ? selectedProduct?.requiresSelection
-                ? 'Отправить заявку на образ'
-                : `Купить ${quantity} шт.`
-                : selectedProduct?.requiresSelection
-                ? 'Отправить заявку на образ'
-                : 'Подтвердить покупку'
-            }
-            </Button>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowConfirmModal(false)}>Отмена</Button>
+          <Button variant="danger" onClick={handleConfirmPurchase} disabled={!selectedProduct || !canAfford(selectedProduct, selectedProduct.type === "consumable" ? quantity : 1)}>
+            Подтвердить обмен
+          </Button>
         </Modal.Footer>
-        </Modal>
+      </Modal>
     </div>
   );
 });

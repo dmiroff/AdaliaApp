@@ -8,7 +8,7 @@ import DonationTab from "../components/DonationTab";
 import EventShopTab from "../components/EventShopTab";
 
 const Shop = () => {
-  const [activeTab, setActiveTab] = useState("premium");
+  const [activeTab, setActiveTab] = useState("premium"); // или "event" по умолчанию, но пусть premium
 
   return (
     <Container className="mt-5 pt-4">
@@ -39,6 +39,18 @@ const Shop = () => {
               >
                 <div className="mt-3">
                   <DonationTab />
+                </div>
+              </Tab>
+              <Tab 
+                eventKey="event" 
+                title={
+                  <span>
+                    Магазин События
+                  </span>
+                }
+              >
+                <div className="mt-3">
+                  <EventShopTab />
                 </div>
               </Tab>
             </Tabs>
