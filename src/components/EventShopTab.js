@@ -234,7 +234,7 @@ const EventShopTab = observer(() => {
       {/* Заголовок */}
       <div className="text-center mb-4">
         <h2 className="fantasy-text-gold">🔥 Алтарь Пепла</h2>
-        <p className="fantasy-text-muted">
+        <p className="fantasy-text-gold">
           Обменяйте трофеи пепла на могущественную награду пепла
         </p>
         <Badge bg="danger" className="fs-6 py-2 px-3">
@@ -341,7 +341,7 @@ const EventShopTab = observer(() => {
               <h6>Войска легиона</h6>
               <small className="fantasy-text-muted">Уничтожайте отряды пепла</small>
             </Col>
-            <Col md={3} className="mb-3">
+            <Col md={3} className="mb-3">1
               <div className="fs-2">⚔️</div>
               <h6>Ежедневные задания</h6>
               <small className="fantasy-text-muted">Выполняйте задания ремесленников</small>
