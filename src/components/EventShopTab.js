@@ -238,7 +238,7 @@ const EventShopTab = observer(() => {
           Обменяйте трофеи пепла на могущественную награду пепла
         </p>
         <Badge bg="danger" className="fs-6 py-2 px-3">
-          🔥 Событие активно до: 15 февраля
+          🔥 Событие активно до: 21 мая
         </Badge>
       </div>
 
@@ -267,7 +267,7 @@ const EventShopTab = observer(() => {
             <div className="fs-3">🏆🔥</div>
           </div>
           <p className="fantasy-text-muted mt-2 mb-0">
-            Трофеи пепла добываются в огненных подземельях и за победу над демонами
+            Трофеи пепла добываются в огненных подземельях и за победу над Легионом
           </p>
         </Card.Body>
       </Card>
