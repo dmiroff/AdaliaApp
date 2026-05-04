@@ -338,7 +338,7 @@ const EventShopTab = observer(() => {
               <h6>Войска легиона</h6>
               <small className="fantasy-text-muted">Уничтожайте отряды пепла</small>
             </Col>
-            <Col md={3} className="mb-3">1
+            <Col md={3} className="mb-3">
               <div className="fs-2">⚔️</div>
               <h6>Ежедневные задания</h6>
               <small className="fantasy-text-muted">Выполняйте задания ремесленников</small>
