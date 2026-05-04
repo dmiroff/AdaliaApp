@@ -31,9 +31,9 @@ const EventShopTab = observer(() => {
   const [activeShop, setActiveShop] = useState("fire"); // "fire" - основной магазин
 
   // ID предмета валюты (трофеи пепла)
-  const CURRENCY_ITEM_ID = '255'; // замените на реальный ID трофеев пепла
+  const CURRENCY_ITEM_ID = '265'; // замените на реальный ID трофеев пепла
   // ID выдаваемой награды (награда пепла)
-  const REWARD_ITEM_ID = '256';  // замените на реальный ID награды пепла
+  const REWARD_ITEM_ID = '266';  // замените на реальный ID награды пепла
 
   // Загрузка данных игрока
   useEffect(() => {
