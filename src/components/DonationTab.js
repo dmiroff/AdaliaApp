@@ -376,6 +376,17 @@ const DonationTab = observer(() => {
       type: "permanent",
       category: "premium"
     },
+    {
+      id: 22,
+      name: "📚 Лицензия магазина",
+      description: "Внимание, персонаж станет магазином, теряя все особенности персонажа",
+      price: 2000,
+      currency: "💎",
+      features: ["Трансформация в магазин - глобальные передачи, отсуствие возможности передвигаться и дейсвовать"],
+      purchased: playerData?.upgrades?.includes("Лицензия магазина") || false,
+      type: "permanent",
+      category: "premium"
+    },
   ];
 
   // Фильтруем товары по активной вкладке и скрываем уже купленные новичковые
