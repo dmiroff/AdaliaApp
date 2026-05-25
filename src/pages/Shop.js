@@ -41,7 +41,7 @@ const Shop = () => {
                   <DonationTab />
                 </div>
               </Tab>
-              <Tab 
+              {/*<Tab 
                 eventKey="event" 
                 title={
                   <span>
@@ -52,7 +52,7 @@ const Shop = () => {
                 <div className="mt-3">
                   <EventShopTab />
                 </div>
-              </Tab>
+              </Tab>*/}
             </Tabs>
           </div>
         </Col>
