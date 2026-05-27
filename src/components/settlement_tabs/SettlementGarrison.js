@@ -707,7 +707,7 @@ const SettlementGarrison = observer(() => {
 
     const renderHireUnitCard = (unit) => {
         if (!unit) return null;
-        const isUnitAvailable = unit.cost <= currentEssence;
+        const isUnitAvailable = true;
         const availableTiersList = checkAvailableTiers(unit.buildingTier);
 
         return (
