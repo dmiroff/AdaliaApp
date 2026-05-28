@@ -38,7 +38,7 @@ const ConstructionTab = ({
     userRole,
     setLocalConstruction,
     localConstruction,
-    onUpdate   // ← новый пропс для обновления данных
+    onUpdate
 }) => {
     const [loading, setLoading] = useState({});
     const [addResourcesLoading, setAddResourcesLoading] = useState({});
@@ -96,8 +96,9 @@ const ConstructionTab = ({
         return { percentage, totalRequired, totalCurrent };
     };
     
+    // ========== ИСПРАВЛЕННАЯ ПРОВЕРКА guildId (0 считается валидным) ==========
     const handleAddResources = async (buildingKey, constrData) => {
-        if (!settlementService || !guildId) {
+        if (!settlementService || guildId === undefined || guildId === null) {
             showNotification('error', 'Ошибка: не указаны необходимые данные');
             return;
         }
@@ -117,7 +118,6 @@ const ConstructionTab = ({
             
             if (result.status === 200) {
                 showNotification('success', result.message || 'Ресурсы успешно добавлены');
-                // Вызываем обновление данных из родителя (перезапрос с сервера)
                 if (onUpdate) await onUpdate();
             } else {
                 showNotification('error', result.message || 'Ошибка при добавлении ресурсов');
@@ -131,7 +131,7 @@ const ConstructionTab = ({
     };
     
     const handleStartBuilding = async (buildingKey) => {
-        if (!settlementService || !guildId) {
+        if (!settlementService || guildId === undefined || guildId === null) {
             showNotification('error', 'Ошибка: не указаны необходимые данные');
             return;
         }
@@ -160,7 +160,7 @@ const ConstructionTab = ({
             return;
         }
         
-        if (!settlementService || !guildId) {
+        if (!settlementService || guildId === undefined || guildId === null) {
             showNotification('error', 'Ошибка: не указаны необходимые данные');
             return;
         }
@@ -183,6 +183,7 @@ const ConstructionTab = ({
             setLoading(prev => ({ ...prev, [buildingKey]: false }));
         }
     };
+    // ========== КОНЕЦ ИСПРАВЛЕНИЙ ==========
     
     return (
         <div className="table-responsive">
@@ -419,7 +420,7 @@ const CurrentConstructionsModal = ({
     userRole,
     setLocalConstruction,
     localConstruction,
-    onUpdate   // ← принимаем onUpdate от родителя
+    onUpdate
 }) => {
     return (
         <Modal 
@@ -469,7 +470,7 @@ const CurrentConstructionsModal = ({
                                 userRole={userRole}
                                 setLocalConstruction={setLocalConstruction}
                                 localConstruction={localConstruction}
-                                onUpdate={onUpdate}   // ← передаём дальше
+                                onUpdate={onUpdate}
                             />
                         </div>
                     </Tab>
