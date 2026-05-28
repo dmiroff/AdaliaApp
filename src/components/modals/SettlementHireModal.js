@@ -2,8 +2,8 @@ import React, { useContext, useState, useEffect } from 'react';
 import { Modal, Button, Form, Alert, Row, Col, Badge, Card, InputGroup, Spinner } from 'react-bootstrap';
 import { observer } from "mobx-react-lite";
 import { Context } from "../../index";
-import { hireUnit } from '../../services/SettlementService'; // предположим, что функция уже есть
-import apiClient from '../../http/apiClient'; // ваш apiClient
+import { hireUnit } from '../../services/SettlementService';
+import apiClient from '../../http/apiClient';
 
 const SettlementHireModal = observer(() => {
     const { settlement, guild, user } = useContext(Context);
@@ -18,14 +18,15 @@ const SettlementHireModal = observer(() => {
     const [costData, setCostData] = useState(null);
     const [buildingKey, setBuildingKey] = useState(null);
     
-    // Загружаем список доступных юнитов с сервера
+    // Получаем guildId (0 - валидное значение)
+    const guildId = guild?.guildData?.id;
+    
     useEffect(() => {
         if (modal.show && modal.type === 'hire') {
             loadAvailableUnits();
         }
     }, [modal.show, modal.type]);
     
-    // При изменении выбранного юнита, тира или количества – запрашиваем стоимость
     useEffect(() => {
         if (selectedUnit && modal.show && modal.type === 'hire') {
             fetchCost();
@@ -35,15 +36,20 @@ const SettlementHireModal = observer(() => {
     }, [selectedUnit, selectedTier, quantity, modal.show]);
     
     const loadAvailableUnits = async () => {
+        // Проверяем, что guildId определён (null или undefined – ошибка, 0 – OK)
+        if (guildId === undefined || guildId === null) {
+            console.error('Guild ID не определён');
+            return;
+        }
         setLoading(true);
         try {
-            const response = await apiClient.get(`/guild/${guild.guildData.id}/settlement/hire-units`, {
+            const response = await apiClient.get(`/guild/${guildId}/settlement/hire-units`, {
                 headers: { Authorization: `Bearer ${user.token}` }
             });
             setAvailableUnits(response.data.units || []);
         } catch (error) {
             console.error("Ошибка загрузки юнитов:", error);
-            alert("Не удалось загрузить список юнитов");
+            // Не показываем alert, чтобы не мешать – ошибка придёт с бэка
         } finally {
             setLoading(false);
         }
@@ -51,9 +57,13 @@ const SettlementHireModal = observer(() => {
     
     const fetchCost = async () => {
         if (!selectedUnit) return;
+        if (guildId === undefined || guildId === null) {
+            console.error('Guild ID не определён');
+            return;
+        }
         setCostLoading(true);
         try {
-            const response = await apiClient.post(`/guild/${guild.guildData.id}/settlement/hire-cost`, {
+            const response = await apiClient.post(`/guild/${guildId}/settlement/hire-cost`, {
                 unitId: selectedUnit.id,
                 tier: selectedTier,
                 quantity: quantity
@@ -72,11 +82,15 @@ const SettlementHireModal = observer(() => {
     
     const handleHire = async () => {
         if (!selectedUnit || !buildingKey || !costData?.canHire) return;
+        if (guildId === undefined || guildId === null) {
+            console.error('Guild ID не определён');
+            return;
+        }
         
         setLoading(true);
         try {
             const result = await hireUnit(
-                guild.guildData.id,
+                guildId,
                 buildingKey,
                 quantity,
                 selectedTier,
@@ -84,21 +98,21 @@ const SettlementHireModal = observer(() => {
                 selectedUnit.id
             );
             if (result.status === 200) {
-                // Обновляем store поселения (эссенция, хранилище)
                 if (result.data.new_essence !== undefined) {
                     settlement.setCurrentEssence(result.data.new_essence);
                 }
                 if (result.data.new_storage) {
                     settlement.setStorage(result.data.new_storage);
                 }
+                // Уведомление можно показывать через showNotification, если она передаётся
                 alert(`${quantity} юнит(ов) "${selectedUnit.name}" успешно наняты!`);
                 hideModal();
-                // Сброс формы
                 setSelectedUnit(null);
                 setQuantity(1);
                 setSelectedTier(0);
                 setCostData(null);
             } else {
+                // Ошибка с бэка – показываем её
                 alert(result.message || "Ошибка найма");
             }
         } catch (error) {
@@ -110,7 +124,7 @@ const SettlementHireModal = observer(() => {
     };
     
     const currentEssence = settlement.currentEssence || 0;
-    const unit = selectedUnit ? availableUnits.find(u => u.id === selectedUnit) : null;
+    const unit = selectedUnit ? availableUnits.find(u => u.id === selectedUnit.id) : null;
     
     if (!modal.show || modal.type !== 'hire') return null;
     
@@ -124,7 +138,6 @@ const SettlementHireModal = observer(() => {
             </Modal.Header>
             <Modal.Body>
                 {!selectedUnit ? (
-                    // Шаг 1: выбор типа юнита
                     <>
                         <div className="mb-4">
                             <div className="mass-modal-title mb-3">
@@ -179,7 +192,6 @@ const SettlementHireModal = observer(() => {
                         </div>
                     </>
                 ) : (
-                    // Шаг 2: настройка количества, тира и подтверждение
                     <>
                         <div className="d-flex justify-content-between align-items-center mb-4">
                             <h5 className="fantasy-text-gold mb-0"><i className="fas fa-user-check me-2"></i>Нанимаем: {unit.name}</h5>
@@ -189,7 +201,6 @@ const SettlementHireModal = observer(() => {
                         </div>
                         
                         <Form>
-                            {/* Количество */}
                             <div className="mb-4">
                                 <div className="mass-modal-title mb-3"><i className="fas fa-hashtag me-2"></i>Количество юнитов:</div>
                                 <div className="item-quantity-row">
@@ -232,7 +243,6 @@ const SettlementHireModal = observer(() => {
                                 </div>
                             </div>
                             
-                            {/* Уровень оснащения */}
                             <div className="mb-4">
                                 <div className="mass-modal-title mb-3"><i className="fas fa-shield-alt me-2"></i>Уровень оснащения:</div>
                                 <div className="d-flex flex-wrap gap-2">
@@ -245,7 +255,6 @@ const SettlementHireModal = observer(() => {
                                 <div className="mt-2"><small className="text-muted"><i className="fas fa-info-circle me-1"></i>Более высокий уровень увеличивает стоимость, но улучшает характеристики</small></div>
                             </div>
                             
-                            {/* Стоимость */}
                             <div className="mb-4">
                                 <div className="mass-modal-title mb-3"><i className="fas fa-calculator me-2"></i>Стоимость найма:</div>
                                 {costLoading ? (
@@ -304,7 +313,6 @@ const SettlementHireModal = observer(() => {
     );
 });
 
-// Вспомогательная функция для названий ресурсов
 function getResourceName(code) {
     const names = {
         "112": "Железная руда",
