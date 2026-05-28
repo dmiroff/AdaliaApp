@@ -189,8 +189,9 @@ const SettlementHeroes = observer(() => {
         };
     }, [heroesOnMission, woundedHeroes]);
     
+    // ========== ИСПРАВЛЕННАЯ ПРОВЕРКА guildId (0 считается валидным) ==========
     const handleHireHero = useCallback(async (hero) => {
-        if (!hero || !guildId) {
+        if (!hero || guildId === undefined || guildId === null) {
             showNotification('error', 'Ошибка: не указаны необходимые данные');
             return;
         }
@@ -261,6 +262,7 @@ const SettlementHeroes = observer(() => {
             setHireLoading(prev => ({ ...prev, [hero.name]: false }));
         }
     }, [showNotification, settlement, guildId, hasAltar, userRole, currentEssence]);
+    // ========== КОНЕЦ ИСПРАВЛЕНИЯ ==========
     
     const renderSkillBadge = useCallback((skill) => {
         return (
