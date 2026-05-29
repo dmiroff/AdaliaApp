@@ -829,7 +829,7 @@ export const talents_dict = {
 },
 "Толстая кожа": {
     "requirements": {
-        "constitition": 200
+        "constitution": 200
     },
     "take_times": 100,
     "effects": "Снижение финального урона на 20, но не более, чем в 20 раз.",
@@ -864,7 +864,7 @@ export const talents_dict = {
 },
 "Крепкое тело": {
     "requirements": {
-        "constitution": 200
+        "strength": 200
     },
     "take_times": 1,
     "effects": "Шанс (увеличение модификатора снижения шанса на травму от выносливости в 2 раза) избежать  получения травмы.",
