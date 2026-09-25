@@ -6,7 +6,9 @@ import GetDataById from "../http/GetData";
 import { 
   premiumPurchase, 
   createPaymentOrder,
-  checkPaymentStatus 
+  checkPaymentStatus,
+  getAbodeTransferOptions,
+  performAbodeTransfer
 } from "../http/premiumApi";
 
 const DonationTab = observer(() => {
@@ -22,6 +24,9 @@ const DonationTab = observer(() => {
   const [customRequest, setCustomRequest] = useState("");
   const [activeTab, setActiveTab] = useState("premium");
   const [selectedWeapon, setSelectedWeapon] = useState("");
+  const [transferOptions, setTransferOptions] = useState(null);
+  const [selectedAbode, setSelectedAbode] = useState("");
+  const [ritualLoading, setRitualLoading] = useState(false);
 
   // Состояния для пополнения
   const [showTopUpModal, setShowTopUpModal] = useState(false);
@@ -55,6 +60,21 @@ const DonationTab = observer(() => {
   useEffect(() => {
     fetchPlayer();
   }, [fetchPlayer]);
+
+  const fetchTransferOptions = useCallback(async () => {
+    try {
+      const result = await getAbodeTransferOptions();
+      setTransferOptions(result.data);
+      const eligible = result.data?.options?.find(option => option.can_transfer);
+      setSelectedAbode(current => current || eligible?.dungeon_key || "");
+    } catch (err) {
+      console.error("Ошибка загрузки ритуала открытия проходов:", err);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (playerData) fetchTransferOptions();
+  }, [playerData, fetchTransferOptions]);
 
   useEffect(() => {
     if (playerData) {
@@ -387,6 +407,22 @@ const DonationTab = observer(() => {
       type: "permanent",
       category: "premium"
     },
+    {
+      id: 23,
+      name: "🗝️ Переносчик обителей",
+      description: "Позволяет открыть путь до такого же этажа, как и в максимально прокаченной Обители.",
+      price: 5000,
+      currency: "💎",
+      features: [
+        "Компонент ритуала открытия проходов",
+        "Ритуал расходует 10 единиц чешуи дракона выбранной Обители",
+        "За один ритуал открывается любое число недостающих этажей"
+      ],
+      purchased: false,
+      type: "consumable",
+      maxQuantity: 100,
+      category: "premium"
+    },
   ];
 
   // Фильтруем товары по активной вкладке и скрываем уже купленные новичковые
@@ -523,6 +559,25 @@ const DonationTab = observer(() => {
       setError(err.response?.data?.detail || 'Не удалось создать платёж');
       setProcessingTopUp(false);
       setShowTopUpModal(false);
+    }
+  };
+
+  const handleAbodeTransfer = async () => {
+    if (!selectedAbode) {
+      setError("Выберите Обитель для открытия проходов");
+      return;
+    }
+
+    setRitualLoading(true);
+    setError("");
+    try {
+      const result = await performAbodeTransfer(selectedAbode);
+      setSuccess(result.message || "Ритуал успешно проведён");
+      await Promise.all([fetchPlayer(), fetchTransferOptions()]);
+    } catch (err) {
+      setError(err.message || "Не удалось провести ритуал");
+    } finally {
+      setRitualLoading(false);
     }
   };
 
@@ -708,6 +763,57 @@ const DonationTab = observer(() => {
           );
         })}
       </Row>
+
+      <Card className="fantasy-card mb-4">
+        <Card.Body>
+          <h4 className="fantasy-text-primary">🜂 Ритуал открытия проходов</h4>
+          <p className="fantasy-text-dark">
+            Выбранная Обитель сразу откроется до максимального этажа среди ваших Обителей.
+            Текущий этаж и местоположение персонажа не изменятся.
+          </p>
+          <Alert variant="info">
+            Стоимость одного ритуала: <strong>1 Переносчик обителей</strong> и
+            <strong> 10 единиц чешуи</strong> соответствующего дракона.
+            У вас переносчиков: <strong>{transferOptions?.transporter_count || 0}</strong>.
+          </Alert>
+          <Form.Group className="mb-3">
+            <Form.Label>Обитель</Form.Label>
+            <Form.Select
+              value={selectedAbode}
+              onChange={(event) => setSelectedAbode(event.target.value)}
+              disabled={ritualLoading || !transferOptions}
+            >
+              <option value="">Выберите Обитель</option>
+              {(transferOptions?.options || []).map(option => (
+                <option key={option.dungeon_key} value={option.dungeon_key}>
+                  {option.name}: {option.current_floor} → {option.target_floor} этаж; {option.scale_name}: {option.scale_count}/10
+                </option>
+              ))}
+            </Form.Select>
+          </Form.Group>
+          {selectedAbode && (() => {
+            const option = transferOptions?.options?.find(item => item.dungeon_key === selectedAbode);
+            if (!option) return null;
+            return (
+              <div>
+                <p className="fantasy-text-muted mb-2">
+                  Будет открыто этажей: <strong>{option.floors_opened}</strong>. Требуется: {option.scale_name} — 10 ед.
+                </p>
+                <Button
+                  className="fantasy-btn fantasy-btn-gold"
+                  disabled={!option.can_transfer || ritualLoading}
+                  onClick={handleAbodeTransfer}
+                >
+                  {ritualLoading ? <Spinner size="sm" /> : option.floors_opened === 0 ? 'Уже достигнут максимум' : 'Провести ритуал'}
+                </Button>
+                {!option.can_transfer && option.floors_opened > 0 && (
+                  <small className="d-block text-danger mt-2">Недостаточно компонентов ритуала.</small>
+                )}
+              </div>
+            );
+          })()}
+        </Card.Body>
+      </Card>
 
       {/* Модальное окно подтверждения покупки */}
       <Modal 

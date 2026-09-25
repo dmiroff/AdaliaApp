@@ -45,7 +45,7 @@ apiClient.interceptors.response.use(
         if (refreshToken) {
           // Пытаемся обновить токен
           const refreshResponse = await axios.post(
-            `${SERVER_APP_API_URL}/api/refresh`,
+            `${SERVER_APP_API_URL}/refresh`,
             {},
             {
               headers: {

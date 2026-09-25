@@ -68,3 +68,18 @@ This section has moved here: [https://facebook.github.io/create-react-app/docs/d
 ### `npm run build` fails to minify
 
 This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+
+## Deployment
+
+For a deployment directly from the developer machine after making changes:
+
+```bash
+./deploy.sh test
+```
+
+The script builds the application, transfers only changed files over SSH,
+switches the active release atomically, and checks the resulting page.
+
+After the test site has been accepted and production deployment has been
+enabled on the server, use `./deploy.sh production`. It requires typing
+`deploy` before anything is uploaded.

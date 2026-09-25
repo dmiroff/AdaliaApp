@@ -100,3 +100,25 @@ export const checkPaymentStatus = async (paymentId) => {
     throw error;
   }
 };
+
+export const getAbodeTransferOptions = async () => {
+  try {
+    const response = await apiClient.get('/abode-transfer/options');
+    return response.data;
+  } catch (error) {
+    const detail = error.response?.data?.detail;
+    throw new Error(typeof detail === 'string' ? detail : 'Не удалось загрузить данные ритуала');
+  }
+};
+
+export const performAbodeTransfer = async (targetDungeon) => {
+  try {
+    const response = await apiClient.post('/abode-transfer/perform', {
+      target_dungeon: targetDungeon
+    });
+    return response.data;
+  } catch (error) {
+    const detail = error.response?.data?.detail;
+    throw new Error(typeof detail === 'string' ? detail : 'Не удалось провести ритуал');
+  }
+};
