@@ -415,7 +415,7 @@ const DonationTab = observer(() => {
       currency: "💎",
       features: [
         "Компонент ритуала открытия проходов",
-        "Ритуал расходует 10 единиц чешуи дракона выбранной Обители",
+        "Ритуал расходует 2 единицы чешуи за каждые начатые 100 открываемых этажей",
         "За один ритуал открывается любое число недостающих этажей"
       ],
       purchased: false,
@@ -773,7 +773,7 @@ const DonationTab = observer(() => {
           </p>
           <Alert variant="info">
             Стоимость одного ритуала: <strong>1 Переносчик обителей</strong> и
-            <strong> 10 единиц чешуи</strong> соответствующего дракона.
+            <strong> 2 единицы чешуи за каждые начатые 100 этажей</strong> соответствующего дракона.
             У вас переносчиков: <strong>{transferOptions?.transporter_count || 0}</strong>.
           </Alert>
           <Form.Group className="mb-3">
@@ -786,7 +786,7 @@ const DonationTab = observer(() => {
               <option value="">Выберите Обитель</option>
               {(transferOptions?.options || []).map(option => (
                 <option key={option.dungeon_key} value={option.dungeon_key}>
-                  {option.name}: {option.current_floor} → {option.target_floor} этаж; {option.scale_name}: {option.scale_count}/10
+                  {option.name}: {option.current_floor} → {option.target_floor} этаж; {option.scale_name}: {option.scale_count}/{option.scale_required}
                 </option>
               ))}
             </Form.Select>
@@ -797,7 +797,7 @@ const DonationTab = observer(() => {
             return (
               <div>
                 <p className="fantasy-text-muted mb-2">
-                  Будет открыто этажей: <strong>{option.floors_opened}</strong>. Требуется: {option.scale_name} — 10 ед.
+                  Будет открыто этажей: <strong>{option.floors_opened}</strong>. Требуется: {option.scale_name} — {option.scale_required} ед.
                 </p>
                 <Button
                   className="fantasy-btn fantasy-btn-gold"
