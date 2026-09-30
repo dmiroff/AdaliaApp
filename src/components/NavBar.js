@@ -56,7 +56,7 @@ const NavBar = observer(() => {
     <>
       <Navbar 
         className="fantasy-navbar"
-        variant="dark"
+        variant="light"
       >
         <div className="fantasy-navbar__inner">
           <Navbar.Brand onClick={() => user.IsAuth && handleNavLinkClick('/inventory')}>
