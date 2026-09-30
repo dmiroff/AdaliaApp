@@ -56,21 +56,10 @@ const AuthCallback = () => {
     }, [id, token, navigate, user]);
 
     return (
-        <div style={{ 
-            display: 'flex', 
-            justifyContent: 'center', 
-            alignItems: 'center', 
-            height: '100vh',
-            padding: '20px',
-            flexDirection: 'column',
-            textAlign: 'center'
-        }}>
-            <Spinner animation="border" variant="primary" />
-            <h4 className="mt-3">Авторизация...</h4>
-            <p className="text-muted">
-                Идентификатор: {id}<br/>
-                Проверка токена...
-            </p>
+        <div className="app-loading" role="status" aria-live="polite">
+            <div className="app-loading__emblem" aria-hidden="true">A</div>
+            <Spinner animation="border" className="app-loading__spinner" />
+            <p>Проверяем ссылку из бота…</p>
         </div>
     );
 };

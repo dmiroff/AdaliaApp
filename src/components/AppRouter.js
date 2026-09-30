@@ -1,13 +1,13 @@
-import React, { useContext, Suspense, useEffect, useState } from "react";
-import { Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
+import React, { useContext, Suspense, useCallback, useEffect, useState } from "react";
+import { Routes, Route, Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
 import { Context } from "../index";
 import { authRoutes, publicRoutes } from "../routes";
 import { observer } from "mobx-react-lite";
 import { Spinner } from "react-bootstrap";
 import { SERVER_APP_API_URL } from "../utils/constants";
+import Login from '../pages/NotAuth';
+import AuthCallback from '../pages/AuthCallback';
 
-// Ленивые импорты
-const Auth = React.lazy(() => import('../pages/Auth'));
 const Admin = React.lazy(() => import('../pages/Admin'));
 const Inventory = React.lazy(() => import('../pages/Inventory'));
 const Character = React.lazy(() => import('../pages/Character'));
@@ -16,11 +16,22 @@ const Prepare = React.lazy(() => import('../pages/Prepare'));
 const Trade = React.lazy(() => import('../pages/Trade'));
 const Map = React.lazy(() => import('../pages/Map'));
 const Donation = React.lazy(() => import('../pages/Shop'));
-const Login = React.lazy(() => import('../pages/NotAuth')); // Компонент для ручного входа
 const ItemPage = React.lazy(() => import('../pages/ItemPage'));
 const Guild = React.lazy(() => import('../pages/Guild'));
 const TermsAndPrivacyPage = React.lazy(() => import('../pages/TermsAndPrivacyPage'));
-const AuthCallback = React.lazy(() => import('../pages/AuthCallback'));
+
+const LoadingScreen = ({ message = "Загружаем Адалию…" }) => (
+    <div className="app-loading" role="status" aria-live="polite">
+        <div className="app-loading__emblem" aria-hidden="true">A</div>
+        <Spinner animation="border" className="app-loading__spinner" />
+        <p>{message}</p>
+    </div>
+);
+
+const LegacyAuthRedirect = () => {
+    const { id, token } = useParams();
+    return <Navigate to={`/auth/${id}/${token}`} replace />;
+};
 
 const AppRouter = observer(() => {
     const { user } = useContext(Context);
@@ -29,11 +40,40 @@ const AppRouter = observer(() => {
     const [isChecking, setIsChecking] = useState(true);
     const [isInitialized, setIsInitialized] = useState(false);
 
-    const checkAuth = async () => {
+    const clearAuthData = useCallback(() => {
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
+        localStorage.removeItem('id');
+        localStorage.removeItem('token');
+        localStorage.removeItem('token_timestamp');
+    }, []);
+
+    const verifyToken = useCallback(async (accessToken) => {
+        try {
+            const response = await fetch(`${SERVER_APP_API_URL}/verify`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (response.status === 200) {
+                const data = await response.json();
+                return { valid: true, data };
+            }
+            return { valid: false, error: 'Токен невалиден' };
+        } catch (error) {
+            return { valid: false, error: 'Ошибка проверки токена' };
+        }
+    }, []);
+
+    const checkAuth = useCallback(async () => {
         setIsChecking(true);
         
         try {
-            const isAuthPath = location.pathname.startsWith('/auth/');
+            const isAuthPath = location.pathname.startsWith('/auth/') ||
+                               location.pathname.startsWith('/api/auth/');
             
             if (isAuthPath) {
                 setIsChecking(false);
@@ -83,50 +123,17 @@ const AppRouter = observer(() => {
             setIsChecking(false);
             setIsInitialized(true);
         }
-    };
-
-    const verifyToken = async (accessToken) => {
-        try {
-            const response = await fetch(`${SERVER_APP_API_URL}/verify`, {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${accessToken}`,
-                    'Content-Type': 'application/json',
-                },
-            });
-
-            if (response.status === 200) {
-                const data = await response.json();
-                return { valid: true, data };
-            } else {
-                return { valid: false, error: 'Токен невалиден' };
-            }
-        } catch (error) {
-            return { valid: false, error: 'Ошибка проверки токена' };
-        }
-    };
-
-    const clearAuthData = () => {
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('refresh_token');
-        localStorage.removeItem('id');
-        localStorage.removeItem('token');
-        localStorage.removeItem('token_timestamp');
-    };
+    }, [clearAuthData, location.pathname, navigate, user, verifyToken]);
 
     useEffect(() => {
         if (!isInitialized) {
             checkAuth();
         }
-    }, [location.pathname]);
+    }, [checkAuth, isInitialized]);
 
     const ProtectedRoute = ({ children }) => {
         if (isChecking && !isInitialized) {
-            return (
-                <div className="d-flex justify-content-center align-items-center" style={{ height: '60vh' }}>
-                    <Spinner animation="border" variant="primary" />
-                </div>
-            );
+            return <LoadingScreen message="Проверяем вход…" />;
         }
         
         if (!user.IsAuth) {
@@ -138,22 +145,11 @@ const AppRouter = observer(() => {
 
     // Если идёт проверка и мы не на публичном маршруте, показываем лоадер
     if (isChecking && !location.pathname.startsWith('/auth/') && location.pathname !== '/notauth') {
-        return (
-            <div className="d-flex justify-content-center align-items-center" style={{ height: '100vh' }}>
-                <div className="text-center">
-                    <Spinner animation="border" variant="primary" />
-                    <p className="mt-3">Проверка авторизации...</p>
-                </div>
-            </div>
-        );
+        return <LoadingScreen message="Проверяем вход…" />;
     }
 
     return (
-        <Suspense fallback={
-            <div className="d-flex justify-content-center align-items-center" style={{ height: '100vh' }}>
-                <Spinner animation="border" variant="primary" />
-            </div>
-        }>
+        <Suspense fallback={<LoadingScreen />}>
             <Routes>
                 {/* Публичные роуты */}
                 {publicRoutes.map(({ path, name }) => {                    
@@ -176,7 +172,7 @@ const AppRouter = observer(() => {
                 })}
                 
                 {/* Роут для редиректа старых /api/auth ссылок */}
-                <Route path="/api/auth/:id/:token" element={<Navigate to={`/auth/:id/:token`} replace />} />
+                <Route path="/api/auth/:id/:token" element={<LegacyAuthRedirect />} />
                 
                 {/* Защищенные роуты */}
                 {authRoutes.map(({ path, name }) => {                    
@@ -209,7 +205,12 @@ const AppRouter = observer(() => {
                     );
                 })}
                 
-                {/* Дефолтный роут */}
+                <Route path="/" element={
+                    user.IsAuth ?
+                        <Navigate to="/inventory" replace /> :
+                        <Navigate to="/notauth" replace />
+                } />
+
                 <Route path="*" element={
                     user.IsAuth ? 
                         <Navigate to="/inventory" replace /> : 

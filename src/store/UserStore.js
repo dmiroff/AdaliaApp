@@ -116,7 +116,6 @@ export default class UserStore {
         this.setFilters([]);
         this.setSelectedType(null);
         
-        // Также можно перенаправить на страницу логина
-        window.location.href = '/login';
+        window.location.href = '/notauth';
     }
 }

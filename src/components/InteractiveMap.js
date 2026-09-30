@@ -1,5 +1,5 @@
-// src/components/InteractiveMap.js /auth/174418785/b4h3kUTHfZjMf9uJa5RwSlBQPzX1jb0_Oqx3exTQFvk
-import React, { useState, useEffect, useContext, useRef, useCallback, useMemo } from 'react';
+// src/components/InteractiveMap.js
+import React, { useState, useEffect, useContext, useRef, useCallback } from 'react';
 import { observer } from "mobx-react-lite";
 import { Card, Button, ProgressBar, Badge, Modal, OverlayTrigger, Tooltip, Spinner, Alert } from "react-bootstrap";
 import { Context } from "../index";
@@ -11,7 +11,6 @@ const InteractiveMap = observer(() => {
   const [showLocationModal, setShowLocationModal] = useState(false);
   const [svgContent, setSvgContent] = useState('');
   const [loading, setLoading] = useState(true);
-  const [delay, setDelay] = useState(false);
   const [svgError, setSvgError] = useState(null);
   
   const svgContainerRef = useRef();
@@ -97,16 +96,6 @@ const InteractiveMap = observer(() => {
 
     fetchAllData();
   }, [createFallbackSvg, user]);
-
-  // Задержка для плавной загрузки
-  useEffect(() => {
-    if (!loading && !delay) {
-      const timer = setTimeout(() => {
-        setDelay(true);
-      }, 800);
-      return () => clearTimeout(timer);
-    }
-  }, [loading, delay]);
 
   // Функции для управления картой
   const applyTransform = useCallback(() => {
@@ -268,7 +257,7 @@ const InteractiveMap = observer(() => {
 
   // В useEffect для инициализации SVG, добавляем вызов resetView после загрузки
   useEffect(() => {
-    if (svgContent && svgContainerRef.current && delay && !hasInitializedSvg.current) {
+    if (svgContent && svgContainerRef.current && !hasInitializedSvg.current) {
       try {
         hasInitializedSvg.current = true;
         
@@ -291,7 +280,7 @@ const InteractiveMap = observer(() => {
         svgContainerRef.current.innerHTML = svgContent;
       }
     }
-  }, [svgContent, delay, resetView, enhanceSvgWithInteractivity]);
+  }, [svgContent, resetView, enhanceSvgWithInteractivity, applyTransform]);
 
   // Получение данных подземелья с проверкой на null
   const getDungeonData = useCallback((dungeonName) => {
@@ -428,7 +417,7 @@ const InteractiveMap = observer(() => {
         handleLocationClick(location);
       }
     }
-  }, []);
+  }, [getLocationsData]);
 
   const handleLocationClick = (location) => {
     setSelectedLocation(location);
@@ -603,7 +592,7 @@ const InteractiveMap = observer(() => {
     );
   });
 
-  if (loading || !delay) {
+  if (loading) {
     return (
       <div className="d-flex justify-content-center align-items-center min-vh-50">
         <div className="text-center">
@@ -611,7 +600,7 @@ const InteractiveMap = observer(() => {
             <span className="visually-hidden">Loading...</span>
           </Spinner>
           <p className="fantasy-text-gold mt-2">
-            {loading ? 'Загрузка карты...' : 'Подготовка интерфейса...'}
+            Загрузка карты…
           </p>
         </div>
       </div>
@@ -639,7 +628,6 @@ const InteractiveMap = observer(() => {
                   borderRadius: '10px',
                   background: '#2c5e2a',
                   cursor: isDragging.current ? 'grabbing' : 'grab',
-                  height: '500px',
                   touchAction: 'none'
                 }}
                 onMouseDown={handleMouseDown}

@@ -852,12 +852,16 @@
 @media (max-width: 768px) {
   /* Уменьшаем меню на мобильных устройствах */
   .inventory-item-menu-wrapper {
-    width: 140px;
+    width: min(180px, calc(100vw - 24px));
+    max-height: min(60dvh, 280px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
     font-size: 13px;
   }
   
   .dropdown-item-custom {
     padding: 8px 12px;
+    min-height: 44px;
     font-size: 13px;
   }
   
@@ -998,7 +1002,7 @@
   }
   
   .inventory-item-menu-wrapper {
-    width: 130px;
+    width: min(170px, calc(100vw - 24px));
   }
 }
 

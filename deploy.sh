@@ -33,12 +33,16 @@ if [[ ! -d node_modules || package-lock.json -nt node_modules/.package-lock.json
 fi
 
 echo "Building frontend..."
-CI=false npm run build
+if [[ "$target" == production || "$target" == prod ]]; then
+  CI=false GENERATE_SOURCEMAP=false npm run build
+else
+  CI=false npm run build
+fi
 
 release_id=$(date +%s%N)
 release_path="$deploy_path/releases/$release_id"
 remote="$ssh_user@$ssh_host"
-ssh_options=(-o BatchMode=yes -o ConnectTimeout=10)
+ssh_options=(-o BatchMode=yes -o ConnectTimeout=40)
 
 if [[ "$target" == production || "$target" == prod ]]; then
   if ! ssh "${ssh_options[@]}" "$remote" "test -f '$deploy_path/.enabled'"; then
@@ -64,15 +68,17 @@ rsync \
   --human-readable \
   --info=progress2,stats2 \
   --link-dest="$deploy_path/current" \
-  -e "ssh -o BatchMode=yes -o ConnectTimeout=10" \
+  -e "ssh -o BatchMode=yes -o ConnectTimeout=40" \
   build/ "$remote:$release_path/"
 
 echo "Activating release..."
 ssh "${ssh_options[@]}" "$remote" \
   "test -f '$release_path/index.html' && ln -sfn '$release_path' '$deploy_path/current.next' && mv -Tf '$deploy_path/current.next' '$deploy_path/current'"
 
-echo "Checking $site_url..."
-if ! curl --fail --silent --show-error --retry 2 --retry-delay 2 "$site_url" >/dev/null; then
+health_url="${site_url}?release=${release_id}"
+echo "Checking $health_url..."
+if ! curl --fail --silent --show-error --retry 2 --retry-delay 2 \
+  -H "Cache-Control: no-cache" "$health_url" >/dev/null; then
   if [[ "$target" == test ]] && curl --fail --silent --show-error \
     -H "Host: test.adaliagame.ru" "http://$ssh_host/" >/dev/null; then
     echo "Release is online over HTTP; public DNS/HTTPS is still updating."

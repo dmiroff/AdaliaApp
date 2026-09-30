@@ -4,25 +4,21 @@ import NavBar from './components/NavBar';
 import Footer from './components/Footer';
 import { Container } from 'react-bootstrap';
 import backgroundImage from './assets/Images/background.webp';
+import mobileBackgroundImage from './assets/Images/background-mobile.webp';
 import './App.css';
 
 const App = () => {
-  const appStyle = {
-    backgroundImage: `url(${backgroundImage})`,
-    backgroundSize: 'cover',
-    backgroundPosition: 'center',
-    backgroundRepeat: 'no-repeat',
-    backgroundAttachment: 'fixed',
-    minHeight: '100vh',
-    display: 'flex',
-    flexDirection: 'column'
-  };
-
   return (
-    <div style={appStyle} className="app-container">
+    <div
+      className="app-container"
+      style={{
+        '--app-background-image': `url(${backgroundImage})`,
+        '--app-background-mobile-image': `url(${mobileBackgroundImage})`,
+      }}
+    >
       <BrowserRouter>
         <NavBar />
-        <Container className="main-content py-4">
+        <Container fluid="xxl" className="main-content">
           <AppRouter />
         </Container>
         <Footer />

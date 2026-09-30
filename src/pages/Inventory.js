@@ -5,28 +5,53 @@ import Col from "react-bootstrap/Col";
 import Button from "react-bootstrap/Button";
 import InventoryList from "../components/InventoryList";
 import Equipment from "../components/Equipment";
+import Wardrobe from "../components/Wardrobe";
 
 const Inventory = () => {
-    const [showEquipment, setShowEquipment] = useState(false);
+    const [activePanel, setActivePanel] = useState(null);
+    const [equipmentRevision, setEquipmentRevision] = useState(0);
+
+    const togglePanel = (panel) => {
+      setActivePanel((current) => current === panel ? null : panel);
+    };
     
     return (
       <Container className="mt-3 pt-3"> {/* Уменьшили отступы */}
-        <Row className="d-flex justify-content-center align-items-center mb-3"> {/* Уменьшили margin-bottom */}
-          <Col xs={12} md={8} lg={6} className="text-center p-3">
+        <Row className="inventory-panel-switcher justify-content-center g-2 mb-3">
+          <Col xs={12} sm={6} lg={4}>
             <Button 
-              onClick={() => setShowEquipment(!showEquipment)}
-              className={`fantasy-btn ${showEquipment ? 'fantasy-btn-warning' : 'fantasy-btn'} fantasy-btn-lg w-100`}
-              style={{ minHeight: '50px' }}
+              onClick={() => togglePanel('equipment')}
+              className={`fantasy-btn fantasy-btn-lg w-100 ${activePanel === 'equipment' ? 'is-active' : ''}`}
+              aria-expanded={activePanel === 'equipment'}
             >
-              {showEquipment ? "✖ Спрятать снаряжение" : "Показать снаряжение"}
+              🛡️ {activePanel === 'equipment' ? "Скрыть снаряжение" : "Снаряжение"}
+            </Button>
+          </Col>
+          <Col xs={12} sm={6} lg={4}>
+            <Button
+              onClick={() => togglePanel('wardrobe')}
+              className={`fantasy-btn fantasy-btn-lg w-100 ${activePanel === 'wardrobe' ? 'is-active' : ''}`}
+              aria-expanded={activePanel === 'wardrobe'}
+            >
+              🏛️ {activePanel === 'wardrobe' ? "Скрыть Зал" : "Зал облачений"}
             </Button>
           </Col>
         </Row>
         
-        {showEquipment && (
-          <Row className="mb-3"> {/* Уменьшили margin-bottom */}
+        {activePanel === 'equipment' && (
+          <Row className="mb-3">
             <Col>
-              <Equipment />
+              <Equipment key={equipmentRevision} />
+            </Col>
+          </Row>
+        )}
+
+        {activePanel === 'wardrobe' && (
+          <Row className="mb-3">
+            <Col>
+              <Wardrobe
+                onEquipmentChanged={() => setEquipmentRevision((revision) => revision + 1)}
+              />
             </Col>
           </Row>
         )}

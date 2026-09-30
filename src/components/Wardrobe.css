@@ -1,0 +1,186 @@
+.wardrobe-panel {
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  color: #f4e4bc;
+  background: linear-gradient(145deg, rgba(28, 22, 20, 0.98), rgba(67, 45, 30, 0.96));
+  border: 2px solid #a87435;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+.wardrobe-header {
+  background: linear-gradient(90deg, rgba(91, 53, 24, 0.95), rgba(42, 30, 25, 0.95));
+  border-bottom: 1px solid #c69248;
+}
+
+.wardrobe-title {
+  color: #f2c66d;
+  font-family: "Cinzel", serif;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.wardrobe-subtitle {
+  color: #d9c7a8;
+}
+
+.wardrobe-build-offer {
+  max-width: 620px;
+  margin: 0 auto;
+}
+
+.wardrobe-build-icon {
+  font-size: 2.5rem;
+}
+
+.wardrobe-slot-card {
+  min-width: 0;
+  color: #3b291e;
+  background: linear-gradient(145deg, #f4e4bc, #dfc58c);
+  border: 2px solid #8d622f;
+}
+
+.wardrobe-slot-card.is-empty {
+  border-style: dashed;
+  opacity: 0.94;
+}
+
+.wardrobe-slot-card .form-control {
+  color: #342319;
+  background-color: rgba(255, 250, 232, 0.92);
+  border-color: #a87435;
+}
+
+.wardrobe-slot-card .form-text {
+  color: #6d5138;
+}
+
+.wardrobe-equipment-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.4rem;
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.wardrobe-equipment-item {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 0.45rem 0.55rem;
+  background: rgba(88, 58, 31, 0.1);
+  border: 1px solid rgba(120, 79, 34, 0.35);
+  border-radius: 0.35rem;
+}
+
+.wardrobe-equipment-item span {
+  color: #795c3d;
+  font-size: 0.72rem;
+}
+
+.wardrobe-equipment-item strong {
+  overflow: hidden;
+  font-size: 0.82rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wardrobe-empty-copy {
+  color: #72573d;
+}
+
+.wardrobe-panel .wardrobe-refresh-btn.btn,
+.wardrobe-panel .wardrobe-action.btn,
+.wardrobe-modal .wardrobe-action.btn {
+  min-height: 2.5rem;
+  border-width: 1px !important;
+  color: #fff !important;
+  transition: filter 160ms ease, transform 160ms ease !important;
+}
+
+.wardrobe-panel .wardrobe-refresh-btn.btn {
+  min-width: 2.5rem;
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-color: rgba(255, 255, 255, 0.55) !important;
+}
+
+.wardrobe-panel .wardrobe-action--primary.btn,
+.wardrobe-modal .wardrobe-action--primary.btn {
+  background: #8b592b !important;
+  border-color: #e0b158 !important;
+}
+
+.wardrobe-panel .wardrobe-action--success.btn,
+.wardrobe-modal .wardrobe-action--success.btn {
+  background: #2e7d32 !important;
+  border-color: #1f5d24 !important;
+}
+
+.wardrobe-panel .wardrobe-action--warning.btn,
+.wardrobe-modal .wardrobe-action--warning.btn {
+  background: #a86013 !important;
+  border-color: #7b430a !important;
+}
+
+.wardrobe-panel .wardrobe-action--danger.btn,
+.wardrobe-modal .wardrobe-action--danger.btn {
+  background: #9b2d30 !important;
+  border-color: #6d1d20 !important;
+}
+
+.wardrobe-modal .wardrobe-action--secondary.btn {
+  background: #5e6267 !important;
+  border-color: #43474b !important;
+}
+
+.wardrobe-panel .wardrobe-action.btn:hover,
+.wardrobe-modal .wardrobe-action.btn:hover {
+  color: #fff !important;
+  filter: brightness(1.12);
+}
+
+.inventory-panel-switcher .fantasy-btn {
+  min-height: 3.25rem;
+}
+
+.inventory-panel-switcher .fantasy-btn.is-active {
+  background: var(--color-accent-bronze-lighter) !important;
+  box-shadow: inset 0 -3px 0 var(--color-primary-dark), 0 4px 12px rgba(0, 0, 0, 0.32) !important;
+}
+
+@media (max-width: 576px) {
+  .wardrobe-header > div,
+  .wardrobe-header > div:last-child {
+    width: 100%;
+  }
+
+  .wardrobe-header > div:last-child {
+    justify-content: space-between;
+  }
+
+  .wardrobe-equipment-list {
+    grid-template-columns: 1fr;
+    max-height: 210px;
+  }
+
+  .wardrobe-slot-card .btn {
+    width: 100%;
+  }
+
+  .wardrobe-slot-card .d-flex.gap-2 {
+    flex-direction: column;
+  }
+
+  .wardrobe-modal.modal-dialog {
+    width: 100%;
+    max-width: none;
+    min-height: 100%;
+    margin: 0;
+    display: flex;
+    align-items: flex-end;
+  }
+
+  .wardrobe-modal .modal-content {
+    border-radius: 1rem 1rem 0 0;
+  }
+}

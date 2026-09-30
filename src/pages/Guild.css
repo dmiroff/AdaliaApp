@@ -108,7 +108,7 @@
 }
 
 /* Стили для выпадающего меню гильдии */
-.dropdown-container {
+.guild-dropdown-container {
   position: relative;
   display: inline-block;
 }
@@ -140,7 +140,7 @@
 }
 
 /* Выпадающее меню */
-.dropdown-menu {
+.guild-container .dropdown-menu {
   background: linear-gradient(135deg, #2d1f0f 0%, var(--color-primary) 100%) !important;
   border: 2px solid var(--color-accent-gold) !important;
   border-radius: 8px !important;
@@ -152,7 +152,7 @@
   backdrop-filter: blur(10px) !important;
 }
 
-.dropdown-menu.show {
+.guild-container .dropdown-menu.show {
   display: block !important;
   opacity: 1 !important;
 }
@@ -168,7 +168,7 @@
   }
 }
 
-.dropdown-menu .dropdown-item {
+.guild-container .dropdown-menu .dropdown-item {
   display: block !important;
   width: 100% !important;
   padding: 8px 16px !important;
@@ -183,33 +183,33 @@
   border-bottom: 1px solid rgba(240, 184, 65, 0.2) !important;
 }
 
-.dropdown-menu .dropdown-item:last-child {
+.guild-container .dropdown-menu .dropdown-item:last-child {
   border-bottom: none !important;
 }
 
-.dropdown-menu .dropdown-item:hover {
+.guild-container .dropdown-menu .dropdown-item:hover {
   background-color: rgba(240, 184, 65, 0.15) !important;
   color: #ffd166 !important;
   padding-left: 20px !important;
 }
 
-.dropdown-menu .dropdown-item.text-danger {
+.guild-container .dropdown-menu .dropdown-item.text-danger {
   color: #ff6b6b !important;
 }
 
-.dropdown-menu .dropdown-item.text-danger:hover {
+.guild-container .dropdown-menu .dropdown-item.text-danger:hover {
   background-color: rgba(255, 107, 107, 0.1) !important;
   color: #ff8e8e !important;
 }
 
-.dropdown-divider {
+.guild-container .dropdown-divider {
   border-top: 1px solid rgba(240, 184, 65, 0.2) !important;
   margin: 4px 0 !important;
 }
 
 /* Мобильная адаптация */
 @media (max-width: 768px) {
-  .dropdown-menu {
+  .guild-container .dropdown-menu {
     position: fixed !important;
     top: 50% !important;
     left: 50% !important;
@@ -241,12 +241,12 @@
 }
 
 @media (max-width: 576px) {
-  .dropdown-menu {
+  .guild-container .dropdown-menu {
     width: 85vw !important;
     max-height: 70vh !important;
   }
 
-  .dropdown-menu .dropdown-item {
+  .guild-container .dropdown-menu .dropdown-item {
     padding: 6px 14px !important;
     font-size: 13px !important;
   }
@@ -264,13 +264,13 @@
 
 /* Для очень широких экранов - автоматическое позиционирование */
 @media (min-width: 769px) {
-  .dropdown-menu {
+  .guild-container .dropdown-menu {
     max-height: 400px !important;
     overflow-y: auto !important;
   }
 
   /* Если меню выходит за правый край */
-  .dropdown-menu.dropdown-menu-right {
+  .guild-container .dropdown-menu.dropdown-menu-right {
     right: 0 !important;
     left: auto !important;
   }
@@ -508,4 +508,99 @@
 
 .bg-orange {
   background-color: #fd7e14 !important;
+}
+
+/* Меню действий рендерится через portal, поэтому не зависит от overflow карточек. */
+.guild-menu-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1190;
+  background: transparent;
+}
+
+.guild-dropdown-menu,
+.guild-dropdown-menu.show {
+  position: fixed !important;
+  z-index: 1200 !important;
+  min-width: 200px !important;
+  max-width: calc(100vw - 16px) !important;
+  margin: 0 !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain;
+  opacity: 1 !important;
+  transform: none !important;
+}
+
+.guild-dropdown-menu .dropdown-item {
+  min-height: 44px;
+  display: flex !important;
+  align-items: center;
+  touch-action: manipulation;
+}
+
+.member-card__identity,
+.member-info {
+  min-width: 0;
+}
+
+.member-card__name-row h6 {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.member-card__actions {
+  flex: 0 0 auto;
+  margin-left: 0.5rem;
+}
+
+@media (max-width: 768px) {
+  .guild-menu-backdrop {
+    background: rgba(0, 0, 0, 0.42);
+    backdrop-filter: blur(1px);
+  }
+
+  .guild-dropdown-menu,
+  .guild-dropdown-menu.show {
+    top: auto !important;
+    left: max(12px, env(safe-area-inset-left)) !important;
+    right: max(12px, env(safe-area-inset-right)) !important;
+    bottom: max(12px, env(safe-area-inset-bottom)) !important;
+    width: auto !important;
+    max-width: none !important;
+    max-height: calc(100dvh - 24px) !important;
+    border-radius: 14px !important;
+  }
+
+  .guild-dropdown-menu .dropdown-item {
+    min-height: 48px;
+    padding: 10px 16px !important;
+    font-size: 0.95rem !important;
+    white-space: normal !important;
+  }
+
+  .member-card__row {
+    align-items: flex-start !important;
+  }
+
+  .member-card__identity {
+    align-items: flex-start !important;
+  }
+
+  .member-card__name-row {
+    align-items: flex-start !important;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+  }
+
+  .member-card__actions {
+    margin-left: 0.35rem;
+  }
+
+  .member-card__actions .btn,
+  .member-action-btn {
+    width: 40px !important;
+    min-width: 40px !important;
+    height: 40px !important;
+  }
 }

@@ -1,5 +1,5 @@
 import { useState, useEffect, useContext } from "react";
-import { Container, Dropdown, DropdownButton, Row, Button, Modal } from "react-bootstrap";
+import { Alert, Container, Row, Button, Modal, Offcanvas } from "react-bootstrap";
 import GetDataById from "../http/GetData";
 import { UnwearDataById } from "../http/SupportFunctions";
 import { Spinner } from "react-bootstrap";
@@ -14,7 +14,7 @@ const Equipment = () => {
   const [error, setError] = useState(null);
   const [modalMessage, setModalMessage] = useState("");
   const [showModal, setShowModal] = useState(false);
-  const [hoveredSlot, setHoveredSlot] = useState(null);
+  const [selectedSlot, setSelectedSlot] = useState(null);
 
   const equipmentSlots = [
     "head", "right_hand", "left_hand", "breast_armor", "cloak", 
@@ -44,22 +44,25 @@ const Equipment = () => {
     if (showModal) {
       const timer = setTimeout(() => {
         handleModalClose();
-      }, 1000);
+      }, 2500);
       return () => clearTimeout(timer);
     }
   }, [showModal]);
 
   const handleUnwear = async (slot) => {
     try {
-      if (user.player_data[slot]) {
-        const response = await UnwearDataById(user.player_data[slot].id);
+      const equippedItem = equippedItems[slot];
+      if (isValidItem(equippedItem)) {
+        const response = await UnwearDataById(equippedItem.id);
         if (response.status) {
           const message = response.message;
           const player_data = response.data;
           user.setPlayerInventory(player_data.inventory_new);
           user.setPlayer(player_data);
+          setEquippedItems(player_data);
           setModalMessage(message);
         }
+        setSelectedSlot(null);
         setShowModal(true);
       } else {
         setModalMessage("Нельзя снять то, чего не надето");
@@ -67,6 +70,9 @@ const Equipment = () => {
       }
     } catch (err) {
       console.error(err);
+      setSelectedSlot(null);
+      setModalMessage("Не удалось снять предмет. Обновите данные и попробуйте ещё раз.");
+      setShowModal(true);
     }
   };
 
@@ -102,22 +108,29 @@ const Equipment = () => {
     return item && item.id !== undefined && item.id !== null;
   };
 
+  const selectedItem = selectedSlot ? equippedItems[selectedSlot] : null;
+
   if (loading) {
     return (
-      <div className="d-flex justify-content-center align-items-center">
+      <div className="equipment-layout__loading" role="status">
         <Spinner animation="border" role="status">
-          <span className="visually-hidden">Loading...</span>
+          <span className="visually-hidden">Загрузка снаряжения...</span>
         </Spinner>
+        <span>Загружаем снаряжение…</span>
       </div>
     );
   }
+
+  if (error) {
+    return <Alert variant="danger">Не удалось загрузить снаряжение. Обновите страницу.</Alert>;
+  }
   
   return (
-    <Container className="mt-4">
-      <Row className="character-body-container">
-        <div className="inventory-container">
-          <div className="character-silhouette">
-            <img src={bodyImage} alt="Character" className="silhouette-img" />
+    <Container className="equipment-layout mt-3">
+      <Row className="equipment-layout__row">
+        <div className="equipment-layout__frame">
+          <div className="equipment-layout__canvas">
+            <img src={bodyImage} alt="Силуэт персонажа" className="equipment-layout__image" />
             {equipmentSlots.map((slot) => {
               const item = equippedItems[slot];
               const itemIsValid = isValidItem(item);
@@ -125,11 +138,13 @@ const Equipment = () => {
               const imagePath = hasImage ? getImagePath(item.Image) : null;
 
               return (
-                <div
+                <button
                   key={slot}
-                  className={`equipment-slot ${slot}`}
-                  onMouseEnter={() => setHoveredSlot(slot)}
-                  onMouseLeave={() => setHoveredSlot(null)}
+                  type="button"
+                  className={`equipment-layout__slot equipment-slot ${slot}`}
+                  onClick={() => itemIsValid && setSelectedSlot(slot)}
+                  disabled={!itemIsValid}
+                  aria-label={itemIsValid ? `${item.name || 'Предмет'} — открыть действия` : undefined}
                 >
                   {itemIsValid ? (
                     <>
@@ -153,33 +168,39 @@ const Equipment = () => {
                           </span>
                         </div>
                       )}
-                      {hoveredSlot === slot && (
-                        <DropdownButton
-                          title="Действия"
-                          show={true}
-                          onClick={(e) => e.stopPropagation()}
-                          variant="dark"
-                          id="inventory-item-dropdown"
-                          className="equipment-dropdown"
-                        >
-                          <Dropdown.Item 
-                            variant="danger" 
-                            onClick={() => handleUnwear(slot)}
-                          >
-                            Снять
-                          </Dropdown.Item>
-                        </DropdownButton>
-                      )}
                     </>
                   ) : (
                     <div className="empty-slot" />
                   )}
-                </div>
+                </button>
               );
             })}
           </div>
         </div>
       </Row>
+      <Offcanvas
+        show={Boolean(selectedSlot && isValidItem(selectedItem))}
+        onHide={() => setSelectedSlot(null)}
+        placement="bottom"
+        className="equipment-action-sheet"
+        aria-labelledby="equipment-action-title"
+      >
+        <Offcanvas.Header closeButton>
+          <Offcanvas.Title id="equipment-action-title">
+            {selectedItem?.name || "Предмет снаряжения"}
+          </Offcanvas.Title>
+        </Offcanvas.Header>
+        <Offcanvas.Body>
+          <p className="equipment-action-sheet__hint">Предмет останется в инвентаре персонажа.</p>
+          <Button
+            variant="danger"
+            className="equipment-action-sheet__button"
+            onClick={() => handleUnwear(selectedSlot)}
+          >
+            Снять предмет
+          </Button>
+        </Offcanvas.Body>
+      </Offcanvas>
       <Modal show={showModal} onHide={handleModalClose} backdrop="static" keyboard={false}>
         <Modal.Header closeButton>
           <Modal.Title>Оповещение</Modal.Title>

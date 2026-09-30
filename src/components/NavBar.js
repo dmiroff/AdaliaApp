@@ -1,118 +1,162 @@
 import { observer } from "mobx-react-lite";
-import { useNavigate } from "react-router-dom";
-import { Nav, Navbar, Button } from "react-bootstrap";
-import { useState, useRef } from "react";
+import { useContext, useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { Nav, Navbar, Button, Offcanvas } from "react-bootstrap";
 import SettingsModal from "./SettingsModal";
+import { Context } from "../index";
+
+const navigationItems = [
+  ["/inventory", "Инвентарь"],
+  ["/character", "Персонаж"],
+  ["/guild", "Гильдия"],
+  ["/map", "Карта"],
+  ["/rating", "Рейтинг"],
+  ["/trade", "Торговля"],
+  ["/donation", "💎 Магазин"],
+];
+
+const mobilePrimaryItems = [
+  ["/inventory", "🎒", "Инвентарь"],
+  ["/character", "🛡️", "Персонаж"],
+  ["/guild", "🏰", "Гильдия"],
+];
+
+const mobileMoreItems = [
+  ["/map", "🗺️", "Карта"],
+  ["/rating", "🏆", "Рейтинг"],
+  ["/trade", "⚖️", "Торговля"],
+  ["/donation", "💎", "Магазин"],
+];
 
 const NavBar = observer(() => {
+  const { user } = useContext(Context);
   const navigate = useNavigate();
+  const location = useLocation();
   const [showSettings, setShowSettings] = useState(false);
-  const [expanded, setExpanded] = useState(false); // Добавляем state для управления expanded
+  const [showMobileMore, setShowMobileMore] = useState(false);
+
+  useEffect(() => {
+    document.body.classList.toggle("has-mobile-bottom-nav", user.IsAuth);
+    return () => document.body.classList.remove("has-mobile-bottom-nav");
+  }, [user.IsAuth]);
 
   const handleSettingsClick = () => {
-    // Закрываем навбар на мобильных устройствах
-    setExpanded(false);
+    setShowMobileMore(false);
     setShowSettings(true);
   };
 
-  // Обработчик для навигации (также закрывает меню на мобильных)
   const handleNavLinkClick = (path) => {
-    setExpanded(false);
+    setShowMobileMore(false);
     navigate(path);
   };
+
+  const moreSectionIsActive = mobileMoreItems.some(([path]) => location.pathname.startsWith(path));
 
   return (
     <>
       <Navbar 
-        collapseOnSelect 
-        expand="lg" 
         className="fantasy-navbar"
-        expanded={expanded}
-        onToggle={() => setExpanded(!expanded)}
+        variant="dark"
       >
-        <Navbar.Toggle 
-          aria-controls="responsive-navbar-nav" 
-          className="fantasy-btn fantasy-btn-lg w-100"
-        />
-        <Navbar.Collapse id="responsive-navbar-nav">
-          <Nav className="w-100">
-            <Nav.Link 
-              eventKey="inventory" 
-              onClick={() => handleNavLinkClick("/inventory")}
-              className="fantasy-btn fantasy-btn-lg mx-1 my-1 w-100"
-            >
-              Инвентарь
-            </Nav.Link>
-            <Nav.Link 
-              eventKey="character" 
-              onClick={() => handleNavLinkClick("/character")}
-              className="fantasy-btn fantasy-btn-lg mx-1 my-1 w-100"
-            >
-              Персонаж
-            </Nav.Link>
-            <Nav.Link 
-              eventKey="guild" 
-              onClick={() => handleNavLinkClick("/guild")}
-              className="fantasy-btn fantasy-btn-lg mx-1 my-1 w-100"
-            >
-              Гильдия
-            </Nav.Link>
-            <Nav.Link 
-              eventKey="map" 
-              onClick={() => handleNavLinkClick("/map")}
-              className="fantasy-btn fantasy-btn-lg mx-1 my-1 w-100"
-            >
-              Карта
-            </Nav.Link>
-            <Nav.Link 
-              eventKey="rating" 
-              onClick={() => handleNavLinkClick("/rating")}
-              className="fantasy-btn fantasy-btn-lg mx-1 my-1 w-100"
-            >
-              Рейтинг
-            </Nav.Link>
-            <Nav.Link 
-              eventKey="trade" 
-              onClick={() => handleNavLinkClick("/trade")}
-              className="fantasy-btn fantasy-btn-lg mx-1 my-1 w-100"
-            >
-              Торговля
-            </Nav.Link>
-            <Nav.Link 
-              eventKey="donation" 
-              onClick={() => handleNavLinkClick("/donation")}
-              className="fantasy-btn fantasy-btn-lg mx-1 my-1 w-100"
-            >
-              💎 Магазин
-            </Nav.Link>
-          </Nav>
-          
-          {/* Компактная кнопка настроек для десктопа */}
-          <Button
-            onClick={handleSettingsClick}
-            className="fantasy-btn d-lg-block d-none"
-            title="Настройки"
-          >
-            ⚙️
-          </Button>
+        <div className="fantasy-navbar__inner">
+          <Navbar.Brand onClick={() => user.IsAuth && handleNavLinkClick('/inventory')}>
+            <span className="fantasy-navbar__crest" aria-hidden="true">A</span>
+            <span className="fantasy-navbar__title">Адалия</span>
+          </Navbar.Brand>
 
-          {/* Полноразмерная кнопка настроек для мобильных */}
-          <div className="d-flex justify-content-center mt-3 w-100 d-lg-none">
-            <Button
-              onClick={handleSettingsClick}
-              className="fantasy-btn fantasy-btn-info w-100"
-              style={{ maxWidth: '200px' }}
-            >
-              ⚙️ Настройки
-            </Button>
-          </div>
-        </Navbar.Collapse>
+          {user.IsAuth && (
+            <div className="fantasy-navbar__desktop d-none d-lg-flex">
+              <Nav className="fantasy-navbar__links">
+                {navigationItems.map(([path, label]) => (
+                  <Nav.Link
+                    key={path}
+                    active={location.pathname.startsWith(path)}
+                    onClick={() => handleNavLinkClick(path)}
+                    className="fantasy-navbar__link"
+                  >
+                    {label}
+                  </Nav.Link>
+                ))}
+              </Nav>
+
+              <Button
+                onClick={handleSettingsClick}
+                className="fantasy-navbar__settings"
+                title="Настройки"
+                aria-label="Настройки"
+              >
+                <span aria-hidden="true">⚙️</span>
+              </Button>
+            </div>
+          )}
+        </div>
       </Navbar>
 
-      <SettingsModal 
-        show={showSettings} 
-        onHide={() => setShowSettings(false)} 
-      />
+      {user.IsAuth && (
+        <nav className="mobile-bottom-nav d-lg-none" aria-label="Основная навигация">
+          {mobilePrimaryItems.map(([path, icon, label]) => (
+            <button
+              key={path}
+              type="button"
+              className={`mobile-bottom-nav__item ${location.pathname.startsWith(path) ? "is-active" : ""}`}
+              onClick={() => handleNavLinkClick(path)}
+              aria-current={location.pathname.startsWith(path) ? "page" : undefined}
+            >
+              <span className="mobile-bottom-nav__icon" aria-hidden="true">{icon}</span>
+              <span>{label}</span>
+            </button>
+          ))}
+          <button
+            type="button"
+            className={`mobile-bottom-nav__item ${moreSectionIsActive ? "is-active" : ""}`}
+            onClick={() => setShowMobileMore(true)}
+            aria-expanded={showMobileMore}
+            aria-controls="mobile-more-navigation"
+          >
+            <span className="mobile-bottom-nav__icon" aria-hidden="true">☰</span>
+            <span>Ещё</span>
+          </button>
+        </nav>
+      )}
+
+      <Offcanvas
+        id="mobile-more-navigation"
+        show={showMobileMore}
+        onHide={() => setShowMobileMore(false)}
+        placement="bottom"
+        className="mobile-more-sheet d-lg-none"
+        aria-labelledby="mobile-more-title"
+      >
+        <Offcanvas.Header closeButton>
+          <Offcanvas.Title id="mobile-more-title">Разделы Адалии</Offcanvas.Title>
+        </Offcanvas.Header>
+        <Offcanvas.Body>
+          <div className="mobile-more-sheet__grid">
+            {mobileMoreItems.map(([path, icon, label]) => (
+              <button
+                key={path}
+                type="button"
+                className={location.pathname.startsWith(path) ? "is-active" : ""}
+                onClick={() => handleNavLinkClick(path)}
+              >
+                <span aria-hidden="true">{icon}</span>
+                <span>{label}</span>
+              </button>
+            ))}
+          </div>
+          <Button className="mobile-more-sheet__settings" onClick={handleSettingsClick}>
+            <span aria-hidden="true">⚙️</span>
+            Настройки
+          </Button>
+        </Offcanvas.Body>
+      </Offcanvas>
+
+      {user.IsAuth && (
+        <SettingsModal
+          show={showSettings}
+          onHide={() => setShowSettings(false)}
+        />
+      )}
     </>
   );
 });

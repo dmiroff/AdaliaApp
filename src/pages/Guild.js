@@ -1,5 +1,6 @@
 // Guild.js - оптимизированная версия с атрибутами и навыками в деталях
 import React, { useState, useContext, useEffect, useRef, useCallback, useMemo } from "react";
+import { createPortal } from "react-dom";
 import { 
   Container, 
   Spinner, 
@@ -108,10 +109,10 @@ const MemberActionsDropdown = React.memo(({
   member, 
   currentUserRole,
   currentUserId,
-  onAction,
-  position = "bottom-end"
+  onAction
 }) => {
   const [show, setShow] = useState(false);
+  const [menuStyle, setMenuStyle] = useState(null);
   const targetRef = useRef(null);
   const dropdownRef = useRef(null);
 
@@ -129,6 +130,48 @@ const MemberActionsDropdown = React.memo(({
     (isCurrentUserLeader && !isTargetLeader) ||
     (isCurrentUserOfficer && member.role === "member")
   );
+
+  const updateMenuPosition = useCallback(() => {
+    const target = targetRef.current;
+    if (!target) return;
+
+    const rect = target.getBoundingClientRect();
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    const edgeGap = 8;
+
+    if (viewportWidth <= 768) {
+      setMenuStyle({
+        position: "fixed",
+        left: 12,
+        right: 12,
+        bottom: 12,
+        top: "auto",
+        width: "auto",
+        maxHeight: "calc(100dvh - 24px)"
+      });
+      return;
+    }
+
+    const menuWidth = Math.min(240, viewportWidth - edgeGap * 2);
+    const menuHeight = dropdownRef.current?.offsetHeight || 210;
+    const left = Math.min(
+      Math.max(edgeGap, rect.right - menuWidth),
+      viewportWidth - menuWidth - edgeGap
+    );
+    const fitsBelow = rect.bottom + menuHeight + edgeGap <= viewportHeight;
+    const top = fitsBelow
+      ? rect.bottom + 6
+      : Math.max(edgeGap, rect.top - menuHeight - 6);
+
+    setMenuStyle({
+      position: "fixed",
+      top,
+      left,
+      width: menuWidth,
+      maxHeight: Math.max(120, viewportHeight - edgeGap * 2)
+    });
+  }, []);
 
   const handleAction = useCallback((action) => {
     setShow(false);
@@ -164,45 +207,72 @@ const MemberActionsDropdown = React.memo(({
       }
     };
 
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") {
+        setShow(false);
+        targetRef.current?.focus();
+      }
+    };
+
     if (show) {
-      document.addEventListener('mousedown', handleClickOutside);
+      updateMenuPosition();
+      const animationFrame = window.requestAnimationFrame(updateMenuPosition);
+      document.addEventListener("pointerdown", handleClickOutside);
+      document.addEventListener("keydown", handleKeyDown);
+      window.addEventListener("resize", updateMenuPosition);
+      window.addEventListener("scroll", updateMenuPosition, true);
+
+      return () => {
+        window.cancelAnimationFrame(animationFrame);
+        document.removeEventListener("pointerdown", handleClickOutside);
+        document.removeEventListener("keydown", handleKeyDown);
+        window.removeEventListener("resize", updateMenuPosition);
+        window.removeEventListener("scroll", updateMenuPosition, true);
+      };
     }
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [show]);
+  }, [show, updateMenuPosition]);
 
   if (isCurrentUser || (!canPromote && !canDemote && !canTransfer && !canKick)) {
     return null;
   }
 
   return (
-    <div ref={dropdownRef} className="position-relative">
+    <div className="guild-dropdown-container">
       <button
         ref={targetRef}
+        type="button"
         className={`member-action-btn ${isCurrentUserLeader ? 'leader' : 'officer'}`}
         onClick={(e) => {
           e.stopPropagation();
-          setShow(!show);
+          if (!show) {
+            updateMenuPosition();
+          }
+          setShow((isShown) => !isShown);
         }}
         title={isCurrentUserLeader ? "Действия лидера" : "Действия офицера"}
+        aria-label={`Действия с игроком ${member.name}`}
+        aria-haspopup="menu"
+        aria-expanded={show}
       >
         {isCurrentUserLeader ? "👑" : "⭐"}
       </button>
 
-      {show && (
-        <div 
-          className="guild-dropdown-menu show"
-          style={{
-            position: 'absolute',
-            top: '100%',
-            right: 0,
-            zIndex: 1050,
-            minWidth: '200px'
-          }}
-        >
+      {show && menuStyle && createPortal(
+        <>
+          <div className="guild-menu-backdrop" aria-hidden="true" />
+          <div
+            ref={dropdownRef}
+            className="guild-dropdown-menu show"
+            style={menuStyle}
+            role="menu"
+            aria-label={`Действия с игроком ${member.name}`}
+          >
           {canPromote && (
             <button
+              type="button"
               className="dropdown-item"
               onClick={() => handleAction("promote")}
+              role="menuitem"
             >
               <i className="fas fa-star me-2"></i>
               Назначить офицером
@@ -211,8 +281,10 @@ const MemberActionsDropdown = React.memo(({
           
           {canDemote && (
             <button
+              type="button"
               className="dropdown-item"
               onClick={() => handleAction("demote")}
+              role="menuitem"
             >
               <i className="fas fa-arrow-down me-2"></i>
               Разжаловать офицера
@@ -221,8 +293,10 @@ const MemberActionsDropdown = React.memo(({
           
           {canTransfer && (
             <button
+              type="button"
               className="dropdown-item"
               onClick={() => handleAction("transfer")}
+              role="menuitem"
             >
               <i className="fas fa-crown me-2"></i>
               Передать гильдию
@@ -235,14 +309,18 @@ const MemberActionsDropdown = React.memo(({
           
           {canKick && (
             <button
+              type="button"
               className="dropdown-item text-danger"
               onClick={() => handleAction("kick")}
+              role="menuitem"
             >
               <i className="fas fa-user-times me-2"></i>
               Исключить из гильдии
             </button>
           )}
-        </div>
+          </div>
+        </>,
+        document.body
       )}
     </div>
   );
@@ -782,15 +860,15 @@ const Guild = observer(() => {
                       <Col md={6} lg={4} key={memberId} className="mb-3">
                         <Card className="fantasy-card member-card h-100">
                           <Card.Body>
-                            <div className="d-flex align-items-center justify-content-between">
-                              <div className="d-flex align-items-center flex-grow-1">
+                            <div className="member-card__row d-flex align-items-center justify-content-between">
+                              <div className="member-card__identity d-flex align-items-center flex-grow-1">
                                 <div className="member-avatar me-3">
                                   <div className={`avatar-circle ${member.is_online ? 'online' : 'offline'}`}>
                                     {getCharacterFallback(member.class)}
                                   </div>
                                 </div>
                                 <div className="member-info flex-grow-1">
-                                  <div className="d-flex align-items-center">
+                                  <div className="member-card__name-row d-flex align-items-center">
                                     <h6 className="fantasy-text-dark mb-1 mb-0 me-2">{member.name || "Без имени"}</h6>
                                     {getRoleBadge(member.role)}
                                   </div>
@@ -805,7 +883,7 @@ const Guild = observer(() => {
                                 </div>
                               </div>
                               
-                              <div className="d-flex align-items-center gap-1">
+                              <div className="member-card__actions d-flex align-items-center gap-1">
                                 {/* Кнопка просмотра деталей */}
                                 {canViewDetails && (<button
                                   className="btn btn-sm btn-outline-info"
