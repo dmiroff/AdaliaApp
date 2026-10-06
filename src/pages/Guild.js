@@ -533,7 +533,7 @@ const Guild = observer(() => {
     }
 
     if (!invitePlayerName.trim()) {
-      setError("Введите имя игрока");
+      setError("Введите имя или ID игрока");
       return;
     }
 
@@ -1325,17 +1325,17 @@ const Guild = observer(() => {
       <Modal.Body className="fantasy-card">
         <Form>
           <Form.Group className="mb-3">
-            <Form.Label className="fantasy-text-dark">Имя игрока</Form.Label>
+            <Form.Label className="fantasy-text-dark">Имя или ID игрока</Form.Label>
             <Form.Control
               type="text"
               value={invitePlayerName}
               onChange={(e) => setInvitePlayerName(e.target.value)}
-              placeholder="Введите имя игрока"
+              placeholder="Имя персонажа или ID"
               className="fantasy-input"
               autoFocus
             />
             <Form.Text className="text-muted">
-              Игрок получит приглашение присоединиться к вашей гильдии
+              Игрок получит в боте приглашение с кнопками принятия и отказа.
             </Form.Text>
           </Form.Group>
         </Form>

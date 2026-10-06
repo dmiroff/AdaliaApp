@@ -513,7 +513,7 @@ export const UpdateGuildSettings = async (settings) => {
 export const InviteToGuild = async (playerName) => {
   try {
     const response = await apiClient.post(`/guild/invite`, {
-      player_name: playerName
+      player_name: playerName.trim()
     });
     
     return {
@@ -525,7 +525,7 @@ export const InviteToGuild = async (playerName) => {
     console.error("Error inviting player to guild:", error);
     return {
       status: error.response?.status || 500,
-      message: error.response?.data?.message || "Ошибка отправки приглашения",
+      message: error.response?.data?.detail || error.response?.data?.message || "Ошибка отправки приглашения",
       data: error.response?.data?.data || {}
     };
   }
