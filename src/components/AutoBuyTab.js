@@ -22,24 +22,24 @@ export default function AutoBuyTab({ onOpenPremium, active = true }) {
     if (!player?.upgrades?.includes('Торговый приказчик')) {
       setData({ owned: false, price: 500 }); setError(''); return;
     }
-    const result = await apiClient.get('/api/autobuy'); setData(result.data); setError('');
+    const result = await apiClient.get('/autobuy'); setData(result.data); setError('');
   }
   useEffect(() => { if (active) load().catch(failure); }, [active]);
   async function search(event) {
     event.preventDefault(); setBusy(true); setError('');
-    try { const result = await apiClient.get('/api/autobuy/items', { params: { q: query } }); setItems(result.data); }
+    try { const result = await apiClient.get('/autobuy/items', { params: { q: query } }); setItems(result.data); }
     catch (exc) { failure(exc); } finally { setBusy(false); }
   }
   async function save(rule, enabled = true) {
     setBusy(true); setError(''); setNotice('');
     try {
-      await apiClient.put(`/api/autobuy/${rule.item_id}`, { price: rule.price, enabled });
+      await apiClient.put(`/autobuy/${rule.item_id}`, { price: rule.price, enabled });
       await load(); setNotice('Прайс-лист сохранён'); setSelected(null); setPrice('');
     } catch (exc) { failure(exc); } finally { setBusy(false); }
   }
   async function remove() {
     setBusy(true); setError('');
-    try { await apiClient.delete(`/api/autobuy/${removing.item_id}`); await load(); setRemoving(null); }
+    try { await apiClient.delete(`/autobuy/${removing.item_id}`); await load(); setRemoving(null); }
     catch (exc) { failure(exc); } finally { setBusy(false); }
   }
   function select(item) { setSelected(item); setPrice(String(data.rules.find(r => r.item_id === item.id)?.price || '')); }

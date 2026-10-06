@@ -9,14 +9,14 @@ export default function HeadContractPanel() {
   const [message, setMessage] = useState('');
   const [confirm, setConfirm] = useState(false);
   async function load() {
-    try { const { data } = await apiClient.get('/api/head-contract'); setContract(data); setError(''); }
+    try { const { data } = await apiClient.get('/head-contract'); setContract(data); setError(''); }
     catch (exc) { setError(exc.response?.data?.detail || 'Не удалось проверить контракт'); }
   }
   useEffect(() => { load(); }, []);
   async function buyout() {
     setBusy(true); setError('');
     try {
-      const { data } = await apiClient.post('/api/head-contract/buyout', { price: contract.price });
+      const { data } = await apiClient.post('/head-contract/buyout', { price: contract.price });
       setMessage(`${data.message}. Потрачено: ${data.price} 🌕`);
       setConfirm(false); await load();
     } catch (exc) { setError(exc.response?.data?.detail || 'Не удалось откупиться'); }
