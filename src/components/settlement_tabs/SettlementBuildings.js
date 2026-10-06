@@ -6,7 +6,6 @@ import {
     Alert, Spinner, Accordion, Tooltip, OverlayTrigger
 } from 'react-bootstrap';
 import { 
-    BUILDINGS_DICT, 
     RESOURCE_NAMES,
     determineSettlementType,
     SETTLEMENT_TYPE_NAMES
@@ -112,7 +111,26 @@ const SettlementBuildings = observer(() => {
         return settlementData?.type || determineSettlementType(buildings, settlementData?.garrison || {});
     }, [settlementData, buildings]);
     
-    const buildingsData = useMemo(() => BUILDINGS_DICT[settlementType] || {}, [settlementType]);
+    const [buildingsData, setBuildingsData] = useState({});
+    const [requirementsError, setRequirementsError] = useState('');
+
+    useEffect(() => {
+        let active = true;
+        setBuildingsData({});
+        setRequirementsError('');
+        if (!guildId) return () => { active = false; };
+        settlementService.getBuildingsData(guildId).then(result => {
+            if (!active) return;
+            if (result.status === 200 && result.data && !result.data.status) {
+                setBuildingsData(result.data);
+            } else {
+                setRequirementsError(result.message || 'Не удалось загрузить требования построек');
+            }
+        }).catch(() => {
+            if (active) setRequirementsError('Не удалось загрузить требования построек');
+        });
+        return () => { active = false; };
+    }, [guildId, settlementType, heroes]);
     
     const showNotification = useCallback((type, message) => {
         setNotification({ show: true, type, message });
@@ -741,6 +759,7 @@ const SettlementBuildings = observer(() => {
     
     return (
         <div className="settlement-buildings">
+            {requirementsError && <Alert variant="danger">{requirementsError}</Alert>}
             {notification.show && (
                 <Alert 
                     variant={notification.type === 'success' ? 'success' : notification.type === 'error' ? 'danger' : 'info'} 
