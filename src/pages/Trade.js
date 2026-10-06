@@ -8,6 +8,8 @@ import AuctionTab from "../components/AuctionTab";
 import BirzhaTab from "../components/BirzhaTab";
 import BulkPurchaseTab from "../components/BulkPurchaseTab"
 
+import AutoBuyTab from '../components/AutoBuyTab';
+
 const Trade = () => {
     const [activeTab, setActiveTab] = useState('auction');
     
@@ -41,6 +43,7 @@ const Trade = () => {
                 </Suspense>
               </Tab>
               
+              <Tab eventKey="autobuy" title="🤝 Автопокупки"><AutoBuyTab /></Tab>
               <Tab eventKey="exchange" title="📊 Биржа" className="fantasy-tab-content">
                 <Suspense fallback={
                   <div className="fantasy-paper p-4 text-center mt-3">
