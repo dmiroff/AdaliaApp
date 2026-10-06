@@ -34,7 +34,7 @@ export default function CraftingTab() {
   return <div className="fantasy-paper p-3">
     <h3>⚒️ Кузня</h3>
     <p>Рецепты используют материалы из инвентаря. Навык Кузнеца увеличивает выход расходников.</p>
-    {!catalog.allowed && <Alert variant="info">{catalog.reason}. Постоянная переносная кузня доступна в премиум-магазине за 500 далёнов.</Alert>}
+    {!catalog.allowed && <Alert variant="info">{catalog.reason}. Постоянная переносная кузня доступна в премиум-магазине за 500 далеонов.</Alert>}
     {catalog.portable && <Alert variant="success">Переносная кузня доступна: можно создавать предметы вне боя в любой локации.</Alert>}
     {error && <Alert variant="danger">{error}</Alert>}
     {message && <Alert variant="success">{message}</Alert>}
