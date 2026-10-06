@@ -423,6 +423,17 @@ const DonationTab = observer(() => {
       maxQuantity: 100,
       category: "premium"
     },
+    {
+      id: 24,
+      name: "⚒️ Переносная кузня",
+      description: "Создавайте предметы и расходники из инвентаря в любой локации вне боя.",
+      price: 500,
+      currency: "💎",
+      features: ["Постоянный доступ к вкладке Кузня", "Стрелы, болты и пустые свитки", "Выход расходников растёт от Кузнеца"],
+      purchased: playerData?.upgrades?.includes("Переносная кузня") || false,
+      type: "permanent",
+      category: "premium"
+    },
   ];
 
   // Фильтруем товары по активной вкладке и скрываем уже купленные новичковые
