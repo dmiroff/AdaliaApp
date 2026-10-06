@@ -43,7 +43,7 @@ const Trade = () => {
                 </Suspense>
               </Tab>
               
-              <Tab eventKey="autobuy" title="🤝 Автопокупки"><AutoBuyTab /></Tab>
+              <Tab eventKey="autobuy" title="📜 Прайс-лист"><AutoBuyTab active={activeTab === "autobuy"} /></Tab>
               <Tab eventKey="exchange" title="📊 Биржа" className="fantasy-tab-content">
                 <Suspense fallback={
                   <div className="fantasy-paper p-4 text-center mt-3">

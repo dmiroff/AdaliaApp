@@ -1,9 +1,12 @@
+import { useNavigate } from 'react-router-dom';
+import { DONATION_ROUTE } from '../utils/constants';
 import React, { useEffect, useState } from 'react';
 import { Alert, Button, Card, Form, ListGroup, Modal } from 'react-bootstrap';
 import apiClient from '../http/apiClient';
 
-export default function AutoBuyTab() {
-  const [data, setData] = useState({ rules: [], money: 0 });
+export default function AutoBuyTab({ onOpenPremium, active = true }) {
+  const navigate = useNavigate();
+  const [data, setData] = useState(null);
   const [query, setQuery] = useState('');
   const [items, setItems] = useState([]);
   const [selected, setSelected] = useState(null);
@@ -12,9 +15,16 @@ export default function AutoBuyTab() {
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [removing, setRemoving] = useState(null);
-  const failure = exc => setError(exc.response?.data?.detail || 'Не удалось выполнить действие');
-  async function load() { const result = await apiClient.get('/api/autobuy'); setData(result.data); }
-  useEffect(() => { load().catch(failure); }, []);
+  const failure = exc => setError(exc.response?.status === 404 ? 'Прайс-лист временно недоступен. Попробуйте позже.' : (exc.response?.data?.detail || 'Не удалось выполнить действие'));
+  async function load() {
+    const playerResponse = await apiClient.get('/player');
+    const player = playerResponse.data?.data || playerResponse.data;
+    if (!player?.upgrades?.includes('Торговый приказчик')) {
+      setData({ owned: false, price: 500 }); setError(''); return;
+    }
+    const result = await apiClient.get('/api/autobuy'); setData(result.data); setError('');
+  }
+  useEffect(() => { if (active) load().catch(failure); }, [active]);
   async function search(event) {
     event.preventDefault(); setBusy(true); setError('');
     try { const result = await apiClient.get('/api/autobuy/items', { params: { q: query } }); setItems(result.data); }
@@ -33,8 +43,20 @@ export default function AutoBuyTab() {
     catch (exc) { failure(exc); } finally { setBusy(false); }
   }
   function select(item) { setSelected(item); setPrice(String(data.rules.find(r => r.item_id === item.id)?.price || '')); }
+  if (!data) return <div className="fantasy-paper p-3">
+    <h3>Торговый приказчик</h3>
+    {error ? <Alert variant="warning">{error}</Alert> : <p>Проверяем доступ к прайс-листу…</p>}
+    {error && <Button onClick={() => { setError(''); load().catch(failure); }}>Повторить</Button>}
+  </div>;
+  if (!data.owned) return <div className="fantasy-paper p-3">
+    <h3>📜 Торговый приказчик</h3>
+    <p>Наймите приказчика в премиум-магазине за {data.price || 500} далеонов. Он будет принимать вещи по вашему прайс-листу и автоматически платить продавцам вашими монетами.</p>
+    <p>Покупка постоянная. Настройки станут доступны после приобретения.</p>
+    <Button onClick={() => onOpenPremium ? onOpenPremium() : navigate(DONATION_ROUTE)}>В премиум-магазин</Button>{' '}
+    <Button variant="outline-secondary" onClick={() => load().catch(failure)}>Проверить покупку</Button>
+  </div>;
   return <div className="fantasy-paper p-3">
-    <h3>Автопокупки — мой прайс-лист</h3>
+    <h3>📜 Торговый приказчик — мой прайс-лист</h3>
     <p>При передаче вам предметов из списка вы автоматически платите отправителю указанную цену за штуку. Доступно: {data.money} 🌕.</p>
     <p>Если монет не хватает, покупается доступное количество. Остаток остаётся у отправителя. Предметы вне списка или с правилом на паузе передаются как обычный подарок. Действуют обычные ограничения передачи по локации, бою и весу.</p>
     {error && <Alert variant="danger">{typeof error === 'string' ? error : 'Проверьте цену и выбранный предмет'}</Alert>}
