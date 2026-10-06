@@ -11,6 +11,8 @@ import {
   performAbodeTransfer
 } from "../http/premiumApi";
 
+import HeadContractPanel from './HeadContractPanel';
+
 const DonationTab = observer(() => {
   const { user } = useContext(Context);
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -424,6 +426,17 @@ const DonationTab = observer(() => {
       category: "premium"
     },
     {
+      id: 25,
+      name: "🕵️ Тайный осведомитель",
+      description: "Узнавайте о контракте на вашу голову и откупайтесь дистанционно.",
+      price: 500,
+      currency: "💎",
+      features: ["Постоянные уведомления о новых контрактах в боте", "Откуп в приложении или командой боту", "Откуп за оставшуюся награду в золоте, вне боя"],
+      purchased: playerData?.upgrades?.includes("Тайный осведомитель") || false,
+      type: "permanent",
+      category: "premium"
+    },
+    {
       id: 24,
       name: "⚒️ Переносная кузня",
       description: "Создавайте предметы и расходники из инвентаря в любой локации вне боя.",
@@ -620,6 +633,7 @@ const DonationTab = observer(() => {
 
   return (
     <div className="fantasy-paper content-overlay">
+      {playerData?.upgrades?.includes("Тайный осведомитель") && <HeadContractPanel />}
       {/* Уведомления */}
       {success && (
         <Alert variant="success" className="fantasy-alert">
