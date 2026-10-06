@@ -42,7 +42,10 @@ export default function AutoBuyTab({ onOpenPremium, active = true }) {
     try { await apiClient.delete(`/autobuy/${removing.item_id}`); await load(); setRemoving(null); }
     catch (exc) { failure(exc); } finally { setBusy(false); }
   }
-  function select(item) { setSelected(item); setPrice(String(data.rules.find(r => r.item_id === item.id)?.price || '')); }
+  function select(item) {
+    setError(''); setNotice(''); setSelected(item);
+    setPrice(String(data.rules.find(r => String(r.item_id) === String(item.id))?.price || ''));
+  }
   if (!data) return <div className="fantasy-paper p-3">
     <h3>Торговый приказчик</h3>
     {error ? <Alert variant="warning">{error}</Alert> : <p>Проверяем доступ к прайс-листу…</p>}
@@ -68,15 +71,17 @@ export default function AutoBuyTab({ onOpenPremium, active = true }) {
     <ListGroup className="mb-3">{items.map(item => <ListGroup.Item key={item.id}>
       {item.name} · ID {item.id}{' '}<Button size="sm" disabled={busy} onClick={() => select(item)}>Выбрать</Button>
     </ListGroup.Item>)}</ListGroup>
-    {selected && <Card className="mb-3"><Card.Body>
-      <Card.Title>{selected.name} · ID {selected.id}</Card.Title>
-      <Form onSubmit={event => { event.preventDefault(); save({ item_id: selected.id, price: Number(price) }); }}>
-        <Form.Label>Монет за одну штуку</Form.Label>
-        <Form.Control type="number" min="1" max="1000000000" step="1" required value={price} onChange={event => setPrice(event.target.value)} />
+    <Modal show={!!selected} onHide={() => !busy && setSelected(null)} centered>
+      <Modal.Header closeButton={!busy}><Modal.Title>{selected?.name} · ID {selected?.id}</Modal.Title></Modal.Header>
+      <Modal.Body>
+      {error && <Alert variant="danger">{typeof error === 'string' ? error : 'Проверьте цену и выбранный предмет'}</Alert>}
+      <Form onSubmit={event => { event.preventDefault(); save({ item_id: selected?.id, price: Number(price) }); }}>
+        <Form.Label htmlFor="autobuy-price">Монет за одну штуку</Form.Label>
+        <Form.Control id="autobuy-price" autoFocus type="number" min="1" max="1000000000" step="1" required value={price} onChange={event => setPrice(event.target.value)} />
         <Button type="submit" disabled={busy} className="mt-2">Сохранить и включить</Button>{' '}
         <Button variant="secondary" disabled={busy} onClick={() => setSelected(null)}>Отмена</Button>
       </Form>
-    </Card.Body></Card>}
+    </Modal.Body></Modal>
     {data.rules.length === 0 && <p>Прайс-лист пуст. Добавьте первый предмет.</p>}
     {data.rules.map(rule => <Card key={rule.item_id} className="mb-2"><Card.Body>
       <strong>{rule.name}</strong> · ID {rule.item_id}<p>{rule.price} 🌕/шт. · {rule.enabled ? 'Автопокупка включена' : 'Пауза'}</p>
