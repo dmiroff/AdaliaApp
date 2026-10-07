@@ -1,3 +1,5 @@
+import BuildingExperience from '../settlement_tabs/BuildingExperience';
+import { getBuildingExperience } from '../../utils/buildingExperience';
 import React, { useContext, useState, useEffect } from 'react';
 import { observer } from "mobx-react-lite";
 import { Context } from "../../index";
@@ -109,6 +111,8 @@ const SettlementConstructionModal = observer(() => {
                                 : `Вы улучшаете здание с уровня ${buildingData.currentLevel} до уровня ${buildingData.level}`}
                         </Alert>
                         
+                        <BuildingExperience experience={requirements.experience || getBuildingExperience(
+                            settlement.settlementData?.buildings?.[buildingData.building] || {}, requirements)} />
                         <h5>Требуемые ресурсы:</h5>
                         <ListGroup className="mb-3">
                             {requirements.essence > 0 && (

@@ -1,3 +1,5 @@
+import BuildingExperience from '../settlement_tabs/BuildingExperience';
+import { getBuildingExperience } from '../../utils/buildingExperience';
 import React, { useState, useEffect } from 'react';
 import { Modal, Button, ProgressBar, Badge, Alert, Spinner } from 'react-bootstrap';
 import { getResourceInfo } from '../../utils/resourceHelpers';
@@ -27,7 +29,8 @@ const UpgradeBuildingModal = ({
     renderResources,
     handleStartConstruction,
     showNotification,
-    buildings,
+    buildings = {},
+    buildingsData = {},
     storage,
     loading,
     getResourceInfo,
@@ -87,6 +90,11 @@ const UpgradeBuildingModal = ({
         progressPercentage
     } = selectedBuilding;
     
+    const requirementData = selectedBuilding.targetLevelInfo || {};
+    const experience = getBuildingExperience(buildings[key] || selectedBuilding.buildingData || {}, requirementData);
+    const requiredBuildings = Object.entries(requirementData.required_buildings || {});
+    const missingBuilding = requiredBuildings.some(([requiredKey, level]) => (buildings[requiredKey]?.level || 0) < level);
+
     const calculateTotalProgress = () => {
         if (!resourcesProgress || Object.keys(resourcesProgress).length === 0) {
             return 0;
@@ -152,6 +160,19 @@ const UpgradeBuildingModal = ({
                     </div>
                 </div>
                 
+                <BuildingExperience experience={experience} />
+                {requiredBuildings.length > 0 && (
+                    <div className="mb-3">
+                        <h6>Необходимые здания:</h6>
+                        {requiredBuildings.map(([requiredKey, level]) => {
+                            const actualLevel = buildings[requiredKey]?.level || 0;
+                            return <div key={requiredKey} className="d-flex justify-content-between mb-1">
+                                <span>{buildingsData[requiredKey]?.name || requiredKey}</span>
+                                <Badge bg={actualLevel >= level ? 'success' : 'danger'}>Ур. {actualLevel}/{level}</Badge>
+                            </div>;
+                        })}
+                    </div>
+                )}
                 <div className="mb-4">
                     <div className="d-flex justify-content-between align-items-center mb-2">
                         <h6 className="mb-0">Необходимые ресурсы:</h6>
@@ -232,7 +253,7 @@ const UpgradeBuildingModal = ({
                 <Button 
                     variant={isNewConstruction ? "success" : "primary"}
                     onClick={() => handleStartConstruction(selectedBuilding)}
-                    disabled={loading || Object.keys(construction).length >= getPossibleConcurrentConstructions}
+                    disabled={loading || experience?.enough === false || missingBuilding || selectedBuilding.canBuild === false || Object.keys(construction).length >= getPossibleConcurrentConstructions}
                 >
                     {loading ? (
                         <><Spinner animation="border" size="sm" className="me-2" />Добавляем в очередь...</>

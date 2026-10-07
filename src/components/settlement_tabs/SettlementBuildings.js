@@ -12,6 +12,8 @@ import {
 } from '../../utils/settlementConstants';
 import CurrentConstructionsModal from '../modals/CurrentConstructionsModal';
 import UpgradeBuildingModal from '../modals/UpgradeBuildingModal';
+import BuildingExperience from './BuildingExperience';
+import { getBuildingExperience } from '../../utils/buildingExperience';
 import { getResourceInfo } from '../../utils/resourceHelpers';
 import { settlementService } from '../../services/SettlementService';
 
@@ -321,7 +323,7 @@ const SettlementBuildings = observer(() => {
                     targetLevel,
                     resources: requirementsData?.resources || {},
                     essence: requirementsData?.essence || 0,
-                    constructionTime: requirementsData?.construction_time || 60,
+                    constructionTime: requirementsData?.construction_time ?? 60,
                     targetLevelInfo: requirementsData,
                     isNewConstruction: currentLevel === 0,
                     buildingData,
@@ -581,10 +583,7 @@ const SettlementBuildings = observer(() => {
         const maxDurability = currentData?.max_durability || 100;
         const durabilityPercentage = maxDurability > 0 ? (durability / maxDurability) * 100 : 100;
         
-        // ИСПРАВЛЕНИЕ: используем статические данные для required exp
-        const exp = currentData?.exp || 0;
-        const expForLevelup = buildingsData[building.key]?.[currentLevel]?.exp_for_levelup;
-        const expPercentage = expForLevelup > 0 ? Math.min((exp / expForLevelup) * 100, 100) : 0;
+        const experience = getBuildingExperience(currentData, buildingsData[key]?.[currentLevel] || {});
         
         const isLoading = constructionLoading[key] || false;
         const requirementsText = buildingRequirements?.reasons?.join(', ') || "Требования не выполнены";
@@ -616,17 +615,7 @@ const SettlementBuildings = observer(() => {
                             />
                         </div>
                         
-                        {expForLevelup > 0 && !maxLevel && (
-                            <div className="mb-3">
-                                <div className="d-flex justify-content-between mb-1">
-                                    <span className="fantasy-text-muted">Опыт здания:</span>
-                                    <span className={`fantasy-text-${expPercentage >= 100 ? 'success' : 'dark'}`}>
-                                        {exp}/{expForLevelup}
-                                    </span>
-                                </div>
-                                <ProgressBar now={expPercentage} variant={expPercentage >= 100 ? "success" : "info"} />
-                            </div>
-                        )}
+                        <BuildingExperience experience={experience} />
                         
                         {targetLevelInfo && !isUnderConstruction && !maxLevel && (
                             <div className="mb-3">
@@ -702,36 +691,15 @@ const SettlementBuildings = observer(() => {
                                     <Button 
                                         variant="outline-secondary"
                                         onClick={() => {
-                                            let message = `<strong>${buildingName}</strong> (Ур. ${currentLevel} → ${buildingRequirements?.targetLevel || currentLevel + 1})\n\n`;
-                                            
-                                            if (buildingRequirements?.reasons && buildingRequirements.reasons.length > 0) {
-                                                message += "<strong>Не выполнено:</strong>\n";
-                                                buildingRequirements.reasons.forEach((reason, index) => {
-                                                    message += `${index + 1}. ${reason}\n`;
-                                                });
-                                            }
-                                            
-                                            if (buildingRequirements?.targetLevelInfo) {
-                                                const { resources, essence } = buildingRequirements.targetLevelInfo;
-                                                if ((resources && Object.keys(resources).length > 0) || essence > 0) {
-                                                    message += "\n<strong>Ресурсы для улучшения:</strong>\n";
-                                                    
-                                                    if (resources && typeof resources === 'object') {
-                                                        Object.entries(resources).forEach(([resourceId, amount]) => {
-                                                            const resourceInfo = getResourceInfo(resourceId, RESOURCE_NAMES);
-                                                            const availableAmount = getResourceAmount(storage, resourceId);
-                                                            const hasEnough = availableAmount >= amount;
-                                                            message += `• ${resourceInfo.name}: ${availableAmount}/${amount} ${hasEnough ? '✓' : '✗'}\n`;
-                                                        });
-                                                    }
-                                                    
-                                                    if (essence > 0) {
-                                                        message += `• Воплощение: ${currentEssence}/${essence} ${currentEssence >= essence ? '✓' : '✗'}\n`;
-                                                    }
-                                                }
-                                            }
-                                            
-                                            showNotification('info', message);
+                                            const quote = buildingRequirements?.targetLevelInfo || targetLevelInfo || {};
+                                            setSelectedBuilding({
+                                                key, name: buildingName, currentLevel, targetLevel: currentLevel + 1,
+                                                resources: quote.resources || {}, essence: quote.essence || 0,
+                                                constructionTime: quote.construction_time ?? 60,
+                                                targetLevelInfo: quote, buildingData: currentData,
+                                                isNewConstruction: false, canBuild: false,
+                                            });
+                                            setShowUpgradeModal(true);
                                         }}
                                     >
                                         <i className="fas fa-info-circle me-2"></i>
@@ -915,6 +883,7 @@ const SettlementBuildings = observer(() => {
                 handleStartConstruction={handleStartConstruction}
                 showNotification={showNotification}
                 buildings={buildings}
+                buildingsData={buildingsData}
                 storage={storage}
                 loading={loading}
                 getResourceInfo={(resourceId) => getResourceInfo(resourceId, RESOURCE_NAMES)}
