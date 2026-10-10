@@ -43,20 +43,26 @@ apiClient.interceptors.response.use(
       try {
         const refreshToken = localStorage.getItem('refresh_token');
         
-        if (refreshToken) {
+        const playerId = localStorage.getItem('id');
+        const botToken = localStorage.getItem('token');
+        if (refreshToken || (playerId && botToken)) {
           // Пытаемся обновить токен
           const refreshResponse = await axios.post(
-            `${SERVER_APP_API_URL}/refresh`,
-            {},
+            `${SERVER_APP_API_URL}/${refreshToken ? 'refresh' : 'login'}`,
+            refreshToken ? {} : {player_id: Number(playerId), token: botToken},
             {
               headers: {
-                'Authorization': `Bearer ${refreshToken}`,
+                ...(refreshToken ? {'Authorization': `Bearer ${refreshToken}`} : {}),
                 'skip_zrok_interstitial': 'true'
-              }
+              },
+              timeout: 15000
             }
           );
           
-          if (refreshResponse.status === 200) {
+          if (refreshResponse.status === 200 && refreshResponse.data.access_token) {
+            if (refreshResponse.data.refresh_token) {
+              localStorage.setItem('refresh_token', refreshResponse.data.refresh_token);
+            }
             // Сохраняем новый токен
             localStorage.setItem('access_token', refreshResponse.data.access_token);
             
