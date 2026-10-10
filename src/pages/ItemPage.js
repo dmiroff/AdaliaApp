@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext, useCallback } from "react";
+import { useState, useEffect, useContext, useCallback, useRef } from "react";
 import { Col, Container, Image, Row, Button, Modal, Badge } from "react-bootstrap";
 import { useLocation, useNavigate } from "react-router-dom";
 import { GetItemById } from "../http/GetData";
@@ -8,6 +8,9 @@ import { Spinner } from "react-bootstrap";
 import { Context } from "../index";
 import { WearDataById, ThrowItemById, SellItemById } from "../http/SupportFunctions";
 import ModalAction from "../components/ModalAction";
+import { observer } from 'mobx-react-lite';
+import GetDataById from '../http/GetData';
+import EquipmentComparison from "../components/EquipmentComparison";
 
 const Item = () => {
   const { user } = useContext(Context);
@@ -20,6 +23,7 @@ const Item = () => {
   const [showModalSell, setShowModalSell] = useState(false);
   const [showModalDrop, setShowModalDrop] = useState(false);
   const [handleRequest, setHandleRequest] = useState(false);
+  const wearPending = useRef(false);
   const [modalMessage, setModalMessage] = useState("");
   const [toNavigate, setToNavigate] = useState(false);
   const navigate = useNavigate();
@@ -62,6 +66,12 @@ const Item = () => {
     };
   }, [num]);
   
+  useEffect(() => {
+    if (itemData?.is_equippable && !user.player_data?.inventory_new) {
+      GetDataById().then(result => { if (result?.data) { user.setPlayer(result.data); user.setPlayerInventory(result.data.inventory_new || {}); } });
+    }
+  }, [itemData, user]);
+
   // Мемоизируем обработчики модальных окон
   const handleModalSell = useCallback((event) => {
     event?.stopPropagation();
@@ -99,6 +109,12 @@ const Item = () => {
       return () => clearTimeout(timer);
     }
   }, [showModal, handleModalClose]);
+
+  useEffect(() => {
+    if (itemData?.is_equippable && !user.player_data?.inventory_new) {
+      GetDataById().then(result => { if (result?.data) { user.setPlayer(result.data); user.setPlayerInventory(result.data.inventory_new || {}); } });
+    }
+  }, [itemData, user]);
 
   // Мемоизируем обработчики действий
   const handleSell = useCallback(async (value) => {
@@ -144,8 +160,12 @@ const Item = () => {
   }, [num, toggleHandleRequest, user]);
 
   const handleWear = useCallback(async () => {
+    if (wearPending.current) return;
+    wearPending.current = true;
+    setHandleRequest(true);
     try {
       const response = await WearDataById(num);
+      if (!response?.data || response.status !== 200) throw new Error('Wear failed');
       const player_data = response.data;
       const message = response.message;
       user.setPlayerInventory(player_data.inventory_new);
@@ -153,8 +173,11 @@ const Item = () => {
       setModalMessage(message);
       setShowModal(true);
     } catch (error) {
-      setModalMessage("Ошибка при надевании предмета");
+      setModalMessage("Не удалось надеть предмет. Проверьте связь и попробуйте снова.");
       setShowModal(true);
+    } finally {
+      wearPending.current = false;
+      setHandleRequest(false);
     }
   }, [num, user]);
 
@@ -285,6 +308,7 @@ const Item = () => {
                 )}
               </div>
 
+              <EquipmentComparison item={itemData} player={user.player_data} />
               {/* Панель действий */}
               <div className="item-actions-panel fantasy-paper p-3">
                 <h5 className="fantasy-text-dark fantasy-text-bold mb-3 text-center">Действия</h5>
@@ -293,8 +317,9 @@ const Item = () => {
                     <Button 
                       className="fantasy-btn fantasy-btn-primary fantasy-btn-lg"
                       onClick={handleWear}
+                      disabled={handleRequest || !inventory_new[num]}
                     >
-                      Надеть предмет
+                      {handleRequest ? 'Надеваем…' : 'Надеть предмет'}
                     </Button>
                   )}
                   <Button 
@@ -407,4 +432,4 @@ const Item = () => {
   );
 };
 
-export default Item;
+export default observer(Item);

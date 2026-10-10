@@ -17,6 +17,8 @@ const InventoryList = observer(() => {
   const [playerData, setPlayerData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
+  const [loadError, setLoadError] = useState(false);
+  const [quickCategory, setQuickCategory] = useState('all');
   const [user_inventory, setUserInventory] = useState({});
   
   const [showModal, setShowModal] = useState(false);
@@ -129,8 +131,10 @@ const InventoryList = observer(() => {
 
   // Функция для обновления данных игрока
   const fetchPlayerData = useCallback(async () => {
+    setLoadError(false);
     try {
       const playerData = await GetDataById();
+      if (!playerData?.data) throw new Error('Player data unavailable');
       
       if (playerData && playerData.data) {
         setPlayerData(playerData.data);
@@ -140,6 +144,7 @@ const InventoryList = observer(() => {
         user.setPlayer(playerData.data);
       }
     } catch (error) {
+      setLoadError(true);
       console.error("Error fetching player data:", error);
     }
   }, [user]);
@@ -157,10 +162,17 @@ const InventoryList = observer(() => {
     fetchData();
   }, [fetchPlayerData]);
 
+  useEffect(() => {
+    if (user.player_data?.inventory_new) {
+      setPlayerData(user.player_data);
+      setUserInventory(user.inventory_new);
+    }
+  }, [user.player_data, user.inventory_new]);
+
   // Очистка выбора при изменении фильтров или поиска
   useEffect(() => {
     setSelectedItems(new Set());
-  }, [filters, query]);
+  }, [filters, query, quickCategory]);
 
   const handleShowModal = (message) => {
     setModalMessage(message);
@@ -289,6 +301,13 @@ const InventoryList = observer(() => {
       return item && typeof item === 'object';
     });
 
+    const armorSlots = ['head', 'breast_armor', 'cloak', 'gloves', 'leg_armor', 'boots', 'belt', 'arm_armor'];
+    if (quickCategory !== 'all') items = items.filter(([, item]) => {
+      if (quickCategory === 'weapons') return ['right_hand', 'left_hand', 'secondary_weapon'].includes(item.type);
+      if (quickCategory === 'armor') return armorSlots.includes(item.type);
+      if (quickCategory === 'consumables') return ['food', 'potion', 'potions', 'scroll', 'scrolls', 'consumable_items'].includes(item.type);
+      return !item.is_equippable;
+    });
     // Применяем кастомные фильтры
     items = applyFiltersToItems(items);
 
@@ -320,7 +339,7 @@ const InventoryList = observer(() => {
     }
 
     return items;
-  }, [applyFiltersToItems, query]);
+  }, [applyFiltersToItems, query, quickCategory]);
 
   // Обработчик успешного завершения массовой операции
   const handleOperationSuccess = useCallback(() => {
@@ -342,6 +361,14 @@ const InventoryList = observer(() => {
         </Spinner>
       </div>
     );
+  }
+
+  if (loadError) {
+    return <div className="fantasy-paper p-4 text-center" role="alert">
+      <h4>Не удалось загрузить инвентарь</h4>
+      <p>Проверьте связь. Ваши предметы не пропали.</p>
+      <Button className="fantasy-btn fantasy-btn-lg" onClick={fetchPlayerData}>Повторить</Button>
+    </div>;
   }
 
   if (!playerData) {
@@ -386,6 +413,48 @@ const InventoryList = observer(() => {
 
   return (
     <div className="fantasy-paper content-overlay inventory-container p-3">
+      {/* Поиск */}
+      <div className="fantasy-paper content-overlay bulk-purchase-tab mb-3">
+        <Form className="fantasy-form">
+          <div className="search-input-wrapper">
+            <i className="fas fa-search search-icon"></i>
+            <Form.Control
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Название или описание предмета..."
+              className="inventory-search-input bulk-purchase"
+            />
+            {query && (
+              <Button
+                variant="link"
+                size="sm"
+                className="clear-search-btn"
+                onClick={() => setQuery('')}
+                title="Очистить поиск"
+              >
+                <i className="fas fa-times"></i>
+              </Button>
+            )}
+          </div>
+          <Form.Text className="text-muted" style={{ fontSize: '0.75rem' }}>
+            Найдено предметов: {results.length}
+            {activeFiltersCount > 0 && (
+              <span className="ms-2">
+                <i className="fas fa-filter text-info me-1"></i>
+                Активных фильтров: {activeFiltersCount}
+              </span>
+            )}
+          </Form.Text>
+        </Form>
+      </div>
+
+
+      <div className="inventory-quick-filters" role="group" aria-label="Категория предметов">
+        {[['all', 'Все'], ['weapons', 'Оружие'], ['armor', 'Броня'], ['consumables', 'Расходники'], ['other', 'Прочее']].map(([value, label]) =>
+          <Button key={value} className="fantasy-btn" aria-pressed={quickCategory === value}
+            onClick={() => setQuickCategory(value)}>{label}</Button>)}
+      </div>
       {/* Панель массовых операций */}
       {selectedItems.size > 0 && (
         <div className="mass-operations-panel mb-3 p-3">
@@ -455,7 +524,8 @@ const InventoryList = observer(() => {
       )}
 
       {/* Два настраиваемых фильтра */}
-      <div className="custom-filters-container mb-3">
+      <details className="custom-filters-container mb-3">
+        <summary>Подробные фильтры {activeFiltersCount > 0 ? `(${activeFiltersCount})` : ''}</summary>
         <div className="d-flex justify-content-between align-items-center mb-3">
           <h6 className="fantasy-text-dark mb-0">Фильтры предметов</h6>
           <div className="d-flex gap-2">
@@ -633,43 +703,7 @@ const InventoryList = observer(() => {
             </small>
           </div>
         )}
-      </div>
-
-      {/* Поиск */}
-      <div className="fantasy-paper content-overlay bulk-purchase-tab mb-3">
-        <Form className="fantasy-form">
-          <div className="search-input-wrapper">
-            <i className="fas fa-search search-icon"></i>
-            <Form.Control
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Название или описание предмета..."
-              className="inventory-search-input bulk-purchase"
-            />
-            {query && (
-              <Button
-                variant="link"
-                size="sm"
-                className="clear-search-btn"
-                onClick={() => setQuery('')}
-                title="Очистить поиск"
-              >
-                <i className="fas fa-times"></i>
-              </Button>
-            )}
-          </div>
-          <Form.Text className="text-muted" style={{ fontSize: '0.75rem' }}>
-            Найдено предметов: {results.length}
-            {activeFiltersCount > 0 && (
-              <span className="ms-2">
-                <i className="fas fa-filter text-info me-1"></i>
-                Активных фильтров: {activeFiltersCount}
-              </span>
-            )}
-          </Form.Text>
-        </Form>
-      </div>
+      </details>
 
       {/* Список предметов */}
       <div className="inventory-items-container">

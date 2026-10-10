@@ -4,6 +4,7 @@ import { SERVER_APP_API_URL } from "../utils/constants";
 // Создаем единый экземпляр axios
 const apiClient = axios.create({
   baseURL: SERVER_APP_API_URL,
+  timeout: 15000,
   headers: {
     'skip_zrok_interstitial': 'true',
   }
@@ -68,6 +69,10 @@ apiClient.interceptors.response.use(
         }
       } catch (refreshError) {
         console.error('Не удалось обновить токен:', refreshError);
+        // A connection failure is not an expired session.
+        if (![401, 403].includes(refreshError.response?.status)) {
+          return Promise.reject(refreshError);
+        }
         
         // Если не удалось обновить, делаем logout
         localStorage.removeItem('access_token');
@@ -77,7 +82,7 @@ apiClient.interceptors.response.use(
         
         // Перенаправляем на страницу логина
         if (window.location.pathname !== '/login' && window.location.pathname !== '/auth') {
-          window.location.href = '/login';
+          window.location.href = '/notauth';
         }
       }
     }

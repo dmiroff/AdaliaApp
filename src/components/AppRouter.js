@@ -4,8 +4,8 @@ import { Context } from "../index";
 import { authRoutes, publicRoutes } from "../routes";
 import { observer } from "mobx-react-lite";
 import { Spinner } from "react-bootstrap";
-import { SERVER_APP_API_URL } from "../utils/constants";
 import Login from '../pages/NotAuth';
+import apiClient from '../http/apiClient';
 import AuthCallback from '../pages/AuthCallback';
 
 const Admin = React.lazy(() => import('../pages/Admin'));
@@ -39,6 +39,7 @@ const AppRouter = observer(() => {
     const navigate = useNavigate();
     const [isChecking, setIsChecking] = useState(true);
     const [isInitialized, setIsInitialized] = useState(false);
+    const [authError, setAuthError] = useState(false);
 
     const clearAuthData = useCallback(() => {
         localStorage.removeItem('access_token');
@@ -50,26 +51,16 @@ const AppRouter = observer(() => {
 
     const verifyToken = useCallback(async (accessToken) => {
         try {
-            const response = await fetch(`${SERVER_APP_API_URL}/verify`, {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${accessToken}`,
-                    'Content-Type': 'application/json',
-                },
-            });
-
-            if (response.status === 200) {
-                const data = await response.json();
-                return { valid: true, data };
-            }
-            return { valid: false, error: 'Токен невалиден' };
+            const response = await apiClient.get('/verify');
+            return { valid: true, data: response.data };
         } catch (error) {
-            return { valid: false, error: 'Ошибка проверки токена' };
+            return { valid: false, connectionError: ![401, 403].includes(error.response?.status) };
         }
     }, []);
 
     const checkAuth = useCallback(async () => {
         setIsChecking(true);
+        setAuthError(false);
         
         try {
             const isAuthPath = location.pathname.startsWith('/auth/') ||
@@ -104,6 +95,10 @@ const AppRouter = observer(() => {
             
             const verifyResult = await verifyToken(accessToken);
             
+            if (verifyResult.connectionError) {
+                setAuthError(true);
+                return;
+            }
             if (verifyResult.valid) {
                 user.setIsAuth(true);
                 user.setUser(parseInt(userId));
@@ -142,6 +137,16 @@ const AppRouter = observer(() => {
 
         return children;
     };
+
+    if (authError) {
+        return <div className="fantasy-paper p-4 text-center" role="alert">
+            <h2>Не удалось подключиться</h2>
+            <p>Вход сохранён. Проверьте связь и попробуйте ещё раз.</p>
+            <button className="fantasy-btn fantasy-btn-lg" disabled={isChecking} onClick={checkAuth}>
+                {isChecking ? 'Подключаемся…' : 'Повторить'}
+            </button>
+        </div>;
+    }
 
     // Если идёт проверка и мы не на публичном маршруте, показываем лоадер
     if (isChecking && !location.pathname.startsWith('/auth/') && location.pathname !== '/notauth') {

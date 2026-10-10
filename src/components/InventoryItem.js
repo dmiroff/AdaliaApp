@@ -1,12 +1,14 @@
 // src/components/InventoryItem.js (ваш оригинальный код с минимальными изменениями)
-import { useState, useContext, useMemo } from "react";
-import { Row, Col, Image } from "react-bootstrap";
+import { observer } from "mobx-react-lite";
+import { useState, useContext, useMemo, useRef } from "react";
+import { Row, Col, Image, Offcanvas, Button } from "react-bootstrap";
 import exampleImage from "../assets/Images/WIP.webp";
 import { useNavigate } from 'react-router-dom';
 import { INVENTORY_ROUTE } from "../utils/constants";
 import { Context } from "../index";
 import { WearDataById, ThrowItemById, SellItemById } from "../http/SupportFunctions";
 import ModalAction from "./ModalAction";
+import EquipmentComparison from "./EquipmentComparison";
 import "./InventoryItem.css";
 
 const InventoryItem = ({ 
@@ -21,6 +23,8 @@ const InventoryItem = ({
     ? `../assets/Images/${device.image.replace(/^.*?Images\//i, '')}`
     : exampleImage;
   const [showMenu, setShowMenu] = useState(false);
+  const [showActions, setShowActions] = useState(false);
+  const wearPending = useRef(false);
   const [showModalSell, setShowModalSell] = useState(false);
   const [showModalDrop, setShowModalDrop] = useState(false);
   const [handleRequest, setHandleRequest] = useState(false);
@@ -101,7 +105,7 @@ const InventoryItem = ({
 
   // Проверяем, надет ли текущий предмет
   const isEquipped = useMemo(() => {
-    return getEquippedItemIds.has(itemId);
+    return getEquippedItemIds.has(String(itemId));
   }, [getEquippedItemIds, itemId]);
 
   // Проверяем, можно ли продать/выбросить предмет
@@ -126,7 +130,7 @@ const InventoryItem = ({
 
   // Обработчик наведения на текстовую часть
   const handleTextMouseEnter = () => {
-    setShowMenu(true);
+    if (window.matchMedia('(hover: hover)').matches) setShowMenu(true);
   };
 
   const handleTextMouseLeave = () => {
@@ -136,13 +140,12 @@ const InventoryItem = ({
   // Обработчик клика на текстовую часть (для мобильных устройств)
   const handleTextClick = (e) => {
     // На мобильных устройствах клик по тексту показывает/скрывает меню
-    if (window.innerWidth <= 768) {
-      setShowMenu(!showMenu);
-    }
+    if (window.innerWidth <= 768) setShowActions(true);
   };
 
   const handleModalSell = (event) => {
     event.stopPropagation();
+    setShowActions(false);
     if (canTransfer) {
       setShowModalSell(true);
     }
@@ -150,6 +153,7 @@ const InventoryItem = ({
 
   const handleModalDrop = (event) => {
     event.stopPropagation();
+    setShowActions(false);
     if (canTransfer) {
       setShowModalDrop(true);
     }
@@ -158,33 +162,36 @@ const InventoryItem = ({
   const handleInspect = (event) => {
     event.stopPropagation();
     setShowMenu(false);
+    setShowActions(false);
     navigate(INVENTORY_ROUTE + "/" + devicekey);
   };
 
-  const handleSell = async (value) => {
+  const transferItem = async (action, value, close) => {
+    if (wearPending.current) return;
+    wearPending.current = true;
     setHandleRequest(true);
-    const response = await SellItemById(devicekey, value);
-    const player_data = response.data;
-    user.setPlayerInventory(player_data.inventory_new);
-    user.setPlayer_data(player_data);
-    setShowModalSell(false);
-    setHandleRequest(false);
-    onShowModal(response.message);
+    try {
+      const response = await action(devicekey, value);
+      if (!response?.data) throw new Error('Transfer failed');
+      user.setPlayerInventory(response.data.inventory_new);
+      user.setPlayer(response.data);
+      close(false);
+      onShowModal(response.message);
+    } catch {
+      onShowModal('Действие не выполнено. Проверьте связь и попробуйте снова.');
+    } finally {
+      wearPending.current = false;
+      setHandleRequest(false);
+    }
   };
-  
-  const handleThrowAway = async (value) => {
-    setHandleRequest(true);
-    const response = await ThrowItemById(devicekey, value);
-    const player_data = response.data;
-    user.setPlayerInventory(player_data.inventory_new);
-    user.setPlayer_data(player_data);
-    setShowModalDrop(false);
-    setHandleRequest(false);
-    onShowModal(response.message);
-  };
+  const handleSell = value => transferItem(SellItemById, value, setShowModalSell);
+  const handleThrowAway = value => transferItem(ThrowItemById, value, setShowModalDrop);
 
   const handleWear = async (event) => {
     event.stopPropagation();
+    if (wearPending.current) return;
+    wearPending.current = true;
+    setHandleRequest(true);
     setShowMenu(false);
     try {
       const response = await WearDataById(devicekey);
@@ -199,23 +206,18 @@ const InventoryItem = ({
           }
         }
         
-        if (typeof user.setUser === 'function') {
-          user.setUser(playerData);
-        } else if (typeof user.updateUser === 'function') {
-          user.updateUser(playerData);
-        } else if (typeof user.setPlayerData === 'function') {
-          user.setPlayerData(playerData);
-        } else if (typeof user.setPlayer === 'function') {
-          user.setPlayer(playerData);
-        }
-        
+        user.setPlayer(playerData);
+        setShowActions(false);
         onShowModal(message);
       } else {
         throw new Error('Invalid response format');
       }
     } catch (error) {
       console.error('Error in handleWear:', error);
-      onShowModal('Ошибка при надевании предмета');
+      onShowModal('Не удалось надеть предмет. Проверьте связь и попробуйте снова.');
+    } finally {
+      wearPending.current = false;
+      setHandleRequest(false);
     }
   };
 
@@ -386,6 +388,8 @@ const InventoryItem = ({
         onMouseLeave={handleTextMouseLeave}
         onClick={handleTextClick}
       >
+        <button type="button" className="item-actions-trigger" aria-label={`Действия: ${device.name}`}
+          aria-haspopup="dialog" onClick={(event) => { event.stopPropagation(); setShowActions(true); }}>⋯</button>
         {/* Меню появляется в правом верхнем углу текстового блока */}
         {showMenu && (
           <div 
@@ -406,6 +410,7 @@ const InventoryItem = ({
                 <button 
                   className="dropdown-item-custom"
                   onClick={handleWear}
+                disabled={handleRequest}
                 >
                   <i className="fas fa-tshirt me-2"></i>
                   надеть
@@ -540,6 +545,23 @@ const InventoryItem = ({
       </Col>
       
       {/* Модальные окна */}
+      <Offcanvas show={showActions} onHide={() => setShowActions(false)} placement="bottom"
+        className="item-actions-sheet" aria-labelledby={`item-actions-${itemId}`}>
+        <Offcanvas.Header closeButton>
+          <Offcanvas.Title id={`item-actions-${itemId}`}>{device.name}</Offcanvas.Title>
+        </Offcanvas.Header>
+        <Offcanvas.Body>
+          <EquipmentComparison item={device} player={user.player_data} />
+          <div className="d-grid gap-2">
+            <Button className="fantasy-btn" onClick={handleInspect}>Осмотреть</Button>
+            {device.is_equippable && <Button className="fantasy-btn" disabled={handleRequest}
+              onClick={handleWear}>{handleRequest ? 'Надеваем…' : 'Надеть'}</Button>}
+            <Button className="fantasy-btn" disabled={!canTransfer || handleRequest} onClick={handleModalSell}>Продать</Button>
+            <Button className="fantasy-btn" disabled={!canTransfer || handleRequest} onClick={handleModalDrop}>Выбросить</Button>
+          </div>
+        </Offcanvas.Body>
+      </Offcanvas>
+
       <ModalAction
         show={showModalSell} 
         onClose={handleModalSellClose} 
@@ -573,4 +595,4 @@ const InventoryItem = ({
   );
 };
 
-export default InventoryItem;
+export default observer(InventoryItem);
