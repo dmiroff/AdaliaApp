@@ -121,8 +121,9 @@ test('success notice announces the action without a dialog and expires',async()=
  jest.useFakeTimers();
  const dismiss=jest.fn();
  await render(<ActionNotice notice={{message:'Надето',variant:'success'}} onDismiss={dismiss}/>);
- expect(container.querySelector('[role="status"]').textContent).toContain('Надето');
+ expect(document.body.querySelector('[role="status"]').textContent).toContain('Надето');
  expect(document.body.querySelector('[role="dialog"]')).toBeNull();
+ expect(document.body.querySelector('.action-notice').parentElement).toBe(document.body);
  await act(async()=>jest.advanceTimersByTime(4500));
  expect(dismiss).toHaveBeenCalledTimes(1);
 });
@@ -133,8 +134,8 @@ test('error notice stays readable until dismissed',async()=>{
  await render(<ActionNotice notice={{message:'Нет связи',variant:'error'}} onDismiss={dismiss}/>);
  await act(async()=>jest.advanceTimersByTime(15000));
  expect(dismiss).not.toHaveBeenCalled();
- expect(container.querySelector('[role="alert"]').textContent).toContain('Нет связи');
- await click(container.querySelector('button'));
+ expect(document.body.querySelector('[role="alert"]').textContent).toContain('Нет связи');
+ await click(document.body.querySelector('[aria-label="Закрыть уведомление"]'));
  expect(dismiss).toHaveBeenCalledTimes(1);
 });
 
@@ -146,7 +147,7 @@ test('wear on the item detail page updates equipment and uses a status notice',a
  await render(<ItemPage/>, '/inventory/101');
  await click(button('Надеть предмет'));
  expect(user.player_data.head.id).toBe(101);
- expect(container.querySelector('[role="status"]').textContent).toContain('Шлем надет');
+ expect(document.body.querySelector('[role="status"]').textContent).toContain('Шлем надет');
  expect(document.body.querySelector('.modal')).toBeNull();
 });
 
@@ -160,7 +161,7 @@ test('unwear updates equipment without a result modal',async()=>{
  await click(container.querySelector('[aria-label="Шлем — открыть действия"]'));
  await click(button('Снять предмет'));
  expect(user.player_data.head).toBeNull();
- expect(container.querySelector('[role="status"]').textContent).toContain('Шлем снят');
+ expect(document.body.querySelector('[role="status"]').textContent).toContain('Шлем снят');
  expect(document.body.querySelector('.modal')).toBeNull();
 });
 

@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 
 export default function ActionNotice({notice, onDismiss}) {
   const dismiss = useRef(onDismiss);
@@ -10,9 +11,9 @@ export default function ActionNotice({notice, onDismiss}) {
   }, [notice]);
   if (!notice) return null;
   const isError = notice.variant === 'error';
-  return <div className={`action-notice ${isError ? 'action-notice--error' : ''}`}
+  return createPortal(<div className={`action-notice ${isError ? 'action-notice--error' : ''}`}
     role={isError ? 'alert' : 'status'} aria-atomic="true">
     <span>{notice.message}</span>
     <button type="button" onClick={onDismiss} aria-label="Закрыть уведомление">×</button>
-  </div>;
+  </div>, document.body);
 }
