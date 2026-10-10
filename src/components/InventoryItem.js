@@ -22,7 +22,7 @@ const InventoryItem = ({
 }) => {
   const { user } = useContext(Context);
   const imageSrc = device.image
-    ? `../assets/Images/${device.image.replace(/^.*?Images\//i, '')}`
+    ? `/assets/Images/${device.image.replace(/^.*?Images\//i, '')}`
     : exampleImage;
   const [showMenu, setShowMenu] = useState(false);
   const [showActions, setShowActions] = useState(false);
@@ -261,7 +261,8 @@ const InventoryItem = ({
             alignItems: 'center',
             justifyContent: 'center',
             width: '100%',
-            height: '100%'
+            aspectRatio: '1 / 1',
+            minHeight: '100px'
           }}
         >
           {/* Чекбокс для выбора предмета */}
@@ -314,7 +315,7 @@ const InventoryItem = ({
             style={{
               width: '100%',
               height: 'auto',
-              maxHeight: '100%',
+              maxHeight: 'none',
               objectFit: 'contain',
               backgroundColor: 'rgba(255, 255, 255, 0.9)',
               borderRadius: '8px'

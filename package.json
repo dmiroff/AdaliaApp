@@ -27,8 +27,9 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "craco build",
-    "build:split": "npm run build && node scripts/splitLargeFiles.js"},
+    "build": "craco build && node scripts/copyImages.cjs",
+    "build:split": "npm run build && node scripts/splitLargeFiles.js"
+  },
   "eslintConfig": {
     "extends": [
       "react-app",
