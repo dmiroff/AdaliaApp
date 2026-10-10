@@ -9,12 +9,14 @@ import { Context } from "../index";
 import { WearDataById, ThrowItemById, SellItemById } from "../http/SupportFunctions";
 import ModalAction from "./ModalAction";
 import EquipmentComparison from "./EquipmentComparison";
+import ActionNotice from "./ActionNotice";
 import "./InventoryItem.css";
 
 const InventoryItem = ({ 
   devicekey, 
   device, 
-  onShowModal, 
+  onShowModal,
+  onNotify = null,
   isSelected = false, 
   onToggleSelect = null 
 }) => {
@@ -24,6 +26,10 @@ const InventoryItem = ({
     : exampleImage;
   const [showMenu, setShowMenu] = useState(false);
   const [showActions, setShowActions] = useState(false);
+  const [notice, setNotice] = useState(null);
+  const notify = (message, variant = 'success') => {
+    (onNotify || setNotice)({message, variant});
+  };
   const wearPending = useRef(false);
   const [showModalSell, setShowModalSell] = useState(false);
   const [showModalDrop, setShowModalDrop] = useState(false);
@@ -208,13 +214,13 @@ const InventoryItem = ({
         
         user.setPlayer(playerData);
         setShowActions(false);
-        onShowModal(message);
+        notify(message);
       } else {
         throw new Error('Invalid response format');
       }
     } catch (error) {
       console.error('Error in handleWear:', error);
-      onShowModal('Не удалось надеть предмет. Проверьте связь и попробуйте снова.');
+      notify('Не удалось надеть предмет. Проверьте связь и попробуйте снова.', 'error');
     } finally {
       wearPending.current = false;
       setHandleRequest(false);
@@ -260,8 +266,9 @@ const InventoryItem = ({
         >
           {/* Чекбокс для выбора предмета */}
           {onToggleSelect && (
-            <div 
+            <label
               className="inventory-item-checkbox"
+              onClick={event => event.stopPropagation()}
               style={{
                 position: 'absolute',
                 top: '8px',
@@ -277,6 +284,7 @@ const InventoryItem = ({
             >
               <input
                 type="checkbox"
+                aria-label={`Выбрать: ${device.name}`}
                 checked={isSelected}
                 onChange={(e) => {
                   e.stopPropagation();
@@ -291,7 +299,7 @@ const InventoryItem = ({
                   accentColor: '#28a745'
                 }}
               />
-            </div>
+            </label>
           )}
           
           {/* Изображение предмета - ПРОСТОЕ РЕШЕНИЕ */}
@@ -545,6 +553,7 @@ const InventoryItem = ({
       </Col>
       
       {/* Модальные окна */}
+      <ActionNotice notice={notice} onDismiss={() => setNotice(null)} />
       <Offcanvas show={showActions} onHide={() => setShowActions(false)} placement="bottom"
         className="item-actions-sheet" aria-labelledby={`item-actions-${itemId}`}>
         <Offcanvas.Header closeButton>

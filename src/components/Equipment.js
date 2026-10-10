@@ -1,9 +1,10 @@
-import { useState, useEffect, useContext } from "react";
-import { Alert, Container, Row, Button, Modal, Offcanvas } from "react-bootstrap";
+import { useState, useEffect, useContext, useRef } from "react";
+import { Alert, Container, Row, Button, Offcanvas } from "react-bootstrap";
 import GetDataById from "../http/GetData";
 import { UnwearDataById } from "../http/SupportFunctions";
 import { Spinner } from "react-bootstrap";
 import { Context } from "../index";
+import ActionNotice from "./ActionNotice";
 import bodyImage from "../assets/Images/kukla.webp";
 import "./Equipment.css";
 
@@ -12,8 +13,9 @@ const Equipment = () => {
   const [equippedItems, setEquippedItems] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [modalMessage, setModalMessage] = useState("");
-  const [showModal, setShowModal] = useState(false);
+  const [notice, setNotice] = useState(null);
+  const [isRemoving, setIsRemoving] = useState(false);
+  const removalPending = useRef(false);
   const [selectedSlot, setSelectedSlot] = useState(null);
 
   const equipmentSlots = [
@@ -38,41 +40,26 @@ const Equipment = () => {
     fetchData();
   }, [user.user.id, user.player_data]);
 
-  const handleModalClose = () => setShowModal(false);
-
-  useEffect(() => {
-    if (showModal) {
-      const timer = setTimeout(() => {
-        handleModalClose();
-      }, 2500);
-      return () => clearTimeout(timer);
-    }
-  }, [showModal]);
-
   const handleUnwear = async (slot) => {
+    if (removalPending.current) return;
+    removalPending.current = true;
+    setIsRemoving(true);
     try {
       const equippedItem = equippedItems[slot];
-      if (isValidItem(equippedItem)) {
-        const response = await UnwearDataById(equippedItem.id);
-        if (response.status) {
-          const message = response.message;
-          const player_data = response.data;
-          user.setPlayerInventory(player_data.inventory_new);
-          user.setPlayer(player_data);
-          setEquippedItems(player_data);
-          setModalMessage(message);
-        }
-        setSelectedSlot(null);
-        setShowModal(true);
-      } else {
-        setModalMessage("Нельзя снять то, чего не надето");
-        setShowModal(true);
-      }
-    } catch (err) {
-      console.error(err);
+      if (!isValidItem(equippedItem)) throw new Error('Missing item');
+      const response = await UnwearDataById(equippedItem.id);
+      if (!response?.data || response.status !== 200) throw new Error('Unwear failed');
+      const player = response.data;
+      user.setPlayerInventory(player.inventory_new);
+      user.setPlayer(player);
+      setEquippedItems(player);
       setSelectedSlot(null);
-      setModalMessage("Не удалось снять предмет. Обновите данные и попробуйте ещё раз.");
-      setShowModal(true);
+      setNotice({message: response.message || 'Предмет снят', variant: 'success'});
+    } catch {
+      setNotice({message: 'Не удалось снять предмет. Проверьте связь и попробуйте снова.', variant: 'error'});
+    } finally {
+      removalPending.current = false;
+      setIsRemoving(false);
     }
   };
 
@@ -195,23 +182,14 @@ const Equipment = () => {
           <Button
             variant="danger"
             className="equipment-action-sheet__button"
+            disabled={isRemoving}
             onClick={() => handleUnwear(selectedSlot)}
           >
-            Снять предмет
+            {isRemoving ? 'Снимаем…' : 'Снять предмет'}
           </Button>
         </Offcanvas.Body>
       </Offcanvas>
-      <Modal show={showModal} onHide={handleModalClose} backdrop="static" keyboard={false}>
-        <Modal.Header closeButton>
-          <Modal.Title>Оповещение</Modal.Title>
-        </Modal.Header>
-        <Modal.Body style={{ whiteSpace: 'pre-wrap' }}>{modalMessage}</Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={handleModalClose}>
-            Закрыть
-          </Button>
-        </Modal.Footer>
-      </Modal>
+      <ActionNotice notice={notice} onDismiss={() => setNotice(null)} />
     </Container>
   );
 };

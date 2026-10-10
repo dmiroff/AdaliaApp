@@ -3420,3 +3420,29 @@ body {
 .comparison-heading { font-weight:600; }
 .equipment-comparison { color:var(--color-text-dark); }
 @media(max-width:768px) { .inventory-search-input { min-height:44px; font-size:16px!important; } .custom-filters-container .form-control,.custom-filters-container .form-select { min-height:44px; font-size:16px; } }
+
+/* Nonblocking equipment feedback */
+.action-notice { position:fixed; z-index:1060; bottom:20px; left:50%; transform:translateX(-50%); width:min(480px,calc(100vw - 24px)); display:flex; align-items:center; gap:12px; padding:12px 12px 12px 16px; border:1px solid #267343; border-radius:12px; background:#edf7ef; color:#173b24; box-shadow:0 4px 18px #0005; }
+.action-notice > span { flex:1; min-width:0; overflow-wrap:anywhere; white-space:pre-wrap; }
+.action-notice > button { flex:0 0 44px; width:44px; height:44px; border:0; border-radius:8px; background:transparent; color:inherit; font-size:24px; }
+.action-notice--error { background:#fff1ec; border-color:#a33b24; color:#652619; }
+@media (max-width:991.98px) {
+  body.has-mobile-bottom-nav .action-notice { bottom:calc(6rem + env(safe-area-inset-bottom)); }
+}
+@media (max-width:768px) {
+  .main-content button, .modal button, .offcanvas button, .main-content .btn { min-width:44px!important; min-height:44px!important; }
+  .main-content .btn-close, .modal .btn-close, .offcanvas .btn-close { width:44px!important; height:44px!important; padding:0!important; flex-shrink:0; }
+  .active-filters-display .badge .btn { height:44px!important; }
+  .inventory-search-input { padding-right:58px!important; }
+  .search-input-wrapper .clear-search-btn { right:2px; }
+  .inventory-item-checkbox { padding:0!important; min-width:44px; min-height:44px; display:flex; align-items:center; justify-content:center; }
+  .inventory-item-checkbox input[type="checkbox"] { width:20px!important; height:20px!important; }
+}
+
+@media (max-width:768px) {
+  .equipment-layout { --equipment-slot-size:44px; }
+  .equipment-layout__slot.ring_1, .equipment-layout__slot.right_hand { left:22%; }
+  .equipment-layout__slot.ring_4, .equipment-layout__slot.secondary_weapon { right:22%; }
+  .equipment-layout__slot.ring_3 { top:38%; left:calc(50% - 22px); }
+  .equipment-layout__slot.left_hand { left:calc(50% - 22px); }
+}

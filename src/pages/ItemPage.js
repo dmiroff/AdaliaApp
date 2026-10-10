@@ -11,6 +11,7 @@ import ModalAction from "../components/ModalAction";
 import { observer } from 'mobx-react-lite';
 import GetDataById from '../http/GetData';
 import EquipmentComparison from "../components/EquipmentComparison";
+import ActionNotice from '../components/ActionNotice';
 
 const Item = () => {
   const { user } = useContext(Context);
@@ -19,6 +20,7 @@ const Item = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [imageSrc, setImageSrc] = useState(null);
+  const [notice, setNotice] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [showModalSell, setShowModalSell] = useState(false);
   const [showModalDrop, setShowModalDrop] = useState(false);
@@ -170,11 +172,9 @@ const Item = () => {
       const message = response.message;
       user.setPlayerInventory(player_data.inventory_new);
       user.setPlayer(player_data);
-      setModalMessage(message);
-      setShowModal(true);
+      setNotice({message: message || 'Предмет надет', variant: 'success'});
     } catch (error) {
-      setModalMessage("Не удалось надеть предмет. Проверьте связь и попробуйте снова.");
-      setShowModal(true);
+      setNotice({message: 'Не удалось надеть предмет. Проверьте связь и попробуйте снова.', variant: 'error'});
     } finally {
       wearPending.current = false;
       setHandleRequest(false);
@@ -386,6 +386,7 @@ const Item = () => {
 </Row>
 </div>
 
+<ActionNotice notice={notice} onDismiss={() => setNotice(null)} />
 {/* Модальные окна */}
 <Modal show={showModal} onHide={handleModalClose} backdrop="static" keyboard={false} centered>
   <Modal.Header closeButton className="fantasy-modal-header">

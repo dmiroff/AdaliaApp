@@ -1,6 +1,7 @@
 import { observer } from "mobx-react-lite";
 import { useContext, useEffect, useState, useCallback, useMemo } from "react";
 import InventoryItem from "./InventoryItem";
+import ActionNotice from "./ActionNotice";
 import { Row, Col, Form, Modal, Button, Badge } from "react-bootstrap";
 import { Context } from "../index";
 import GetDataById from "../http/GetData";
@@ -21,6 +22,7 @@ const InventoryList = observer(() => {
   const [quickCategory, setQuickCategory] = useState('all');
   const [user_inventory, setUserInventory] = useState({});
   
+  const [notice, setNotice] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [modalMessage, setModalMessage] = useState("");
   
@@ -432,6 +434,7 @@ const InventoryList = observer(() => {
                 className="clear-search-btn"
                 onClick={() => setQuery('')}
                 title="Очистить поиск"
+                aria-label="Очистить поиск"
               >
                 <i className="fas fa-times"></i>
               </Button>
@@ -691,9 +694,10 @@ const InventoryList = observer(() => {
                     <Button
                       variant="link"
                       size="sm"
-                      className="text-white p-0"
+                      className="text-white p-0 filter-remove-button"
+                      aria-label={`Убрать фильтр: ${fieldConfig?.name}`}
                       onClick={() => removeFilter(index)}
-                      style={{ minWidth: '16px', height: '16px' }}
+                      style={{ minWidth: '44px', minHeight: '44px' }}
                     >
                       <i className="fas fa-times" style={{ fontSize: '0.6rem' }}></i>
                     </Button>
@@ -714,6 +718,7 @@ const InventoryList = observer(() => {
               devicekey={item.id} 
               device={item} 
               onShowModal={handleShowModal}
+              onNotify={setNotice}
               isSelected={selectedItems.has(item.id)}
               onToggleSelect={toggleItemSelection}
               isUnidentified={item.undefined === true}
@@ -754,6 +759,7 @@ const InventoryList = observer(() => {
         onSuccess={handleOperationSuccess}
       />
 
+      <ActionNotice notice={notice} onDismiss={() => setNotice(null)} />
       {/* Оповещение о результате операции */}
       <Modal show={showModal} onHide={handleCloseModal} backdrop="static" keyboard={false} centered className="fantasy-modal">
         <Modal.Header closeButton className="fantasy-card-header fantasy-card-header-primary">

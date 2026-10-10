@@ -7,9 +7,12 @@ import { Context } from '../index';
 import InventoryList from './InventoryList';
 import InventoryItem from './InventoryItem';
 import AppRouter from './AppRouter';
-import GetDataById from '../http/GetData';
+import ActionNotice from './ActionNotice';
+import ItemPage from '../pages/ItemPage';
+import Equipment from './Equipment';
+import GetDataById, {GetItemById} from '../http/GetData';
 import apiClient from '../http/apiClient';
-import { WearDataById } from '../http/SupportFunctions';
+import { WearDataById, UnwearDataById } from '../http/SupportFunctions';
 import { comparisonStats, comparisonSlots } from '../utils/equipmentComparison';
 
 jest.mock('../pages/NotAuth', () => () => null);
@@ -17,7 +20,7 @@ jest.mock('../pages/AuthCallback', () => () => null);
 jest.mock('../index', () => ({Context: require('react').createContext(null)}));
 jest.mock('../http/GetData', () => ({__esModule:true, default:jest.fn(), GetItemById:jest.fn()}));
 jest.mock('../http/apiClient', () => ({__esModule:true, default:{get:jest.fn()}}));
-jest.mock('../http/SupportFunctions', () => ({WearDataById:jest.fn(), SellItemById:jest.fn(), ThrowItemById:jest.fn()}));
+jest.mock('../http/SupportFunctions', () => ({WearDataById:jest.fn(), UnwearDataById:jest.fn(), SellItemById:jest.fn(), ThrowItemById:jest.fn()}));
 jest.mock('./MassTransferModal', () => ({MassTransferModal:()=>null, MassSellModal:()=>null, MassDropModal:()=>null}));
 let container, root, user;
 beforeEach(() => {
@@ -27,8 +30,8 @@ beforeEach(() => {
   user = new UserStore();
   container = document.createElement('div'); document.body.appendChild(container); root=createRoot(container);
 });
-afterEach(async()=>{await act(async()=>root.unmount());container.remove();});
-const render = async component => act(async()=>root.render(<Context.Provider value={{user}}><MemoryRouter initialEntries={['/inventory']}>{component}</MemoryRouter></Context.Provider>));
+afterEach(async()=>{await act(async()=>root.unmount());container.remove();jest.useRealTimers();});
+const render = async (component, path = '/inventory') => act(async()=>root.render(<Context.Provider value={{user}}><MemoryRouter initialEntries={[path]}>{component}</MemoryRouter></Context.Provider>));
 const click = async button => act(async()=>Simulate.click(button));
 const button = text => [...document.querySelectorAll('button')].find(b=>b.textContent.trim()===text);
 
@@ -84,6 +87,8 @@ test('explicit item actions open a sheet and rapid double wear sends one request
  await act(async()=>resolve({status:200,data:{inventory_new:{1:item},right_hand:{...item,id:1}},message:'Готово'}));
  expect(user.player_data.right_hand.id).toBe(1);
  expect(user.user.id).toBe(0);
+ expect(notice).not.toHaveBeenCalled();
+ expect(document.body.querySelector('[role="status"]').textContent).toContain('Готово');
 });
 
 test('comparison does not invent dice arithmetic and exposes all ring slots',()=>{
@@ -110,4 +115,62 @@ test('failed wear releases the action button for another attempt',async()=>{
  expect(button('Надеть').disabled).toBe(false);
  await click(button('Надеть'));
  expect(WearDataById).toHaveBeenCalledTimes(2);
+});
+
+test('success notice announces the action without a dialog and expires',async()=>{
+ jest.useFakeTimers();
+ const dismiss=jest.fn();
+ await render(<ActionNotice notice={{message:'Надето',variant:'success'}} onDismiss={dismiss}/>);
+ expect(container.querySelector('[role="status"]').textContent).toContain('Надето');
+ expect(document.body.querySelector('[role="dialog"]')).toBeNull();
+ await act(async()=>jest.advanceTimersByTime(4500));
+ expect(dismiss).toHaveBeenCalledTimes(1);
+});
+
+test('error notice stays readable until dismissed',async()=>{
+ jest.useFakeTimers();
+ const dismiss=jest.fn();
+ await render(<ActionNotice notice={{message:'Нет связи',variant:'error'}} onDismiss={dismiss}/>);
+ await act(async()=>jest.advanceTimersByTime(15000));
+ expect(dismiss).not.toHaveBeenCalled();
+ expect(container.querySelector('[role="alert"]').textContent).toContain('Нет связи');
+ await click(container.querySelector('button'));
+ expect(dismiss).toHaveBeenCalledTimes(1);
+});
+
+test('wear on the item detail page updates equipment and uses a status notice',async()=>{
+ const item={id:101,name:'Шлем',type:'head',is_equippable:true,count:1};
+ user.setPlayer({inventory_new:{101:item}});user.setPlayerInventory({101:item});
+ GetItemById.mockResolvedValue({data:item});
+ WearDataById.mockResolvedValue({status:200,data:{inventory_new:{101:item},head:item},message:'Шлем надет'});
+ await render(<ItemPage/>, '/inventory/101');
+ await click(button('Надеть предмет'));
+ expect(user.player_data.head.id).toBe(101);
+ expect(container.querySelector('[role="status"]').textContent).toContain('Шлем надет');
+ expect(document.body.querySelector('.modal')).toBeNull();
+});
+
+test('unwear updates equipment without a result modal',async()=>{
+ const item={id:101,name:'Шлем',type:'head',count:1};
+ const player={id:1,inventory_new:{101:item},head:item};
+ user.setUser(1);user.setPlayer(player);user.setPlayerInventory(player.inventory_new);
+ GetDataById.mockResolvedValue({data:player});
+ UnwearDataById.mockResolvedValue({status:200,data:{...player,head:null},message:'Шлем снят'});
+ await render(<Equipment/>);
+ await click(container.querySelector('[aria-label="Шлем — открыть действия"]'));
+ await click(button('Снять предмет'));
+ expect(user.player_data.head).toBeNull();
+ expect(container.querySelector('[role="status"]').textContent).toContain('Шлем снят');
+ expect(document.body.querySelector('.modal')).toBeNull();
+});
+
+test('selection checkbox has a label and toggles once',async()=>{
+ const select=jest.fn();
+ const item={name:'Меч',count:1};
+ await render(<InventoryItem devicekey="1" device={item} onToggleSelect={select} onShowModal={jest.fn()}/>);
+ const checkbox=container.querySelector('input[type="checkbox"]');
+ expect(checkbox.closest('label')).not.toBeNull();
+ expect(checkbox.getAttribute('aria-label')).toBe('Выбрать: Меч');
+ await act(async()=>Simulate.change(checkbox,{target:{checked:true}}));
+ expect(select).toHaveBeenCalledTimes(1);
 });
