@@ -3440,9 +3440,9 @@ body {
 }
 
 @media (max-width:768px) {
-  .equipment-layout { --equipment-slot-size:44px; }
-  .equipment-layout__slot.ring_1, .equipment-layout__slot.right_hand { left:22%; }
-  .equipment-layout__slot.ring_4, .equipment-layout__slot.secondary_weapon { right:22%; }
-  .equipment-layout__slot.ring_3 { top:38%; left:calc(50% - 22px); }
-  .equipment-layout__slot.left_hand { left:calc(50% - 22px); }
+  .main-content .equipment-layout { --equipment-slot-size:44px; }
+  .equipment-layout .equipment-layout__slot.ring_1, .equipment-layout .equipment-layout__slot.right_hand { left:22%; }
+  .equipment-layout .equipment-layout__slot.ring_4, .equipment-layout .equipment-layout__slot.secondary_weapon { right:22%; }
+  .equipment-layout .equipment-layout__slot.ring_3 { top:38%; left:calc(50% - 22px); }
+  .equipment-layout .equipment-layout__slot.left_hand { left:calc(50% - 22px); }
 }
