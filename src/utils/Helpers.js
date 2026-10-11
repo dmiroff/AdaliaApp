@@ -839,7 +839,7 @@ export const talents_dict = {
         "agility": 200
     },
     "take_times": 1,
-    "effects": "Стоимость смены оружия 1.",
+    "effects": "Стоимость смены оружия 1. Можно взять только один раз.",
 },
 "Удачный удар": {
     "requirements": {
