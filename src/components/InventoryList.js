@@ -1,10 +1,11 @@
 import { observer } from "mobx-react-lite";
-import { useContext, useEffect, useState, useCallback, useMemo } from "react";
+import { useContext, useEffect, useState, useCallback, useMemo, useRef } from "react";
 import InventoryItem from "./InventoryItem";
 import ActionNotice from "./ActionNotice";
 import { Row, Col, Form, Modal, Button, Badge } from "react-bootstrap";
 import { Context } from "../index";
 import GetDataById from "../http/GetData";
+import apiClient from "../http/apiClient";
 import { Spinner } from "react-bootstrap";
 import Fuse from "fuse.js";
 import { MassTransferModal, MassDropModal, MassSellModal } from "../components/MassTransferModal";
@@ -26,6 +27,44 @@ const InventoryList = observer(() => {
   const [showModal, setShowModal] = useState(false);
   const [modalMessage, setModalMessage] = useState("");
   
+  const identifyPending = useRef(false);
+  const [identifying, setIdentifying] = useState(false);
+  const [identifiedCount, setIdentifiedCount] = useState(0);
+  const unidentifiedCount = Object.values(user_inventory).reduce((sum, item) =>
+    sum + (item.undefined && item.is_equippable ? Math.max(0, Number(item.count ?? 1)) : 0), 0);
+
+  const identifyAll = async () => {
+    if (identifyPending.current) return;
+    identifyPending.current = true;
+    setIdentifying(true);
+    setIdentifiedCount(0);
+    let total = 0;
+    try {
+      let remaining;
+      do {
+        const {data} = await apiClient.post('/inventory/identify-all', {}, {timeout: 60000});
+        total += data.identified_count;
+        remaining = data.remaining_count;
+        setIdentifiedCount(total);
+        setSelectedItems(new Set());
+        if (data.data) {
+          user.setPlayer(data.data);
+          user.setPlayerInventory(data.data.inventory_new || {});
+          setPlayerData(data.data);
+          setUserInventory(data.data.inventory_new || {});
+        }
+        if (!data.identified_count && remaining) throw new Error('Часть предметов не удалось распознать.');
+      } while (remaining > 0);
+      setNotice({variant: 'success', message: `Распознано предметов: ${total}.`});
+    } catch (error) {
+      setNotice({variant: 'error', message: `Распознано: ${total}. ${error.response?.data?.detail || error.message || 'Не удалось завершить распознавание.'}`});
+      await fetchPlayerData();
+    } finally {
+      identifyPending.current = false;
+      setIdentifying(false);
+    }
+  };
+
   // Состояния для массовых операций
   const [selectedItems, setSelectedItems] = useState(new Set());
   const [showMassTransferModal, setShowMassTransferModal] = useState(false);
@@ -415,6 +454,11 @@ const InventoryList = observer(() => {
 
   return (
     <div className="fantasy-paper content-overlay inventory-container p-3">
+      {(unidentifiedCount > 0 || identifying) && <button
+        className="fantasy-btn fantasy-btn-lg mb-3" disabled={identifying || massOperationLoading || playerData?.in_fight}
+        onClick={identifyAll}>
+        {identifying ? `Распознаём… ${identifiedCount}` : `Распознать всё (${unidentifiedCount})`}
+      </button>}
       {/* Поиск */}
       <div className="fantasy-paper content-overlay bulk-purchase-tab mb-3">
         <Form className="fantasy-form">

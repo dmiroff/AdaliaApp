@@ -19,7 +19,7 @@ jest.mock('../pages/NotAuth', () => () => null);
 jest.mock('../pages/AuthCallback', () => () => null);
 jest.mock('../index', () => ({Context: require('react').createContext(null)}));
 jest.mock('../http/GetData', () => ({__esModule:true, default:jest.fn(), GetItemById:jest.fn()}));
-jest.mock('../http/apiClient', () => ({__esModule:true, default:{get:jest.fn()}}));
+jest.mock('../http/apiClient', () => ({__esModule:true, default:{get:jest.fn(),post:jest.fn()}}));
 jest.mock('../http/SupportFunctions', () => ({WearDataById:jest.fn(), UnwearDataById:jest.fn(), SellItemById:jest.fn(), ThrowItemById:jest.fn()}));
 jest.mock('./MassTransferModal', () => ({MassTransferModal:()=>null, MassSellModal:()=>null, MassDropModal:()=>null}));
 let container, root, user;
@@ -174,4 +174,16 @@ test('selection checkbox has a label and toggles once',async()=>{
  expect(checkbox.getAttribute('aria-label')).toBe('Выбрать: Меч');
  await act(async()=>Simulate.change(checkbox,{target:{checked:true}}));
  expect(select).toHaveBeenCalledTimes(1);
+});
+
+
+test('identify all handles whole inventory stacks across batches',async()=>{
+ GetDataById.mockResolvedValue({data:{inventory_new:{1:{name:'Неопознанный меч',undefined:true,is_equippable:true,count:2}}}});
+ apiClient.post.mockResolvedValueOnce({data:{identified_count:1,remaining_count:1,data:{inventory_new:{1:{name:'Неопознанный меч',undefined:true,is_equippable:true,count:1}}}}}).mockResolvedValueOnce({data:{identified_count:1,remaining_count:0,data:{inventory_new:{2:{name:'Распознанный меч',undefined:false,is_equippable:true,count:2}}}}});
+ await render(<InventoryList/>);
+ await click(button('Распознать всё (2)'));
+ expect(apiClient.post).toHaveBeenCalledTimes(2);
+ expect(container.textContent).toContain('Распознанный меч');
+ expect(document.body.textContent).toContain('Распознано предметов: 2.');
+ expect(button('Распознать всё (2)')).toBeUndefined();
 });
