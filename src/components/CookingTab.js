@@ -1,0 +1,77 @@
+import React, { useEffect, useState } from 'react';
+import { Alert, Button, Card, Form, Modal, Spinner } from 'react-bootstrap';
+import apiClient from '../http/apiClient';
+
+const art = require.context('../assets/Images', true, /\.(webp|png|jpe?g)$/);
+function picture(path) {
+  const relative = (path || '').split('Images/')[1];
+  if (!relative) return null;
+  for (const key of [`./${relative.replace(/\.[^.]+$/, '.webp')}`, `./${relative}`]) {
+    if (art.keys().includes(key)) return art(key);
+  }
+  return null;
+}
+export default function CookingTab() {
+  const [data, setData] = useState(null), [error, setError] = useState(''), [message, setMessage] = useState('');
+  const [batches, setBatches] = useState(1), [busy, setBusy] = useState(false), [pending, setPending] = useState(null);
+  const [selected, setSelected] = useState([]), [now, setNow] = useState(Date.now());
+  const reload = async () => { const result = await apiClient.get('/crafting/cooking'); setData(result.data); };
+  useEffect(() => {
+    reload().catch(() => setError('Не удалось загрузить кухню'));
+    const timer = setInterval(() => setNow(Date.now()), 1000);
+    const poll = setInterval(() => reload().catch(() => {}), 10000);
+    return () => { clearInterval(timer); clearInterval(poll); };
+  }, []);
+  const preview = (action, payload, title, details) => {
+    setPending({ action, payload: { ...payload, request_id: crypto.randomUUID() }, title, details });
+  };
+  const submit = async () => {
+    if (!pending || busy) return;
+    setBusy(true); setError('');
+    try {
+      const result = await apiClient.post(`/crafting/cooking/${pending.action}`, pending.payload);
+      setMessage(result.data.message); setPending(null); await reload();
+    } catch (e) { setError(e.response?.data?.detail || 'Ответ не получен. Можно повторить подтверждение.'); }
+    finally { setBusy(false); }
+  };
+  const quoteText = q => q ? `${q.effect}\nДополнительная обычная еда: ${Object.values(q.food).reduce((a, n) => a + n, 0)} шт. Лечение: ${q.healed}. ${q.partial ? 'Еды не хватает: отдых частичный. ' : ''}${q.replaces ? 'Предыдущий пищевой эффект будет заменён.' : ''}` : 'Ваша раса не может использовать обычную еду.';
+  if (!data) return error ? <Alert variant="danger">{error}</Alert> : <Spinner animation="border" />;
+  return <div className="fantasy-paper p-3">
+    <h3>🍲 Кухня · Повар {data.skill ?? 'не открыт'}</h3>
+    <p>Сила зависит от навыка автора при приготовлении и сохраняется при передаче. Рост продолжается после 100.</p>
+    {!data.allowed && <Alert variant="info">{data.reason}</Alert>}
+    {message && <Alert variant="success">{message}</Alert>}
+    {error && <Alert variant="danger">{error}</Alert>}
+    {data.job && <Alert variant="info">До завершения: {Math.max(0, Math.ceil(data.job.ready_at - now / 1000))} сек. <Button size="sm" onClick={() => reload().catch(() => setError('Не удалось обновить'))}>Обновить</Button></Alert>}
+    {data.meal && <p>Следующий бой: {data.meal.name}. Осталось {Math.max(0, Math.ceil((data.meal.expires_at - now / 1000) / 60))} мин.</p>}
+    <h4>Приготовление</h4>
+    <Form.Label>Партий (готовятся последовательно)</Form.Label>
+    <Form.Control type="number" min={1} max={100} value={batches} onChange={e => setBatches(Math.min(100, Math.max(1, Number(e.target.value) || 1)))} />
+    {data.recipes.map(r => <Card key={r.id} className="my-2"><Card.Body>
+      {picture(r.image) && <img src={picture(r.image)} width="64" height="64" alt="" className="float-end rounded" />}
+      <Card.Title>{r.name}</Card.Title><p>Повар {r.level} · {r.known ? 'Изучен' : 'Нужна запись рецепта'}</p>
+      <p>{r.effect}</p><p>{r.portions * batches} порц. · {r.seconds * batches} сек.</p>
+      <ul>{r.materials.map(m => <li key={m.id}>{m.name}: {m.count * batches} / есть {m.available}</li>)}</ul>
+      {r.known ? <Button disabled={busy || !data.allowed || data.skill < r.level || r.max_batches < batches} onClick={() => preview('cook', { recipe_id: r.id, batches }, r.name, `Будет потрачено: ${r.materials.map(m => `${m.name} ×${m.count * batches}`).join(', ')}.\n${r.portions * batches} порц., ${r.seconds * batches} сек.\n${r.effect}`)}>Приготовить</Button>
+        : <Button disabled={busy || !data.allowed || !r.note_count || data.skill === null} onClick={() => preview('learn', { note_id: r.note_id }, 'Изучить рецепт', `Расход: 1 запись «${r.name}». Готовка доступна с навыка ${r.level}.`)}>Изучить (есть {r.note_count})</Button>}
+    </Card.Body></Card>)}
+    <h4>Готовые блюда</h4>
+    {data.group_members.map(p => <Form.Check key={p.id} label={`${p.name}${p.nearby ? '' : ' — далеко'}`} disabled={!p.nearby || busy} checked={selected.includes(p.id)} onChange={e => setSelected(e.target.checked ? [...selected, p.id] : selected.filter(i => i !== p.id))} />)}
+    {data.dishes.map(d => <Card key={d.id} className="my-2"><Card.Body>
+      <Card.Title>{d.name} ×{d.count}</Card.Title><p>{d.effect}</p>
+      <Button disabled={busy || !data.allowed || !d.quote} onClick={() => preview('rest', { item_id: d.id, replace: !!d.quote.replaces, partial: d.quote.partial }, 'Отдых с блюдом — 30 секунд', `Расход: 1 порция.\n${quoteText(d.quote)}`)}>Отдохнуть</Button>{' '}
+      <Button variant="outline-secondary" disabled={busy || !data.allowed || !selected.length || selected.length + 1 > d.count} onClick={() => preview('invite', { item_id: d.id, participant_ids: selected }, 'Общая трапеза', `${selected.length + 1} участников, включая вас. После согласия всех и запуска будет потрачено по порции на каждого согласившегося. Дополнительную еду участники оплачивают сами.`)}>Пригласить группу</Button>
+    </Card.Body></Card>)}
+    <h4>Предложения трапезы</h4>
+    {data.feasts.map(f => <Card key={f.id} className="my-2"><Card.Body><Card.Title>Приглашает {f.host_name}</Card.Title>
+      <p>{Object.values(f.participants).map(p => `${p.name}: ${p.answer}`).join(', ')}</p><p style={{ whiteSpace: 'pre-line' }}>{quoteText(f.quote)}</p>
+      <Button disabled={busy || !f.quote} onClick={() => preview('answer', { feast_id: f.id, accept: true, replace: !!f.quote.replaces, partial: f.quote.partial }, 'Согласиться на трапезу', quoteText(f.quote))}>Согласиться</Button>{' '}
+      <Button disabled={busy} variant="outline-secondary" onClick={() => preview('answer', { feast_id: f.id, accept: false }, 'Отказаться', 'Расходов не будет.')}>Отказаться</Button>
+      {f.host_id === data.player_id && <><Button disabled={busy} onClick={() => preview('start', { feast_id: f.id }, 'Начать общий отдых', 'Только после ответа всех участников. По одной вашей порции каждому согласившемуся, включая вас. Отдых — 30 секунд.')}>Начать</Button><Button variant="outline-secondary" disabled={busy} onClick={() => preview('cancel', { feast_id: f.id }, 'Отменить приглашение', 'Порции не расходуются.')}>Отменить</Button></>}
+    </Card.Body></Card>)}
+    <Modal show={!!pending} onHide={() => !busy && setPending(null)}><Modal.Header closeButton={!busy}><Modal.Title>{pending?.title}</Modal.Title></Modal.Header>
+      <Modal.Body style={{ whiteSpace: 'pre-line' }}>{pending?.details}{error && <Alert variant="danger">{error}</Alert>}</Modal.Body>
+      <Modal.Footer><Button variant="secondary" disabled={busy} onClick={() => setPending(null)}>Отмена</Button><Button disabled={busy} onClick={submit}>Подтвердить</Button></Modal.Footer>
+    </Modal>
+  </div>;
+}

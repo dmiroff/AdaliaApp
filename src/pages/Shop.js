@@ -6,6 +6,7 @@ import Col from "react-bootstrap/Col";
 import { Tabs, Tab } from "react-bootstrap";
 import DonationTab from "../components/DonationTab";
 import CraftingTab from "../components/CraftingTab";
+import CookingTab from "../components/CookingTab";
 import AutoBuyTab from "../components/AutoBuyTab";
 import EventShopTab from "../components/EventShopTab";
 
@@ -45,6 +46,7 @@ const Shop = () => {
               </Tab>
               <Tab eventKey="autobuy" title="📜 Прайс-лист"><div className="mt-3"><AutoBuyTab active={activeTab === "autobuy"} onOpenPremium={() => setActiveTab("premium")} /></div></Tab>
               <Tab eventKey="crafting" title="⚒️ Кузня"><div className="mt-3"><CraftingTab /></div></Tab>
+              <Tab eventKey="cooking" title="🍲 Кухня" mountOnEnter unmountOnExit><div className="mt-3"><CookingTab /></div></Tab>
               {/*<Tab 
                 eventKey="event" 
                 title={
