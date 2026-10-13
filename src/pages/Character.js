@@ -12,6 +12,7 @@ import {
 } from "../utils/descriptions";
 import UpgradeTab from "../components/UpgradeTab";
 import GetDataById from "../http/GetData";
+import "./CharacterReadability.css";
 
 // Хук для загрузки данных персонажа
 const usePlayerData = (userId) => {

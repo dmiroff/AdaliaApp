@@ -1,0 +1,161 @@
+/* Character sheets use a readable Cyrillic font and solid text surfaces. */
+.character-container {
+  font-family: Arial, "Segoe UI", sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  color: #302318;
+}
+
+.character-container .fantasy-card {
+  background: #fff5df;
+  color: #302318;
+  border: 1px solid #b69a70;
+  border-radius: 10px;
+}
+
+.character-container .fantasy-card::before {
+  display: none;
+}
+
+.character-container .fantasy-card-header {
+  background: #432f22 !important;
+  color: #fff4db !important;
+  padding: 16px 18px;
+  border-bottom: 1px solid #b69a70 !important;
+}
+
+.character-container .fantasy-card-header h6,
+.character-container .fantasy-card-header .fantasy-text-gold {
+  margin: 0;
+  color: #fff4db !important;
+  font-family: inherit;
+  font-size: 19px;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: normal;
+  text-shadow: none !important;
+}
+
+.character-container .card-body {
+  padding: 18px;
+}
+
+.character-container .fantasy-stat-row {
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 10px;
+  padding: 12px 0;
+  border-bottom-color: #dcc9a9;
+  color: #302318;
+  font-size: 16px;
+  line-height: 1.5;
+  text-shadow: none;
+}
+
+.character-container .fantasy-stat-row > span:first-child {
+  flex: 1;
+  min-width: 0;
+}
+
+.character-container .fantasy-stat-row > span:last-child {
+  max-width: 60%;
+  overflow-wrap: anywhere;
+  text-align: right;
+}
+
+.character-container .fantasy-badge,
+.character-container .badge {
+  background: #f2dfba !important;
+  color: #302318 !important;
+  border: 1px solid #b69a70;
+  border-radius: 7px;
+  padding: 5px 10px;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.3;
+  font-variant-numeric: tabular-nums;
+  white-space: normal;
+  opacity: 1;
+  text-shadow: none !important;
+  box-shadow: none;
+}
+
+.character-container .fantasy-text-muted,
+.character-container .fantasy-text-bold,
+.character-container .text-muted,
+.character-container .fantasy-attribute-key,
+.character-container .fantasy-attribute-value {
+  color: #463426 !important;
+  font-family: inherit;
+  font-size: 16px;
+  line-height: 1.5;
+  text-shadow: none !important;
+}
+
+.character-container .fantasy-tabs .nav-link {
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 600;
+  color: #302318 !important;
+  text-shadow: none !important;
+  letter-spacing: normal;
+}
+
+.character-container .fantasy-tabs .nav-link.active {
+  background: #fff5df !important;
+  color: #302318 !important;
+  border-color: #b69a70;
+}
+
+.character-container .progress-label,
+.character-container .progress-label-left,
+.character-container .progress-label-right {
+  font-family: inherit;
+  color: #302318;
+  font-size: 16px;
+  font-weight: 600;
+  text-shadow: none;
+}
+
+.character-container .health-progress .progress-text,
+.character-container .experience-progress .progress-text {
+  color: #302318 !important;
+  font-family: inherit;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: normal;
+  text-shadow: none !important;
+  mix-blend-mode: normal;
+  -webkit-text-stroke: 0;
+}
+
+@media (max-width: 575px) {
+  .character-container .card-body {
+    padding: 14px;
+  }
+
+  .character-container .fantasy-card-header {
+    padding: 14px;
+  }
+
+  .character-container .fantasy-tabs .nav-tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+  }
+
+  .character-container .fantasy-tabs .nav-link {
+    min-width: 110px;
+    white-space: nowrap;
+  }
+}
+
+.character-container .tab-content {
+  font-family: Arial, "Segoe UI", sans-serif;
+}
+
+.character-container .fantasy-tabs {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+}
