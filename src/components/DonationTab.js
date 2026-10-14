@@ -473,6 +473,10 @@ const DonationTab = observer(() => {
     return false;
   });
 
+  const selectedTransferOption = transferOptions?.options?.find(
+    option => option.dungeon_key === selectedAbode
+  );
+
   const handlePurchaseClick = (product) => {
     setSelectedProduct(product);
     setQuantity(1);
@@ -808,9 +812,16 @@ const DonationTab = observer(() => {
             Текущий этаж и местоположение персонажа не изменятся.
           </p>
           <Alert variant="info">
-            Стоимость одного ритуала: <strong>1 Переносчик обителей</strong> и
-            <strong> 2 единицы чешуи за каждые начатые 100 этажей</strong> соответствующего дракона.
-            У вас переносчиков: <strong>{transferOptions?.transporter_count || 0}</strong>.
+            Стоимость ритуала: <strong>1 Переносчик обителей</strong>
+            {selectedTransferOption ? (
+              <>
+                {' '}и <strong>{selectedTransferOption.scale_required} ед. «{selectedTransferOption.scale_name}»</strong>.
+                {' '}У вас: <strong>{selectedTransferOption.scale_count}</strong> чешуи и{' '}
+                <strong>{transferOptions?.transporter_count || 0}</strong> переносчиков.
+              </>
+            ) : (
+              <>. Выберите Обитель, чтобы увидеть фактическое число требуемой чешуи.</>
+            )}
           </Alert>
           <Form.Group className="mb-3">
             <Form.Label>Обитель</Form.Label>
@@ -822,14 +833,13 @@ const DonationTab = observer(() => {
               <option value="">Выберите Обитель</option>
               {(transferOptions?.options || []).map(option => (
                 <option key={option.dungeon_key} value={option.dungeon_key}>
-                  {option.name}: {option.current_floor} → {option.target_floor} этаж; {option.scale_name}: {option.scale_count}/{option.scale_required}
+                  {option.name}: {option.current_floor} → {option.target_floor} этаж; нужно {option.scale_required} ед. {option.scale_name} (есть {option.scale_count})
                 </option>
               ))}
             </Form.Select>
           </Form.Group>
-          {selectedAbode && (() => {
-            const option = transferOptions?.options?.find(item => item.dungeon_key === selectedAbode);
-            if (!option) return null;
+          {selectedTransferOption && (() => {
+            const option = selectedTransferOption;
             return (
               <div>
                 <p className="fantasy-text-muted mb-2">
