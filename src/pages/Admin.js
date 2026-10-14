@@ -3,6 +3,7 @@ import {Alert, Button, Card, Col, Container, Form, Row, Spinner, Table} from 're
 import api from '../http/apiClient';
 
 const labels={vk:'ВКонтакте',telegram:'Telegram',max:'MAX',discord:'Discord'};
+const activePlatforms=['vk','telegram','max'];
 const phases={draft:'Черновик',planned:'Запланирован',pending:'Ожидает',sending:'Отправляется',posted:'Отправлен',unknown:'Нужна проверка',failed:'Ошибка'};
 const moscowInput=stamp=>stamp?new Date(stamp*1000+3*3600000).toISOString().slice(0,16):'';
 const toTimestamp=value=>value?Math.floor(new Date(value+':00+03:00').getTime()/1000):null;
@@ -14,7 +15,7 @@ export default function Admin(){
  const [image,setImage]=useState('');
  const selectedId=selected?.id,selectedImage=selected?.image;
  useEffect(()=>{if(selectedId)document.getElementById('post-editor')?.scrollIntoView({behavior:'smooth',block:'start'});},[selectedId]);
- const accept=value=>{setData(value);setConfig(value.settings);};
+ const accept=value=>{setData(value);setConfig({...value.settings,platforms:value.settings.platforms.filter(p=>activePlatforms.includes(p))});};
  const act=async(callback)=>{setBusy(true);setError('');try{await callback();}catch(e){setError(e.response?.data?.detail||'Не удалось выполнить действие.');}finally{setBusy(false);}};
  useEffect(()=>{act(async()=>accept((await api.get('/admin/posts')).data));},[]);
  useEffect(()=>{
@@ -42,10 +43,22 @@ export default function Admin(){
   {!data.main_deployment&&<Alert variant="info">Тестовый редактор: автоматическая отправка отсюда отключена. Для публикаций используйте основной сайт.</Alert>}
   <Card className="mb-4"><Card.Body>
    <h2 className="h5">Каналы и расписание</h2>
-   <Row>{Object.entries(labels).map(([p,label])=><Col md={6} key={p} className="mb-3">
+   <Row>{Object.entries(labels).filter(([p])=>activePlatforms.includes(p)).map(([p,label])=><Col md={6} key={p} className="mb-3">
     <Form.Check label={label} checked={config.platforms.includes(p)} disabled={busy} onChange={e=>setConfig({...config,platforms:e.target.checked?[...config.platforms,p]:config.platforms.filter(x=>x!==p)})}/>
     <Form.Control aria-label={`Канал ${label}`} placeholder={p==='telegram'?'@канал или числовой ID':'Числовой ID канала'} value={config.targets[p]||''} disabled={p==='vk'||busy} onChange={e=>setConfig({...config,targets:{...config.targets,[p]:e.target.value}})}/>
     <small className="text-muted">{data.credentials[p]?'Токен настроен на сервере':'Токен не настроен'}</small>
+    {p==='max'&&<div className="mt-2">
+     {!!data.max_channels?.length&&<Form.Select aria-label="Найденный канал MAX" value={config.targets.max||''} disabled={busy} onChange={e=>setConfig({...config,targets:{...config.targets,max:e.target.value}})}>
+      <option value="">Выберите найденный канал</option>{data.max_channels.map(channel=><option key={channel.target} value={channel.target}>{channel.title} · {channel.target}</option>)}
+     </Form.Select>}
+     <small className="text-muted d-block">Чтобы канал появился здесь, добавьте бота администратором с правом публикации, затем разместите сообщение в канале и обновите список.</small>
+     <Button size="sm" className="mt-1" variant="outline-secondary" disabled={busy} onClick={()=>act(async()=>{const value=(await api.get('/admin/posts')).data;setData(value);setNotice('Список найденных каналов обновлён.');})}>Обновить найденные каналы</Button>
+    </div>}
+
+    {p!=='vk'&&<div className="mt-2"><Button size="sm" variant="outline-secondary" disabled={busy||!config.targets[p]} onClick={()=>act(async()=>{
+     const r=await api.post('/admin/posts/channel-check',{platform:p,target:config.targets[p]});
+     if(r.data.ok)setNotice(`${label}: ${r.data.message}`);else setError(`${label}: ${r.data.message}`);
+    })}>Проверить канал и права бота</Button></div>}
    </Col>)}</Row>
    <Row className="mb-3">{config.times.map((value,i)=><Col key={i} xs={6} md={3}><Form.Label>Пост {i+1}, МСК</Form.Label><Form.Control type="time" value={value} onChange={e=>setConfig({...config,times:config.times.map((v,j)=>i===j?e.target.value:v)})}/></Col>)}</Row>
    <Form.Check className="mb-3" type="switch" label="Автоматически публиковать по расписанию" checked={config.enabled} disabled={!data.main_deployment||busy} onChange={e=>setConfig({...config,enabled:e.target.checked})}/>
