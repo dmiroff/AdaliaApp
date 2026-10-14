@@ -42,6 +42,11 @@ fi
 release_id=$(date +%s%N)
 release_path="$deploy_path/releases/$release_id"
 remote="$ssh_user@$ssh_host"
+if [[ "$target" == test ]]; then
+  shared_assets_path=/var/www/adalia-production/current
+else
+  shared_assets_path=/var/www/adalia-test/current
+fi
 ssh_options=(-o BatchMode=yes -o ConnectTimeout=40)
 
 if [[ "$target" == production || "$target" == prod ]]; then
@@ -70,6 +75,7 @@ rsync \
   --human-readable \
   --info=progress2,stats2 \
   --link-dest="$deploy_path/current" \
+  --link-dest="$shared_assets_path" \
   -e "ssh -o BatchMode=yes -o ConnectTimeout=40" \
   build/ "$remote:$release_path/"
 
