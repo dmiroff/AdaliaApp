@@ -76,7 +76,7 @@ export default function Admin(){
    <Form.Check className="mb-3" type="switch" label="Автоматически публиковать по расписанию" checked={config.enabled} disabled={!data.main_deployment||busy} onChange={e=>setConfig({...config,enabled:e.target.checked})}/>
    <Button disabled={busy} onClick={()=>act(async()=>{accept((await api.put('/admin/posts/settings',config)).data);setNotice('Настройки сохранены.');})}>Сохранить настройки</Button>{' '}
    <Button variant="outline-secondary" disabled={busy} onClick={()=>act(async()=>{const r=await api.get('/admin/posts/vk-check',{timeout:60000});if(r.data.ok){setNotice(r.data.message);if(r.data.catalogue)accept(r.data.catalogue);}else setError(r.data.message);})}>Проверить ВК</Button>
-   <p className="mt-3 mb-0 text-muted">Для ВК нужен пользовательский токен администратора с правами wall и photos в VK_WALL_TOKEN. Токены вводятся в окружение сервера.</p>
+   <p className="mt-3 mb-0 text-muted">Для ВК используется настроенный пользовательский токен администратора сообщества с правами на стену и фотографии.</p>
   </Card.Body></Card>
   <Row className="align-items-end mb-4"><Col xs={12} md={4}><Form.Label>Начать серию с даты, МСК</Form.Label><Form.Control type="date" value={start} onChange={e=>setStart(e.target.value)}/></Col><Col className="mt-2"><Button disabled={busy} onClick={()=>act(async()=>{
    if(!window.confirm('Распределить все неотправленные посты по двум выбранным временам в день?'))return;
@@ -85,6 +85,16 @@ export default function Admin(){
   })}>Назначить даты: 2 поста в день</Button>{' '}<Button variant="outline-secondary" disabled={busy} onClick={()=>act(refresh)}>Обновить статусы</Button></Col></Row>
   <div className="d-flex flex-wrap gap-2 mb-4">
    <Button disabled={busy} onClick={()=>setSelected({isNew:true,title:'',text:'',image:'',localDate:'',editable:true})}>Добавить пост</Button>
+   <Button variant="outline-primary" disabled={busy||!data.main_deployment||data.settings.enabled||!data.credentials.vk} onClick={()=>act(async()=>{
+    if(!window.confirm('Создать отложенные записи в ВК для включённых постов с назначенными датами? ВК опубликует их по расписанию.'))return;
+    try {
+     accept((await api.post('/admin/posts/vk-postpone',null,{timeout:1800000})).data);
+     setNotice('Отложенные записи созданы в ВК. Их публикацией управляет ВКонтакте.');
+    } catch(error) {
+     try {await refresh();} catch(refreshError) { /* Keep the original publication error. */ }
+     throw error;
+    }
+   })}>Создать отложенные записи ВК</Button>
    <Button variant="success" disabled={busy||!data.main_deployment} onClick={()=>act(async()=>{
     if(!window.confirm('Включить автопубликацию ВК для всех включённых постов, по 2 в день? Уже опубликованные и отложенные записи сохранятся.'))return;
     await api.put('/admin/posts/settings',{...config,enabled:false,platforms:['vk']});
@@ -92,6 +102,7 @@ export default function Admin(){
     setNotice('Автопостинг ВК включён для всей очереди. Расписание: 10:00 и 18:00 МСК либо выбранные вами два времени.');
    })}>ВК: автопостинг всей очереди</Button>
   </div>
+  {data.settings.enabled&&<p className="text-muted">Для создания отложенных записей ВК выключите автоматическую публикацию и сохраните настройки.</p>}
   <p className="text-muted">Включайте и исключайте темы ниже. Стрелки меняют порядок черновиков и переставляют даты у двух запланированных тем. Для новой темы сначала можно выбрать дату в карточке. Отложенный в ВК пост можно изменить до публикации.</p>
   {selected&&<Card id="post-editor" className="mb-4" style={{scrollMarginTop:100}}><Card.Body><h2 className="h5">{selected.isNew?'Новый пост':`Пост ${selected.id}`}</h2>
    {!selected.editable&&<Alert variant="info">Запись уже отправлена или требует проверки. Текст доступен для просмотра.</Alert>}
@@ -106,7 +117,7 @@ export default function Admin(){
    <td><Form.Check aria-label={`Включить пост ${p.id}`} checked={p.included!==false} disabled={busy||!!p.remote_change||Object.values(p.deliveries).some(d=>['sending','unknown'].includes(d.phase))} onChange={e=>include(p,e.target.checked)}/></td>
    <td>{index+1}. {p.title}<br/><small>{p.included===false?'Исключён из очереди':phases[p.phase]||p.phase}</small>{p.remote_change&&<small className="d-block text-warning">Изменение ВК требует проверки. Нажмите «Проверить ВК».</small>}</td>
    <td>{p.date?new Date(p.date*1000).toLocaleString('ru-RU',{timeZone:'Europe/Moscow'}):'Не задана'}</td>
-   <td>{Object.entries(p.deliveries).map(([platform,d])=><div key={platform}>{labels[platform]}: {phases[d.phase]||d.phase}{d.remote_id&&` · ${d.remote_id}`}{d.error&&<small className="d-block text-danger">{d.error}</small>}{['unknown','failed','sending'].includes(d.phase)&&<Button size="sm" variant="outline-warning" disabled={busy} onClick={()=>resolve(p,platform)}>Проверено: привязать / повторить</Button>}</div>)}</td>
+   <td>{Object.entries(p.deliveries).map(([platform,d])=><div key={platform}>{labels[platform]}: {phases[d.phase]||d.phase}{d.remote_id&&(platform==='vk'&&/^\d+$/.test(String(d.remote_id))?<a className="ms-1" href={`https://vk.com/wall-218992880_${d.remote_id}`} target="_blank" rel="noopener noreferrer">Открыть в ВК</a>:` · ${d.remote_id}`)}{d.error&&<small className="d-block text-danger">{d.error}</small>}{['unknown','failed','sending'].includes(d.phase)&&<Button size="sm" variant="outline-warning" disabled={busy} onClick={()=>resolve(p,platform)}>Проверено: привязать / повторить</Button>}</div>)}</td>
    <td><div className="d-flex gap-1 mb-1"><Button size="sm" variant="outline-secondary" aria-label={`Поднять пост ${p.id}`} disabled={busy||index===0} onClick={()=>move(p,'up')}>↑</Button><Button size="sm" variant="outline-secondary" aria-label={`Опустить пост ${p.id}`} disabled={busy||index===data.posts.length-1} onClick={()=>move(p,'down')}>↓</Button></div><Button size="sm" variant="outline-primary" onClick={()=>setSelected({...p,localDate:moscowInput(p.date)})}>Открыть</Button></td>
   </tr>)}</tbody></Table>
 

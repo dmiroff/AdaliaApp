@@ -1,3 +1,4 @@
+import { GAME_DRAFT_ROUTE, isGameDraftEnabled } from '../utils/gameDraftProtocol';
 import { observer } from "mobx-react-lite";
 import { useContext, useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -50,7 +51,9 @@ const NavBar = observer(() => {
     navigate(path);
   };
 
-  const moreSectionIsActive = mobileMoreItems.some(([path]) => location.pathname.startsWith(path));
+  const desktopItems = isGameDraftEnabled() ? [[GAME_DRAFT_ROUTE, 'Игровой чат'], ...navigationItems] : navigationItems;
+  const moreItems = isGameDraftEnabled() ? [[GAME_DRAFT_ROUTE, '✉️', 'Игровой чат'], ...mobileMoreItems] : mobileMoreItems;
+  const moreSectionIsActive = moreItems.some(([path]) => location.pathname.startsWith(path));
 
   return (
     <>
@@ -67,7 +70,7 @@ const NavBar = observer(() => {
           {user.IsAuth && (
             <div className="fantasy-navbar__desktop d-none d-lg-flex">
               <Nav className="fantasy-navbar__links">
-                {navigationItems.map(([path, label]) => (
+                {desktopItems.map(([path, label]) => (
                   <Nav.Link
                     key={path}
                     active={location.pathname.startsWith(path)}
@@ -132,7 +135,7 @@ const NavBar = observer(() => {
         </Offcanvas.Header>
         <Offcanvas.Body>
           <div className="mobile-more-sheet__grid">
-            {mobileMoreItems.map(([path, icon, label]) => (
+            {moreItems.map(([path, icon, label]) => (
               <button
                 key={path}
                 type="button"

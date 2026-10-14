@@ -64,6 +64,8 @@ ssh "${ssh_options[@]}" "$remote" "mkdir -p '$release_path'"
 echo "Uploading changed files..."
 rsync \
   --archive \
+  --checksum \
+  --no-perms --no-owner --no-group --no-times \
   --delete \
   --human-readable \
   --info=progress2,stats2 \
