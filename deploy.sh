@@ -47,7 +47,7 @@ if [[ "$target" == test ]]; then
 else
   shared_assets_path=/var/www/adalia-test/current
 fi
-ssh_options=(-o BatchMode=yes -o ConnectTimeout=40)
+ssh_options=(-n -o BatchMode=yes -o ConnectTimeout=40)
 
 if [[ "$target" == production || "$target" == prod ]]; then
   if ! ssh "${ssh_options[@]}" "$remote" "test -f '$deploy_path/.enabled'"; then
