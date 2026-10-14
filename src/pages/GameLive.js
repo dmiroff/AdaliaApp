@@ -2,6 +2,7 @@ import React,{useEffect,useRef,useState} from 'react';
 import api from '../http/apiClient';
 import GameDraftKeyboard from '../components/GameDraftKeyboard';
 import {normalizeKeyboard} from '../utils/gameDraftProtocol';
+import {normalizeGameHistory} from '../utils/gameLiveHistory';
 import './GameDraft.css';
 
 const freshId=()=>{
@@ -41,7 +42,7 @@ export default function GameLive(){
   const authenticated=Boolean(localStorage.getItem('access_token'));
   const refresh=async(signal)=>{
     const response=await api.get('/game/messages',{signal});
-    if(mounted.current){setData(response.data);setPending(response.data.pending_command);setError('');setLoading(false);}
+    if(mounted.current){setData(normalizeGameHistory(response.data));setPending(response.data.pending_command);setError('');setLoading(false);}
     return response.data;
   };
   useEffect(()=>{
@@ -79,11 +80,18 @@ export default function GameLive(){
   };
   const send=(command,revision,label,payload,sourceId)=>{
     if(!command?.trim()||pending||retry||sending.current)return;
-    deliver({request_id:freshId(),text:command.trim(),revision:data?.revision||'0',source_message_id:sourceId||null});
+    // A plain VK text button is also a valid typed command. If an old worker
+    // dated its latest keyboard before the input, the API still identifies
+    // an earlier keyboard. Preserve payload provenance; send only the current
+    // plain text action through the ordinary text-command path in this case.
+    const source=data?.messages.find(message=>message.id===sourceId);
+    const expectedSource=source?.keyboard?.inline?data?.revision:data?.keyboard_source;
+    const legacyText=source&&data.legacySources.includes(sourceId)&&sourceId!==expectedSource&&!payload;
+    deliver({request_id:freshId(),text:command.trim(),revision:data?.revision||'0',source_message_id:legacyText?null:sourceId||null});
   };
   const acknowledge=async()=>{
     if(!window.confirm('Вы проверили сообщения и состояние персонажа? Это разрешит новые команды, прежняя команда повторяться не будет.'))return;
-    try{setData((await api.post(`/game/commands/${pending.request_id}/acknowledge`,{checked:true})).data);setRetry(null);setPending(null);setCommandError('');}
+    try{setData(normalizeGameHistory((await api.post(`/game/commands/${pending.request_id}/acknowledge`,{checked:true})).data));setRetry(null);setPending(null);setCommandError('');}
     catch(e){setCommandError('Не удалось подтвердить проверку результата.');}
   };
   const player=data?.player;
@@ -105,9 +113,9 @@ export default function GameLive(){
           {loading&&<p>Загружаем сообщения…</p>}{data&&!data.messages.length&&<p>Начните с «Где я», чтобы получить текущую локацию и клавиатуру бота.</p>}
           {data?.messages.map(message=><article className={`game-draft-message game-draft-message--${message.role}`} key={message.id}><div className="game-draft-message__meta"><strong>{message.role==='user'?'Вы':'Адалия'}</strong><time dateTime={new Date(message.time).toISOString()}>{new Date(message.time).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})}</time></div>
             {message.image_url&&<MessageImage url={message.image_url} onLoad={scrollBottom}/>}<p>{message.text}</p>
-            {message.keyboard&&normalizeKeyboard(message.keyboard).inline&&<GameDraftKeyboard keyboard={normalizeKeyboard(message.keyboard)} revision={data.revision} sourceId={message.id} disabled={!!pending||!!retry||message.id!==data.revision} onCommand={send}/>}
+            {message.keyboard&&normalizeKeyboard(message.keyboard).inline&&<GameDraftKeyboard keyboard={normalizeKeyboard(message.keyboard)} revision={data.revision} sourceId={message.id} disabled={!!pending||!!retry||message.id!==data.displayRevision} onCommand={send}/>}
           </article>)}
-        </div><div className="game-draft-controls"><span className="game-draft-controls__label">Действия бота</span><GameDraftKeyboard keyboard={data?.keyboard?normalizeKeyboard(data.keyboard):startupKeyboard} revision={data?.revision} sourceId={data?.keyboard_source} disabled={!data||!!pending||!!retry} onCommand={send}/>
+        </div><div className="game-draft-controls"><span className="game-draft-controls__label">Действия бота</span><GameDraftKeyboard keyboard={data?.displayKeyboard?normalizeKeyboard(data.displayKeyboard):startupKeyboard} revision={data?.revision} sourceId={data?.displayKeyboardSource} disabled={!data||!!pending||!!retry} onCommand={send}/>
           <form className="game-draft-composer" onSubmit={e=>{e.preventDefault();send(text);}}><label className="visually-hidden" htmlFor="game-live-command">Команда боту</label><input id="game-live-command" value={text} maxLength={500} disabled={!data||!!pending||!!retry} autoComplete="off" placeholder="Введите команду боту…" onChange={e=>setText(e.target.value)}/><button type="submit" disabled={!data||!!pending||!!retry||!text.trim()}>Отправить</button></form>
         </div></div></div>
     </>}
