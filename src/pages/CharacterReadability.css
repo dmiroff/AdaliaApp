@@ -84,11 +84,23 @@
 .character-container .fantasy-text-muted,
 .character-container .fantasy-text-bold,
 .character-container .text-muted,
-.character-container .fantasy-attribute-key,
-.character-container .fantasy-attribute-value {
+.character-container .fantasy-attribute-key {
   color: #463426 !important;
   font-family: inherit;
   font-size: 16px;
+  line-height: 1.5;
+  text-shadow: none !important;
+}
+
+/* Numeric pills share the brown surface in attributes and skills. */
+.character-container .fantasy-attribute-value {
+  background: #75431d;
+  color: #fff5df !important;
+  border-color: #5b3014;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
   line-height: 1.5;
   text-shadow: none !important;
 }
