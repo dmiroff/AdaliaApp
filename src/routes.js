@@ -1,3 +1,4 @@
+import { isPlayerEventsEnabled } from './utils/playerEvents';
 import { 
   ADMIN_ROUTE, 
   CHARACTER_ROUTE, 
@@ -14,6 +15,7 @@ import {
 } from "./utils/constants";
 
 export const authRoutes = [
+    ...(isPlayerEventsEnabled() ? [{path: '/player-events', name: 'PlayerEvents'}] : []),
     {
         path: ADMIN_ROUTE,
         name: 'Admin',

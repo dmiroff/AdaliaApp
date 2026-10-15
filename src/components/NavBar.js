@@ -1,3 +1,4 @@
+import { isPlayerEventsEnabled } from '../utils/playerEvents';
 import { GAME_DRAFT_ROUTE, isGameDraftEnabled } from '../utils/gameDraftProtocol';
 import { observer } from "mobx-react-lite";
 import { useContext, useEffect, useState } from "react";
@@ -11,6 +12,7 @@ const navigationItems = [
   ["/character", "Персонаж"],
   ["/guild", "Гильдия"],
   ["/map", "Карта"],
+  ...(isPlayerEventsEnabled() ? [["/player-events", "Ивенты игроков"]] : []),
   ["/rating", "Рейтинг"],
   ["/trade", "Торговля"],
   ["/donation", "💎 Магазин"],
@@ -24,6 +26,7 @@ const mobilePrimaryItems = [
 
 const mobileMoreItems = [
   ["/map", "🗺️", "Карта"],
+  ...(isPlayerEventsEnabled() ? [["/player-events", "🎪", "Ивенты"]] : []),
   ["/rating", "🏆", "Рейтинг"],
   ["/trade", "⚖️", "Торговля"],
   ["/donation", "💎", "Магазин"],
