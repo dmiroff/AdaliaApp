@@ -15,7 +15,7 @@ import {
 } from "./utils/constants";
 
 export const authRoutes = [
-    ...(isPlayerEventsEnabled() ? [{path: '/player-events', name: 'PlayerEvents'}] : []),
+    ...(isPlayerEventsEnabled() ? [{path: '/player-events', name: 'PlayerEvents'}, {path: '/sign-techniques', name: 'SignTechniques'}] : []),
     {
         path: ADMIN_ROUTE,
         name: 'Admin',

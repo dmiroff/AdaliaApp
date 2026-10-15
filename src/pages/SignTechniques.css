@@ -1,0 +1,24 @@
+.sign-techniques-page { padding-top: 24px; padding-bottom: 90px; }
+.sign-techniques-page > h1 { font-size: 2rem; }
+.sign-techniques-selection { position: sticky; top: 65px; z-index: 2; display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin: 20px 0; padding: 16px; background: #f3e6c8; color: #352416; border: 2px solid #94724c; border-radius: 8px; }
+.sign-techniques-selection > span { flex: 1 1 220px; }
+.sign-techniques-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,340px),1fr)); gap: 16px; margin: 16px 0 24px; }
+.sign-technique-card { display: flex; flex-direction: column; padding: 20px; border: 2px solid transparent; border-radius: 10px; }
+.sign-technique-card.selected { border-color: #9d6d20; }
+.sign-technique-card h2 { font-size: 1.35rem; margin-top: 8px; }
+.sign-technique-card > button { margin-top: auto; align-self: start; }
+.sign-technique-meta { font-size: .9rem; opacity: .85; }
+.sign-techniques-page select { padding: 8px 12px; margin-left: 8px; max-width: 100%; }
+.sign-techniques-page button:disabled { opacity: .55; cursor: default; }
+.sign-mastery-help { padding: 18px; border-radius: 10px; }
+.sign-mastery-help summary { font-size: 1.2rem; cursor: pointer; }
+.sign-mastery-help dt { margin-top: 12px; }
+.sign-techniques-error { padding: 12px; border: 1px solid #a33; border-radius: 8px; }
+@media(max-width:600px) { .sign-techniques-selection { position: static; } .sign-techniques-page { padding-left: 14px; padding-right: 14px; } }
+
+.sign-techniques-intro, .sign-techniques-filter { background: #f3e6c8; color: #352416; padding: 18px; border-radius: 10px; }
+.sign-techniques-intro h1 { font-size: 2rem; }
+.sign-techniques-intro p:last-child { margin-bottom: 0; }
+.sign-techniques-filter { display: inline-block; padding: 8px 12px; }
+.sign-techniques-page > [role="status"] { background: #f3e6c8; color: #352416; padding: 12px; border-radius: 8px; }
+.sign-techniques-error { background: #f8eee3; color: #762b27; margin-top: 12px; }

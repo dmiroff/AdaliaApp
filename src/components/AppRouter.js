@@ -8,6 +8,7 @@ import Login from '../pages/NotAuth';
 import apiClient from '../http/apiClient';
 import AuthCallback from '../pages/AuthCallback';
 
+const SignTechniques = React.lazy(() => import('../pages/SignTechniques'));
 const PlayerEvents = React.lazy(() => import('../pages/PlayerEvents'));
 const Admin = React.lazy(() => import('../pages/Admin'));
 const Inventory = React.lazy(() => import('../pages/Inventory'));
@@ -185,6 +186,7 @@ const AppRouter = observer(() => {
                     let Component;
                     switch (name) {
                         case 'PlayerEvents': Component = PlayerEvents; break;
+                        case 'SignTechniques': Component = SignTechniques; break;
                         case 'Admin': Component = Admin; break;
                         case 'Prepare': Component = Prepare; break;
                         case 'Character': Component = Character; break;

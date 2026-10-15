@@ -114,6 +114,7 @@ export const dict_translator = {
   "sign_magic_effect": "Аугментация Мощи",
   "sign_magic_accuracy": "Аугментация Точности",
   "sign_magic_range": "Аугментация Дальности",
+  "sign_magic_augmentation": "Аугментация Союзника",
   "scroll": "Свиток",
   "reagent": "Реагент",
   "junk": "Хлам",

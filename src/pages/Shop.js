@@ -1,5 +1,6 @@
 // src/pages/Shop.js
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import Container from "react-bootstrap/esm/Container";
 import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/Col";
@@ -11,7 +12,12 @@ import AutoBuyTab from "../components/AutoBuyTab";
 import EventShopTab from "../components/EventShopTab";
 
 const Shop = () => {
-  const [activeTab, setActiveTab] = useState("premium"); // или "event" по умолчанию, но пусть premium
+  const location = useLocation();
+  const [activeTab, setActiveTab] = useState(() => new URLSearchParams(location.search).get("tab") === "cooking" ? "cooking" : "premium"); // или "event" по умолчанию, но пусть premium
+
+  useEffect(() => {
+    if (new URLSearchParams(location.search).get("tab") === "cooking") setActiveTab("cooking");
+  }, [location.search]);
 
   return (
     <Container className="mt-5 pt-4">

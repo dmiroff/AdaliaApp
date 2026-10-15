@@ -1,3 +1,5 @@
+import {Link} from 'react-router-dom';
+import {isPlayerEventsEnabled} from '../utils/playerEvents';
 import { useState, useContext, useEffect, useMemo } from "react";
 import { Container, Spinner, Tabs, Tab, Card, Row, Col, Badge, OverlayTrigger, Tooltip } from "react-bootstrap";
 import { Context } from "../index";
@@ -464,11 +466,14 @@ const Character = observer(() => {
         );
       case "magicCards":
         return (
+          <>
+          {isPlayerEventsEnabled() && <p><Link className="fantasy-btn" to="/sign-techniques">Приёмы знаков · выбор в лагере</Link></p>}
           <Row>
             {Object.entries(categoryData.data).map(([key, value]) => (
               <MagicCard key={key} spellKey={key} spellData={value} />
             ))}
           </Row>
+          </>
         );
       case "abilityCards":
         return (
