@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext, useCallback, useRef } from "react";
+import { useState, useEffect, useContext, useCallback, useRef, useMemo } from "react";
 import { Col, Container, Image, Row, Button, Modal, Badge } from "react-bootstrap";
 import { useLocation, useNavigate } from "react-router-dom";
 import { GetItemById } from "../http/GetData";
@@ -12,6 +12,7 @@ import { observer } from 'mobx-react-lite';
 import GetDataById from '../http/GetData';
 import EquipmentComparison from "../components/EquipmentComparison";
 import CookingTab from "../components/CookingTab";
+import { MassTransferModal } from "../components/MassTransferModal";
 import ActionNotice from '../components/ActionNotice';
 
 const Item = () => {
@@ -23,6 +24,7 @@ const Item = () => {
   const [imageSrc, setImageSrc] = useState(null);
   const [notice, setNotice] = useState(null);
   const [showCooking, setShowCooking] = useState(false);
+  const [showTransfer, setShowTransfer] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [showModalSell, setShowModalSell] = useState(false);
   const [showModalDrop, setShowModalDrop] = useState(false);
@@ -41,6 +43,7 @@ const Item = () => {
     const number = pathParts[pathParts.length - 1];
     return +number;
   }, [location.pathname])();
+  const transferItems = useMemo(() => new Set([String(num)]), [num]);
 
   useEffect(() => {
     let isMounted = true;
@@ -318,6 +321,9 @@ const Item = () => {
                   {itemData.food_data?.recipe_id && inventory_new[num]?.count > 0 &&
                     <Button className="fantasy-btn fantasy-btn-primary fantasy-btn-lg" onClick={() => setShowCooking(true)}>Использовать на отдыхе</Button>}
 
+                  {itemData.food_data?.recipe_id && inventory_new[num]?.count > 0 &&
+                    <Button className="fantasy-btn fantasy-btn-secondary fantasy-btn-lg" onClick={() => setShowTransfer(true)}>Передать</Button>}
+
                   {itemData.is_equippable && (
                     <Button 
                       className="fantasy-btn fantasy-btn-primary fantasy-btn-lg"
@@ -393,6 +399,15 @@ const Item = () => {
 
 <ActionNotice notice={notice} onDismiss={() => setNotice(null)} />
 {/* Модальные окна */}
+{showTransfer && <MassTransferModal
+  show={showTransfer}
+  onClose={() => setShowTransfer(false)}
+  selectedItems={transferItems}
+  inventory={inventory_new}
+  onSuccess={() => GetDataById().then(result => {
+    if (result?.data) { user.setPlayer(result.data); user.setPlayerInventory(result.data.inventory_new || {}); }
+  })}
+/>}
 <Modal show={showCooking} onHide={() => { setShowCooking(false); GetDataById().then(result => { if (result?.data) { user.setPlayer(result.data); user.setPlayerInventory(result.data.inventory_new || {}); } }); }} size="lg">
   <Modal.Header closeButton><Modal.Title>Отдых с блюдом</Modal.Title></Modal.Header>
   <Modal.Body><CookingTab initialDishId={num} dishesOnly /></Modal.Body>
