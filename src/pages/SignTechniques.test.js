@@ -13,21 +13,25 @@ const catalogue = extra => ({prepared:[],in_camp:true,in_fight:false,techniques:
 const render = async () => act(async()=>root.render(<MemoryRouter><SignTechniques/></MemoryRouter>));
 beforeEach(()=>{jest.clearAllMocks();global.IS_REACT_ACT_ENVIRONMENT=true;container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);api.get.mockResolvedValue({data:catalogue()});});
 afterEach(async()=>{await act(async()=>root.unmount());container.remove();});
-test('saves selection and prevents adding a third technique',async()=>{
-    api.get.mockResolvedValue({data:catalogue({prepared:['fire_aim']})});
-    api.put.mockResolvedValue({data:catalogue({prepared:['fire_aim','fire_seal']})});
-    await render();await act(async()=>Simulate.click(container.querySelectorAll('.sign-technique-card button')[1]));
-    expect(api.put).toHaveBeenCalledWith('/sign-techniques',{prepared:['fire_aim','fire_seal']});
-    expect(container.textContent).toContain('Подготовлено 2/2');
-    expect(container.querySelectorAll('.sign-technique-card button')[2].disabled).toBe(true);
-});
-test.each([{in_camp:false},{in_fight:true}])('selection requires a camp outside battle: %o',async flags=>{
+test.each([{in_camp:true},{in_camp:false},{in_fight:true}])('all learned techniques are automatic without selection: %o',async flags=>{
     api.get.mockResolvedValue({data:catalogue(flags)});await render();
-    expect([...container.querySelectorAll('.sign-technique-card button')].every(button=>button.disabled)).toBe(true);
+    expect(container.textContent).toContain('Открыто 3 из 3');
+    expect(container.textContent).toContain('открываются автоматически');
+    expect(container.querySelectorAll('.sign-technique-card button')).toHaveLength(0);
+    expect(api.put).not.toHaveBeenCalled();
+    expect(container.querySelector('.sign-techniques-selection').textContent).not.toContain('/2');
 });
-test('failed save retains the confirmed selection',async()=>{
-    await render();api.put.mockRejectedValue(new Error('network'));
-    await act(async()=>Simulate.click(container.querySelector('.sign-technique-card button')));
-    expect(container.textContent).toContain('Подготовлено 0/2');
+test('shows sign threshold and weapon readiness separately',async()=>{
+    const data=catalogue();data.techniques[1].available=false;
+    api.get.mockResolvedValue({data});await render();
+    expect(container.textContent).toContain('Открыто 2 из 3');
+    expect(container.textContent).toContain('Нужен знак 100.');
+    expect(container.textContent).toContain('Наденьте стихийное оружие');
+    expect(container.querySelectorAll('.sign-technique-card.selected')).toHaveLength(1);
+});
+test('can retry a failed catalogue request',async()=>{
+    api.get.mockRejectedValueOnce(new Error('network'));await render();
     expect(container.querySelector('[role=alert]')).toBeTruthy();
+    await act(async()=>Simulate.click(container.querySelector('[role=alert] button')));
+    expect(container.textContent).toContain('Открыто 3 из 3');
 });

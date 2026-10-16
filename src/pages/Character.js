@@ -467,7 +467,7 @@ const Character = observer(() => {
       case "magicCards":
         return (
           <>
-          {isPlayerEventsEnabled() && <p><Link className="fantasy-btn" to="/sign-techniques">Приёмы знаков · выбор в лагере</Link></p>}
+          {isPlayerEventsEnabled() && <p><Link className="fantasy-btn" to="/sign-techniques">Приёмы знаков · открываются автоматически</Link></p>}
           <Row>
             {Object.entries(categoryData.data).map(([key, value]) => (
               <MagicCard key={key} spellKey={key} spellData={value} />
