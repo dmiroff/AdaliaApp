@@ -6,6 +6,7 @@ import Button from "react-bootstrap/Button";
 import InventoryList from "../components/InventoryList";
 import Equipment from "../components/Equipment";
 import Wardrobe from "../components/Wardrobe";
+import HomeStorage from "../components/HomeStorage";
 
 const Inventory = () => {
     const [activePanel, setActivePanel] = useState(null);
@@ -36,6 +37,13 @@ const Inventory = () => {
               🏛️ {activePanel === 'wardrobe' ? "Скрыть Зал" : "Зал облачений"}
             </Button>
           </Col>
+          <Col xs={12} sm={6} lg={4}>
+            <Button onClick={() => togglePanel('home')}
+              className={'fantasy-btn fantasy-btn-lg w-100 ' + (activePanel === 'home' ? 'is-active' : '')}
+              aria-expanded={activePanel === 'home'}>
+              🏠 {activePanel === 'home' ? 'Скрыть хранилище' : 'Домашнее хранилище'}
+            </Button>
+          </Col>
         </Row>
         
         {activePanel === 'equipment' && (
@@ -56,6 +64,7 @@ const Inventory = () => {
           </Row>
         )}
         
+        {activePanel === 'home' && <HomeStorage onInventoryChanged={() => setEquipmentRevision(revision => revision + 1)} />}
         <Row>
           <Col>
             <Suspense fallback={
@@ -63,7 +72,7 @@ const Inventory = () => {
                 <div className="fantasy-text-muted fs-5">Загрузка инвентаря...</div>
               </div>
             }>
-              <InventoryList />
+              <InventoryList key={equipmentRevision} />
             </Suspense>
           </Col>
         </Row>
