@@ -40,6 +40,7 @@ export default function CookingTab({ initialDishId = null, dishesOnly = false })
     <h3>🍲 Кухня · Повар {data.skill ?? 'не открыт'}</h3>
     <p>Выберите готовое блюдо и нажмите «Использовать на отдыхе». Результат придёт в игру через 30 секунд.</p>
     <p>Сила зависит от навыка автора при приготовлении и сохраняется при передаче. Рост продолжается после 100.</p>
+    <p>🔥 «Посиделки у костра»: поешьте в одной локации лагеря за 5 минут компанией из 5, 10 или 100 человек. Каждый завершает полный отдых со своим блюдом. Награды к навыку повара: +1, +2 и +3 — по одному разу за уровень.</p>
     {!data.allowed && <Alert variant="info">{['В поселении нужна построенная кухня', 'Разбейте лагерь или войдите в кухню своего поселения'].includes(data.reason) ? 'Для готовки и отдыха с блюдом разбейте лагерь.' : data.reason}</Alert>}
     {data.last_result && !data.job && <Alert variant="success" role="status">{data.last_result.message}</Alert>}
     {message && !(data.last_result && !data.job && message.includes('начат')) && <Alert variant="success">{message}</Alert>}
