@@ -14,7 +14,7 @@ function picture(path) {
 export default function CookingTab({ initialDishId = null, dishesOnly = false }) {
   const [data, setData] = useState(null), [error, setError] = useState(''), [message, setMessage] = useState('');
   const [batches, setBatches] = useState(1), [busy, setBusy] = useState(false), [pending, setPending] = useState(null);
-  const [selected, setSelected] = useState(null), [now, setNow] = useState(Date.now());
+  const [now, setNow] = useState(Date.now());
   const reload = async () => { const result = await apiClient.get('/crafting/cooking'); setData(result.data); };
   useEffect(() => {
     reload().catch(() => setError('Не удалось загрузить кухню'));
@@ -35,33 +35,23 @@ export default function CookingTab({ initialDishId = null, dishesOnly = false })
     finally { setBusy(false); }
   };
   const quoteText = q => q ? `${q.effect}\nДополнительная обычная еда: ${Object.entries(q.food).map(([id, n]) => `${data?.food_names?.[id] || id} ×${n}`).join(', ') || 'не требуется'}. Лечение: ${q.healed}. ${q.partial ? 'Еды не хватает: отдых частичный. ' : ''}${q.replaces ? 'Предыдущий пищевой эффект будет заменён.' : ''}` : 'Ваша раса не может использовать обычную еду.';
-  const selectedIds = selected ?? (data?.group_members || []).filter(p => p.nearby).map(p => p.id);
   if (!data) return error ? <Alert variant="danger">{error}</Alert> : <Spinner animation="border" />;
   return <div className="fantasy-paper p-3">
     <h3>🍲 Кухня · Повар {data.skill ?? 'не открыт'}</h3>
     <p>Выберите готовое блюдо и нажмите «Использовать на отдыхе». Результат придёт в игру через 30 секунд.</p>
     <p>Сила зависит от навыка автора при приготовлении и сохраняется при передаче. Рост продолжается после 100.</p>
-    {!data.allowed && <Alert variant="info">{data.reason}</Alert>}
+    {!data.allowed && <Alert variant="info">{['В поселении нужна построенная кухня', 'Разбейте лагерь или войдите в кухню своего поселения'].includes(data.reason) ? 'Для готовки и отдыха с блюдом разбейте лагерь.' : data.reason}</Alert>}
     {data.last_result && !data.job && <Alert variant="success" role="status">{data.last_result.message}</Alert>}
     {message && !(data.last_result && !data.job && message.includes('начат')) && <Alert variant="success">{message}</Alert>}
     {error && <Alert variant="danger">{error}</Alert>}
     {data.job && <Alert variant="info">До завершения: {Math.max(0, Math.ceil(data.job.ready_at - now / 1000))} сек. <Button size="sm" onClick={() => reload().catch(() => setError('Не удалось обновить'))}>Обновить</Button></Alert>}
     {data.meal && <p>Следующий бой: {data.meal.name}. Осталось {Math.max(0, Math.ceil((data.meal.expires_at - now / 1000) / 60))} мин.</p>}
-    {!!data.feasts.length && <h4>Приглашения на совместный отдых</h4>}
-    {data.feasts.map(f => <Card key={f.id} className="my-2"><Card.Body><Card.Title>Приглашает {f.host_name}</Card.Title>
-      <p>{Object.values(f.participants).map(p => `${p.name}: ${{ waiting: 'ждём ответа', accepted: 'участвует', declined: 'отказался' }[p.answer] || p.answer}`).join(', ')}</p><p style={{ whiteSpace: 'pre-line' }}>{quoteText(f.quote)}</p>
-      <Button disabled={busy || !f.quote || f.participants[String(data.player_id)]?.answer === 'accepted'} onClick={() => preview('answer', { feast_id: f.id, accept: true, replace: !!f.quote.replaces, partial: f.quote.partial }, 'Согласиться на трапезу', quoteText(f.quote))}>{f.participants[String(data.player_id)]?.answer === 'accepted' ? 'Вы участвуете' : 'Принять приглашение'}</Button>{' '}
-      <Button disabled={busy} variant="outline-secondary" onClick={() => preview('answer', { feast_id: f.id, accept: false }, 'Отказаться', 'Расходов не будет.')}>Отказаться</Button>
-      {f.host_id === data.player_id && <><Button disabled={busy} onClick={() => preview('start', { feast_id: f.id, ready_only: true }, 'Начать общий отдых', 'Отдых начнётся с согласившимися. Остальные не участвуют. По одной вашей порции каждому согласившемуся, включая вас. Отдых — 30 секунд.')}>Начать с согласившимися</Button><Button variant="outline-secondary" disabled={busy} onClick={() => preview('cancel', { feast_id: f.id }, 'Отменить приглашение', 'Порции не расходуются.')}>Отменить</Button></>}
-    </Card.Body></Card>)}
     <h4>Готовые блюда</h4>
-    {!!data.group_members.length && <p>Совместный отдых: выберите участников рядом. Порции — ваши, обычная еда — у каждого своя.</p>}
-    {data.group_members.map(p => <Form.Check key={p.id} label={`${p.name}${p.nearby ? '' : ' — далеко'}`} disabled={!p.nearby || busy} checked={selectedIds.includes(p.id)} onChange={e => setSelected(e.target.checked ? [...selectedIds, p.id] : selectedIds.filter(i => i !== p.id))} />)}
     {!data.dishes.length && <p>В инвентаре пока нет готовых блюд.</p>}
     {data.dishes.filter(d => !initialDishId || d.id === Number(initialDishId)).map(d => <Card key={d.id} className="my-2"><Card.Body>
       <Card.Title>{d.name} ×{d.count}</Card.Title><p>{d.effect}</p>
-      <Button disabled={busy || !data.allowed || !d.quote} onClick={() => preview('rest', { item_id: d.id, replace: !!d.quote.replaces, partial: d.quote.partial }, 'Отдых с блюдом — 30 секунд', `Расход: 1 порция.\n${quoteText(d.quote)}`)}>Использовать на отдыхе</Button>{' '}
-      <Button variant="outline-secondary" disabled={busy || !data.allowed || !d.quote || !selectedIds.length || selectedIds.length + 1 > d.count} onClick={() => preview('invite', { item_id: d.id, participant_ids: selectedIds, host_accept: true, replace: !!d.quote?.replaces, partial: !!d.quote?.partial }, 'Общая трапеза', `Ваша часть: ${quoteText(d.quote)}\n${selectedIds.length + 1} участников, включая вас. Вы сразу подтверждаете свою часть. Приглашения придут участникам в игру. При запуске с согласившимися будет потрачено по порции на каждого согласившегося. Дополнительную еду участники оплачивают сами.`)}>Пригласить группу</Button>
+      <Button disabled={busy || !data.allowed || !d.quote} onClick={() => preview('rest', { item_id: d.id, replace: !!d.quote.replaces, partial: d.quote.partial }, 'Отдых с блюдом — 30 секунд', `Расход: 1 порция.\n${quoteText(d.quote)}`)}>Использовать на отдыхе</Button>
+
     </Card.Body></Card>)}
     {!dishesOnly && <details className="mt-3"><summary>Приготовить блюдо / изучить рецепт</summary>
     <h4>Приготовление</h4>
