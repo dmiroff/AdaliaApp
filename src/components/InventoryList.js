@@ -459,6 +459,11 @@ const InventoryList = observer(() => {
 
   return (
     <div className="fantasy-paper content-overlay inventory-container p-3">
+      {(unidentifiedCount > 0 || identifying) && <button
+        className="fantasy-btn inventory-identify" disabled={identifying || massOperationLoading || playerData?.in_fight}
+        onClick={identifyAll}>
+        {identifying ? `Распознаём… ${identifiedCount}` : `Распознать всё (${unidentifiedCount})`}
+      </button>}
       {/* Поиск */}
       <div className="inventory-search-panel mb-2">
         <Form className="fantasy-form">
@@ -583,11 +588,7 @@ const InventoryList = observer(() => {
       {/* Два настраиваемых фильтра */}
       <details className="custom-filters-container mb-3">
         <summary>Фильтры{unidentifiedCount > 0 ? ` · Неопознано: ${unidentifiedCount}` : ''} {activeFiltersCount > 0 ? `(${activeFiltersCount})` : ''}</summary>
-      {(unidentifiedCount > 0 || identifying) && <button
-        className="fantasy-btn inventory-identify" disabled={identifying || massOperationLoading || playerData?.in_fight}
-        onClick={identifyAll}>
-        {identifying ? `Распознаём… ${identifiedCount}` : `Распознать всё (${unidentifiedCount})`}
-      </button>}
+
 
         <div className="d-flex justify-content-between align-items-center mb-3">
           <h6 className="fantasy-text-dark mb-0">Фильтры предметов</h6>

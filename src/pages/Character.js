@@ -557,6 +557,10 @@ const Character = observer(() => {
   const isLoading = initialLoading || !delay || !playerData;
   console.log("[Character] render: isLoading =", isLoading, "initialLoading:", initialLoading, "delay:", delay, "playerData:", playerData);
 
+  if (!initialLoading && !playerData) {
+    return <div role="alert" className="fantasy-paper p-3">Не удалось загрузить персонажа. Обновите страницу, чтобы повторить запрос.</div>;
+  }
+
   if (isLoading) {
     return (
       <div className="d-flex justify-content-center align-items-center min-vh-50">
