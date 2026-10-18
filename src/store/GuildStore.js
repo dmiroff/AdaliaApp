@@ -17,7 +17,7 @@ export default class GuildStore {
 
     setGuildData(guildData) {
         // Нормализуем данные: если есть guild_id, добавляем его как id
-        if (guildData && guildData.guild_id) {
+        if (guildData && guildData.guild_id != null) {
             guildData.id = guildData.guild_id;
         }
         this._guildData = guildData;
@@ -240,7 +240,7 @@ export default class GuildStore {
                 if (guildData) {
                     // Нормализуем данные перед сохранением
                     const normalizedData = { ...guildData };
-                    if (guildData.guild_id && !guildData.id) {
+                    if (guildData.guild_id != null && guildData.id == null) {
                         normalizedData.id = guildData.guild_id;
                     }
                     

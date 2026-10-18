@@ -188,7 +188,7 @@ const SettlementOverview = observer(({ settlementData, guildId, onRefresh, isLoa
                                     <div className="info-item p-3 border rounded">
                                         <div className="d-flex align-items-center mb-2">
                                             <i className="fas fa-tools me-2 text-info"></i>
-                                            <span className="fantasy-text-dark fw-bold">ID гильдии: {guildId || 'Не указан'}</span>
+                                            <span className="fantasy-text-dark fw-bold">ID гильдии: {guildId ?? 'Не указан'}</span>
                                         </div>
                                     </div>
                                 </Col>

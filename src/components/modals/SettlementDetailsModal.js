@@ -177,7 +177,7 @@ const SettlementDetailsModal = ({
                       </div>
                       <div className="text-truncate">
                         <p className="fantasy-text-dark mb-0 text-truncate">
-                          {data.guild_name || data.owner_name || data.guild_id || 'Неизвестно'}
+                          {data.guild_name || data.owner_name || (data.guild_id ?? 'Неизвестно')}
                         </p>
                         {data.guild_name && (
                           <small className="fantasy-text-muted text-truncate d-block">

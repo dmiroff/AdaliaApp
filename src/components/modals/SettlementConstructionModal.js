@@ -19,7 +19,7 @@ const SettlementConstructionModal = observer(() => {
     }, [settlement.modal]);
     
     const loadBuildingRequirements = async () => {
-        if (!settlement.modal.data || !guild.guildData?.id) return;
+        if (!settlement.modal.data || guild.guildData?.id == null) return;
         
         setLoadingRequirements(true);
         try {
@@ -42,13 +42,13 @@ const SettlementConstructionModal = observer(() => {
     };
     
     const refreshSettlementData = async () => {
-        if (guild.guildData?.id) {
+        if (guild.guildData?.id != null) {
             await settlement.fetchSettlementData(guild.guildData.id);
         }
     };
     
     const handleSubmit = async () => {
-        if (!settlement.modal.data || !guild.guildData?.id) return;
+        if (!settlement.modal.data || guild.guildData?.id == null) return;
         
         const buildingKey = settlement.modal.data.building;
         const targetLevel = settlement.modal.data.level;

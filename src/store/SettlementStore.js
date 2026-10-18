@@ -104,7 +104,7 @@ export default class SettlementStore {
     }
 
     async fetchBuildingsData(guildId) {
-        if (!guildId || !this._settlementData) {
+        if (guildId == null || !this._settlementData) {
             return;
         }
 

@@ -120,7 +120,7 @@ const SettlementBuildings = observer(() => {
         let active = true;
         setBuildingsData({});
         setRequirementsError('');
-        if (!guildId) return () => { active = false; };
+        if (guildId == null) return () => { active = false; };
         settlementService.getBuildingsData(guildId).then(result => {
             if (!active) return;
             if (result.status === 200 && result.data && !result.data.status) {
@@ -416,14 +416,14 @@ const SettlementBuildings = observer(() => {
     }, [storage, currentEssence]);
     
     const refreshSettlementData = useCallback(async () => {
-        if (!guildId) return;
+        if (guildId == null) return;
         await settlement.fetchSettlementData(guildId);
         setLocalBuildings(prev => ({ ...prev, current: settlement._settlementData?.buildings || {} }));
         setLocalConstruction(prev => ({ ...prev, current: settlement._settlementData?.construction || {} }));
     }, [settlement, guildId]);
     
     const handleStartConstruction = useCallback(async (building) => {
-        if (!building || !guildId) {
+        if (!building || guildId == null) {
             showNotification('error', 'Ошибка: не указаны необходимые данные');
             return;
         }
@@ -456,7 +456,7 @@ const SettlementBuildings = observer(() => {
     }, [showNotification, refreshSettlementData, guildId]);
     
     const handleQuickConstruction = useCallback(async (building) => {
-        if (!building || !guildId) {
+        if (!building || guildId == null) {
             showNotification('error', 'Ошибка: не указаны необходимые данные');
             return;
         }

@@ -427,7 +427,7 @@ const SettlementGarrison = observer(() => {
 
     // Новая функция получения стоимости найма с сервера
     const fetchHireCost = useCallback(async (unitId, tier, quantity) => {
-        if (!guildId || !unitId) return;
+        if (guildId == null || !unitId) return;
         setHireCostLoading(true);
         try {
             const result = await settlementService.getHireCost(guildId, unitId, tier, quantity);
