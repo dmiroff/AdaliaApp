@@ -1,7 +1,7 @@
 export const GAME_DRAFT_ROUTE = '/play-draft';
 
 export const isGameDraftEnabled = (hostname = window.location.hostname) =>
-  ['test.adaliagame.ru', 'localhost', '127.0.0.1'].includes(hostname);
+  ['adaliagame.ru', 'www.adaliagame.ru', 'test.adaliagame.ru', 'localhost', '127.0.0.1'].includes(hostname);
 
 export const safeLink = value => {
   if (typeof value !== 'string' || !value.trim()) return null;

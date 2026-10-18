@@ -42,6 +42,7 @@ export default function GameLive(){
   const [showHistory,setShowHistory]=useState(false),[clock,setClock]=useState(Date.now());
   useEffect(()=>{const timer=setInterval(()=>setClock(Date.now()),1000);return()=>clearInterval(timer);},[]);
   const log=useRef(null),sending=useRef(false),mounted=useRef(true),keepBottom=useRef(true);
+  const production = ['adaliagame.ru', 'www.adaliagame.ru'].includes(window.location.hostname);
   const authenticated=Boolean(localStorage.getItem('access_token'));
   const refresh=async(signal)=>{
     const response=await api.get('/game/messages',{signal});
@@ -55,7 +56,7 @@ export default function GameLive(){
     const poll=async()=>{
       try{await refresh(controller.signal);}catch(e){if(mounted.current&&e.code!=='ERR_CANCELED'){
         setLoading(false);
-        setError(e.response?.status===404?'Канал игры ещё не включён на API зеркала.':e.response?.status===401?'Войдите в приложение заново по ссылке из бота.':'Не удалось получить сообщения. Повторим подключение автоматически.');
+        setError(e.response?.status===404?'Игровой чат ещё не включён на сервере.':e.response?.status===401?'Войдите в приложение заново по ссылке из бота.':'Не удалось получить сообщения. Повторим подключение автоматически.');
       }}
       if(mounted.current)timer=setTimeout(poll,2500);
     };
@@ -114,7 +115,7 @@ export default function GameLive(){
   return <section className="game-draft game-live-mobile" aria-labelledby="game-live-title">
     <header className="game-draft-heading"><div><h1 id="game-live-title">Игровой чат</h1></div><a className="game-draft-app-link" href="/inventory">К рюкзаку ↗</a></header>
     {!authenticated?<div className="game-draft-banner"><strong>Войдите в приложение</strong><span>Откройте свою ссылку из бота, затем вернитесь в игровой чат.</span></div>:<>
-      <div className="game-draft-banner" role="status"><strong>{pending?.status==='running'?'Бот выполняет команду':data?'Подключено к боту зеркала':'Подключаемся к боту'}</strong><span className="game-live-environment">Зеркало · те же команды и действия, что в боте.</span></div>
+      <div className="game-draft-banner" role="status"><strong>{pending?.status==='running'?'Бот выполняет команду':data?(production?'Подключено к боту основы':'Подключено к боту зеркала'):'Подключаемся к боту'}</strong><span className="game-live-environment">{production ? 'Основа' : 'Зеркало'} · те же команды и действия, что в боте.</span></div>
       {error&&<div className="game-live-error" role="alert">{error}</div>}
       {(commandError||retry)&&<div className="game-live-error" role="alert">{commandError}{retry&&<button type="button" className="game-draft-action" disabled={sending.current} onClick={()=>deliver(retry)}>Проверить отправку</button>}</div>}
       {pending?.status==='unknown'&&!retry&&<div className="game-live-error" role="alert">Результат предыдущей команды требует проверки. Посмотрите сообщения и персонажа перед продолжением.<button type="button" className="game-draft-action" onClick={acknowledge}>Проверено: продолжить</button></div>}

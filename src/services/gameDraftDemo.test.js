@@ -1,10 +1,12 @@
 import {createDemoSession,demoCommand,restoreDemoSession} from './gameDraftDemo';
 import {isGameDraftEnabled,normalizeKeyboard} from '../utils/gameDraftProtocol';
 
-test('draft is restricted to the exact test hostname and local development',() => {
+test('game chat accepts both exact game domains and local development',() => {
   expect(isGameDraftEnabled('test.adaliagame.ru')).toBe(true);
   expect(isGameDraftEnabled('localhost')).toBe(true);
-  for (const host of ['adaliagame.ru','www.adaliagame.ru','test.adaliagame.ru.evil.example','test-adaliagame.ru']) expect(isGameDraftEnabled(host)).toBe(false);
+  expect(isGameDraftEnabled('adaliagame.ru')).toBe(true);
+  expect(isGameDraftEnabled('www.adaliagame.ru')).toBe(true);
+  for (const host of ['test.adaliagame.ru.evil.example','test-adaliagame.ru']) expect(isGameDraftEnabled(host)).toBe(false);
 });
 
 test('callback keeps its command payload rather than sending the button label',() => {
