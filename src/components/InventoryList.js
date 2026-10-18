@@ -21,6 +21,7 @@ const InventoryList = observer(() => {
   const [query, setQuery] = useState("");
   const [loadError, setLoadError] = useState(false);
   const [quickCategory, setQuickCategory] = useState('all');
+  const [sortOrder, setSortOrder] = useState('default');
   const [user_inventory, setUserInventory] = useState({});
   
   const [notice, setNotice] = useState(null);
@@ -243,7 +244,7 @@ const InventoryList = observer(() => {
     const filteredItems = filterInventoryItems(inventory);
     const allIds = filteredItems.map(([id]) => id);
     setSelectedItems(new Set(allIds));
-  }, [user_inventory, filters, query]);
+  }, [user_inventory, filters, query, quickCategory, sortOrder]);
 
   const clearSelection = useCallback(() => {
     setSelectedItems(new Set());
@@ -379,11 +380,15 @@ const InventoryList = observer(() => {
       }
     }
 
+    if (sortOrder !== 'default') items.sort(([, a], [, b]) => sortOrder === 'name'
+      ? String(a.name || '').localeCompare(String(b.name || ''), 'ru')
+      : Number(b[sortOrder] || 0) - Number(a[sortOrder] || 0));
     return items;
-  }, [applyFiltersToItems, query, quickCategory]);
+  }, [applyFiltersToItems, query, quickCategory, sortOrder]);
 
   // Обработчик успешного завершения массовой операции
-  const handleOperationSuccess = useCallback(() => {
+  const handleOperationSuccess = useCallback((message) => {
+    if (typeof message === "string") setNotice({message,variant:"success"});
     fetchPlayerData();
     setSelectedItems(new Set());
   }, [fetchPlayerData]);
@@ -454,13 +459,8 @@ const InventoryList = observer(() => {
 
   return (
     <div className="fantasy-paper content-overlay inventory-container p-3">
-      {(unidentifiedCount > 0 || identifying) && <button
-        className="fantasy-btn fantasy-btn-lg mb-3" disabled={identifying || massOperationLoading || playerData?.in_fight}
-        onClick={identifyAll}>
-        {identifying ? `Распознаём… ${identifiedCount}` : `Распознать всё (${unidentifiedCount})`}
-      </button>}
       {/* Поиск */}
-      <div className="fantasy-paper content-overlay bulk-purchase-tab mb-3">
+      <div className="inventory-search-panel mb-2">
         <Form className="fantasy-form">
           <div className="search-input-wrapper">
             <i className="fas fa-search search-icon"></i>
@@ -468,7 +468,8 @@ const InventoryList = observer(() => {
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Название или описание предмета..."
+              placeholder="Поиск в рюкзаке"
+              aria-label="Поиск предметов"
               className="inventory-search-input bulk-purchase"
             />
             {query && (
@@ -497,11 +498,20 @@ const InventoryList = observer(() => {
       </div>
 
 
+      <label className="inventory-category-picker">Категория<select className="form-select" value={quickCategory} onChange={event => setQuickCategory(event.target.value)}>
+        {[['all','Все предметы'],['weapons','Оружие'],['armor','Броня'],['consumables','Расходники'],['other','Прочее']].map(([value,label]) => <option key={value} value={value}>{label}</option>)}
+      </select></label>
       <div className="inventory-quick-filters" role="group" aria-label="Категория предметов">
         {[['all', 'Все'], ['weapons', 'Оружие'], ['armor', 'Броня'], ['consumables', 'Расходники'], ['other', 'Прочее']].map(([value, label]) =>
           <Button key={value} className="fantasy-btn" aria-pressed={quickCategory === value}
             onClick={() => setQuickCategory(value)}>{label}</Button>)}
       </div>
+      <label className="inventory-sort">Сортировка
+        <select className="form-select" value={sortOrder} onChange={event => setSortOrder(event.target.value)}>
+          <option value="default">Как в рюкзаке</option><option value="name">По названию</option>
+          <option value="level">По уровню</option><option value="value">По цене</option><option value="count">По количеству</option>
+        </select>
+      </label>
       {/* Панель массовых операций */}
       {selectedItems.size > 0 && (
         <div className="mass-operations-panel mb-3 p-3">
@@ -572,7 +582,13 @@ const InventoryList = observer(() => {
 
       {/* Два настраиваемых фильтра */}
       <details className="custom-filters-container mb-3">
-        <summary>Подробные фильтры {activeFiltersCount > 0 ? `(${activeFiltersCount})` : ''}</summary>
+        <summary>Фильтры{unidentifiedCount > 0 ? ` · Неопознано: ${unidentifiedCount}` : ''} {activeFiltersCount > 0 ? `(${activeFiltersCount})` : ''}</summary>
+      {(unidentifiedCount > 0 || identifying) && <button
+        className="fantasy-btn inventory-identify" disabled={identifying || massOperationLoading || playerData?.in_fight}
+        onClick={identifyAll}>
+        {identifying ? `Распознаём… ${identifiedCount}` : `Распознать всё (${unidentifiedCount})`}
+      </button>}
+
         <div className="d-flex justify-content-between align-items-center mb-3">
           <h6 className="fantasy-text-dark mb-0">Фильтры предметов</h6>
           <div className="d-flex gap-2">

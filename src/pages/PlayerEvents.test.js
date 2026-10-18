@@ -89,7 +89,26 @@ test('insufficient prize reserve is explained before submitting', async () => {
         await act(async () => Simulate.change(container.querySelector(`[name=${name}]`),{target:{name,value}}));
     }
     expect(container.textContent).toContain('Не хватает 728 золота');
-    expect(button('Создать и объявить в чате').disabled).toBe(true);
+    expect(button('Создать и уведомить администраторов').disabled).toBe(true);
     await act(async () => Simulate.submit(container.querySelector('form')));
     expect(api.post).not.toHaveBeenCalled();
+});
+
+
+test('creation refuses an event shorter than a day', async () => {
+    api.get.mockResolvedValue({data:{player_id:1,money:10000,events:[]}});
+    await render(); await click('Создать ивент');
+    const start = container.querySelector('[name=starts_at]').value;
+    await act(async () => Simulate.change(container.querySelector('[name=ends_at]'), {target:{name:'ends_at',value:start}}));
+    expect(button('Создать и уведомить администраторов').disabled).toBe(true);
+    expect(container.textContent).toContain('не менее суток');
+    await act(async () => Simulate.submit(container.querySelector('form')));
+    expect(api.post).not.toHaveBeenCalled();
+});
+
+test('organizer cannot settle rewards before the announced ending', async () => {
+    const current = event({status:'active',ends_at:Date.now()/1000+86400,participants:{2:'Игрок'},leaderboard:[{player_id:2,name:'Игрок',place:1,score:5}]});
+    api.get.mockImplementation(path => Promise.resolve({data:path === '/player-events/run1' ? current : {player_id:1,money:900,events:[current]}}));
+    await render(); await act(async () => Simulate.click(container.querySelector('.player-event-card')));
+    expect(button('Завершить и выдать награды').disabled).toBe(true);
 });

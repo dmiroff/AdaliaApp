@@ -638,7 +638,12 @@ const Guild = observer(() => {
           <Card.Body className="text-center">
             <div className="mb-4">
               <i className="fas fa-users fa-3x text-muted mb-3"></i>
-              <p className="fantasy-text-muted">Присоединитесь к существующей или создайте свою гильдию!</p>
+              <p className="fantasy-text-muted">Гильдия объединяет игроков для совместных походов и развития поселения.</p>
+              <details className="guild-join-help"><summary>Как вступить в существующую гильдию</summary>
+                <p>Узнайте название гильдии у её участников. В боте ВК откройте гильдию и подайте заявку либо попросите руководителя прислать приглашение.</p>
+                <p>Команда боту: <code>Подать заявку: название гильдии</code>. Для просмотра приглашений: <code>Приглашения в гильдию</code>.</p>
+                <p>После принятия заявки вернитесь сюда и обновите данные: появятся участники, замки и хранилище.</p>
+              </details>
             </div>
             <div className="d-flex justify-content-center gap-3">
               <Button 

@@ -11,8 +11,9 @@ import ModalAction from "../components/ModalAction";
 import { observer } from 'mobx-react-lite';
 import GetDataById from '../http/GetData';
 import EquipmentComparison from "../components/EquipmentComparison";
+import {EQUIPMENT_SLOTS} from "../utils/equipmentComparison";
+import {MassTransferModal} from "../components/MassTransferModal";
 import CookingTab from "../components/CookingTab";
-import { MassTransferModal } from "../components/MassTransferModal";
 import ActionNotice from '../components/ActionNotice';
 
 const Item = () => {
@@ -43,7 +44,9 @@ const Item = () => {
     const number = pathParts[pathParts.length - 1];
     return +number;
   }, [location.pathname])();
-  const transferItems = useMemo(() => new Set([String(num)]), [num]);
+
+  const equipped = EQUIPMENT_SLOTS.some(slot => String(user.player_data?.[slot]?.id) === String(num));
+  const transferableCount = Math.max(0, Number(inventory_new[num]?.count || 0) - (equipped ? 1 : 0));
 
   useEffect(() => {
     let isMounted = true;
@@ -321,9 +324,6 @@ const Item = () => {
                   {itemData.food_data?.recipe_id && inventory_new[num]?.count > 0 &&
                     <Button className="fantasy-btn fantasy-btn-primary fantasy-btn-lg" onClick={() => setShowCooking(true)}>Использовать на отдыхе</Button>}
 
-                  {itemData.food_data?.recipe_id && inventory_new[num]?.count > 0 &&
-                    <Button className="fantasy-btn fantasy-btn-secondary fantasy-btn-lg" onClick={() => setShowTransfer(true)}>Передать</Button>}
-
                   {itemData.is_equippable && (
                     <Button 
                       className="fantasy-btn fantasy-btn-primary fantasy-btn-lg"
@@ -333,6 +333,8 @@ const Item = () => {
                       {handleRequest ? 'Надеваем…' : 'Надеть предмет'}
                     </Button>
                   )}
+                  <Button className="fantasy-btn fantasy-btn-lg" disabled={!transferableCount || handleRequest} onClick={() => setShowTransfer(true)}>Передать</Button>
+                  <details className="item-destructive-actions"><summary>Продать или выбросить</summary>
                   <Button 
                     className="fantasy-btn fantasy-btn-success fantasy-btn-lg"
                     onClick={handleModalSell}
@@ -347,6 +349,7 @@ const Item = () => {
                   >
                     Выбросить
                   </Button>
+                  </details>
                   <Button 
                     className="fantasy-btn fantasy-btn-secondary fantasy-btn-lg"
                     onClick={handleBack}
@@ -397,17 +400,11 @@ const Item = () => {
 </Row>
 </div>
 
+{showTransfer && <MassTransferModal show onClose={() => setShowTransfer(false)}
+  selectedItems={new Set([String(num)])} inventory={{[num]: {...inventory_new[num], count: transferableCount}}}
+  onSuccess={async (message) => {setNotice({message:message || 'Предмет передан',variant:'success'});try {const response = await GetDataById(); if(response?.data){user.setPlayer(response.data);user.setPlayerInventory(response.data.inventory_new || {});}} catch {setNotice({message:'Передача выполнена. Обновите рюкзак, чтобы увидеть остаток.',variant:'success'});}}} />}
 <ActionNotice notice={notice} onDismiss={() => setNotice(null)} />
 {/* Модальные окна */}
-{showTransfer && <MassTransferModal
-  show={showTransfer}
-  onClose={() => setShowTransfer(false)}
-  selectedItems={transferItems}
-  inventory={inventory_new}
-  onSuccess={() => GetDataById().then(result => {
-    if (result?.data) { user.setPlayer(result.data); user.setPlayerInventory(result.data.inventory_new || {}); }
-  })}
-/>}
 <Modal show={showCooking} onHide={() => { setShowCooking(false); GetDataById().then(result => { if (result?.data) { user.setPlayer(result.data); user.setPlayerInventory(result.data.inventory_new || {}); } }); }} size="lg">
   <Modal.Header closeButton><Modal.Title>Отдых с блюдом</Modal.Title></Modal.Header>
   <Modal.Body><CookingTab initialDishId={num} dishesOnly /></Modal.Body>

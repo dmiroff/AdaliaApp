@@ -1,6 +1,6 @@
 // src/components/MassOperationModals.js
-import { useState, useEffect } from "react";
-import { Modal, Button, Form, ListGroup, Spinner, InputGroup } from "react-bootstrap";
+import { useState, useEffect, useRef } from "react";
+import { Modal, Button, Form, InputGroup } from "react-bootstrap";
 import {MassDropItems, MassSellItems, MassTransferItems} from "../http/SupportFunctions";
 
 // Массовая продажа
@@ -289,10 +289,10 @@ export const MassSellModal = ({ show, onClose, selectedItems, inventory, onSucce
 export const MassTransferModal = ({ show, onClose, selectedItems, inventory, onSuccess }) => {
   const [recipientName, setRecipientName] = useState("");
   const [itemsWithQuantity, setItemsWithQuantity] = useState([]);
-  const [suggestedPlayers, setSuggestedPlayers] = useState([]);
-  const [selectedRecipient, setSelectedRecipient] = useState("");
-  const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [operationError, setOperationError] = useState('');
+  const transferPending = useRef(false);
+  useEffect(() => {if(show){setRecipientName('');setOperationError('');}}, [show]);
 
   useEffect(() => {
     const initialItems = Array.from(selectedItems).map(itemId => {
@@ -308,34 +308,8 @@ export const MassTransferModal = ({ show, onClose, selectedItems, inventory, onS
     setItemsWithQuantity(initialItems);
   }, [selectedItems, inventory]);
 
-  const searchPlayers = (query) => {
-    return [
-      { id: 1, name: "Арагорн", level: 45 },
-      { id: 2, name: "Леголас", level: 42 },
-      { id: 3, name: "Гимли", level: 38 },
-      { id: 4, name: "Гэндальф", level: 99 },
-      { id: 5, name: "Фродо", level: 12 }
-    ].filter(player => 
-      player.name.toLowerCase().includes(query.toLowerCase())
-    );
-  };
-
   const handleRecipientChange = (e) => {
-    const value = e.target.value;
-    setRecipientName(value);
-    
-    if (value.length >= 2) {
-      setSuggestedPlayers(searchPlayers(value));
-    } else {
-      setSuggestedPlayers([]);
-    }
-  };
-
-  const handleSelectRecipient = (player) => {
-    setRecipientName(player.name);
-    setSelectedRecipient(player.name);
-    setSuggestedPlayers([]);
-    setMessage(`Передать предметы ${player.name} (уровень ${player.level})`);
+    setRecipientName(e.target.value);
   };
 
   const handleQuantityChange = (itemId, quantity) => {
@@ -365,13 +339,11 @@ export const MassTransferModal = ({ show, onClose, selectedItems, inventory, onS
     }
   };
 
-  const handleSetMin = (itemId) => {
-    handleQuantityChange(itemId, 1);
-  };
-
   const handleSubmit = async () => {
+    if (transferPending.current) return;
+    setOperationError('');
     if (!recipientName.trim()) {
-      alert("Введите имя получателя");
+      setOperationError("Введите точное имя персонажа получателя");
       return;
     }
 
@@ -380,21 +352,23 @@ export const MassTransferModal = ({ show, onClose, selectedItems, inventory, onS
       quantity: item.quantity
     }));
     
+    transferPending.current = true;
     setLoading(true);
     try {
-      const result = await MassTransferItems(recipientName, itemsToSubmit);
+      const result = await MassTransferItems(recipientName.trim(), itemsToSubmit);
       
-      alert(result.message || 'Предметы успешно переданы!');
+
       
       if (onSuccess) {
-        onSuccess();
+        onSuccess(result.message || 'Предметы успешно переданы!');
       }
       
       onClose();
     } catch (error) {
       console.error('Ошибка массовой передачи:', error);
-      alert(error.response?.data?.detail || error.message || 'Ошибка при передаче предметов');
+      setOperationError(typeof error.response?.data?.detail === 'string' ? error.response.data.detail : 'Передача не выполнена. Проверьте получателя и попробуйте снова.');
     } finally {
+      transferPending.current = false;
       setLoading(false);
     }
   };
@@ -404,73 +378,38 @@ export const MassTransferModal = ({ show, onClose, selectedItems, inventory, onS
   return (
     <Modal 
       show={show} 
-      onHide={onClose}
+      onHide={() => {if (!transferPending.current) onClose();}}
       backdrop="static"
       centered
       className="fantasy-modal mass-operation-modal"
     >
-      <Modal.Header closeButton className="fantasy-card-header fantasy-card-header-primary">
+      <Modal.Header closeButton={!loading} className="fantasy-card-header fantasy-card-header-primary">
         <Modal.Title className="d-flex align-items-center fantasy-text-gold">
           <i className="fas fa-share-alt me-2"></i>
           Передача предметов
         </Modal.Title>
       </Modal.Header>
       <Modal.Body>
+        {operationError && <p role="alert" className="text-danger">{operationError}</p>}
         <div className="mb-4">
           <div className="mass-recipient-label">
             <i className="fas fa-user-circle me-2"></i>
-            Имя получателя:
+            Имя персонажа получателя:
           </div>
+          <p className="small">Укажите точное игровое имя. Перед передачей проверьте получателя и количество.</p>
           <div className="recipient-search">
             <i className="fas fa-search search-icon"></i>
             <Form.Control
               type="text"
               value={recipientName}
               onChange={handleRecipientChange}
-              placeholder="Введите имя игрока..."
+              placeholder="Точное имя персонажа"
+              aria-label="Имя персонажа получателя"
               className="mass-input"
               disabled={loading}
             />
           </div>
           
-          {message && (
-            <div className="alert alert-info mt-3 mb-0 p-3 mass-info-alert">
-              <i className="fas fa-info-circle me-2"></i>
-              {message}
-            </div>
-          )}
-          
-          {suggestedPlayers.length > 0 && (
-            <div className="recipient-list mt-3">
-              <div className="mass-player-label">Найденные игроки:</div>
-              <ListGroup>
-                {suggestedPlayers.map(player => (
-                  <ListGroup.Item
-                    key={player.id}
-                    onClick={() => handleSelectRecipient(player)}
-                    className={`recipient-item ${selectedRecipient === player.name ? 'selected' : ''}`}
-                  >
-                    <div className="d-flex align-items-center justify-content-between">
-                      <div className="d-flex align-items-center">
-                        <div className="mass-player-avatar">
-                          {player.name.charAt(0)}
-                        </div>
-                        <div>
-                          <div className="mass-player-name">
-                            {player.name}
-                          </div>
-                          <small className="mass-player-level">
-                            Уровень: <span>{player.level}</span>
-                          </small>
-                        </div>
-                      </div>
-                      <i className={`fas ${selectedRecipient === player.name ? 'fa-check-circle text-success' : 'fa-chevron-right'}`}></i>
-                    </div>
-                  </ListGroup.Item>
-                ))}
-              </ListGroup>
-            </div>
-          )}
         </div>
 
         <div className="mb-4">
@@ -489,113 +428,15 @@ export const MassTransferModal = ({ show, onClose, selectedItems, inventory, onS
                   </span>
                 </div>
                 
-                <div className="d-flex flex-column gap-3">
-                  {/* Ползунок */}
-                  <div className="d-flex align-items-center gap-3">
-                    <span className="mass-quantity-label">Ползунок:</span>
-                    <Form.Range
-                      min="1"
-                      max={item.maxQuantity}
-                      value={item.quantity}
-                      onChange={(e) => handleQuantityChange(item.itemId, parseInt(e.target.value))}
-                      className="mass-quantity-slider flex-grow-1"
-                      disabled={loading}
-                    />
-                  </div>
-                  
-                  {/* Прямой ввод числа */}
-                  <div className="d-flex align-items-center gap-3">
-                    <span className="mass-quantity-label">Прямой ввод:</span>
-                    <div className="d-flex align-items-center gap-2">
-                      <Button
-                        variant="outline-secondary"
-                        size="sm"
-                        onClick={() => handleSetMin(item.itemId)}
-                        disabled={item.quantity <= 1 || loading}
-                        className="mass-quantity-btn"
-                        title="Установить минимум"
-                      >
-                        Мин
-                      </Button>
-                      
-                      <InputGroup size="sm" style={{ width: '120px' }}>
-                        <Button
-                          variant="outline-secondary"
-                          onClick={() => handleQuantityChange(item.itemId, item.quantity - 1)}
-                          disabled={item.quantity <= 1 || loading}
-                        >
-                          -
-                        </Button>
-                        <Form.Control
-                          type="number"
-                          min="1"
-                          max={item.maxQuantity}
-                          value={item.quantity}
-                          onChange={(e) => handleInputChange(item.itemId, e.target.value)}
-                          className="text-center"
-                          disabled={loading}
-                        />
-                        <Button
-                          variant="outline-secondary"
-                          onClick={() => handleQuantityChange(item.itemId, item.quantity + 1)}
-                          disabled={item.quantity >= item.maxQuantity || loading}
-                        >
-                          +
-                        </Button>
-                      </InputGroup>
-                      
-                      <Button
-                        variant="outline-secondary"
-                        size="sm"
-                        onClick={() => handleSetMax(item.itemId)}
-                        disabled={item.quantity >= item.maxQuantity || loading}
-                        className="mass-quantity-btn"
-                        title="Установить максимум"
-                      >
-                        Макс
-                      </Button>
-                    </div>
-                  </div>
-                  
-                  {/* Быстрые кнопки */}
-                  <div className="d-flex align-items-center gap-3">
-                    <span className="mass-quantity-label">Быстрый выбор:</span>
-                    <div className="d-flex gap-1">
-                      {[1, 5, 10, 25, 50].map(num => (
-                        <Button
-                          key={num}
-                          variant="outline-primary"
-                          size="sm"
-                          onClick={() => handleQuantityChange(item.itemId, Math.min(num, item.maxQuantity))}
-                          disabled={loading || num > item.maxQuantity}
-                          className="mass-quick-btn"
-                          active={item.quantity === Math.min(num, item.maxQuantity)}
-                        >
-                          {num}
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
+                <label className="transfer-quantity-label" htmlFor={`transfer-quantity-${item.itemId}`}>Количество</label>
+                <div className="transfer-quantity-control">
+                  <Button className="fantasy-btn" aria-label={`Уменьшить количество: ${item.name}`} onClick={() => handleQuantityChange(item.itemId,item.quantity-1)} disabled={loading || item.quantity<=1}>−</Button>
+                  <Form.Control id={`transfer-quantity-${item.itemId}`} type="number" inputMode="numeric" min="1" max={item.maxQuantity} step="1"
+                    value={item.quantity} onChange={event => handleInputChange(item.itemId,event.target.value)} disabled={loading}/>
+                  <Button className="fantasy-btn" aria-label={`Увеличить количество: ${item.name}`} onClick={() => handleQuantityChange(item.itemId,item.quantity+1)} disabled={loading || item.quantity>=item.maxQuantity}>+</Button>
+                  <Button className="fantasy-btn transfer-quantity-max" onClick={() => handleSetMax(item.itemId)} disabled={loading || item.quantity>=item.maxQuantity}>Все ({item.maxQuantity})</Button>
                 </div>
-                
-                {/* Прогресс бар */}
-                <div className="mt-2">
-                  <div className="d-flex justify-content-between small text-muted">
-                    <span>0</span>
-                    <span>Использовано: {item.quantity} из {item.maxQuantity}</span>
-                    <span>{item.maxQuantity}</span>
-                  </div>
-                  <div className="progress" style={{ height: '5px' }}>
-                    <div 
-                      className="progress-bar bg-info" 
-                      role="progressbar" 
-                      style={{ width: `${(item.quantity / item.maxQuantity) * 100}%` }}
-                      aria-valuenow={item.quantity}
-                      aria-valuemin="0"
-                      aria-valuemax={item.maxQuantity}
-                    />
-                  </div>
-                </div>
+                <p className="small mt-2 mb-0">Будет передано {item.quantity} из {item.maxQuantity} шт.</p>
               </div>
             ))}
           </div>
@@ -644,7 +485,7 @@ export const MassTransferModal = ({ show, onClose, selectedItems, inventory, onS
           ) : (
             <>
               <i className="fas fa-paper-plane me-2"></i>
-              Передать {totalCount} предметов
+              Передать · {totalCount} шт.
             </>
           )}
         </Button>

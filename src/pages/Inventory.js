@@ -17,9 +17,9 @@ const Inventory = () => {
     };
     
     return (
-      <Container className="mt-3 pt-3"> {/* Уменьшили отступы */}
+      <Container className="inventory-page mt-3"> {/* Уменьшили отступы */}
         <Row className="inventory-panel-switcher justify-content-center g-2 mb-3">
-          <Col xs={12} sm={6} lg={4}>
+          <Col xs="auto">
             <Button 
               onClick={() => togglePanel('equipment')}
               className={`fantasy-btn fantasy-btn-lg w-100 ${activePanel === 'equipment' ? 'is-active' : ''}`}
@@ -28,14 +28,11 @@ const Inventory = () => {
               🛡️ {activePanel === 'equipment' ? "Скрыть снаряжение" : "Снаряжение"}
             </Button>
           </Col>
-          <Col xs={12} sm={6} lg={4}>
-            <Button
-              onClick={() => togglePanel('wardrobe')}
-              className={`fantasy-btn fantasy-btn-lg w-100 ${activePanel === 'wardrobe' ? 'is-active' : ''}`}
-              aria-expanded={activePanel === 'wardrobe'}
-            >
-              🏛️ {activePanel === 'wardrobe' ? "Скрыть Зал" : "Зал облачений"}
-            </Button>
+          <Col xs="auto" className="inventory-storage-tools">
+            <details><summary className="fantasy-btn">Ещё</summary><div className="inventory-storage-menu">
+              <Button className="fantasy-btn" onClick={() => togglePanel('wardrobe')}>Зал облачений</Button>
+              <Button className="fantasy-btn" onClick={() => togglePanel('home')}>Домашнее хранилище</Button>
+            </div></details>
           </Col>
           <Col xs={12} sm={6} lg={4}>
             <Button onClick={() => togglePanel('home')}

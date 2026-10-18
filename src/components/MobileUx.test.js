@@ -21,6 +21,7 @@ jest.mock('../index', () => ({Context: require('react').createContext(null)}));
 jest.mock('../http/GetData', () => ({__esModule:true, default:jest.fn(), GetItemById:jest.fn()}));
 jest.mock('../http/apiClient', () => ({__esModule:true, default:{get:jest.fn(),post:jest.fn()}}));
 jest.mock('../http/SupportFunctions', () => ({WearDataById:jest.fn(), UnwearDataById:jest.fn(), SellItemById:jest.fn(), ThrowItemById:jest.fn()}));
+jest.mock('./CookingTab', () => () => null);
 jest.mock('./MassTransferModal', () => ({MassTransferModal:()=>null, MassSellModal:()=>null, MassDropModal:()=>null}));
 let container, root, user;
 beforeEach(() => {

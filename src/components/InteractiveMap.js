@@ -18,6 +18,9 @@ const InteractiveMap = observer(() => {
   const scaleIndicatorRef = useRef();
   const isDragging = useRef(false);
   const isTouchDragging = useRef(false);
+  const pinch = useRef(null);
+  const moved = useRef(false);
+  const dragOrigin = useRef({x:0,y:0});
   const dragStart = useRef({ x: 0, y: 0 });
   // В начале компонента, обновим начальный transform
   const transform = useRef({ x: -150, y: -350, scale: 1.8 }); // Изменили начальные значения
@@ -346,9 +349,17 @@ const InteractiveMap = observer(() => {
   }, []);
 
   const handleTouchStart = useCallback((e) => {
+    moved.current = false;
+    if (e.touches.length === 2) {
+      const [a,b] = e.touches, rect = svgContainerRef.current.getBoundingClientRect();
+      const center = {x:(a.clientX+b.clientX)/2-rect.left,y:(a.clientY+b.clientY)/2-rect.top};
+      pinch.current = {distance:Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY),scale:transform.current.scale,
+        worldX:(center.x-transform.current.x)/transform.current.scale,worldY:(center.y-transform.current.y)/transform.current.scale};
+      isTouchDragging.current = false; moved.current = true; return;
+    }
     if (e.target.closest('.location-point')) return;
-    
     isTouchDragging.current = true;
+    dragOrigin.current = {x:e.touches[0].clientX,y:e.touches[0].clientY};
     const touch = e.touches[0];
     
     dragStart.current = {
@@ -361,9 +372,15 @@ const InteractiveMap = observer(() => {
 
   const handleTouchMove = useCallback((e) => {
     if (!svgContainerRef.current) return;
+    if (e.touches.length === 2 && pinch.current) {
+      const [a,b] = e.touches, rect = svgContainerRef.current.getBoundingClientRect();
+      const scale = Math.max(.1,Math.min(5,pinch.current.scale*Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY)/Math.max(1,pinch.current.distance)));
+      transform.current = {scale,x:(a.clientX+b.clientX)/2-rect.left-pinch.current.worldX*scale,y:(a.clientY+b.clientY)/2-rect.top-pinch.current.worldY*scale};
+      applyTransform(); moved.current = true; if(e.cancelable)e.preventDefault(); return;
+    }
     const touch = e.touches[0];
-
-    if (!isTouchDragging.current) return;
+    if (!touch || !isTouchDragging.current) return;
+    if(Math.hypot(touch.clientX-dragOrigin.current.x,touch.clientY-dragOrigin.current.y)>8)moved.current=true;
 
     transform.current.x = touch.clientX - dragStart.current.x;
     transform.current.y = touch.clientY - dragStart.current.y;
@@ -374,7 +391,7 @@ const InteractiveMap = observer(() => {
   }, [applyTransform]);
 
   const handleTouchEnd = useCallback(() => {
-    isTouchDragging.current = false;
+    isTouchDragging.current = false; pinch.current = null;
   }, []);
 
   const handleWheel = useCallback((e) => {
@@ -407,7 +424,21 @@ const InteractiveMap = observer(() => {
     applyTransform();
   }, [applyTransform]);
 
+  const centerOnPlayer = () => {
+    const location = `${playerData?.global_location || ''} ${playerData?.location || ''}`.toLowerCase();
+    const id = location.includes('fargos') || location.includes('canalisation') ? 'fargos'
+      : /coast|wind|sound|power/.test(location) ? 'coast'
+      : /mountain|stone|ice|electric/.test(location) ? 'mountains'
+      : /forest|life|dark/.test(location) ? 'forest'
+      : /steppe|fire|light|death/.test(location) ? 'steppe' : null;
+    const point = getLocationsData().find(item => item.id === id);
+    if(!point || !svgContainerRef.current) {resetView();return;}
+    const rect = svgContainerRef.current.getBoundingClientRect(), scale = 1.8;
+    transform.current = {scale,x:rect.width/2-point.position[0]*scale,y:rect.height/2-point.position[1]*scale};applyTransform();
+  };
+
   const handleSvgClick = useCallback((e) => {
+    if(moved.current){moved.current=false;return;}
     const target = e.target;
     
     if (target.classList.contains('location-point')) {
@@ -557,7 +588,7 @@ const InteractiveMap = observer(() => {
     const dungeons = getLocationDungeons(selectedLocation);
 
     return (
-      <Modal show={showLocationModal} onHide={onClose} centered size="lg">
+      <Modal show={showLocationModal} onHide={onClose} centered size="lg" className="map-location-modal">
         <Modal.Header closeButton className="fantasy-card">
           <Modal.Title className="fantasy-text-dark">
             {selectedLocation.name}
@@ -565,6 +596,7 @@ const InteractiveMap = observer(() => {
         </Modal.Header>
         <Modal.Body className="fantasy-card">
           <p className="fantasy-text-dark">{selectedLocation.description}</p>
+          <p className="small">Карта показывает регионы и прогресс подземелий. Переход выполняется обычными действиями в боте ВК.</p>
           
           {dungeons.length > 0 ? (
             <div className="mt-3">
@@ -608,7 +640,7 @@ const InteractiveMap = observer(() => {
   }
 
   return (
-    <div className="fantasy-paper content-overlay">
+    <div className="fantasy-paper content-overlay mobile-world-map">
       {svgError && (
         <Alert variant="warning" className="mb-3">
           <strong>Внимание:</strong> Основная карта не загружена. Используется упрощённая версия. ({svgError})
@@ -642,6 +674,12 @@ const InteractiveMap = observer(() => {
                 onTouchCancel={handleTouchEnd}
               />
 
+              <div className="map-floating-controls" aria-label="Управление картой">
+                <button type="button" onClick={zoomIn} aria-label="Приблизить карту">+</button>
+                <button type="button" onClick={zoomOut} aria-label="Отдалить карту">−</button>
+                <button type="button" onClick={centerOnPlayer}>К персонажу</button>
+                <button type="button" onClick={resetView}>Сбросить</button>
+              </div>
               <div 
                 ref={scaleIndicatorRef}
                 style={{
@@ -663,7 +701,7 @@ const InteractiveMap = observer(() => {
           </Card>
         </div>
 
-        <div className="col-md-3">
+        <div className="col-md-3 map-desktop-controls">
           <NavigationControls />
           <LocationLegend />
         </div>

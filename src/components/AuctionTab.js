@@ -309,7 +309,12 @@ const AuctionTab = observer(() => {
 
       {filteredLots.length === 0 && !loading && (
         <div className="text-center fantasy-text-muted py-4">
-          {query ? "Лоты по вашему запросу не найдены" : "Лотов на аукционе нет"}
+          <p>{query ? "Лоты по вашему запросу не найдены" : "На аукционе пока нет лотов"}</p>
+          <div className="empty-state-actions">
+            {query && <Button className="fantasy-btn" onClick={() => setQuery('')}>Сбросить поиск</Button>}
+            <Button className="fantasy-btn" onClick={() => setRefreshTrigger(value => value + 1)}>Обновить лоты</Button>
+            <Button className="fantasy-btn" disabled={!inventoryArray.length} onClick={handleCreateButtonClick}>Выставить свой предмет</Button>
+          </div>
         </div>
       )}
 

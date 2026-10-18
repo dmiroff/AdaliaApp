@@ -13,6 +13,8 @@ import {
   keyMappingDict,
 } from "../utils/descriptions";
 import UpgradeTab from "../components/UpgradeTab";
+import {abilityRows} from '../utils/abilityPresentation';
+import ParameterDetails from "../components/ParameterDetails";
 import GetDataById from "../http/GetData";
 import "./CharacterReadability.css";
 
@@ -79,6 +81,7 @@ const Character = observer(() => {
   console.log("[Character] initialData:", initialData, "initialLoading:", initialLoading, "initialError:", initialError);
 
   const [playerData, setPlayerData] = useState(null);
+  const [activeSection, setActiveSection] = useState('Параметры');
   const [delay, setDelay] = useState(false);
   const [useBlueTheme, setUseBlueTheme] = useState(true);
   const [canUpgrade, setCanUpgrade] = useState(false);
@@ -385,31 +388,20 @@ const Character = observer(() => {
   };
 
   const AbilityCard = ({ abilityKey, abilityData }) => {
-    const description = getDescription("Умения", abilityKey);
+    const description = abilityData?.description || getDescription("Умения", abilityKey);
     return (
       <Col xs={12} sm={6} md={4} lg={3} className="mb-3">
-        <OverlayTrigger placement="top" delay={{ show: 250, hide: 400 }} overlay={renderTooltip(description)}>
-          <Card className="h-100 fantasy-card">
-            <Card.Header className="fantasy-card-header fantasy-card-header-info">
-              <h6 className="mb-0">{abilityData?.name || getTranslation(abilityKey)}</h6>
-            </Card.Header>
-            <Card.Body>
-              {Object.entries(abilityData || {}).map(([key, value]) => {
-                if (key === "name") return null;
-                return (
-                  <div key={key} className="fantasy-stat-row">
-                    <span className="fantasy-text-muted">{getTranslation(key)}:</span>
-                    <span className="fantasy-text-bold text-muted">
-                      {Array.isArray(value) && (key === "influencing" || key === "влияющие")
-                        ? translateArray(value).join(", ")
-                        : prepareDataValues(value, key)}
-                    </span>
-                  </div>
-                );
-              })}
-            </Card.Body>
-          </Card>
-        </OverlayTrigger>
+        <Card className="h-100 fantasy-card">
+          <Card.Body>
+            <details className="ability-details">
+              <summary><h6>{abilityData?.name || getTranslation(abilityKey)}</h6><span>Описание и эффекты</span></summary>
+              {description && !description.startsWith("Описание для этого элемента пока") && <p>{description}</p>}
+              {abilityRows(abilityData || {}).filter(([key]) => key !== 'Описание').map(([key, value]) => (
+                <div key={key} className="fantasy-stat-row"><span className="fantasy-text-muted">{key}:</span><span className="fantasy-text-bold">{value}</span></div>
+              ))}
+            </details>
+          </Card.Body>
+        </Card>
       </Col>
     );
   };
@@ -502,21 +494,18 @@ const Character = observer(() => {
     }
   };
 
-  const renderStatCard = (title, icon, data, color = "warning") => (
+  const statKeys = {'Очки действия 🏃': 'action_points', 'Инициатива ⏳': 'initiative',
+    'Ближняя атака': 'melee_attack', 'Ближний урон': 'melee_damage', 'Дальняя атака': 'range_attack',
+    'Дальний урон': 'range_damage', 'Магическая атака': 'magic_attack', 'Магический урон': 'magic_damage',
+    'Атака духа': 'pray_attack', 'Урон духа': 'pray_damage', 'Класс защиты': 'current_defence', 'Магическое сопротивление': 'magic_resist'};
+  const renderStatCard = (title, icon, data, color = "warning") => title === 'Основная информация' ? null : (
     <Col md={6} lg={4} className="mb-3">
-      <Card className="h-100 fantasy-card">
-        <Card.Header className={`fantasy-card-header fantasy-card-header-${color}`}>
-          <h6 className="fantasy-text-gold">
-            {icon} {title}
-          </h6>
-        </Card.Header>
-        <Card.Body>
-          {Object.entries(data).map(([key, value]) => (
-            <div key={key} className="fantasy-stat-row">
-              <span>{key}:</span>
-              <Badge className="fantasy-badge fantasy-badge-muted">{value ?? "—"}</Badge>
-            </div>
-          ))}
+      <details className={`character-stat-section fantasy-card character-stat-section-${color}`}>
+        <summary>{icon} {title}</summary>
+        <div className="card-body">
+          {Object.entries(data).map(([key, value]) => statKeys[key]
+            ? <ParameterDetails key={key} player={playerData} parameter={statKeys[key]} label={key} value={value} />
+            : <div key={key} className="fantasy-stat-row"><span>{key}:</span><Badge className="fantasy-badge fantasy-badge-muted">{value ?? "—"}</Badge></div>)}
           {title === "Основная информация" && (
             <>
               <div className="progress-section">
@@ -559,8 +548,8 @@ const Character = observer(() => {
               </div>
             </>
           )}
-        </Card.Body>
-      </Card>
+        </div>
+      </details>
     </Col>
   );
 
@@ -597,7 +586,27 @@ const Character = observer(() => {
   // Основной рендер
   return (
     <div className="character-container">
-      <Tabs defaultActiveKey="Параметры" transition={false} id="playerInfo" className="fantasy-tabs mb-3" justify>
+      <section className="character-overview fantasy-paper" aria-label="Кратко о персонаже">
+        <div className="character-overview-title"><h1>{playerData.name}</h1><span>Уровень {playerData.level}</span></div>
+        <p>{playerData.Race} · {playerData.Character_class}</p>
+        <div className="character-overview-vitals">
+          <span>❤️ {playerData.current_health}/{playerData.max_health}</span><span>🏃 {playerData.current_action_points ?? playerData.action_points}/{playerData.action_points} ОД</span>
+        </div>
+        <progress max={playerData.max_health || 1} value={playerData.current_health || 0} aria-label="Здоровье" />
+        <button type="button" className="fantasy-btn character-upgrade-link" onClick={() => setActiveSection('Прокачка')}>
+          Развитие: {playerData.free_attribute_points || 0} атр. · {playerData.free_skill_points || 0} навыков · {playerData.free_talent_points || 0} талантов
+        </button>
+        <div className="character-active-effects">
+          {Object.keys(playerData.temporary_effects || {}).length > 0 ? <button className="fantasy-btn" onClick={() => setActiveSection('Эффекты')}>Эффекты: {Object.keys(playerData.temporary_effects).join(', ')}</button> : <span>Временных эффектов нет</span>}
+        </div>
+        <details><summary>Опыт и дополнительные сведения</summary><p>Опыт: {playerData.experience ?? 0} / {playerData.experience_next_level ?? '—'} · Скидка: {playerData.discount || 0}% · Очки навыков за уровень: {playerData.points_per_level ?? '—'}</p></details>
+      </section>
+      <label className="character-section-picker">Раздел персонажа
+        <select className="form-select" value={activeSection} onChange={event => setActiveSection(event.target.value)}>
+          {['Параметры', 'Атрибуты', 'Навыки', 'Магия', 'Таланты', 'Умения', 'Эффекты', 'Прокачка'].map(section => <option key={section}>{section}</option>)}
+        </select>
+      </label>
+      <Tabs activeKey={activeSection} onSelect={setActiveSection} transition={false} id="playerInfo" className="fantasy-tabs mb-3" justify>
         <Tab eventKey="Параметры" title="📊 Параметры">
           <Container fluid>
             <Row className="g-3">

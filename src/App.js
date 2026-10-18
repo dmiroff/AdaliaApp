@@ -9,6 +9,7 @@ import { Container } from 'react-bootstrap';
 import backgroundImage from './assets/Images/background.webp';
 import mobileBackgroundImage from './assets/Images/background-mobile.webp';
 import './App.css';
+import './MobileExperience.css';
 
 const GameDraft = React.lazy(() => import('./pages/GameDraft'));
 

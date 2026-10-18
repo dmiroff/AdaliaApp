@@ -9,8 +9,8 @@ const localDate = (minutes) => {
     const date = new Date(Date.now() + minutes * 60000);
     return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
 };
-const initialForm = () => ({title: '', rules: '', tie_rule: '', starts_at: localDate(10), ends_at: localDate(70), limit: 20, prizes: '100', participation_gold: 0});
-const errorMessage = e => e.response?.status === 404 ? 'Ивенты ещё не включены на сервере тестового зеркала.' : typeof e.response?.data?.detail === 'string' ? e.response.data.detail : 'Не удалось выполнить действие. Проверьте данные и соединение.';
+const initialForm = () => ({title: '', rules: '', tie_rule: '', starts_at: localDate(10), ends_at: localDate(1450), limit: 20, prizes: '100', participation_gold: 0});
+const errorMessage = e => e.response?.status === 404 ? 'Ивенты ещё не включены на сервере.' : typeof e.response?.data?.detail === 'string' ? e.response.data.detail : 'Не удалось выполнить действие. Проверьте данные и соединение.';
 
 function EventForm({onCreate, busy, money}) {
     const [form, setForm] = useState(initialForm);
@@ -34,14 +34,16 @@ function EventForm({onCreate, busy, money}) {
     const prizes = form.prizes.split(',').map(n => Number(n.trim()));
     const reserve = prizes.reduce((a, b) => a + b, 0) + Number(form.limit) * Number(form.participation_gold);
     const shortfall = Math.max(0, reserve - money);
+    const durationValid = new Date(form.ends_at) - new Date(form.starts_at) >= 86400000;
     return <form className="fantasy-paper player-events-form" onSubmit={e => {
         e.preventDefault();
-        if (shortfall > 0) return;
+        if (shortfall > 0 || !durationValid) return;
         onCreate({...form, starts_at: new Date(form.starts_at).getTime()/1000, ends_at: new Date(form.ends_at).getTime()/1000,
             limit: Number(form.limit), participation_gold: Number(form.participation_gold), prizes,
             conditions: conditions.map(({label, ...c}) => c)});
     }}>
-        <h2>Создать ивент</h2>
+        <h2>Создать ивент</h2><p>Ивент длится не менее суток. Завершение и выдача наград доступны после объявленного окончания.</p>
+        {!durationValid && <p role="alert">Между началом и окончанием должно пройти не менее суток.</p>}
         <label>Название<input required maxLength={100} name="title" value={form.title} onChange={change}/></label>
         <label>Правила<textarea required maxLength={2000} name="rules" value={form.rules} onChange={change}/></label>
         <label>Как разрешаем ничью<textarea required maxLength={500} name="tie_rule" value={form.tie_rule} onChange={change}/></label>
@@ -69,7 +71,7 @@ function EventForm({onCreate, busy, money}) {
         <p>Будет зарезервировано: <strong>{Number.isFinite(reserve) ? reserve.toLocaleString('ru-RU') : '—'} золота</strong>. Неиспользованный остаток возвращается. После создания правила и призы зафиксированы.</p>
         <p>После создания зарегистрируйте участников и нажмите «Начать ивент» в объявленное время.</p>
         {shortfall > 0 && <p role="alert">Не хватает {shortfall.toLocaleString('ru-RU')} золота для призового фонда.</p>}
-        <button className="fantasy-btn" disabled={busy || shortfall > 0}>Создать и объявить в чате</button>
+        <button className="fantasy-btn" disabled={busy || shortfall > 0 || !durationValid}>Создать и уведомить администраторов</button>
     </form>;
 }
 
@@ -109,9 +111,9 @@ function EventDetails({event, viewer, busy, act}) {
                     <label>Причина<input required maxLength={300} value={reason} onChange={e => setReason(e.target.value)}/></label>
                 </div><button className="fantasy-btn" disabled={busy}>Начислить</button>
             </form>
-            <h3>Подтвердить результаты</h3><p>При ничьей укажите ID всех участников по порядку мест через запятую, соблюдая объявленное правило. Участники с разными очками сохраняют свой порядок.</p>
+            <h3>Подтвердить результаты</h3>{Date.now() < event.ends_at * 1000 && <p>Награды можно выдать после объявленного окончания ивента.</p>}<p>При ничьей укажите ID всех участников по порядку мест через запятую, соблюдая объявленное правило. Участники с разными очками сохраняют свой порядок.</p>
             <label>Порядок мест при ничьей<input value={order} onChange={e => setOrder(e.target.value)} placeholder={rows.map(r => r.player_id).join(', ')}/></label>
-            <button className="fantasy-btn" disabled={busy || !rows.length} onClick={() => act('finish', {order: order.trim() ? order.split(',').map(n => Number(n.trim())) : null})}>Завершить и выдать награды</button>
+            <button className="fantasy-btn" disabled={busy || !rows.length || Date.now() < event.ends_at * 1000} onClick={() => act('finish', {order: order.trim() ? order.split(',').map(n => Number(n.trim())) : null})}>Завершить и выдать награды</button>
         </>}
         {host && !closed && <div className="mt-3">{cancelOpen ? <><p>Отменить ивент и вернуть призовой фонд?</p><button className="fantasy-btn" disabled={busy} onClick={() => act('cancel')}>Да, отменить ивент</button> <button onClick={() => setCancelOpen(false)}>Продолжить ивент</button></> : <button disabled={busy} onClick={() => setCancelOpen(true)}>Отменить ивент</button>}</div>}
         <h3>{host ? 'История начислений' : 'Мои начисления'}</h3>

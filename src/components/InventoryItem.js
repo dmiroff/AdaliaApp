@@ -9,6 +9,8 @@ import { Context } from "../index";
 import { WearDataById, ThrowItemById, SellItemById } from "../http/SupportFunctions";
 import ModalAction from "./ModalAction";
 import EquipmentComparison from "./EquipmentComparison";
+import { MassTransferModal } from "./MassTransferModal";
+import GetDataById from "../http/GetData";
 import ActionNotice from "./ActionNotice";
 import "./InventoryItem.css";
 
@@ -26,6 +28,7 @@ const InventoryItem = ({
     : exampleImage;
   const [showMenu, setShowMenu] = useState(false);
   const [showActions, setShowActions] = useState(false);
+  const [showTransfer, setShowTransfer] = useState(false);
   const [notice, setNotice] = useState(null);
   const notify = (message, variant = 'success') => {
     (onNotify || setNotice)({message, variant});
@@ -561,17 +564,31 @@ const InventoryItem = ({
           <Offcanvas.Title id={`item-actions-${itemId}`}>{device.name}</Offcanvas.Title>
         </Offcanvas.Header>
         <Offcanvas.Body>
+          <div className="item-sheet-summary">
+            <span>{device.count || 1} шт. · {device.weight ?? '—'} кг · {device.value ?? 0} монет</span>
+            {device.description && <p>{device.description}</p>}
+            {isEquipped && <p>Предмет надет. Единственный надетый экземпляр остаётся у вас.</p>}
+          </div>
           <EquipmentComparison item={device} player={user.player_data} />
-          <div className="d-grid gap-2">
+          <div className="d-grid gap-2 item-sheet-actions">
             <Button className="fantasy-btn" onClick={handleInspect}>Осмотреть</Button>
             {device.is_equippable && <Button className="fantasy-btn" disabled={handleRequest}
               onClick={handleWear}>{handleRequest ? 'Надеваем…' : 'Надеть'}</Button>}
-            <Button className="fantasy-btn" disabled={!canTransfer || handleRequest} onClick={handleModalSell}>Продать</Button>
-            <Button className="fantasy-btn" disabled={!canTransfer || handleRequest} onClick={handleModalDrop}>Выбросить</Button>
+            <Button className="fantasy-btn" disabled={!canTransfer || handleRequest} onClick={() => {setShowActions(false); setShowTransfer(true);}}>Передать</Button>
+            <details className="item-destructive-actions"><summary>Продать или выбросить</summary>
+              <Button className="fantasy-btn" disabled={!canTransfer || handleRequest} onClick={handleModalSell}>Продать</Button>
+              <Button variant="outline-danger" disabled={!canTransfer || handleRequest} onClick={handleModalDrop}>Выбросить</Button>
+            </details>
           </div>
         </Offcanvas.Body>
       </Offcanvas>
 
+      {showTransfer && <MassTransferModal show onClose={() => setShowTransfer(false)}
+        selectedItems={new Set([String(itemId)])}
+        inventory={{[itemId]: {...device, count: maxTransferAmount}}}
+        onSuccess={async (message) => { notify(message || 'Предмет передан'); try {const response = await GetDataById(); if (response?.data) {
+          user.setPlayer(response.data); user.setPlayerInventory(response.data.inventory_new || {});
+        }} catch {notify('Передача выполнена. Обновите рюкзак, чтобы увидеть остаток.');}}} />}
       <ModalAction
         show={showModalSell} 
         onClose={handleModalSellClose} 

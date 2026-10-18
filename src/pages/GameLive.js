@@ -4,6 +4,7 @@ import GameDraftKeyboard from '../components/GameDraftKeyboard';
 import {normalizeKeyboard} from '../utils/gameDraftProtocol';
 import {normalizeGameHistory} from '../utils/gameLiveHistory';
 import './GameDraft.css';
+import { dict_translator } from '../utils/Helpers';
 
 const freshId=()=>{
   if(window.crypto.randomUUID)return window.crypto.randomUUID();
@@ -38,6 +39,8 @@ function MessageImage({url,onLoad}){
 export default function GameLive(){
   const [data,setData]=useState(null),[error,setError]=useState(''),[commandError,setCommandError]=useState(''),[text,setText]=useState('');
   const [pending,setPending]=useState(null),[retry,setRetry]=useState(null),[loading,setLoading]=useState(true);
+  const [showHistory,setShowHistory]=useState(false),[clock,setClock]=useState(Date.now());
+  useEffect(()=>{const timer=setInterval(()=>setClock(Date.now()),1000);return()=>clearInterval(timer);},[]);
   const log=useRef(null),sending=useRef(false),mounted=useRef(true),keepBottom=useRef(true);
   const authenticated=Boolean(localStorage.getItem('access_token'));
   const refresh=async(signal)=>{
@@ -95,28 +98,50 @@ export default function GameLive(){
     catch(e){setCommandError('Не удалось подтвердить проверку результата.');}
   };
   const player=data?.player;
+  const messages=data?.messages || [];
+  const currentMessage=[...messages].reverse().find(message=>message.role==='bot'&&message.keyboard) || [...messages].reverse().find(message=>message.role==='bot');
+  const currentKeyboard=currentMessage?.keyboard?normalizeKeyboard(currentMessage.keyboard):null;
+  const lastBot=[...messages].reverse().find(message=>message.role==='bot');
+  const restMatch=lastBot?.text?.match(/Вы начинаете отдых \((\d+) секунд\)/);
+  const restLeft=restMatch?Math.max(0,Math.ceil((Number(lastBot.time)+Number(restMatch[1])*1000-clock)/1000)):0;
+  const battle=player?.in_fight?[...messages].reverse().find(message=>message.role==='bot'&&/Текущий ход:|Свободных очков действий:/.test(message.text)):null;
+  const battleAP=battle?.text.match(/🏃\s*(\d+)|Свободных очков действий:\s*(\d+)/);
+  const warnings=battle?.text.split('\n').filter(line=>/◈|⚠️/.test(line)) || [];
+  const statusIndex=battle?.text.search(/Текущий ход:|Команда 2:/) ?? -1;
+  const battleState=battle && statusIndex>=0?battle.text.slice(statusIndex):battle?.text;
+  const turnLog=battle && statusIndex>0?battle.text.slice(0,statusIndex).trim():'';
   const health=Number(player?.current_health)||0,maxHealth=Number(player?.max_health)||1;
-  return <section className="game-draft" aria-labelledby="game-live-title">
-    <header className="game-draft-heading"><div><span className="game-draft-eyebrow">АДАЛИЯ · БОТ</span><h1 id="game-live-title">Игровой чат</h1><p>Сообщения и действия вашего персонажа.</p></div><a className="game-draft-app-link" href="/">Открыть приложение ↗</a></header>
+  return <section className="game-draft game-live-mobile" aria-labelledby="game-live-title">
+    <header className="game-draft-heading"><div><h1 id="game-live-title">Игровой чат</h1></div><a className="game-draft-app-link" href="/inventory">К рюкзаку ↗</a></header>
     {!authenticated?<div className="game-draft-banner"><strong>Войдите в приложение</strong><span>Откройте свою ссылку из бота, затем вернитесь в игровой чат.</span></div>:<>
-      <div className="game-draft-banner" role="status"><strong>{pending?.status==='running'?'Бот выполняет команду':data?'Подключено к боту зеркала':'Подключаемся к боту'}</strong><span>Здесь действия изменяют вашего персонажа на зеркале.</span></div>
+      <div className="game-draft-banner" role="status"><strong>{pending?.status==='running'?'Бот выполняет команду':data?'Подключено к боту зеркала':'Подключаемся к боту'}</strong><span className="game-live-environment">Зеркало · те же команды и действия, что в боте.</span></div>
       {error&&<div className="game-live-error" role="alert">{error}</div>}
       {(commandError||retry)&&<div className="game-live-error" role="alert">{commandError}{retry&&<button type="button" className="game-draft-action" disabled={sending.current} onClick={()=>deliver(retry)}>Проверить отправку</button>}</div>}
       {pending?.status==='unknown'&&!retry&&<div className="game-live-error" role="alert">Результат предыдущей команды требует проверки. Посмотрите сообщения и персонажа перед продолжением.<button type="button" className="game-draft-action" onClick={acknowledge}>Проверено: продолжить</button></div>}
       <div className="game-draft-layout"><aside className="game-draft-side"><div className="game-draft-hero"><span className="game-draft-hero__crest" aria-hidden="true">А</span><div><h2>{player?.name||'Ваш персонаж'}</h2><span>{player?`Уровень ${player.level}`:'Загружаем данные'}</span></div></div>
         <div className="game-draft-stats"><span>Здоровье <strong>{health}/{maxHealth}</strong></span><span>Монеты <strong>{player?.money??'—'}</strong></span></div>
         <div className="game-draft-health" role="progressbar" aria-label="Здоровье персонажа" aria-valuenow={Math.max(0,health)} aria-valuemin={0} aria-valuemax={maxHealth}><span style={{width:`${Math.max(0,Math.min(100,health/maxHealth*100))}%`}}/></div>
-        <p className="game-draft-location">{player?.location}</p>{player?.in_fight&&<p className="game-draft-enemy">Вы в бою</p>}
+        <p className="game-draft-location">{dict_translator[player?.location] || player?.location}</p>{player?.in_fight&&<p className="game-draft-enemy">Вы в бою</p>}
         <button type="button" className="game-draft-action mt-3" disabled={!data||!!pending||!!retry} onClick={()=>send('Где я')}>Обновить игровую клавиатуру</button>
-      </aside><div className="game-draft-chat"><div className="game-draft-chat__heading"><span>Адалия · зеркало</span><span>{pending?'Ожидаем ответ':'История сообщений'}</span></div>
-        <div ref={log} className="game-draft-log" role="log" aria-label="Сообщения бота" aria-live="polite" aria-relevant="additions" onScroll={()=>{keepBottom.current=log.current.scrollHeight-log.current.scrollTop-log.current.clientHeight<60;}}>
+      </aside><div className="game-draft-chat"><div className="game-draft-chat__heading"><span>{player?.in_fight?'Бой':'Сейчас'}</span><button className="game-history-toggle" type="button" aria-expanded={showHistory} onClick={()=>setShowHistory(value=>!value)}>{showHistory?'К текущему событию':'История сообщений'}</button></div>
+        {!showHistory&&<section className="game-current-state" aria-label="Текущая ситуация">
+          <div className="game-current-vitals"><strong>❤️ {health}/{maxHealth}</strong>{battleAP&&<strong>🏃 {battleAP[1] || battleAP[2]} ОД</strong>}<span>{player?.name}</span></div>
+          {restLeft>0&&<p role="status">Отдых · осталось {restLeft} сек.</p>}
+          {warnings.map((warning,index)=><p key={index} className="game-current-warning">{warning}</p>)}
+          {currentMessage?.image_url&&!player?.in_fight&&<MessageImage url={currentMessage.image_url}/>}
+          <p className="game-current-text">{battleState || currentMessage?.text || (loading?'Загружаем ситуацию…':'Нажмите «Где я», чтобы обновить ситуацию.')}</p>
+          {turnLog&&<details className="game-turn-log"><summary>События хода</summary><p className="game-current-text">{turnLog}</p></details>}
+          {lastBot&&lastBot.id!==currentMessage?.id&&lastBot.id!==battle?.id&&<p className="game-current-text game-latest-reply">{lastBot.text}</p>}
+          {currentKeyboard?.inline&&<GameDraftKeyboard keyboard={currentKeyboard} revision={data?.revision} sourceId={currentMessage.id} disabled={!!pending||!!retry||currentMessage.id!==data?.displayRevision} onCommand={send}/>}
+        </section>}
+        <div hidden={!showHistory} ref={log} className="game-draft-log" role="log" aria-label="Сообщения бота" aria-live="polite" aria-relevant="additions" onScroll={()=>{keepBottom.current=log.current.scrollHeight-log.current.scrollTop-log.current.clientHeight<60;}}>
           {loading&&<p>Загружаем сообщения…</p>}{data&&!data.messages.length&&<p>Начните с «Где я», чтобы получить текущую локацию и клавиатуру бота.</p>}
           {data?.messages.map(message=><article className={`game-draft-message game-draft-message--${message.role}`} key={message.id}><div className="game-draft-message__meta"><strong>{message.role==='user'?'Вы':'Адалия'}</strong><time dateTime={new Date(message.time).toISOString()}>{new Date(message.time).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})}</time></div>
             {message.image_url&&<MessageImage url={message.image_url} onLoad={scrollBottom}/>}<p>{message.text}</p>
             {message.keyboard&&normalizeKeyboard(message.keyboard).inline&&<GameDraftKeyboard keyboard={normalizeKeyboard(message.keyboard)} revision={data.revision} sourceId={message.id} disabled={!!pending||!!retry||message.id!==data.displayRevision} onCommand={send}/>}
           </article>)}
-        </div><div className="game-draft-controls"><span className="game-draft-controls__label">Действия бота</span><GameDraftKeyboard keyboard={data?.displayKeyboard?normalizeKeyboard(data.displayKeyboard):startupKeyboard} revision={data?.revision} sourceId={data?.displayKeyboardSource} disabled={!data||!!pending||!!retry} onCommand={send}/>
-          <form className="game-draft-composer" onSubmit={e=>{e.preventDefault();send(text);}}><label className="visually-hidden" htmlFor="game-live-command">Команда боту</label><input id="game-live-command" value={text} maxLength={500} disabled={!data||!!pending||!!retry} autoComplete="off" placeholder="Введите команду боту…" onChange={e=>setText(e.target.value)}/><button type="submit" disabled={!data||!!pending||!!retry||!text.trim()}>Отправить</button></form>
+        </div><div className="game-draft-controls"><div className="game-controls-heading"><span>Действия бота</span><button type="button" className="game-history-toggle" disabled={!data||!!pending||!!retry} onClick={()=>send('Где я')}>Обновить ситуацию</button></div>{!currentKeyboard?.inline&&<GameDraftKeyboard compactCosts={!!player?.in_fight} keyboard={data?.displayKeyboard?normalizeKeyboard(data.displayKeyboard):startupKeyboard} revision={data?.revision} sourceId={data?.displayKeyboardSource} disabled={!data||!!pending||!!retry} onCommand={send}/>}
+          <details className="game-manual-command" open={!!text}><summary>Ввести команду вручную</summary><form className="game-draft-composer" onSubmit={e=>{e.preventDefault();send(text);}}><label className="visually-hidden" htmlFor="game-live-command">Команда боту</label><input id="game-live-command" value={text} maxLength={500} disabled={!data||!!pending||!!retry} autoComplete="off" placeholder="Введите команду боту…" onChange={e=>setText(e.target.value)}/><button type="submit" disabled={!data||!!pending||!!retry||!text.trim()}>Отправить</button></form></details>
         </div></div></div>
     </>}
   </section>;

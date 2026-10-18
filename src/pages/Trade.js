@@ -14,7 +14,7 @@ const Trade = () => {
     const [activeTab, setActiveTab] = useState('auction');
     
     return (
-      <Container className="mt-5 pt-4">
+      <Container className="trade-page mt-3">
         <Row className="d-flex justify-content-center align-items-center mb-4">
           <Col xs={12} md={10} lg={8}>
             <Tabs

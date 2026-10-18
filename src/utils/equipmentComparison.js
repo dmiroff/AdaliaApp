@@ -5,8 +5,8 @@ export const comparisonSlots = (item) => {
   return EQUIPMENT_SLOTS.includes(type) ? [type] : [];
 };
 export const comparisonStats = (item, current) => {
-  const keys = ['weapon_damage', 'weapon_damage_type', 'defence', 'weight', 'strength', 'dexterity', 'constitution', 'intelligence', 'wisdom', 'charisma'];
-  return keys.filter(key => item?.[key] !== undefined || current?.[key] !== undefined).map(key => {
+  const keys = ['weapon_damage', 'weapon_damage_type', 'defence', 'weight', 'strength', 'agility', 'constitution', 'intelligence', 'wisdom', 'charisma'];
+  return keys.filter(key => (item?.[key] !== undefined || current?.[key] !== undefined) && !(Number(item?.[key] || 0) === 0 && Number(current?.[key] || 0) === 0)).map(key => {
     const next = item?.[key]; const previous = current?.[key];
     const delta = typeof next === 'number' && typeof previous === 'number' && Number.isFinite(next) && Number.isFinite(previous) ? Math.round((next - previous) * 100) / 100 : null;
     return {key, next, previous, delta};

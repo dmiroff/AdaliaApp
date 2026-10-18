@@ -7,7 +7,7 @@ import InteractiveMap from "../components/InteractiveMap";
 
 const Map = () => {
   return (
-    <Container className="mt-5 pt-4">
+    <Container className="map-page mt-3">
       <Row className="d-flex justify-content-center align-items-center mb-4">
         <Col xs={12} md={10} lg={8}>
           <h1 className="fantasy-text-gold text-center mb-4">🗺️ Карта Мира</h1>
