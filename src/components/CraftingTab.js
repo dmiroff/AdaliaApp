@@ -53,7 +53,7 @@ export default function CraftingTab() {
     {error && <Alert variant="danger">{error}</Alert>}
     {message && <Alert variant="success">{message}</Alert>}
     <h4>📚 Навыки из книг</h4>
-    <p>Первая книга открывает навык. Каждая следующая даёт +5. Задания дают +1, практика становится реже после успешных прибавок за день.</p>
+    <p>Первая книга открывает навык. Каждая следующая даёт +3. Задания дают +1, практика становится реже после успешных прибавок за день.</p>
     {(catalog.professional_skills || []).map(skill => <div key={skill.key} className="mb-1">
       <strong>{skill.name}</strong>: {skill.opened ? `${skill.level}; шанс практики ${(skill.practice_chance * 100).toPrecision(3)}%` : 'закрыт'}
     </div>)}
