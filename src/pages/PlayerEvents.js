@@ -111,7 +111,7 @@ function EventDetails({event, viewer, busy, act}) {
                     <label>Причина<input required maxLength={300} value={reason} onChange={e => setReason(e.target.value)}/></label>
                 </div><button className="fantasy-btn" disabled={busy}>Начислить</button>
             </form>
-            <h3>Подтвердить результаты</h3>{Date.now() < event.ends_at * 1000 && <p>Награды можно выдать после объявленного окончания ивента.</p>}<p>При ничьей укажите ID всех участников по порядку мест через запятую, соблюдая объявленное правило. Участники с разными очками сохраняют свой порядок.</p>
+            <h3>Подтвердить результаты</h3>{Date.now() < event.ends_at * 1000 && <p>Награды можно выдать после объявленного окончания ивента.</p>}<p>Ручной порядок нужен, только если равные очки влияют на победителя или распределение призов. В этом случае укажите ID всех участников по объявленному правилу. Ничьи ниже призовых мест завершению не мешают.</p>
             <label>Порядок мест при ничьей<input value={order} onChange={e => setOrder(e.target.value)} placeholder={rows.map(r => r.player_id).join(', ')}/></label>
             <button className="fantasy-btn" disabled={busy || !rows.length || Date.now() < event.ends_at * 1000} onClick={() => act('finish', {order: order.trim() ? order.split(',').map(n => Number(n.trim())) : null})}>Завершить и выдать награды</button>
         </>}

@@ -298,6 +298,7 @@ export const dict_translator = {
   "Necropolis_necromancer": "Логово некроманта",
   "scrolls": "Свитки",
   "description": "Описание",
+  "death_resistance": "Бонус к броскам в посмертном сне",
 }
 
 

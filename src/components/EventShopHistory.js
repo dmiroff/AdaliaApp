@@ -1,7 +1,7 @@
 // src/components/EventShopHistory.js
 import React, { useState, useEffect } from 'react';
 import { Table, Card, Alert, Spinner, Button } from "react-bootstrap";
-import { getEventShopHistory, getEventShopStatistics } from "../http/eventShopApi";
+import { getEventShopHistory } from "../http/eventShopApi";
 
 const translateProductType = (type) => {
   const translations = {
