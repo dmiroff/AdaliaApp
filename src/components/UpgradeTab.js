@@ -1,3 +1,4 @@
+import { magicStudyLimit, validStudySelection } from "../utils/magicStudy";
 import {isPlayerEventsEnabled} from '../utils/playerEvents';
 import { useState, useContext, useEffect, useMemo } from "react";
 import { observer } from "mobx-react-lite";
@@ -545,8 +546,8 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
         setError("Нет доступных знаков для изучения");
         return;
       }
-      const openCount = tempPlayerData.available_signs?.length || 0;
-      const maxNew = openCount > 3 ? 1 : 2;
+      const pendingSigns = changes.talents.flatMap(t => t.chosenSigns || []);
+      const maxNew = magicStudyLimit(tempPlayerData, pendingSigns);
       const maxSelectable = Math.min(maxNew, availableSigns.length);
       if (maxSelectable === 0) {
         setError("Нет доступных знаков для изучения");
@@ -568,6 +569,10 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
     }
     if (selectedSigns.length > maxSelectableSigns) {
       setError(`Можно выбрать не более ${maxSelectableSigns} знаков`);
+      return;
+    }
+    if (!validStudySelection(selectedSigns, maxSelectableSigns)) {
+      setError(maxSelectableSigns === 2 ? "Выберите одну стихию и один тип воздействия" : "Выберите один знак");
       return;
     }
     addTalentChange("Изучение магии", selectedSigns, 1);
@@ -1188,7 +1193,7 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
           <Modal.Title>Выбор знаков для таланта "Изучение магии"</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <p>Можно выбрать <strong>{maxSelectableSigns}</strong> знак(а/ов).</p>
+          <p>{maxSelectableSigns === 2 ? "Выберите одну стихию и один тип воздействия. Аугментации в стартовую пару не входят." : "Выберите один знак."}</p>
           <Form.Group className="mb-3">
             <Form.Label>Доступные знаки:</Form.Label>
             <div style={{ maxHeight: "300px", overflowY: "auto" }}>
@@ -1219,7 +1224,7 @@ const UpgradeTab = observer(({ playerData, setPlayerData, canUpgrade }) => {
           <Button variant="secondary" onClick={() => setShowSignSelector(false)} className="fantasy-btn">
             Отмена
           </Button>
-          <Button variant="primary" onClick={handleSignConfirm} disabled={selectedSigns.length === 0} className="fantasy-btn">
+          <Button variant="primary" onClick={handleSignConfirm} disabled={!validStudySelection(selectedSigns, maxSelectableSigns)} className="fantasy-btn">
             Подтвердить
           </Button>
         </Modal.Footer>
