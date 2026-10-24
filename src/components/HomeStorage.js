@@ -5,6 +5,7 @@ import { dict_translator } from '../utils/Helpers';
 import './HomeStorage.css';
 
 const kg = value => Number(value || 0).toLocaleString('ru-RU', {maximumFractionDigits: 2});
+const searchText = value => String(value || '').toLocaleLowerCase('ru-RU').replace(/ё/g, 'е').trim();
 const errorText = error => [404, 502].includes(error.response?.status)
   ? 'Хранилище временно недоступно. Попробуйте обновить позже.'
   : (typeof error.response?.data?.detail === 'string' ? error.response.data.detail : 'Не удалось связаться с хранилищем. Обновите список перед повторной попыткой.');
@@ -20,6 +21,10 @@ export default function HomeStorage({onInventoryChanged}) {
   const [confirm, setConfirm] = useState(false);
   const [busy, setBusy] = useState(false);
   const pending = useRef(false);
+  const receipt = useRef(null);
+  useEffect(() => {
+    if (notice) receipt.current?.scrollIntoView?.({block: 'start', behavior: 'smooth'});
+  }, [notice]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -36,8 +41,11 @@ export default function HomeStorage({onInventoryChanged}) {
 
   const source = useMemo(() => data ? data[direction === 'deposit' ? 'inventory' : 'storage'] : [], [data, direction]);
   const categories = [...new Set(source.map(item => item.type).filter(Boolean))].sort();
-  const filtered = source.filter(item =>
-    (!category || item.type === category) && (item.name || '').toLocaleLowerCase('ru-RU').includes(query.toLocaleLowerCase('ru-RU')));
+  const terms = searchText(query).split(/\s+/).filter(Boolean);
+  const filtered = source.filter(item => {
+    const text = searchText([item.name, item.type, dict_translator[item.type]].filter(Boolean).join(' '));
+    return (!category || item.type === category) && terms.every(term => text.includes(term));
+  });
   const chosen = source.filter(item => selected[item.id] !== undefined);
   const selectedWeight = chosen.reduce((total, item) => total + Number(item.weight || 0) * Number(selected[item.id] || 0), 0);
   const valid = chosen.length > 0 && chosen.every(item => Number.isInteger(Number(selected[item.id])) &&
@@ -80,7 +88,7 @@ export default function HomeStorage({onInventoryChanged}) {
       <h2>Домашнее хранилище</h2>
       <Button variant="outline-secondary" onClick={() => {setNotice(null); load();}} disabled={busy || loading}>Обновить</Button>
     </div>
-    {notice && <Alert variant={notice.variant} role="alert">{notice.text}</Alert>}
+    {notice && <Alert ref={receipt} className="home-storage-receipt" variant={notice.variant} role="alert">{notice.text}</Alert>}
     {loading && <p role="status"><Spinner size="sm" animation="border" /> Загружаем хранилище…</p>}
     {data && <>
       <div className="home-storage-weights">
@@ -94,8 +102,15 @@ export default function HomeStorage({onInventoryChanged}) {
             disabled={busy || loading} onClick={() => {setDirection(value); setSelected({}); setCategory(''); setQuery(''); setNotice(null);}}>{label}</Button>)}
       </div>
       <div className="home-storage-filters">
-        <Form.Control aria-label="Поиск предметов" placeholder="Найти по названию" value={query} disabled={disabled} onChange={event => setQuery(event.target.value)} />
-        <Form.Select aria-label="Тип предмета" value={category} disabled={disabled} onChange={event => setCategory(event.target.value)}>
+        <Form.Group className="home-storage-search" controlId="home-storage-search">
+          <Form.Label>Поиск в {direction === 'withdraw' ? 'домашнем хранилище' : 'инвентаре'}</Form.Label>
+          <div className="home-storage-search-input">
+            <Form.Control type="search" aria-label="Поиск предметов" placeholder="Название или тип предмета" value={query} disabled={busy || loading} onChange={event => setQuery(event.target.value)} />
+            {query && <Button variant="outline-secondary" aria-label="Очистить поиск" disabled={busy || loading} onClick={() => setQuery('')}>Сбросить</Button>}
+          </div>
+          <Form.Text aria-live="polite">Найдено: {filtered.length} из {source.length}. Выбранные предметы сохраняются при поиске.</Form.Text>
+        </Form.Group>
+        <Form.Select aria-label="Тип предмета" value={category} disabled={busy || loading} onChange={event => setCategory(event.target.value)}>
           <option value="">Все типы</option>
           {categories.map(type => <option key={type} value={type}>{dict_translator[type] || type}</option>)}
         </Form.Select>
