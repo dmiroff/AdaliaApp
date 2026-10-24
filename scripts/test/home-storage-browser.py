@@ -29,7 +29,8 @@ with sync_playwright() as p:
   page=browser.new_page(viewport={'width':width,'height':900})
   errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
   page.route('**/api/**',handle)
-  page.route(BASE+'/inventory',lambda r:r.fulfill(content_type='text/html',body=(BUILD/'index.html').read_text()))
+  if BASE.startswith('http://127.0.0.1'):
+   page.route(BASE+'/inventory',lambda r:r.fulfill(content_type='text/html',body=(BUILD/'index.html').read_text()))
   page.add_init_script("localStorage.setItem('id','991001');localStorage.setItem('access_token','fixture');")
   page.goto(BASE+'/inventory')
   page.get_by_role('button',name='🏠 Домашнее хранилище',exact=True).click()
