@@ -1,5 +1,6 @@
+import EventRatingPanel from '../components/EventRatingPanel';
 import { useState, useEffect } from "react";
-import { GetRating, GetGrandGame, GetTournament } from "../http/GetData";
+import { GetRating, GetGrandGame, GetTournament, GetEventRating } from "../http/GetData";
 import Tab from "react-bootstrap/Tab";
 import Tabs from "react-bootstrap/Tabs";
 import Spinner from "react-bootstrap/Spinner";
@@ -10,6 +11,8 @@ import { dict_translator } from "../utils/Helpers";
 const Rating = () => {
   const [loading, setLoading] = useState(true);
   const [rating, setRating] = useState([]);
+  const [eventRating, setEventRating] = useState(null);
+  const [eventRatingError, setEventRatingError] = useState(false);
   const [grandGame, setGrandGame] = useState([]);
   const [tournament, setTournament] = useState([]);
   const [currentUserData, setCurrentUserData] = useState({
@@ -20,10 +23,15 @@ const Rating = () => {
   useEffect(() => {
     const fetchRatingData = async () => {
       try {
-        const ratingResponse = await GetRating();
-        const grandGameResponse = await GetGrandGame();
-        const tournamentResponse = await GetTournament();
-        
+        const [normal, grand, tourney, event] = await Promise.allSettled([
+          GetRating(), GetGrandGame(), GetTournament(), GetEventRating()
+        ]);
+        const ratingResponse = normal.status === 'fulfilled' ? normal.value || {} : {};
+        const grandGameResponse = grand.status === 'fulfilled' ? grand.value || {} : {};
+        const tournamentResponse = tourney.status === 'fulfilled' ? tourney.value || {} : {};
+        if (event.status === 'fulfilled' && event.value?.status === 200) setEventRating(event.value);
+        else setEventRatingError(true);
+
         const ratingData = ratingResponse.data || [];
         const grandGameData = grandGameResponse.data || [];
         const tournamentData = tournamentResponse.data || [];
@@ -143,7 +151,7 @@ const Rating = () => {
               {key === "Рейтинг" && currentUserData.ratingType && (
                 <div className="fantasy-rating-type mb-3 p-2 text-center">
                   <h5 className="fantasy-text-gold mb-0">
-                    📊 Текущий рейтинг: <strong>{dict_translator[currentUserData.ratingType] ? dict_translator[currentUserData.ratingType] : currentUserData.ratingType}</strong>
+                    📊 Обычный недельный рейтинг: <strong>{dict_translator[currentUserData.ratingType] ? dict_translator[currentUserData.ratingType] : currentUserData.ratingType}</strong>
                   </h5>
                 </div>
               )}
@@ -188,6 +196,8 @@ const Rating = () => {
                 </div>
               )}
               
+              {key === "Рейтинг" && <EventRatingPanel rating={eventRating} error={eventRatingError} />}
+
               {/* Дополнительная информация для текущего пользователя, если он не в топе */}
               {key === "Рейтинг" && rating.length > 10 && (
                 <div className="fantasy-user-position mt-3 p-2 text-center">

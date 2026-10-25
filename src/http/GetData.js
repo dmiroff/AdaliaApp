@@ -28,6 +28,11 @@ export const GetRating = async () => {
   }
 };
 
+export const GetEventRating = async () => {
+  const response = await apiClient.get('/rating/event');
+  return response.data;
+};
+
 export const GetGrandGame = async () => {
   try {
     const response = await apiClient.get(`/grandgame`, {
