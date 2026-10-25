@@ -66,14 +66,8 @@ const EventShopHistory = () => {
       <Card.Body>
         {error && <Alert variant="danger">{error}</Alert>}
         
-        {statistics && (
-          <div className="mb-4">
-            <h6>Статистика:</h6>
-            <p>Всего потрачено: {statistics.total_spent}</p>
-            <p>Всего покупок: {statistics.total_items}</p>
-            <p>Средний чек: {Math.round(statistics.average_spent)}</p>
-          </div>
-        )}
+        {statistics && <p>Покупок: {statistics.total_items}</p>}
+
 
         <Table striped bordered hover responsive>
           <thead>
@@ -91,10 +85,14 @@ const EventShopHistory = () => {
               history.map((purchase) => (
                 <tr key={purchase.id}>
                     <td>{new Date(purchase.created_at).toLocaleDateString()}</td>
-                    <td>{purchase.product_name}</td>
+                    <td>{purchase.product_name}
+                      {purchase.purchase_details?.custom_image_request && <small className="d-block text-break">
+                        Без анимации: {purchase.purchase_details.custom_image_request}
+                      </small>}
+                    </td>
                     <td>{translateProductType(purchase.product_type)}</td>
                     <td>{purchase.quantity}</td>
-                    <td>{purchase.price} ❄️</td>
+                    <td>{purchase.price} {purchase.currency_name || "валюты события"}</td>
                     <td>{purchase.selected_image_name || "-"}</td>
                 </tr>
               ))

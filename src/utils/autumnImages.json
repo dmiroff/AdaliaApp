@@ -1,0 +1,102 @@
+{
+  "Images/Profiles/Autumn/01_witch_lantern.png": {
+    "name": "Ведьма с фонарём",
+    "emoji": "🍂",
+    "type": "event"
+  },
+  "Images/Profiles/Autumn/02_plague_doctor.png": {
+    "name": "Чумной лекарь",
+    "emoji": "🍂",
+    "type": "event"
+  },
+  "Images/Profiles/Autumn/03_pumpkin_ranger.png": {
+    "name": "Тыквенный следопыт",
+    "emoji": "🍂",
+    "type": "event"
+  },
+  "Images/Profiles/Autumn/04_moon_drow.png": {
+    "name": "Лунный дроу",
+    "emoji": "🍂",
+    "type": "event"
+  },
+  "Images/Profiles/Autumn/05_ghost_smith.png": {
+    "name": "Призрачная кузнец",
+    "emoji": "🍂",
+    "type": "event"
+  },
+  "Images/Profiles/Autumn/06_pumpkin_paladin.png": {
+    "name": "Паладин урожая",
+    "emoji": "🍂",
+    "type": "event"
+  },
+  "Images/Profiles/Autumn/07_candle_necromancer.png": {
+    "name": "Некромантка свечей",
+    "emoji": "🍂",
+    "type": "event"
+  },
+  "Images/Profiles/Autumn/08_goblin_trickster.png": {
+    "name": "Гоблин-плут",
+    "emoji": "🍂",
+    "type": "event"
+  },
+  "Images/Profiles/Autumn/09_vampire_countess.png": {
+    "name": "Графиня-вампир",
+    "emoji": "🍂",
+    "type": "event"
+  },
+  "Images/Profiles/Autumn/10_wolf_hunter.png": {
+    "name": "Охотник на волков",
+    "emoji": "🍂",
+    "type": "event"
+  },
+  "Images/Profiles/Autumn/11_ember_draconid.png": {
+    "name": "Драконидка пепла",
+    "emoji": "🍂",
+    "type": "event"
+  },
+  "Images/Profiles/Autumn/12_harvest_hobbit.png": {
+    "name": "Хоббит-пекарь",
+    "emoji": "🍂",
+    "type": "event"
+  },
+  "Images/Profiles/Autumn/13_revenant_knight.png": {
+    "name": "Рыцарь-ревенант",
+    "emoji": "🍂",
+    "type": "event"
+  },
+  "Images/Profiles/Autumn/14_swamp_alchemist.png": {
+    "name": "Болотный алхимик",
+    "emoji": "🍂",
+    "type": "event"
+  },
+  "Images/Profiles/Autumn/15_masquerade_bard.png": {
+    "name": "Бард маскарада",
+    "emoji": "🍂",
+    "type": "event"
+  },
+  "Images/Profiles/Autumn/16_moth_oracle.png": {
+    "name": "Оракул мотыльков",
+    "emoji": "🍂",
+    "type": "event"
+  },
+  "Images/Profiles/Autumn/17_bone_archer.png": {
+    "name": "Костяной лучник",
+    "emoji": "🍂",
+    "type": "event"
+  },
+  "Images/Profiles/Autumn/18_spider_weaver.png": {
+    "name": "Ткачиха паутины",
+    "emoji": "🍂",
+    "type": "event"
+  },
+  "Images/Profiles/Autumn/19_haunted_captain.png": {
+    "name": "Капитан призрачной баржи",
+    "emoji": "🍂",
+    "type": "event"
+  },
+  "Images/Profiles/Autumn/20_scarecrow_sentinel.png": {
+    "name": "Страж урожая",
+    "emoji": "🍂",
+    "type": "event"
+  }
+}

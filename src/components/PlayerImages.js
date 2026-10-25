@@ -1,3 +1,4 @@
+import autumnImages from '../utils/autumnImages.json';
 // src/components/PlayerImages.js
 import React, { useState, useEffect, useContext } from 'react';
 import { Card, Row, Col, Button, Alert, Spinner, Badge, Accordion } from 'react-bootstrap';
@@ -18,6 +19,7 @@ const PlayerImages = () => {
 
   // Маппинг путей к изображениям для читаемых имён и эмодзи
   const IMAGE_CONFIG = {
+    ...autumnImages,
     'Images/Profiles/HumanM.png': { name: 'Человек (мужской)', emoji: '👤', type: 'base' },
     'Images/Profiles/HumanW.png': { name: 'Человек (женский)', emoji: '👤', type: 'base' },
     'Images/Profiles/HighElfM.png': { name: 'Высший эльф (мужской)', emoji: '🧝', type: 'base' },

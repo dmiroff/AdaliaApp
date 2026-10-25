@@ -37,8 +37,8 @@ const Shop = () => {
               className="fantasy-tabs mb-4"
               justify
             >
-              <Tab 
-                eventKey="premium" 
+              <Tab
+                eventKey="premium"
                 title={
                   <span>
                     <i className="fas fa-crown me-2"></i>
@@ -53,8 +53,8 @@ const Shop = () => {
               <Tab eventKey="autobuy" title="📜 Прайс-лист"><div className="mt-3"><AutoBuyTab active={activeTab === "autobuy"} onOpenPremium={() => setActiveTab("premium")} /></div></Tab>
               <Tab eventKey="crafting" title="⚒️ Кузня"><div className="mt-3"><CraftingTab /></div></Tab>
               <Tab eventKey="cooking" title="🍲 Кухня" mountOnEnter unmountOnExit><div className="mt-3"><CookingTab /></div></Tab>
-              {/*<Tab 
-                eventKey="event" 
+              <Tab
+                eventKey="event"
                 title={
                   <span>
                     Магазин События
@@ -64,7 +64,7 @@ const Shop = () => {
                 <div className="mt-3">
                   <EventShopTab />
                 </div>
-              </Tab>*/}
+              </Tab>
             </Tabs>
           </div>
         </Col>
