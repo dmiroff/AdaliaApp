@@ -31,6 +31,7 @@ export default function HomeStorage({onInventoryChanged}) {
     try {
       const response = await apiClient.get('/home-storage');
       setData(response.data);
+      if (response.data.can_deposit === false && response.data.can_withdraw) setDirection("withdraw");
       setSelected({});
     } catch (error) {
       setData(null);
@@ -51,7 +52,8 @@ export default function HomeStorage({onInventoryChanged}) {
   const valid = chosen.length > 0 && chosen.every(item => Number.isInteger(Number(selected[item.id])) &&
     Number(selected[item.id]) >= 1 && Number(selected[item.id]) <= item.available);
   const overCapacity = direction === 'deposit' && data && selectedWeight + data.storage_weight > data.capacity + 1e-7;
-  const disabled = busy || loading || !!data?.blocked_reason;
+  const blockedReason = data?.[`${direction}_blocked_reason`] || data?.blocked_reason;
+  const disabled = busy || loading || !!blockedReason;
   const toggle = item => setSelected(current => {
     const next = {...current};
     if (next[item.id] !== undefined) delete next[item.id];
@@ -69,6 +71,7 @@ export default function HomeStorage({onInventoryChanged}) {
         items: chosen.map(item => ({item_id: item.id, quantity: Number(selected[item.id])}))
       });
       setData(response.data);
+      if (response.data.can_deposit === false && response.data.can_withdraw) setDirection("withdraw");
       setSelected({});
       setNotice({variant: 'success', text: response.data.message});
       onInventoryChanged?.();
@@ -95,7 +98,9 @@ export default function HomeStorage({onInventoryChanged}) {
         <span>Сундук: <strong>{kg(data.storage_weight)} / {kg(data.capacity)} кг</strong></span>
         <span>Инвентарь: <strong>{kg(data.inventory_weight)} / {kg(data.max_weight)} кг</strong></span>
       </div>
-      {data.blocked_reason && <Alert variant="warning">{data.blocked_reason}</Alert>}
+      {blockedReason && <Alert variant="warning">{blockedReason}</Alert>}
+      {data.has_home_courier ? <p>🏠 Домашний посланник: получение вещей доступно удалённо. Складывание — только дома.</p> :
+        <p><a href="/donation">Домашний посланник в магазине улучшений</a> за 200 далеонов навсегда позволит забирать вещи удалённо.</p>}
       <div className="home-storage-tabs" role="group" aria-label="Направление переноса">
         {[['deposit', 'Сложить из инвентаря'], ['withdraw', 'Забрать из сундука']].map(([value, label]) =>
           <Button key={value} variant={direction === value ? 'primary' : 'outline-primary'} aria-pressed={direction === value}
