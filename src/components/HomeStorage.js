@@ -100,7 +100,7 @@ export default function HomeStorage({onInventoryChanged}) {
       </div>
       {blockedReason && <Alert variant="warning">{blockedReason}</Alert>}
       {data.has_home_courier ? <p>🏠 Домашний посланник: складывайте и забирайте вещи удалённо.</p> :
-        <p><a href="/donation">Домашний посланник в магазине улучшений</a> за 200 далеонов навсегда позволит складывать и забирать вещи удалённо.</p>}
+        <p><a href="/donation">Домашний посланник в магазине улучшений</a> за 500 далеонов навсегда позволит складывать и забирать вещи удалённо.</p>}
       <div className="home-storage-tabs" role="group" aria-label="Направление переноса">
         {[['deposit', 'Сложить из инвентаря'], ['withdraw', 'Забрать из сундука']].map(([value, label]) =>
           <Button key={value} variant={direction === value ? 'primary' : 'outline-primary'} aria-pressed={direction === value}
