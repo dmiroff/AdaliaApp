@@ -32,14 +32,15 @@ export default function EventShopTab() {
   const total = (selected?.price || 0) * quantity;
   const validQuantity = Number.isInteger(quantity) && quantity >= 1 && quantity <= (selected?.max_quantity || 1);
   const confirm = async () => {
-    if (busy || !selected || !validQuantity || total > shop.balance || (custom && !description.trim())) return;
+    if (busy || !selected || selected.purchased || !validQuantity || total > shop.balance || (custom && !description.trim())) return;
     setBusy(true); setError('');
     try {
       const result = await eventShopPurchase(selected.id, selected.type, quantity, {
         request_id: id, ...(custom ? {custom_image_request: description.trim(), player_contacts: contacts.trim()} : {})
       });
       setSuccess(result.message);
-      setShop(previous => ({...previous, balance: result.data.remaining_currency}));
+      setShop(previous => ({...previous, balance: result.data.remaining_currency,
+        products: previous.products.map(product => product.id === selected.id && product.type === "permanent" ? {...product, purchased: true} : product)}));
       setSelected(null); setReceiptKey(key => key + 1);
     } catch (err) {setError(err.message || 'Не удалось завершить покупку');}
     finally {setBusy(false);}
@@ -59,8 +60,8 @@ export default function EventShopTab() {
               <Card.Title>{product.image} {product.name}</Card.Title>
               <Card.Text>{product.description}</Card.Text>
               <p className="fantasy-text-dark">{product.price.toLocaleString('ru-RU')} осколков</p>
-              <Button className="mt-auto" onClick={() => choose(product)} disabled={busy || shop.balance < product.price}>
-                {shop.balance < product.price ? 'Не хватает осколков' : 'Купить'}
+              <Button className="mt-auto" onClick={() => choose(product)} disabled={busy || product.purchased || shop.balance < product.price}>
+                {product.purchased ? 'Приобретено' : shop.balance < product.price ? 'Не хватает осколков' : 'Купить'}
               </Button>
             </Card.Body></Card>
           </Col>)}</Row>
