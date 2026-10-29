@@ -85,16 +85,22 @@ function EventDetails({event, viewer, busy, act}) {
     const host = viewer === event.host_id;
     const rows = event.leaderboard;
     const closed = ['finished', 'cancelled'].includes(event.status);
+    const participating = Object.prototype.hasOwnProperty.call(event.participants, String(viewer));
+    const registrationOpen = ['open', 'active'].includes(event.status) && Date.now() < event.ends_at * 1000;
+    const full = Object.keys(event.participants).length >= event.limit;
     return <section className="fantasy-paper player-event-detail">
         <h2>{event.title}</h2><p>{statusNames[event.status]} · Организатор: {event.host_name}</p>
+        {participating && <p>Вы участвуете в этом ивенте.</p>}
+        {!host && !participating && (registrationOpen ? <div>
+            <button className="fantasy-btn" disabled={busy || full} onClick={() => act('join')}>Участвовать</button>
+            {full ? <p>Все места заняты.</p> : <p>После регистрации очки начисляются автоматически во время ивента. Действия до регистрации не учитываются.</p>}
+        </div> : <p>Регистрация закрыта.</p>)}
         <p className="player-event-prose">{event.rules}</p>
         <p>{new Date(event.starts_at*1000).toLocaleString('ru-RU')} — {new Date(event.ends_at*1000).toLocaleString('ru-RU')}</p>
         <p>Ничья: {event.tie_rule}</p>
         <p>Призы за места: {event.prizes.join(', ')} золота. Каждому: {event.participation_gold} золота. В резерве: {event.escrow}.</p>
         <p>Участники: {rows.length}/{event.limit}. Достижения: «За любой движ», победителю «Победитель», организатору «Контентмейкер».</p>
         <ul>{event.conditions.map(c => <li key={`${c.kind}:${c.target}`}>{kinds[c.kind]}: {c.label || c.target} — {c.points} очк.</li>)}</ul>
-        {!host && event.status === 'open' && !event.participants[String(viewer)] && <button className="fantasy-btn" disabled={busy} onClick={() => act('join')}>Участвовать</button>}
-        {event.participants[String(viewer)] && <p>Вы участвуете в этом ивенте.</p>}
         {host && event.status === 'open' && <button className="fantasy-btn" disabled={busy} onClick={() => act('start')}>Начать ивент</button>}
         {host && event.status === 'open' && <form className="mt-3" onSubmit={e => {e.preventDefault(); act('add-participant', {player_id: Number(participantId)});}}>
             <label>ID участника для ручной записи<input required type="number" step="1" value={participantId} onChange={e => setParticipantId(e.target.value)}/></label>

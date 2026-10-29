@@ -7,7 +7,7 @@ import api from '../http/apiClient';
 jest.mock('../http/apiClient', () => ({__esModule: true, default: {get: jest.fn(), post: jest.fn()}}));
 let container, root;
 const event = (extra = {}) => ({id:'run1',host_id:1,host_name:'Ведущий',title:'Охота игроков',rules:'Очки за добычу',tie_rule:'По дате записи',
-    status:'open',starts_at:1700000000,ends_at:1700003600,prizes:[100],participation_gold:0,escrow:100,limit:20,
+    status:'open',starts_at:Date.now()/1000-60,ends_at:Date.now()/1000+3600,prizes:[100],participation_gold:0,escrow:100,limit:20,
     conditions:[{kind:'item',target:'10',label:'Камень',points:3}],participants:{},leaderboard:[],history:[],...extra});
 const button = name => [...container.querySelectorAll('button')].find(b => b.textContent === name);
 const click = async name => act(async () => Simulate.click(button(name)));
@@ -111,4 +111,37 @@ test('organizer cannot settle rewards before the announced ending', async () => 
     api.get.mockImplementation(path => Promise.resolve({data:path === '/player-events/run1' ? current : {player_id:1,money:900,events:[current]}}));
     await render(); await act(async () => Simulate.click(container.querySelector('.player-event-card')));
     expect(button('Завершить и выдать награды').disabled).toBe(true);
+});
+
+
+test('active event allows joining and confirms participation after refresh', async () => {
+    let current = event({status:'active'});
+    api.get.mockImplementation(path => Promise.resolve({data:path === '/player-events/run1' ? current : {player_id:2,money:50,events:[current]}}));
+    api.post.mockImplementation(() => {
+        current = {...current, participants:{2:'Игрок'},leaderboard:[{player_id:2,name:'Игрок',place:1,score:0}]};
+        return Promise.resolve({data:current});
+    });
+    await render();await act(async () => Simulate.click(container.querySelector('.player-event-card')));
+    expect(button('Участвовать').disabled).toBe(false);
+    expect(container.textContent).toContain('Действия до регистрации не учитываются');
+    await click('Участвовать');
+    expect(api.post).toHaveBeenCalledWith('/player-events/run1/join',expect.objectContaining({request_id:expect.any(String)}));
+    expect(button('Участвовать')).toBeUndefined();
+    expect(container.textContent).toContain('Вы участвуете в этом ивенте');
+});
+
+test.each(['finished','cancelled','active'])('closed or expired %s event cannot be joined', async status => {
+    const current = event({status,ends_at:Date.now()/1000-1});
+    api.get.mockImplementation(path => Promise.resolve({data:path === '/player-events/run1' ? current : {player_id:2,money:50,events:[current]}}));
+    await render();await act(async () => Simulate.click(container.querySelector('.player-event-card')));
+    expect(button('Участвовать')).toBeUndefined();
+    expect(container.textContent).toContain('Регистрация закрыта');
+});
+
+test('full active event explains why registration is disabled', async () => {
+    const current=event({status:'active',limit:2,participants:{3:'Третий',4:'Четвёртый'}});
+    api.get.mockImplementation(path => Promise.resolve({data:path === '/player-events/run1' ? current : {player_id:2,money:50,events:[current]}}));
+    await render();await act(async () => Simulate.click(container.querySelector('.player-event-card')));
+    expect(button('Участвовать').disabled).toBe(true);
+    expect(container.textContent).toContain('Все места заняты');
 });
