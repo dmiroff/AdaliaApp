@@ -24,6 +24,9 @@ const DonationTab = observer(() => {
   const [delay, setDelay] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [customRequest, setCustomRequest] = useState("");
+  const [newName, setNewName] = useState("");
+  const [purchasingName, setPurchasingName] = useState(false);
+  const namePurchaseInFlight = useRef(false);
   const [activeTab, setActiveTab] = useState("premium");
   const [selectedWeapon, setSelectedWeapon] = useState("");
   const [transferOptions, setTransferOptions] = useState(null);
@@ -133,6 +136,17 @@ const DonationTab = observer(() => {
 
   // Список товаров с категориями
   const donationProducts = [
+    {
+      id: 29,
+      name: "✍️ Смена ника",
+      description: "Выберите новое имя персонажа по обычным правилам создания",
+      price: 200,
+      currency: "💎",
+      features: ["200 далеонов за каждую смену", "Свободное имя длиной от 1 до 29 символов", "Те же правила, что при создании персонажа", "Доступно вне боя"],
+      purchased: false,
+      type: "rename",
+      category: "premium"
+    },
     {
       id: 28,
       name: "🏠 Домашний посланник",
@@ -508,12 +522,42 @@ const DonationTab = observer(() => {
     setSelectedProduct(product);
     setQuantity(1);
     setCustomRequest("");
+    setNewName("");
     setSelectedWeapon("");
     setShowConfirmModal(true);
     setError("");
   };
 
   const handleConfirmPurchase = async () => {
+    if (!selectedProduct || namePurchaseInFlight.current) return;
+    if (selectedProduct.type === "rename") {
+      if (!newName || newName.length > 29 || newName === playerData?.name) {
+        setError("Введите новое имя длиной от 1 до 29 символов, отличающееся от текущего");
+        return;
+      }
+      namePurchaseInFlight.current = true;
+      setPurchasingName(true);
+      setError("");
+      try {
+        const result = await premiumPurchase(selectedProduct.id, null, 1, { new_name: newName });
+        if (result.status !== 200) {
+          setError(result.detail || result.message || "Не удалось сменить ник");
+          return;
+        }
+        setSuccess(result.message || `Ваш новый ник: ${result.data?.name || newName}`);
+        setShowConfirmModal(false);
+        setSelectedProduct(null);
+        setNewName("");
+        await fetchPlayer();
+        if (user.updatePlayerData) user.updatePlayerData();
+      } catch (err) {
+        setError(err.message || "Не удалось сменить ник");
+      } finally {
+        namePurchaseInFlight.current = false;
+        setPurchasingName(false);
+      }
+      return;
+    }
     try {
       // Валидация для товаров с описанием (арт и анимация)
       if (selectedProduct.requiresSelection) {
@@ -892,6 +936,7 @@ const DonationTab = observer(() => {
       <Modal 
         show={showConfirmModal} 
         onHide={() => {
+          if (purchasingName) return;
           setShowConfirmModal(false);
           setSelectedProduct(null);
           setCustomRequest("");
@@ -901,7 +946,7 @@ const DonationTab = observer(() => {
         className="fantasy-modal"
         size={selectedProduct?.requiresSelection || selectedProduct?.id === 10 ? "lg" : "md"}
       >
-        <Modal.Header closeButton className="fantasy-card-header fantasy-card-header-primary">
+        <Modal.Header closeButton={!purchasingName} className="fantasy-card-header fantasy-card-header-primary">
           <Modal.Title className="fantasy-text-gold">
             {selectedProduct?.requiresSelection ? 'Оформление заказа' : 'Подтверждение покупки'}
           </Modal.Title>
@@ -911,6 +956,28 @@ const DonationTab = observer(() => {
             <div className="text-center">
               <h4 className="fantasy-text-primary mb-3">{selectedProduct.name}</h4>
               <p className="fantasy-text-dark">{selectedProduct.description}</p>
+              {selectedProduct.type === "rename" && (
+                <Form.Group controlId="rename-character-name" className="my-4 text-start">
+                  <Form.Label className="fantasy-text-dark">Новый ник персонажа</Form.Label>
+                  <p className="fantasy-text-muted">Текущий ник: {playerData?.name}</p>
+                  <Form.Control
+                    type="text"
+                    value={newName}
+                    onChange={(event) => { setNewName(event.target.value); setError(""); }}
+                    maxLength={29}
+                    autoComplete="off"
+                    spellCheck={false}
+                    disabled={purchasingName}
+                    placeholder="Введите новое имя"
+                  />
+                  <Form.Text className="fantasy-text-muted">
+                    От 1 до 29 символов: латиница, кириллица, цифры, пробел, точка, апостроф и нижнее подчёркивание.
+                    Не более трёх знаков . ' _. Пробелы и специальные знаки нельзя ставить рядом, в начале или в конце.
+                    Имя должно быть свободным, без запрещённых слов и игровых команд.
+                  </Form.Text>
+                  {error && <Alert variant="danger" className="mt-3" role="alert">{error}</Alert>}
+                </Form.Group>
+              )}
               
               {/* Поле ввода описания для кастомных товаров (арт/анимация) */}
               {selectedProduct.requiresSelection && (
@@ -1057,6 +1124,7 @@ const DonationTab = observer(() => {
               setCustomRequest("");
               setSelectedWeapon("");
             }}
+            disabled={purchasingName}
           >
             Отмена
           </Button>
@@ -1064,16 +1132,20 @@ const DonationTab = observer(() => {
             className="fantasy-btn fantasy-btn-gold"
             onClick={handleConfirmPurchase}
             disabled={
-              selectedProduct?.type === "consumable" && !selectedProduct.requiresSelection && selectedProduct.id !== 10
+              purchasingName || (selectedProduct?.type === "rename"
+                ? !newName || newName.length > 29 || newName === playerData?.name || (playerData?.daleons || 0) < 200
+                : selectedProduct?.type === "consumable" && !selectedProduct.requiresSelection && selectedProduct.id !== 10
                 ? (playerData?.daleons || 0) < calculateTotalPrice()
                 : selectedProduct?.requiresSelection
                 ? !customRequest || customRequest.length < (selectedProduct.selectionMinLength || 10)
                 : selectedProduct?.id === 10
                 ? !selectedWeapon || (playerData?.daleons || 0) < selectedProduct.price
-                : (playerData?.daleons || 0) < (selectedProduct?.price || 0)
+                : (playerData?.daleons || 0) < (selectedProduct?.price || 0))
             }
           >
-            {selectedProduct?.requiresSelection
+            {selectedProduct?.type === "rename"
+              ? purchasingName ? 'Меняем ник…' : 'Сменить ник за 200 💎'
+              : selectedProduct?.requiresSelection
               ? 'Отправить заявку'
               : selectedProduct?.type === "consumable"
                 ? `Купить ${quantity} шт.`

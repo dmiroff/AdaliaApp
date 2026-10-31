@@ -11,6 +11,9 @@ export const premiumPurchase = async (productId, durationDays = null, quantity =
     if (extraData.custom_request) {
       requestData.custom_request = extraData.custom_request;
     }
+    if (typeof extraData.new_name === 'string') {
+      requestData.new_name = extraData.new_name;
+    }
 
     const response = await apiClient.post(`/premium-purchase`, requestData);
     return response.data;
