@@ -40,6 +40,23 @@ const NavBar = observer(() => {
   const location = useLocation();
   const [showSettings, setShowSettings] = useState(false);
   const [showMobileMore, setShowMobileMore] = useState(false);
+  const [canPlayNavyi, setCanPlayNavyi] = useState(false);
+
+  useEffect(() => {
+    setCanPlayNavyi(false);
+    if (!user.IsAuth || window.location.hostname !== 'test.adaliagame.ru') return;
+    const token = localStorage.getItem('access_token');
+    if (!token) return;
+    const controller = new AbortController();
+    fetch('/navyi/api/access', {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: 'no-store',
+      signal: controller.signal,
+    }).then(response => response.ok ? response.json() : null)
+      .then(data => { if (!controller.signal.aborted) setCanPlayNavyi(data?.is_admin === true); })
+      .catch(() => {});
+    return () => controller.abort();
+  }, [user.IsAuth, user.user.id]);
 
   useEffect(() => {
     document.body.classList.toggle("has-mobile-bottom-nav", user.IsAuth);
@@ -53,11 +70,15 @@ const NavBar = observer(() => {
 
   const handleNavLinkClick = (path) => {
     setShowMobileMore(false);
+    if (path === '/navyi/') {
+      window.location.assign(path);
+      return;
+    }
     navigate(path);
   };
 
-  const desktopItems = isGameDraftEnabled() ? [[GAME_DRAFT_ROUTE, 'Игровой чат'], ...navigationItems] : navigationItems;
-  const moreItems = isGameDraftEnabled() ? [[GAME_DRAFT_ROUTE, '✉️', 'Игровой чат'], ...mobileMoreItems] : mobileMoreItems;
+  const desktopItems = [...(isGameDraftEnabled() ? [[GAME_DRAFT_ROUTE, 'Игровой чат'], ...navigationItems] : navigationItems), ...(canPlayNavyi ? [['/navyi/', '🌲 Навьи тропы']] : [])];
+  const moreItems = [...(isGameDraftEnabled() ? [[GAME_DRAFT_ROUTE, '✉️', 'Игровой чат'], ...mobileMoreItems] : mobileMoreItems), ...(canPlayNavyi ? [['/navyi/', '🌲', 'Навьи тропы']] : [])];
   const moreSectionIsActive = moreItems.some(([path]) => location.pathname.startsWith(path));
 
   return (
