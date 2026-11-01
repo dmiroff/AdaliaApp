@@ -21,6 +21,7 @@ const Donation = React.lazy(() => import('../pages/Shop'));
 const ItemPage = React.lazy(() => import('../pages/ItemPage'));
 const Guild = React.lazy(() => import('../pages/Guild'));
 const TermsAndPrivacyPage = React.lazy(() => import('../pages/TermsAndPrivacyPage'));
+const Help = React.lazy(() => import('../pages/Help'));
 
 const LoadingScreen = ({ message = "Загружаем Адалию…" }) => (
     <div className="app-loading" role="status" aria-live="polite">
@@ -68,7 +69,7 @@ const AppRouter = observer(() => {
             const isAuthPath = location.pathname.startsWith('/auth/') ||
                                location.pathname.startsWith('/api/auth/');
             
-            if (isAuthPath) {
+            if (isAuthPath || location.pathname === '/help') {
                 setIsChecking(false);
                 setIsInitialized(true);
                 return;
@@ -123,10 +124,8 @@ const AppRouter = observer(() => {
     }, [clearAuthData, location.pathname, navigate, user, verifyToken]);
 
     useEffect(() => {
-        if (!isInitialized) {
-            checkAuth();
-        }
-    }, [checkAuth, isInitialized]);
+        checkAuth();
+    }, [checkAuth]);
 
     const ProtectedRoute = ({ children }) => {
         if (isChecking && !isInitialized) {
@@ -140,7 +139,7 @@ const AppRouter = observer(() => {
         return children;
     };
 
-    if (authError) {
+    if (authError && location.pathname !== '/help') {
         return <div className="fantasy-paper p-4 text-center" role="alert">
             <h2>Не удалось подключиться</h2>
             <p>Вход сохранён. Проверьте связь и попробуйте ещё раз.</p>
@@ -151,7 +150,7 @@ const AppRouter = observer(() => {
     }
 
     // Если идёт проверка и мы не на публичном маршруте, показываем лоадер
-    if (isChecking && !location.pathname.startsWith('/auth/') && location.pathname !== '/notauth') {
+    if (isChecking && !location.pathname.startsWith('/auth/') && location.pathname !== '/notauth' && location.pathname !== '/help') {
         return <LoadingScreen message="Проверяем вход…" />;
     }
 
@@ -162,6 +161,9 @@ const AppRouter = observer(() => {
                 {publicRoutes.map(({ path, name }) => {                    
                     let Component;
                     switch (name) {
+                        case 'Help':
+                            Component = Help;
+                            break;
                         case 'Auth': 
                             Component = AuthCallback;
                             break;

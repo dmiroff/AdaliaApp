@@ -7,6 +7,9 @@ const Footer = () => {
   return (
     <footer className="bg-dark text-white py-3 mt-5">
       <Container>
+        <Row className="justify-content-center mb-2"><Col xs="auto">
+          <Link to="/help" className="text-light text-decoration-none border-bottom border-secondary">Справочник Адалии</Link>
+        </Col></Row>
         <Row className="justify-content-center">
           <Col xs="auto">
             <Link 

@@ -2,7 +2,7 @@ import { isPlayerEventsEnabled } from '../utils/playerEvents';
 import { GAME_DRAFT_ROUTE, isGameDraftEnabled } from '../utils/gameDraftProtocol';
 import { observer } from "mobx-react-lite";
 import { useContext, useEffect, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Nav, Navbar, Button, Offcanvas } from "react-bootstrap";
 import SettingsModal from "./SettingsModal";
 import { Context } from "../index";
@@ -16,6 +16,7 @@ const navigationItems = [
   ["/rating", "Рейтинг"],
   ["/trade", "Торговля"],
   ["/donation", "💎 Магазин"],
+  ["/help", "📖 Справка"],
 ];
 
 const mobilePrimaryItems = [
@@ -30,6 +31,7 @@ const mobileMoreItems = [
   ["/rating", "🏆", "Рейтинг"],
   ["/trade", "⚖️", "Торговля"],
   ["/donation", "💎", "Магазин"],
+  ["/help", "📖", "Справка"],
 ];
 
 const NavBar = observer(() => {
@@ -65,10 +67,14 @@ const NavBar = observer(() => {
         variant="light"
       >
         <div className="fantasy-navbar__inner">
-          <Navbar.Brand onClick={() => user.IsAuth && handleNavLinkClick('/inventory')}>
+          <Navbar.Brand onClick={() => handleNavLinkClick(user.IsAuth ? '/inventory' : '/notauth')}>
             <span className="fantasy-navbar__crest" aria-hidden="true">A</span>
             <span className="fantasy-navbar__title">Адалия</span>
           </Navbar.Brand>
+
+          {!user.IsAuth && <Link className="fantasy-navbar__link nav-link" style={{ width: 'auto', marginLeft: 'auto' }} to="/help">
+            📖 Справка
+          </Link>}
 
           {user.IsAuth && (
             <div className="fantasy-navbar__desktop d-none d-lg-flex">

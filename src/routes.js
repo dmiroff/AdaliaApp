@@ -59,6 +59,7 @@ export const authRoutes = [
 ]
 
 export const publicRoutes = [
+    { path: '/help', name: 'Help' },
     {
         path: AUTH_ROUTE + '/:id/:token',
         name: 'Auth',    
