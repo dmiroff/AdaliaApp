@@ -5,7 +5,7 @@ import './Help.css';
 
 const kindNames = { guide: 'Раздел', attribute: 'Атрибут', skill: 'Навык', talent: 'Талант',
   parameter: 'Параметр', term: 'Механика', eon: 'Эон', handbook: 'Руководство', spell: 'Заклинание',
-  trauma: 'Травма', injury: 'Повреждение', profession: 'Ремесло' };
+  trauma: 'Травма', injury: 'Повреждение', profession: 'Ремесло', condition: 'Состояние' };
 
 function HelpText({ text, glossary, currentId, onPreview }) {
   return text.split(/\n\s*\n/).map((paragraph, index) => <p key={index}>
@@ -34,6 +34,7 @@ export default function Help() {
   const previewAnchor = useRef(null);
   const ignoreFocus = useRef(false);
   const ignoreHoverUntil = useRef(0);
+  const ignoreScrollUntil = useRef(0);
   const closeTimer = useRef(null);
   const location = useLocation();
   const navigate = useNavigate();
@@ -64,7 +65,7 @@ export default function Help() {
       // that synthetic re-entry so it cannot immediately open a different term.
       ignoreHoverUntil.current = Date.now() + 250;
       ignoreFocus.current = true;
-      previewAnchor.current?.focus();
+      previewAnchor.current?.focus({ preventScroll: true });
       ignoreFocus.current = false;
     }
   }, []);
@@ -72,6 +73,7 @@ export default function Help() {
     if (trigger === 'focus' && ignoreFocus.current) return;
     if (trigger === 'hover' && Date.now() < ignoreHoverUntil.current) return;
     clearTimeout(closeTimer.current);
+    if (trigger === 'click') ignoreScrollUntil.current = Date.now() + 150;
     previewAnchor.current = anchor;
     const rect = anchor.getBoundingClientRect();
     const width = Math.min(360, window.innerWidth - 32);
@@ -88,12 +90,15 @@ export default function Help() {
 
   useEffect(() => {
     if (!preview) return undefined;
-    if (preview.trigger === 'click') previewRef.current?.focus();
+    if (preview.trigger === 'click') previewRef.current?.focus({ preventScroll: true });
     const onKey = event => { if (event.key === 'Escape') { event.preventDefault(); closePreview(true); } };
     const onOutside = event => {
       if (!previewRef.current?.contains(event.target) && event.target !== previewAnchor.current) closePreview();
     };
     const onScroll = event => {
+      // A term may be clicked immediately after its scroll-into-view. Its
+      // queued scroll event must not dismiss the newly opened touch panel.
+      if (event.type === 'scroll' && Date.now() < ignoreScrollUntil.current) return;
       if (!(event.target instanceof Node) || !previewRef.current?.contains(event.target)) closePreview();
     };
     document.addEventListener('keydown', onKey);

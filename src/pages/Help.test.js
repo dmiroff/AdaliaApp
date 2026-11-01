@@ -39,6 +39,8 @@ test('a public deep link loads without player/API credentials and opens touch/ke
   expect(container.querySelector('[role="dialog"]')).toBeNull();
   act(() => Simulate.click(term));
   expect(document.activeElement).toBe(container.querySelector('[role="dialog"]'));
+  act(() => window.dispatchEvent(new Event('scroll')));
+  expect(container.querySelector('[role="dialog"]')).not.toBeNull();
   act(() => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })));
   expect(container.querySelector('[role="dialog"]')).toBeNull();
   expect(document.activeElement).toBe(term);
