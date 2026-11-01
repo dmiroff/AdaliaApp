@@ -33,3 +33,18 @@ test('broken links and unsupported schemas fail visibly rather than showing inco
   expect(helpIdFromHash('#%D1%81%D0%B8%D0%BB%D0%B0')).toBe('сила');
   expect(helpIdFromHash('#%xx')).toBe('');
 });
+
+test('reviewed contextual links avoid metaphorical attributes and distinguish the berserk condition', () => {
+  const topic = id => data.topics.find(item => item.id === id);
+  const guide = key => data.topics.find(item => item.sourceUrl?.endsWith(`-${key}`));
+  expect(splitHelpTerms('Сила и Жрец', buildGlossary(data.topics, guide('poseleniya')), 'none')).toEqual(['Сила и Жрец']);
+  expect(splitHelpTerms('силу', buildGlossary(data.topics, guide('westlands')), 'none')).toEqual(['силу']);
+  expect(splitHelpTerms('свою жизнь', buildGlossary(data.topics, topic('тёмный-эльф')), 'none')).toEqual(['свою жизнь']);
+  const armor = splitHelpTerms('Берсерк', buildGlossary(data.topics, guide('magic-items')), 'none');
+  expect(armor[0].topic.kind).toBe('condition');
+  const barbarian = splitHelpTerms('Берсерк', buildGlossary(data.topics, topic('варвар')), 'none');
+  expect(barbarian[0].topic.kind).toBe('talent');
+  ['Молот', 'Сфера', 'Боги'].forEach(text => {
+    expect(splitHelpTerms(text, buildGlossary(data.topics), 'none')[0].topic).toBeDefined();
+  });
+});

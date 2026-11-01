@@ -31,14 +31,20 @@ export function helpIdFromHash(hash) {
 
 export const helpHref = id => `/help#${encodeURIComponent(id)}`;
 
-export function buildGlossary(topics) {
+export function buildGlossary(topics, currentTopic) {
+  if (currentTopic?.disableInlineLinks) return { terms: new Map(), pattern: null };
   const terms = new Map();
   const priority = { attribute: 0, guide: 1, parameter: 2, skill: 3, term: 4, talent: 5, eon: 6 };
   [...topics].sort((a, b) => (priority[a.kind] ?? 9) - (priority[b.kind] ?? 9)).forEach(topic => {
+    if (currentTopic?.inlineExcluded?.includes(topic.id)) return;
     [topic.title, ...(topic.aliases || [])].forEach(term => {
       const normalized = normalizeHelp(term);
       if (normalized.length >= 2 && !terms.has(normalized)) terms.set(normalized, topic);
     });
+  });
+  Object.entries(currentTopic?.inlineOverrides || {}).forEach(([term, id]) => {
+    const topic = topics.find(item => item.id === id);
+    if (topic) terms.set(normalizeHelp(term), topic);
   });
   const escaped = [...terms.keys()].sort((a, b) => b.length - a.length)
     .map(term => term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/е/g, '[её]'));

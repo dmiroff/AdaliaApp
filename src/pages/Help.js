@@ -50,10 +50,10 @@ export default function Help() {
   }, [attempt]);
 
   const topics = data?.topics;
-  const glossary = useMemo(() => buildGlossary(topics || []), [topics]);
   const filtered = useMemo(() => searchHelp(topics || [], query, category), [topics, query, category]);
   const lookup = useMemo(() => new Map((topics || []).map(topic => [topic.id, topic])), [topics]);
   const selected = lookup.get(selectedId);
+  const glossary = useMemo(() => buildGlossary(topics || [], selected), [topics, selected]);
   const categoryName = data?.categories.find(item => item.id === selected?.category)?.title;
 
   const closePreview = useCallback((restoreFocus = false) => {
