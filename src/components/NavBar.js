@@ -5,6 +5,7 @@ import { useContext, useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Nav, Navbar, Button, Offcanvas } from "react-bootstrap";
 import SettingsModal from "./SettingsModal";
+import apiClient from "../http/apiClient";
 import { Context } from "../index";
 
 const navigationItems = [
@@ -45,18 +46,30 @@ const NavBar = observer(() => {
   useEffect(() => {
     setCanPlayNavyi(false);
     if (!user.IsAuth || window.location.hostname !== 'test.adaliagame.ru') return;
-    const token = localStorage.getItem('access_token');
-    if (!token) return;
     const controller = new AbortController();
-    fetch('/navyi/api/access', {
-      headers: { Authorization: `Bearer ${token}` },
-      cache: 'no-store',
-      signal: controller.signal,
-    }).then(response => response.ok ? response.json() : null)
-      .then(data => { if (!controller.signal.aborted) setCanPlayNavyi(data?.is_admin === true); })
-      .catch(() => {});
-    return () => controller.abort();
-  }, [user.IsAuth, user.user.id]);
+    let pending = false;
+    const checkAccess = async () => {
+      if (pending || !localStorage.getItem('access_token')) return;
+      pending = true;
+      try {
+        const response = await apiClient.get('/navyi/api/access', {
+          baseURL: '', signal: controller.signal,
+          headers: { 'Cache-Control': 'no-cache' },
+        });
+        if (!controller.signal.aborted) setCanPlayNavyi(response.data?.is_admin === true);
+      } catch (_) {
+        if (!controller.signal.aborted) setCanPlayNavyi(false);
+      } finally { pending = false; }
+    };
+    checkAccess();
+    window.addEventListener('focus', checkAccess);
+    const timer = window.setInterval(checkAccess, 60000);
+    return () => {
+      controller.abort();
+      window.removeEventListener('focus', checkAccess);
+      window.clearInterval(timer);
+    };
+  }, [user.IsAuth, user.user.id, location.pathname]);
 
   useEffect(() => {
     document.body.classList.toggle("has-mobile-bottom-nav", user.IsAuth);

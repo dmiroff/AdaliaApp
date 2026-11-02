@@ -7,3 +7,5 @@
 Проверки без необязательных jest-dom matchers старого setupTests.js:
 
     CI=true node node_modules/react-scripts/bin/react-scripts.js test --watchAll=false --runInBand --setupFilesAfterEnv=./scripts/test/navyi-jest-setup.cjs --runTestsByPath src/components/NavBarNavyi.test.js
+
+Исправление 02.11.2026: запрос доступа использует общий apiClient с обновлением JWT после401, но с baseURL="" для точного /navyi/api/access. Проверка повторяется при смене страницы, возврате фокуса и раз в минуту. Ошибки не превращаются в постоянное скрытие кнопки; снятие прав убирает пункт при следующей проверке. Добавлены тесты восстановления после сетевой ошибки и отзыва прав, всего5 проверок. Сам сервер по-прежнему проверяет актуальный is_admin на каждом запросе. Индивидуальная причина жалобы ещё не подтверждена: ожидаются аккаунт и адрес сайта.
