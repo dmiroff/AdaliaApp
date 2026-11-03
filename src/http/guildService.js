@@ -443,7 +443,7 @@ export const UpdateGuildDescription = async (description) => {
     console.error("Error updating guild description:", error);
     return {
       status: error.response?.status || 500,
-      message: error.response?.data?.message || "Ошибка обновления описания гильдии",
+      message: error.response?.data?.detail || error.response?.data?.message || "Ошибка обновления описания гильдии",
       data: error.response?.data?.data || {}
     };
   }
