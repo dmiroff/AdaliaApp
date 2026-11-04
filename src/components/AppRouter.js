@@ -103,6 +103,11 @@ const AppRouter = observer(() => {
                 return;
             }
             if (verifyResult.valid) {
+                if (window.location.hostname === 'test.adaliagame.ru' && sessionStorage.getItem('navyi_return') === '1') {
+                    sessionStorage.removeItem('navyi_return');
+                    window.location.assign('/navyi/');
+                    return;
+                }
                 user.setIsAuth(true);
                 user.setUser(parseInt(userId));
             } else {

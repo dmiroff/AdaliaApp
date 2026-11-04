@@ -56,7 +56,7 @@ const NavBar = observer(() => {
           baseURL: '', signal: controller.signal,
           headers: { 'Cache-Control': 'no-cache' },
         });
-        if (!controller.signal.aborted) setCanPlayNavyi(response.data?.is_admin === true);
+        if (!controller.signal.aborted) setCanPlayNavyi(response.data?.can_play === true || (response.data?.can_play === undefined && response.data?.is_admin === true));
       } catch (_) {
         if (!controller.signal.aborted) setCanPlayNavyi(false);
       } finally { pending = false; }
