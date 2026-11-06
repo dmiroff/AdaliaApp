@@ -58,7 +58,7 @@ test('create form reserves all prizes including participant limit', async () => 
     expect(container.querySelector('textarea[name=tie_rule]').required).toBe(true);
 });
 
-test('race condition uses readable labels and submits its stable race key', async () => {
+test.each([1, -2])('race condition submits a signed weight %s and its stable race key', async points => {
     api.get.mockImplementation((path, config) => Promise.resolve({data: path.endsWith('/targets')
         ? (config?.params.kind === 'kill_race' ? [{id:'Undead',name:'Нежить'}] : [{id:'Found_iron_ore6_next',name:'Добыча железной руды — этап 6, продолжение'}])
         : path === '/player-events/run1' ? event() : {player_id:1,money:20000,events:[]}}));
@@ -72,14 +72,21 @@ test('race condition uses readable labels and submits its stable race key', asyn
     await act(async () => new Promise(resolve => setTimeout(resolve, 350)));
     const target = container.querySelectorAll('fieldset select')[1];
     await act(async () => Simulate.change(target,{target:{value:'Undead'}}));
+    const weight = container.querySelector('fieldset input[type=number]');
+    for (const invalid of ['', '0', '-1.5', '-1000001', '1000001']) {
+        await act(async () => Simulate.change(weight,{target:{value:invalid}}));
+        expect(button('Добавить условие').disabled).toBe(true);
+    }
+    await act(async () => Simulate.change(weight,{target:{value:String(points)}}));
+    expect(button('Добавить условие').disabled).toBe(false);
     await click('Добавить условие');
-    expect(container.textContent).toContain('Убийство по расе: Нежить');
+    expect(container.textContent).toContain(`Убийство по расе: Нежить — ${points} очк.`);
     for (const [name,value] of [['title','Охота'],['rules','Убивайте нежить'],['tie_rule','Решает организатор']]) {
         const input = container.querySelector(`[name=${name}]`);
         await act(async () => Simulate.change(input,{target:{name,value}}));
     }
     await act(async () => Simulate.submit(container.querySelector('form')));
-    expect(api.post).toHaveBeenCalledWith('/player-events', expect.objectContaining({conditions:[{kind:'kill_race',target:'Undead',points:1}]}));
+    expect(api.post).toHaveBeenCalledWith('/player-events', expect.objectContaining({conditions:[{kind:'kill_race',target:'Undead',points}]}));
 });
 
 test('insufficient prize reserve is explained before submitting', async () => {

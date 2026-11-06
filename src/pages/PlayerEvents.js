@@ -19,7 +19,9 @@ function EventForm({onCreate, busy, money}) {
     const [query, setQuery] = useState('');
     const [targets, setTargets] = useState([]);
     const [target, setTarget] = useState('');
-    const [points, setPoints] = useState(1);
+    const [points, setPoints] = useState('1');
+    const conditionPoints = Number(points);
+    const pointsValid = points.trim() !== '' && Number.isInteger(conditionPoints) && conditionPoints !== 0 && Math.abs(conditionPoints) <= 1000000;
     const [searchError, setSearchError] = useState('');
     useEffect(() => {
         let live = true;
@@ -60,11 +62,12 @@ function EventForm({onCreate, busy, money}) {
                 <label>Условие<select value={kind} onChange={e => {setKind(e.target.value); setTarget(''); setTargets([]); setQuery('');}}>{Object.entries(kinds).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></label>
                 <label>Поиск цели<input value={query} onChange={e => setQuery(e.target.value)} placeholder="Название"/></label>
                 <label>Цель<select value={target} onChange={e => setTarget(e.target.value)}><option value="">Выберите цель</option>{targets.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}</select></label>
-                <label>Очки за одно выполнение<input type="number" min="1" max="1000000" value={points} onChange={e => setPoints(Number(e.target.value))}/></label>
+                <label>Очки за одно выполнение<input type="number" min="-1000000" max="1000000" step="1" value={points} onChange={e => setPoints(e.target.value)}/></label>
             </div>
+            <p>Положительные значения начисляют очки, отрицательные — снимают. Укажите ненулевое целое число от −1 000 000 до 1 000 000.</p>
             {searchError && <p role="alert">{searchError}</p>}
-            <button className="fantasy-btn" type="button" disabled={!target || points < 1 || conditions.length >= 20} onClick={() => {
-                if (!conditions.some(c => c.kind === kind && c.target === target)) setConditions([...conditions, {kind, target, points, label: targets.find(t => t.id === target)?.name || target}]);
+            <button className="fantasy-btn" type="button" disabled={!target || !pointsValid || conditions.length >= 20} onClick={() => {
+                if (pointsValid && !conditions.some(c => c.kind === kind && c.target === target)) setConditions([...conditions, {kind, target, points: conditionPoints, label: targets.find(t => t.id === target)?.name || target}]);
             }}>Добавить условие</button>
             <ul>{conditions.map((c, i) => <li key={`${c.kind}:${c.target}`}>{kinds[c.kind]}: {c.label} — {c.points} очк. <button type="button" onClick={() => setConditions(conditions.filter((_, n) => n !== i))}>Убрать</button></li>)}</ul>
         </fieldset>
