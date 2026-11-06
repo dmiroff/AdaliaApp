@@ -17,7 +17,14 @@ export default function FrontierMap() {
     fetch(`${process.env.PUBLIC_URL || ''}/maps/westlands-grid.json`).then(r=>{if(!r.ok)throw new Error('Не удалось загрузить сетку карты.');return r.json();})
       .then(data=>{if(live)setGrid(data);}).catch(e=>{if(live)setError(e.message);});
     api.get('/frontier-map/state').then(r=>{if(live)setState(r.data);})
-      .catch(e=>{if(live)setError(e.response?.data?.detail || 'Не удалось загрузить данные поселения.');});
+      .catch(e=>{
+        if(!live)return;
+        if(e.response?.status===404){
+          setState({can_place:false,position:null,reason:'Выбор места поселения пока недоступен. Карту можно просматривать.'});
+          return;
+        }
+        setError(e.response?.data?.detail || 'Не удалось загрузить данные поселения.');
+      });
     return ()=>{live=false;};
   },[]);
   const point=useCallback((x,y)=>{

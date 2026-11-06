@@ -56,6 +56,29 @@ test('read-only members cannot select a place',async()=>{
  expect(api.post).not.toHaveBeenCalled();
 });
 
+test('a missing settlement API leaves the map available for viewing without a raw 404 error',async()=>{
+ api.get.mockRejectedValue({response:{status:404,data:{detail:'Not Found'}}});
+ await render();await choose();
+ expect(container.textContent).not.toContain('Not Found');
+ expect(container.textContent).toContain('Выбор места поселения пока недоступен. Карту можно просматривать.');
+ expect(container.querySelector('[role="alert"]')).toBeNull();
+ expect(container.querySelectorAll('svg polygon')).toHaveLength(512);
+ expect(container.querySelectorAll('[aria-label="Западная дорога"] path')).toHaveLength(2);
+ expect(container.querySelector('[aria-label="Выбранное место"]')).toBeNull();
+ expect(api.post).not.toHaveBeenCalled();
+ const svg=container.querySelector('svg'),before=svg.getAttribute('viewBox');
+ await act(async()=>Simulate.click(container.querySelector('[aria-label="Приблизить карту"]')));
+ expect(svg.getAttribute('viewBox')).not.toBe(before);
+});
+
+test('read-only fallback does not conceal a failure to load the map itself',async()=>{
+ api.get.mockRejectedValue({response:{status:404,data:{detail:'Not Found'}}});
+ global.fetch.mockResolvedValue({ok:false});
+ await render();
+ expect(container.textContent).toContain('Не удалось загрузить сетку карты.');
+ expect(container.querySelector('svg')).toBeNull();
+});
+
 test('a collision does not place the settlement optimistically',async()=>{
  api.post.mockRejectedValue({response:{data:{detail:'Рядом уже есть поселение.'}}});
  await render();await choose();await click('Основать поселение здесь');await click('Подтвердить место');
