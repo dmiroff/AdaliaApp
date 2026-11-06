@@ -1,3 +1,4 @@
+import useItemFavorite from '../hooks/useItemFavorite';
 import { useState, useEffect, useContext, useCallback, useRef, useMemo } from "react";
 import { Col, Container, Image, Row, Button, Modal, Badge } from "react-bootstrap";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -44,6 +45,9 @@ const Item = () => {
     const number = pathParts[pathParts.length - 1];
     return +number;
   }, [location.pathname])();
+
+  const { isFavorite, enabled: favoriteEnabled, pending: favoritePending, toggleFavorite } = useItemFavorite(user, num,
+    (message) => { setModalMessage(message); setShowModal(true); });
 
   const equipped = EQUIPMENT_SLOTS.some(slot => String(user.player_data?.[slot]?.id) === String(num));
   const transferableCount = Math.max(0, Number(inventory_new[num]?.count || 0) - (equipped ? 1 : 0));
@@ -321,6 +325,11 @@ const Item = () => {
               <div className="item-actions-panel fantasy-paper p-3">
                 <h5 className="fantasy-text-dark fantasy-text-bold mb-3 text-center">Действия</h5>
                 <div className="d-grid gap-2">
+                  {favoriteEnabled && inventory_new[num] && <Button className="fantasy-btn fantasy-btn-lg"
+                    aria-pressed={isFavorite} disabled={favoritePending || handleRequest} onClick={toggleFavorite}>
+                    {favoritePending ? 'Сохраняем…' : isFavorite ? '★ Убрать из избранного' : '☆ В избранное'}
+                  </Button>}
+                  {isFavorite && <p>⭐ Вся стопка защищена от продажи и передачи.</p>}
                   {itemData.food_data?.recipe_id && inventory_new[num]?.count > 0 &&
                     <Button className="fantasy-btn fantasy-btn-primary fantasy-btn-lg" onClick={() => setShowCooking(true)}>Использовать на отдыхе</Button>}
 
@@ -333,12 +342,12 @@ const Item = () => {
                       {handleRequest ? 'Надеваем…' : 'Надеть предмет'}
                     </Button>
                   )}
-                  <Button className="fantasy-btn fantasy-btn-lg" disabled={!transferableCount || handleRequest} onClick={() => setShowTransfer(true)}>Передать</Button>
+                  <Button className="fantasy-btn fantasy-btn-lg" disabled={!transferableCount || handleRequest || isFavorite || favoritePending} onClick={() => setShowTransfer(true)}>Передать</Button>
                   <details className="item-destructive-actions"><summary>Продать или выбросить</summary>
                   <Button 
                     className="fantasy-btn fantasy-btn-success fantasy-btn-lg"
                     onClick={handleModalSell}
-                    disabled={!inventory_new[num]}
+                    disabled={!inventory_new[num] || isFavorite || favoritePending}
                   >
                     Продать
                   </Button>

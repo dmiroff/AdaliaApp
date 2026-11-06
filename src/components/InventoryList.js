@@ -1,3 +1,4 @@
+import { favoriteInventory as withFavorites } from '../utils/favorites';
 import { observer } from "mobx-react-lite";
 import { useContext, useEffect, useState, useCallback, useMemo, useRef } from "react";
 import InventoryItem from "./InventoryItem";
@@ -23,6 +24,7 @@ const InventoryList = observer(() => {
   const [quickCategory, setQuickCategory] = useState('all');
   const [sortOrder, setSortOrder] = useState('default');
   const [user_inventory, setUserInventory] = useState({});
+  const inventoryWithFavorites = useMemo(() => withFavorites(user_inventory, playerData), [user_inventory, playerData]);
   
   const [notice, setNotice] = useState(null);
   const [showModal, setShowModal] = useState(false);
@@ -95,6 +97,12 @@ const InventoryList = observer(() => {
 
   // Доступные поля для фильтрации
   const filterFields = useMemo(() => [
+    {
+      id: "favorite",
+      name: "Избранное?",
+      type: "boolean",
+      options: [{value: "true", label: "Да"}, {value: "false", label: "Нет"}]
+    },
     { 
       id: "type", 
       name: "Тип предмета", 
@@ -240,7 +248,7 @@ const InventoryList = observer(() => {
   }, []);
 
   const selectAllItems = useCallback(() => {
-    const inventory = user_inventory || {};
+    const inventory = inventoryWithFavorites;
     const filteredItems = filterInventoryItems(inventory);
     const allIds = filteredItems.map(([id]) => id);
     setSelectedItems(new Set(allIds));
@@ -339,7 +347,7 @@ const InventoryList = observer(() => {
 
   // Функция фильтрации предметов (фильтры + поиск)
   const filterInventoryItems = useCallback((inventory) => {
-    let items = Object.entries(inventory).filter(([key, item]) => {
+    let items = Object.entries(withFavorites(inventory, playerData)).filter(([key, item]) => {
       return item && typeof item === 'object';
     });
 
@@ -384,7 +392,7 @@ const InventoryList = observer(() => {
       ? String(a.name || '').localeCompare(String(b.name || ''), 'ru')
       : Number(b[sortOrder] || 0) - Number(a[sortOrder] || 0));
     return items;
-  }, [applyFiltersToItems, query, quickCategory, sortOrder]);
+  }, [applyFiltersToItems, query, quickCategory, sortOrder, playerData]);
 
   // Обработчик успешного завершения массовой операции
   const handleOperationSuccess = useCallback((message) => {

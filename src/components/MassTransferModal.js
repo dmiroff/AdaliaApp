@@ -1,3 +1,6 @@
+import { useContext } from 'react';
+import { Context } from '../index';
+import { isFavoriteItem } from '../utils/favorites';
 // src/components/MassOperationModals.js
 import { useState, useEffect, useRef } from "react";
 import { Modal, Button, Form, InputGroup } from "react-bootstrap";
@@ -5,11 +8,12 @@ import {MassDropItems, MassSellItems, MassTransferItems} from "../http/SupportFu
 
 // Массовая продажа
 export const MassSellModal = ({ show, onClose, selectedItems, inventory, onSuccess }) => {
+  const { user } = useContext(Context);
   const [itemsWithQuantity, setItemsWithQuantity] = useState([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const initialItems = Array.from(selectedItems).map(itemId => {
+    const initialItems = Array.from(selectedItems).filter(itemId => !isFavoriteItem(user.player_data, itemId)).map(itemId => {
       const item = inventory[itemId];
       return {
         itemId,
@@ -20,7 +24,7 @@ export const MassSellModal = ({ show, onClose, selectedItems, inventory, onSucce
       };
     });
     setItemsWithQuantity(initialItems);
-  }, [selectedItems, inventory]);
+  }, [selectedItems, inventory, user.player_data?.favorite_items]);
 
   const handleQuantityChange = (itemId, quantity) => {
     setItemsWithQuantity(prev => prev.map(item => 
@@ -95,6 +99,7 @@ export const MassSellModal = ({ show, onClose, selectedItems, inventory, onSucce
         </Modal.Title>
       </Modal.Header>
       <Modal.Body>
+        {Array.from(selectedItems).some(id => isFavoriteItem(user.player_data, id)) && <p className="text-warning">Избранные предметы исключены из операции.</p>}
         <div className="alert alert-warning mb-4 mass-modal-alert">
           <i className="fas fa-info-circle me-2"></i>
           <strong>Окончательная стоимость продажи определяется с учётом:</strong>
@@ -265,7 +270,7 @@ export const MassSellModal = ({ show, onClose, selectedItems, inventory, onSucce
         <Button 
           variant="success"
           onClick={handleSubmit}
-          disabled={loading}
+          disabled={loading || !itemsWithQuantity.length}
           className="mass-submit-btn mass-submit-gold"
         >
           {loading ? (
@@ -287,6 +292,7 @@ export const MassSellModal = ({ show, onClose, selectedItems, inventory, onSucce
 
 // Массовая передача
 export const MassTransferModal = ({ show, onClose, selectedItems, inventory, onSuccess }) => {
+  const { user } = useContext(Context);
   const [recipientName, setRecipientName] = useState("");
   const [itemsWithQuantity, setItemsWithQuantity] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -295,7 +301,7 @@ export const MassTransferModal = ({ show, onClose, selectedItems, inventory, onS
   useEffect(() => {if(show){setRecipientName('');setOperationError('');}}, [show]);
 
   useEffect(() => {
-    const initialItems = Array.from(selectedItems).map(itemId => {
+    const initialItems = Array.from(selectedItems).filter(itemId => !isFavoriteItem(user.player_data, itemId)).map(itemId => {
       const item = inventory[itemId];
       return {
         itemId,
@@ -306,7 +312,7 @@ export const MassTransferModal = ({ show, onClose, selectedItems, inventory, onS
       };
     });
     setItemsWithQuantity(initialItems);
-  }, [selectedItems, inventory]);
+  }, [selectedItems, inventory, user.player_data?.favorite_items]);
 
   const handleRecipientChange = (e) => {
     setRecipientName(e.target.value);
@@ -390,6 +396,7 @@ export const MassTransferModal = ({ show, onClose, selectedItems, inventory, onS
         </Modal.Title>
       </Modal.Header>
       <Modal.Body>
+        {Array.from(selectedItems).some(id => isFavoriteItem(user.player_data, id)) && <p className="text-warning">Избранные предметы исключены из операции.</p>}
         {operationError && <p role="alert" className="text-danger">{operationError}</p>}
         <div className="mb-4">
           <div className="mass-recipient-label">
@@ -474,7 +481,7 @@ export const MassTransferModal = ({ show, onClose, selectedItems, inventory, onS
         <Button 
           variant="primary"
           onClick={handleSubmit}
-          disabled={loading || !recipientName.trim()}
+          disabled={loading || !recipientName.trim() || !itemsWithQuantity.length}
           className="mass-submit-btn mass-submit-gold"
         >
           {loading ? (

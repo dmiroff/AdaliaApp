@@ -1,3 +1,4 @@
+import useItemFavorite from '../hooks/useItemFavorite';
 // src/components/InventoryItem.js (ваш оригинальный код с минимальными изменениями)
 import { observer } from "mobx-react-lite";
 import { useState, useContext, useMemo, useRef } from "react";
@@ -41,6 +42,7 @@ const InventoryItem = ({
 
   // Получаем ID предмета как число
   const itemId = devicekey;
+  const { isFavorite, enabled: favoriteEnabled, pending: favoritePending, toggleFavorite } = useItemFavorite(user, itemId, notify);
 
   const shouldShowLevel = useMemo(() => {
     if (device.level === undefined || device.level === null) return false;
@@ -129,6 +131,8 @@ const InventoryItem = ({
     return true;
   }, [isEquipped, device.count]);
 
+  const canTrade = canTransfer && !isFavorite && !favoritePending;
+
   // Вычисляем максимальное количество для продажи/выбрасывания
   const maxTransferAmount = useMemo(() => {
     if (isEquipped) {
@@ -155,7 +159,7 @@ const InventoryItem = ({
   const handleModalSell = (event) => {
     event.stopPropagation();
     setShowActions(false);
-    if (canTransfer) {
+    if (canTrade) {
       setShowModalSell(true);
     }
   };
@@ -432,7 +436,7 @@ const InventoryItem = ({
               <button 
                 className="dropdown-item-custom"
                 onClick={handleModalSell}
-                disabled={!canTransfer}
+                disabled={!canTrade}
               >
                 <i className="fas fa-coins me-2"></i>
                 продать
@@ -461,6 +465,10 @@ const InventoryItem = ({
             }}>
               <div className="fantasy-text-dark">{formatItemName()}</div>
             </span>
+            {favoriteEnabled && <Button size="sm" className="ms-1 me-2" variant={isFavorite ? 'warning' : 'outline-secondary'}
+              aria-label={isFavorite ? `Убрать из избранного: ${device.name}` : `В избранное: ${device.name}`}
+              aria-pressed={isFavorite} title="Защита всей стопки от продажи и передачи"
+              disabled={favoritePending || handleRequest} onClick={toggleFavorite}>{isFavorite ? '★' : '☆'}</Button>}
             {/* Бейдж редкости */}
             {device.rarity > 1 && (
               <span 
@@ -569,14 +577,17 @@ const InventoryItem = ({
             {device.description && <p>{device.description}</p>}
             {isEquipped && <p>Предмет надет. Единственный надетый экземпляр остаётся у вас.</p>}
           </div>
+          {isFavorite && <p>⭐ Избранное: продажа и передача защищены для всей стопки.</p>}
           <EquipmentComparison item={device} player={user.player_data} />
           <div className="d-grid gap-2 item-sheet-actions">
             <Button className="fantasy-btn" onClick={handleInspect}>Осмотреть</Button>
+            {favoriteEnabled && <Button className="fantasy-btn" disabled={favoritePending || handleRequest}
+              aria-pressed={isFavorite} onClick={toggleFavorite}>{favoritePending ? 'Сохраняем…' : isFavorite ? '★ Убрать из избранного' : '☆ В избранное'}</Button>}
             {device.is_equippable && <Button className="fantasy-btn" disabled={handleRequest}
               onClick={handleWear}>{handleRequest ? 'Надеваем…' : 'Надеть'}</Button>}
-            <Button className="fantasy-btn" disabled={!canTransfer || handleRequest} onClick={() => {setShowActions(false); setShowTransfer(true);}}>Передать</Button>
+            <Button className="fantasy-btn" disabled={!canTrade || handleRequest} onClick={() => {setShowActions(false); setShowTransfer(true);}}>Передать</Button>
             <details className="item-destructive-actions"><summary>Продать или выбросить</summary>
-              <Button className="fantasy-btn" disabled={!canTransfer || handleRequest} onClick={handleModalSell}>Продать</Button>
+              <Button className="fantasy-btn" disabled={!canTrade || handleRequest} onClick={handleModalSell}>Продать</Button>
               <Button variant="outline-danger" disabled={!canTransfer || handleRequest} onClick={handleModalDrop}>Выбросить</Button>
             </details>
           </div>
