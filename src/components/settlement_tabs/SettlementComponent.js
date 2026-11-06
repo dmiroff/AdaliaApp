@@ -1,3 +1,4 @@
+import {Link} from 'react-router-dom';
 import React, { useContext, useEffect, useState } from 'react';
 import { Container, Row, Col, Card, Spinner, Alert, Tab, Nav } from 'react-bootstrap';
 import { observer } from "mobx-react-lite";
@@ -188,7 +189,8 @@ const SettlementComponent = observer(() => {
         return (
             <Alert variant="info" className="mt-3">
                 <i className="fas fa-info-circle me-2"></i>
-                У вашей гильдии нет поселения. Вы можете создать его в разделе "Постройки".
+                У вашей гильдии нет поселения. Глава может основать его, находясь в выбранном биоме Диких Земель.
+                <div className="mt-3"><Link className="btn fantasy-btn" to="/map?settlement=found">Выбрать место на карте</Link></div>
             </Alert>
         );
     }
@@ -205,6 +207,7 @@ const SettlementComponent = observer(() => {
 
     return (
         <div className="settlement-container">
+            <Link className="btn fantasy-btn mb-3" to="/map?settlement=place">Поселение на карте</Link>
             <Tab.Container activeKey={settlement.activeTab} onSelect={(k) => settlement.setActiveTab(k)}>
                 <Card className="fantasy-card">
                     <Card.Header className="fantasy-card-header">
