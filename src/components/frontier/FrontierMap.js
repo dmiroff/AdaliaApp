@@ -2,6 +2,7 @@ import React, {useCallback,useEffect,useRef,useState} from 'react';
 import {Alert,Button,Modal,Spinner} from 'react-bootstrap';
 import api from '../../http/apiClient';
 import {nearestBoundary} from './geometry';
+import {WESTERN_ROAD_PATH} from './westernRoad';
 import './FrontierMap.css';
 
 const HOME={x:210,y:0,w:1460,h:1341};
@@ -96,6 +97,10 @@ export default function FrontierMap() {
       onPointerDown={start} onPointerMove={move} onPointerUp={end} onPointerCancel={e=>{pointers.current.delete(e.pointerId);gesture.current=null;}}>
       <image href={`${process.env.PUBLIC_URL || ''}/maps/westlands-base.jpg`} width={grid.width} height={grid.height}/>
       {grid.sectors.map(s=><polygon key={s.id} points={s.polygon.map(p=>p.join(',')).join(' ')} fill={state?.can_place && s.biome===state.biome ? '#efd06b22':'none'} stroke={grid.biomes.find(b=>b.id===s.biome).colour} strokeWidth="1.2" vectorEffect="non-scaling-stroke"/>)}
+      <g aria-label="Западная дорога" fill="none" strokeLinecap="round" strokeLinejoin="round" pointerEvents="none">
+        <path d={WESTERN_ROAD_PATH} stroke="#573a21" strokeWidth="12"/>
+        <path d={WESTERN_ROAD_PATH} stroke="#efb34e" strokeWidth="6"/>
+      </g>
       {labels && grid.sectors.map(s=><text key={s.id} x={s.label[0]} y={s.label[1]} textAnchor="middle" className="frontier-sector-label">{s.id}</text>)}
       <circle cx={grid.fargos.x} cy={grid.fargos.y} r="8" fill="#8c3226" stroke="#fff" strokeWidth="2"/><text x={grid.fargos.x+12} y={grid.fargos.y+18} className="frontier-city-label">Фаргос</text>
       {placed && <g aria-label="Поселение вашей гильдии"><circle cx={placed.x} cy={placed.y} r="10" fill="#8c3226" stroke="#fff3cf" strokeWidth="3"/><text x={placed.x+14} y={placed.y-12} className="frontier-city-label">{state.guild_name}</text></g>}
