@@ -7,7 +7,7 @@ export function WarScore({score=0}){
  const value=Math.max(-100,Math.min(100,Number(score)||0));
  return <div className="frontier-war-score" aria-label={`Счёт войны: ${value}`}><div className="frontier-war-scale"><span style={{left:`${(value+100)/2}%`}}/></div><div className="d-flex justify-content-between"><span>−100 · сторона 2</span><strong>{value>0?'+':''}{value}</strong><span>+100 · сторона 1</span></div></div>;
 }
-export default function FrontierObservation(){
+export default function FrontierObservation({stageB=false}){
  const [data,setData]=useState(null),[grid,setGrid]=useState(null),[error,setError]=useState(''),[loading,setLoading]=useState(false);
  const [commander,setCommander]=useState('player'),[quantities,setQuantities]=useState({}),[from,setFrom]=useState(''),[to,setTo]=useState(''),[score,setScore]=useState(0);
  const [objectiveType,setObjectiveType]=useState('sector'),[objectiveSector,setObjectiveSector]=useState(''),[objectiveCastle,setObjectiveCastle]=useState('');
@@ -63,8 +63,8 @@ export default function FrontierObservation(){
     <ul><li>Пакт о ненападении запрещает атаки. После разрыва — ещё 3 суток запрета.</li><li>После войны — перемирие 7 суток.</li><li>Проход и союз оформляются отдельными договорами.</li><li>Заявка на осаду замка требует войны.</li><li>Оформление войны или договора в Фаргосе: предварительно 100 далеонов. Перемещения без этой платы.</li></ul>
    </Tab>
    <Tab eventKey="supply" title="Казна и караваны">
-    <p>Казначейство новой системы ещё не открыто: далеоны понадобятся для оформления дипломатии, монеты — для жалованья. Здесь средства не списываются.</p>
-    {data?.available&&<><p>Предварительное содержание в казармах за сутки: {fmt(data.maintenance_preview.food_day)} провианта, {fmt(data.maintenance_preview.essence_day)} эссенции, {fmt(data.maintenance_preview.gold_day)} монет.</p><p>При включении провианта: разовое обеспечение на {data.bootstrap_preview.days} суток — {fmt(data.bootstrap_preview.food)} еды и {fmt(data.bootstrap_preview.essence)} эссенции. Сейчас это расчёт, запас ещё не выдан.</p></>}
+    {stageB?<p>Казна и обеспечение доступны во вкладке «Экономика». Караваны относятся к следующей стадии.</p>:<><p>Казначейство новой системы ещё не открыто: далеоны понадобятся для оформления дипломатии, монеты — для жалованья. Здесь средства не списываются.</p>
+    {data?.available&&<><p>Предварительное содержание в казармах за сутки: {fmt(data.maintenance_preview.food_day)} провианта, {fmt(data.maintenance_preview.essence_day)} эссенции, {fmt(data.maintenance_preview.gold_day)} монет.</p><p>При включении провианта: разовое обеспечение на {data.bootstrap_preview.days} суток — {fmt(data.bootstrap_preview.food)} еды и {fmt(data.bootstrap_preview.essence)} эссенции. Сейчас это расчёт, запас ещё не выдан.</p></>}</>}
     <p>Добыча проверяется каждый час. В полночь караваны забирают остаток местного склада за вычетом выбранного резерва гарнизона. Охрана выделяется отдельно; возможны нападения местных и воюющих гильдий.</p>
     <p>Пропускную способность поставок и усталость в первый выпуск не включаем. Некрополь получает отдельное обеспечение эссенцией; одна подходящая постройка остальных поселений будет производить провиант вместо прежнего ресурса.</p>
    </Tab>
