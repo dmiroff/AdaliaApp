@@ -11,6 +11,7 @@ let root,container;
 const button=name=>[...document.querySelectorAll('button')].find(x=>x.textContent===name);
 const field=label=>[...container.querySelectorAll('label')].find(x=>x.firstChild.textContent===label)?.querySelector('input,select');
 const click=async name=>act(async()=>button(name).click());
+const waitForDialogExit=async()=>{for(let i=0;i<50&&document.querySelector('[role="dialog"]');i++)await act(async()=>new Promise(resolve=>setTimeout(resolve,20)));};
 beforeEach(()=>{jest.clearAllMocks();localStorage.clear();global.IS_REACT_ACT_ENVIRONMENT=true;Object.defineProperty(global,'crypto',{value:{randomUUID:()=> '11111111-1111-4111-8111-111111111111'},configurable:true});api.get.mockResolvedValue({data:fixture});api.post.mockResolvedValue({data:{message:'Приказ отправлен.'}});container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);});
 afterEach(async()=>{await act(async()=>root.unmount());container.remove();});
 const render=async()=>act(async()=>root.render(<FrontierCommand/>));
@@ -29,6 +30,7 @@ test('guildless admin can complete acceptance without a red membership error or 
  await click('Проверить систему с откатом');await click('Запустить проверку');
  expect(container.textContent).toContain('Проверка пройдена. Откат подтверждён.');
  expect(button('Проверить систему с откатом').disabled).toBe(false);
+ await waitForDialogExit();
  expect(document.querySelector('[role="dialog"]')).toBeNull();
  expect(container.querySelector('[role="alert"]')).toBeNull();
  expect(api.get.mock.calls.filter(([path])=>path==='/frontier-strategy/state')).toHaveLength(1);
@@ -41,7 +43,7 @@ test('a late initial membership response cannot turn a passed admin test into an
  await render();await click('Проверить систему с откатом');await click('Запустить проверку');
  await act(async()=>rejectState({response:{status:403,data:{detail:'Для приказов нужно состоять в гильдии.'}}}));
  expect(container.textContent).toContain('Проверка пройдена. Откат подтверждён.');
- expect(container.querySelector('[role="alert"]')).toBeNull();expect(document.querySelector('[role="dialog"]')).toBeNull();
+ await waitForDialogExit();expect(container.querySelector('[role="alert"]')).toBeNull();expect(document.querySelector('[role="dialog"]')).toBeNull();
 });
 
 test('acceptance does not claim success without unchanged actor confirmation',async()=>{
