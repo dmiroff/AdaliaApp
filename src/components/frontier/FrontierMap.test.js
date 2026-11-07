@@ -79,6 +79,19 @@ test('read-only fallback does not conceal a failure to load the map itself',asyn
  expect(container.querySelector('svg')).toBeNull();
 });
 
+test('only scouted sectors show guard elements and ownership has a separate outline',async()=>{
+ api.get.mockResolvedValue({data:{can_place:false,position:null}});
+ const [a,b,c]=grid.sectors;
+ await act(async()=>root.render(<FrontierMap strategy={{guild_id:0,sectors:[{id:a.id,element:'Death',owner:null},{id:b.id,element:'Light',owner:0}],bases:[],armies:[],enemy_armies:[],caravans:[]}}/>));
+ const polygon=id=>container.querySelector(`polygon[data-sector-id="${id}"]`);
+ expect(polygon(a.id).getAttribute('fill')).toBe('#8862a988');
+ expect(polygon(b.id).getAttribute('fill')).toBe('#e3bd3888');
+ expect(polygon(b.id).getAttribute('stroke')).toBe('#23834b');
+ expect(polygon(c.id).getAttribute('fill')).toBe('none');
+ expect(polygon(c.id).textContent).toContain('Не разведан');
+ expect(container.querySelector('[aria-label="Стихии гарнизонов"]').textContent).toContain('Смерть');
+});
+
 test('a collision does not place the settlement optimistically',async()=>{
  api.post.mockRejectedValue({response:{data:{detail:'Рядом уже есть поселение.'}}});
  await render();await choose();await click('Основать поселение здесь');await click('Подтвердить место');

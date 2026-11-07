@@ -3,6 +3,7 @@ import {Alert,Button,Modal,Spinner} from 'react-bootstrap';
 import api from '../../http/apiClient';
 import {nearestBoundary} from './geometry';
 import {WESTERN_ROAD_PATH} from './westernRoad';
+import ELEMENTS from './elements.json';
 import './FrontierMap.css';
 
 const HOME={x:210,y:0,w:1460,h:1341};
@@ -100,12 +101,13 @@ export default function FrontierMap({strategy=null,onSector=null}) {
       <label><input type="checkbox" checked={labels} onChange={e=>setLabels(e.target.checked)}/> Номера секторов</label>
     </div>
     <div className="frontier-legend">{grid.biomes.map(b=><span key={b.id}><i style={{background:b.colour}}/>{b.name}</span>)}</div>
+    {strategy&&<><p>Цвет заливки — стихия защитников разведанного сектора. Контроль показан обводкой: зелёный — ваш, красный — чужой, коричневый — Дикие Земли.</p><div className="frontier-legend" aria-label="Стихии гарнизонов">{Object.entries(ELEMENTS).map(([id,e])=><span key={id}><i style={{background:e.colour}}/>{e.name}</span>)}</div></>}
     {error && <Alert variant="danger" role="alert">{error}</Alert>}{notice && <Alert variant="success" role="status">{notice}</Alert>}
     {state?.can_place ? <p><strong>{state.intent==='found'?'Основание поселения':'Выбор места поселения'}: {biome?.name}.</strong> Нажмите рядом с границей соседних секторов этого биома. Место выбирается один раз.</p> : state && <p>{state.reason}</p>}
     <svg ref={svg} viewBox={`${view.x} ${view.y} ${view.w} ${view.h}`} className="frontier-map-canvas" role="img" aria-label="Секторы Диких Земель"
       onPointerDown={start} onPointerMove={move} onPointerUp={end} onPointerCancel={e=>{pointers.current.delete(e.pointerId);gesture.current=null;}}>
       <image href={`${process.env.PUBLIC_URL || ''}/maps/westlands-base.jpg`} width={grid.width} height={grid.height}/>
-      {grid.sectors.map(s=><polygon key={s.id} points={s.polygon.map(p=>p.join(',')).join(' ')} fill={state?.can_place&&s.biome===state.biome?'#efd06b22':strategy&&intel.get(s.id)?.owner===strategy.guild_id?'#3bb87166':intel.has(s.id)?intel.get(s.id).owner===null?'#b58a3d33':'#d7464655':'none'} stroke={grid.biomes.find(b=>b.id===s.biome).colour} strokeWidth="1.2" vectorEffect="non-scaling-stroke"/>)}
+      {grid.sectors.map(s=>{const known=intel.get(s.id),element=ELEMENTS[known?.element];return <polygon key={s.id} data-sector-id={s.id} points={s.polygon.map(p=>p.join(',')).join(' ')} fill={state?.can_place&&s.biome===state.biome?'#efd06b22':element?`${element.colour}88`:'none'} stroke={known?known.owner===strategy?.guild_id?'#23834b':known.owner===null?'#8b692e':'#bd3838':grid.biomes.find(b=>b.id===s.biome).colour} strokeWidth={known?'2':'1.2'} vectorEffect="non-scaling-stroke"><title>{s.id}{element?` · ${element.name}`:' · Не разведан'}</title></polygon>;})}
       <g aria-label="Западная дорога" fill="none" strokeLinecap="round" strokeLinejoin="round" pointerEvents="none">
         <path d={WESTERN_ROAD_PATH} stroke="#573a21" strokeWidth="12"/>
         <path d={WESTERN_ROAD_PATH} stroke="#efb34e" strokeWidth="6"/>

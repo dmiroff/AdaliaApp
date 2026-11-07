@@ -63,6 +63,15 @@ test('all material names match the item catalogue and influence cannot be traded
  await click('Поставки и торговля');expect([...container.querySelectorAll('option')].some(option=>option.value==='influence')).toBe(false);
 });
 
+test('plant and fish names from the server reach cargo, trade and commodity choices',async()=>{
+ api.get.mockResolvedValue({data:{...fixture,resource_names:{1133:'Ромашка',148:'Судак'},tradable_resources:['1133','148','food'],caravans:[{id:'c1',owner:0,at:'Л050',target:'base:0',status:'moving',cargo:{1133:7,148:5}}],trades:[{id:'x1',seller:0,buyer:1,resource:'1133',amount:5,price:100,status:'offered'}]}});
+ await render();await click('Поставки и торговля');
+ expect(container.textContent).toContain('Ромашка: 7');expect(container.textContent).toContain('Судак: 5');expect(container.textContent).toContain('Ромашка ×5');
+ const select=[...container.querySelectorAll('label')].find(l=>l.textContent==='Товар');
+ const options=[...document.getElementById(select.htmlFor).options].map(o=>o.value);
+ expect(options.sort()).toEqual(['1133','148','food'].sort());
+});
+
 test('a cancelled battle is displayed as cancelled rather than a draw',async()=>{
  api.get.mockImplementation(path=>Promise.resolve({data:path.includes('/battles/')?{status:'cancelled',sector:'Л050',result:{winner:null,rounds:0,log:['Резерв возвращён']}}:{...fixture,events:[{id:'e1',title:'Бой отменён',battle:'b1'}]}}));
  await render();await click('Донесения');await click('Отчёт о бое');

@@ -1,0 +1,13 @@
+{
+  "Light": {"name": "Свет", "colour": "#e3bd38"},
+  "Death": {"name": "Смерть", "colour": "#8862a9"},
+  "Fire": {"name": "Огонь", "colour": "#d65b32"},
+  "Dark": {"name": "Тьма", "colour": "#4c426b"},
+  "Life": {"name": "Жизнь", "colour": "#56a451"},
+  "Wind": {"name": "Ветер", "colour": "#71bcb6"},
+  "Sound": {"name": "Звук", "colour": "#d47eab"},
+  "Power": {"name": "Власть", "colour": "#a74767"},
+  "Ice": {"name": "Лёд", "colour": "#58a6d4"},
+  "Lighting": {"name": "Молния", "colour": "#a9a92f"},
+  "Stone": {"name": "Камень", "colour": "#987454"}
+}
