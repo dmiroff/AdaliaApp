@@ -1,3 +1,4 @@
+import {isPlayerShopsEnabled} from '../utils/playerShops';
 import { isPlayerEventsEnabled } from '../utils/playerEvents';
 import { GAME_DRAFT_ROUTE, isGameDraftEnabled } from '../utils/gameDraftProtocol';
 import { observer } from "mobx-react-lite";
@@ -16,6 +17,7 @@ const navigationItems = [
   ...(isPlayerEventsEnabled() ? [["/player-events", "Ивенты игроков"]] : []),
   ["/rating", "Рейтинг"],
   ["/trade", "Торговля"],
+  ...(isPlayerShopsEnabled() ? [["/player-shops", "Лавки игроков"]] : []),
   ["/donation", "💎 Магазин"],
   ["/help", "📖 Справка"],
 ];
@@ -31,6 +33,7 @@ const mobileMoreItems = [
   ...(isPlayerEventsEnabled() ? [["/player-events", "🎪", "Ивенты"]] : []),
   ["/rating", "🏆", "Рейтинг"],
   ["/trade", "⚖️", "Торговля"],
+  ...(isPlayerShopsEnabled() ? [["/player-shops", "🏪", "Лавки игроков"]] : []),
   ["/donation", "💎", "Магазин"],
   ["/help", "📖", "Справка"],
 ];

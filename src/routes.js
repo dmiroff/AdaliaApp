@@ -1,3 +1,4 @@
+import {isPlayerShopsEnabled} from './utils/playerShops';
 import { isPlayerEventsEnabled } from './utils/playerEvents';
 import { 
   ADMIN_ROUTE, 
@@ -15,6 +16,7 @@ import {
 } from "./utils/constants";
 
 export const authRoutes = [
+    ...(isPlayerShopsEnabled() ? [{path:'/player-shops',name:'PlayerShops'}] : []),
     ...(isPlayerEventsEnabled() ? [{path: '/player-events', name: 'PlayerEvents'}, {path: '/sign-techniques', name: 'SignTechniques'}] : []),
     {
         path: ADMIN_ROUTE,

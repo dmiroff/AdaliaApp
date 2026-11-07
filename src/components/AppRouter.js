@@ -15,6 +15,7 @@ const Inventory = React.lazy(() => import('../pages/Inventory'));
 const Character = React.lazy(() => import('../pages/Character'));
 const Rating = React.lazy(() => import('../pages/Rating'));
 const Prepare = React.lazy(() => import('../pages/Prepare'));
+const PlayerShops = React.lazy(() => import('../pages/PlayerShops'));
 const Trade = React.lazy(() => import('../pages/Trade'));
 const Map = React.lazy(() => import('../pages/Map'));
 const Donation = React.lazy(() => import('../pages/Shop'));
@@ -201,6 +202,7 @@ const AppRouter = observer(() => {
                         case 'ItemPage': Component = ItemPage; break;
                         case 'Rating': Component = Rating; break;
                         case 'Trade': Component = Trade; break;
+                        case 'PlayerShops': Component = PlayerShops; break;
                         case 'Map': Component = Map; break;
                         case 'Donation': Component = Donation; break;
                         case 'Guild': Component = Guild; break;
