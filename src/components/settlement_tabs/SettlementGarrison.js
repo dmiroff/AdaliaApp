@@ -263,9 +263,9 @@ const SettlementGarrison = observer(() => {
             Object.entries(buildingsData).forEach(([buildingKey, buildingData]) => {
                 if (buildingData.hire) {
                     const unitName = buildingData.hire;
-                    const unitId = UNIT_NAME_TO_ID[unitName];
-                    let baseCost = 100;
-                    if (unitId !== undefined) {
+                    const unitId = buildingData.hire_id ?? UNIT_NAME_TO_ID[unitName];
+                    let baseCost = buildingData.hire_cost ?? 100;
+                    if (unitId !== undefined && buildingData.hire_cost === undefined) {
                         const costKey = unitId < 0 ? unitId.toString() : unitId;
                         baseCost = HIRE_COSTS[costKey] || 100;
                     }

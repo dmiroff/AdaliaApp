@@ -5,6 +5,8 @@ import { Context } from '../../index';
 import SettlementBuildings from './SettlementBuildings';
 import { settlementService } from '../../services/SettlementService';
 import { getBuildingExperience } from '../../utils/buildingExperience';
+import {isFrontierObservationHost} from '../frontier/observation';
+jest.mock('../frontier/observation',()=>({isFrontierObservationHost:jest.fn(()=>false)}));
 
 jest.mock('../../index', () => ({ Context: require('react').createContext(null) }));
 jest.mock('../../services/SettlementService', () => ({
@@ -50,4 +52,13 @@ test('experience calculation treats explicit null as an absent building', () => 
         current: 150, required: 0, enough: true, missing: 0
     });
     expect(getBuildingExperience(null, null)).toBeNull();
+});
+
+
+test.each([true,false])('provision output is shown only on mirror: %s',async mirror=>{
+    isFrontierObservationHost.mockReturnValue(mirror);
+    settlementService.getBuildingsData.mockResolvedValue({status:200,data:{unit_t1_1:{name:'Хижина',1:{resources:{},essence:0,exp_for_levelup:100}}}});
+    const stores={settlement:{_settlementData:{id:3,type:'Life',buildings:{unit_t1_1:{level:1,name:'Хижина'}},provisions_production:{food_day:40,essence_day:0},heroes:{active_heroes:{}},construction:{},storage:{},current_essence:0}},user:{guildRole:'member'},guild:{guildData:{player_role:'member'}}};
+    await act(async()=>root.render(<Context.Provider value={stores}><SettlementBuildings/></Context.Provider>));
+    expect(container.textContent.includes('40 провианта')).toBe(mirror);
 });

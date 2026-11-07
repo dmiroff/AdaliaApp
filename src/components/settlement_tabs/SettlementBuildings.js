@@ -16,6 +16,7 @@ import BuildingExperience from './BuildingExperience';
 import { getBuildingExperience } from '../../utils/buildingExperience';
 import { getResourceInfo } from '../../utils/resourceHelpers';
 import { settlementService } from '../../services/SettlementService';
+import {isFrontierObservationHost} from '../frontier/observation';
 
 const getBuildingName = (buildingKey, buildingData) => {
     if (!buildingData) return buildingKey;
@@ -601,6 +602,7 @@ const SettlementBuildings = observer(() => {
                     </Card.Header>
                     
                     <Card.Body>
+                        {isFrontierObservationHost()&&key==='unit_t1_1'&&currentLevel>0&&settlementData.provisions_production&&<p className="text-success" role="status">Производство за сутки: {Number(settlementData.provisions_production.food_day||0).toLocaleString('ru-RU')} провианта, {Number(settlementData.provisions_production.essence_day||0).toLocaleString('ru-RU',{maximumFractionDigits:2})} эссенции содержания. Производство растёт с уровнем здания.</p>}
                         <div className="mb-3">
                             <div className="d-flex justify-content-between mb-1">
                                 <span className="fantasy-text-muted">Прочность:</span>
