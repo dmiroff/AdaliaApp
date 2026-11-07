@@ -21,3 +21,48 @@ test('ordinary member cannot form troops, spend treasury or offer wars',async()=
 test('negotiated peace displays every concession and requires an explicit acceptance',async()=>{api.get.mockResolvedValue({data:{...fixture,peace_offers:[{id:'p1',status:'proposed',terms:[{name:'Л050',mandatory:true,owner:0},{name:'П020',owner:1}],accepted:[1],required:[0,1],expires:1794100000,participants:[0,1]}]}});await render();await click('Войны и договоры');expect(container.textContent).toContain('Цель войны: Л050');expect(container.textContent).toContain('П020');await click('Принять условия');expect(api.post).not.toHaveBeenCalled();await click('Подтвердить приказ');expect(api.post).toHaveBeenCalledWith('/frontier-strategy/order',expect.objectContaining({kind:'accept_peace',args:{offer:'p1'}}));});
 
 test('mirror admin acceptance requires confirmation and shows confirmed rollback',async()=>{api.get.mockImplementation(path=>Promise.resolve({data:path==='/player'?{is_admin:true}:fixture}));api.post.mockResolvedValue({data:{status:'passed',rolled_back:true,actor_unchanged:true,steps:['PASS: откат подтверждён']}});await render();await click('Проверить систему с откатом');expect(api.post).not.toHaveBeenCalled();await click('Запустить проверку');expect(api.post).toHaveBeenCalledWith('/frontier-strategy/self-test',{}, {timeout:120000});expect(container.textContent).toContain('Проверка пройдена. Откат подтверждён.');});
+
+test('guildless admin can complete acceptance without a red membership error or extra refresh',async()=>{
+ api.get.mockImplementation(path=>path==='/player'?Promise.resolve({data:{is_admin:true}}):Promise.reject({response:{status:403,data:{detail:'Для приказов нужно состоять в гильдии.'}}}));
+ api.post.mockResolvedValue({data:{status:'passed',rolled_back:true,actor_unchanged:true,steps:[]}});
+ await render();expect(container.querySelector('[role="alert"]')).toBeNull();
+ await click('Проверить систему с откатом');await click('Запустить проверку');
+ expect(container.textContent).toContain('Проверка пройдена. Откат подтверждён.');
+ expect(button('Проверить систему с откатом').disabled).toBe(false);
+ expect(document.querySelector('[role="dialog"]')).toBeNull();
+ expect(container.querySelector('[role="alert"]')).toBeNull();
+ expect(api.get.mock.calls.filter(([path])=>path==='/frontier-strategy/state')).toHaveLength(1);
+});
+
+test('a late initial membership response cannot turn a passed admin test into an error',async()=>{
+ let rejectState;
+ api.get.mockImplementation(path=>path==='/player'?Promise.resolve({data:{is_admin:true}}):new Promise((resolve,reject)=>{rejectState=reject;}));
+ api.post.mockResolvedValue({data:{status:'passed',rolled_back:true,actor_unchanged:true,steps:[]}});
+ await render();await click('Проверить систему с откатом');await click('Запустить проверку');
+ await act(async()=>rejectState({response:{status:403,data:{detail:'Для приказов нужно состоять в гильдии.'}}}));
+ expect(container.textContent).toContain('Проверка пройдена. Откат подтверждён.');
+ expect(container.querySelector('[role="alert"]')).toBeNull();expect(document.querySelector('[role="dialog"]')).toBeNull();
+});
+
+test('acceptance does not claim success without unchanged actor confirmation',async()=>{
+ api.get.mockImplementation(path=>Promise.resolve({data:path==='/player'?{is_admin:true}:fixture}));
+ api.post.mockResolvedValue({data:{status:'passed',rolled_back:true,actor_unchanged:false,steps:[]}});
+ await render();await click('Проверить систему с откатом');await click('Запустить проверку');
+ expect(container.textContent).toContain('Проверка требует внимания.');expect(container.textContent).not.toContain('Проверка пройдена.');
+});
+
+test('all material names match the item catalogue and influence cannot be traded',async()=>{
+ api.get.mockResolvedValue({data:{...fixture,armies:[{id:'a1',name:'Дозор',at:'Л050',status:'escort',units:{39:1},players:[],supply:{},cargo:{112:1,114:1,115:1,116:1,117:1,118:1,119:1,120:1,121:1,influence:1},daily:{},connected:true}]}});
+ await render();await click('Армии');
+ const armyLabel=[...container.querySelectorAll('label')].find(label=>label.textContent==='Армия');
+ await act(async()=>Simulate.change(document.getElementById(armyLabel.htmlFor),{target:{value:'a1'}}));
+ for(const name of ['Железная руда','Брёвна','Мешок угля','Песчаник','Мешок песка','Стекло','Доски','Сталь','Каменный блок','Влияние'])expect(container.textContent).toContain(name+': 1');
+ expect(container.textContent).toContain('Охраняет караван');expect(container.textContent).not.toContain('Ресурс 119');
+ await click('Поставки и торговля');expect([...container.querySelectorAll('option')].some(option=>option.value==='influence')).toBe(false);
+});
+
+test('a cancelled battle is displayed as cancelled rather than a draw',async()=>{
+ api.get.mockImplementation(path=>Promise.resolve({data:path.includes('/battles/')?{status:'cancelled',sector:'Л050',result:{winner:null,rounds:0,log:['Резерв возвращён']}}:{...fixture,events:[{id:'e1',title:'Бой отменён',battle:'b1'}]}}));
+ await render();await click('Донесения');await click('Отчёт о бое');
+ const dialog=document.querySelector('[role="dialog"]');expect(dialog.textContent).toContain('Бой отменён.');expect(dialog.textContent).not.toContain('ничья');expect(dialog.textContent).not.toContain('Победитель:');
+});
