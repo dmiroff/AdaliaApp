@@ -6,7 +6,7 @@ import {WESTERN_ROAD_PATH} from './westernRoad';
 import './FrontierMap.css';
 
 const HOME={x:210,y:0,w:1460,h:1341};
-export default function FrontierMap() {
+export default function FrontierMap({strategy=null,onSector=null}) {
   const [grid,setGrid]=useState(null),[state,setState]=useState(null),[error,setError]=useState('');
   const [selected,setSelected]=useState(null),[confirm,setConfirm]=useState(false),[busy,setBusy]=useState(false),[notice,setNotice]=useState('');
   const [view,setView]=useState(HOME),[labels,setLabels]=useState(false);
@@ -69,6 +69,7 @@ export default function FrontierMap() {
   };
   const end=e=>{
     const g=gesture.current;pointers.current.delete(e.pointerId);
+    if(g&&!g.moved&&onSector&&grid&&!state?.can_place){const q=point(e.clientX,e.clientY);const hit=grid.sectors.find(s=>{let inside=false;for(let i=0,j=s.polygon.length-1;i<s.polygon.length;j=i++){const a=s.polygon[i],b=s.polygon[j];if((a[1]>q.y)!==(b[1]>q.y)&&q.x<(b[0]-a[0])*(q.y-a[1])/(b[1]-a[1])+a[0])inside=!inside;}return inside;});if(hit)onSector(hit.id);}
     if(g && !g.moved && state?.can_place && !busy && grid){
       const found=nearestBoundary(grid,state.biome,point(e.clientX,e.clientY));
       if(found && found.distance<30){setSelected(found);setNotice('');setError('');}
@@ -87,6 +88,7 @@ export default function FrontierMap() {
     finally{setBusy(false);}
   };
   if(!grid)return error ? <Alert variant="danger">{error}</Alert> : <Spinner role="status" animation="border"/>;
+  const intel=new Map((strategy?.sectors||[]).map(s=>[s.id,s]));
   const biome=grid.biomes.find(b=>b.id===state?.biome),placed=state?.position;
   return <section className="frontier-map-panel fantasy-paper" aria-label="Карта Западных Диких Земель">
     <h2>Западные Дикие Земли</h2>
@@ -103,11 +105,15 @@ export default function FrontierMap() {
     <svg ref={svg} viewBox={`${view.x} ${view.y} ${view.w} ${view.h}`} className="frontier-map-canvas" role="img" aria-label="Секторы Диких Земель"
       onPointerDown={start} onPointerMove={move} onPointerUp={end} onPointerCancel={e=>{pointers.current.delete(e.pointerId);gesture.current=null;}}>
       <image href={`${process.env.PUBLIC_URL || ''}/maps/westlands-base.jpg`} width={grid.width} height={grid.height}/>
-      {grid.sectors.map(s=><polygon key={s.id} points={s.polygon.map(p=>p.join(',')).join(' ')} fill={state?.can_place && s.biome===state.biome ? '#efd06b22':'none'} stroke={grid.biomes.find(b=>b.id===s.biome).colour} strokeWidth="1.2" vectorEffect="non-scaling-stroke"/>)}
+      {grid.sectors.map(s=><polygon key={s.id} points={s.polygon.map(p=>p.join(',')).join(' ')} fill={state?.can_place&&s.biome===state.biome?'#efd06b22':strategy&&intel.get(s.id)?.owner===strategy.guild_id?'#3bb87166':intel.has(s.id)?intel.get(s.id).owner===null?'#b58a3d33':'#d7464655':'none'} stroke={grid.biomes.find(b=>b.id===s.biome).colour} strokeWidth="1.2" vectorEffect="non-scaling-stroke"/>)}
       <g aria-label="Западная дорога" fill="none" strokeLinecap="round" strokeLinejoin="round" pointerEvents="none">
         <path d={WESTERN_ROAD_PATH} stroke="#573a21" strokeWidth="12"/>
         <path d={WESTERN_ROAD_PATH} stroke="#efb34e" strokeWidth="6"/>
       </g>
+      {(strategy?.roads||[]).map(edge=>{const [a,b]=edge.split('|').map(id=>grid.sectors.find(s=>s.id===id));return a&&b?<line key={edge} x1={a.label[0]} y1={a.label[1]} x2={b.label[0]} y2={b.label[1]} stroke="#d6b256" strokeWidth="3" pointerEvents="none"/>:null;})}
+      {(strategy?.sectors||[]).flatMap(s=>{const cell=grid.sectors.find(c=>c.id===s.id);return cell?(s.features||[]).map((f,i)=><text key={s.id+':'+i} x={cell.label[0]+i*13} y={cell.label[1]} fontSize="16" pointerEvents="none"><title>{f.name}{f.sealed?' · запечатано':''}</title>{f.kind==='castle'?'🏰':f.kind==='abode'?'✦':'⛏'}</text>):[];})}
+      {(strategy?.bases||[]).map(base=><g key={base.guild_id} pointerEvents="none"><circle cx={base.x} cy={base.y} r="9" fill={base.guild_id===strategy.guild_id?'#387147':'#9b463e'} stroke="#fff3cf" strokeWidth="2"/><title>{base.name}</title></g>)}
+      {[...(strategy?.armies||[]),...(strategy?.enemy_armies||[]),...(strategy?.caravans||[])].map((a,i)=>{const cell=grid.sectors.find(s=>s.id===a.at),base=(strategy?.bases||[]).find(b=>a.at===`base:${b.guild_id}`);const at=cell?cell.label:base?[base.x,base.y]:null;return at?<g key={a.id} pointerEvents="none"><circle cx={at[0]+12+(i%3)*9} cy={at[1]-14} r="7" fill={a.owner===strategy.guild_id?'#245c96':'#a12d28'} stroke="#fff3cf" strokeWidth="1.5"/><title>{a.name||a.id} · {a.status}</title></g>:null;})}
       {labels && grid.sectors.map(s=><text key={s.id} x={s.label[0]} y={s.label[1]} textAnchor="middle" className="frontier-sector-label">{s.id}</text>)}
       <circle cx={grid.fargos.x} cy={grid.fargos.y} r="8" fill="#8c3226" stroke="#fff" strokeWidth="2"/><text x={grid.fargos.x+12} y={grid.fargos.y+18} className="frontier-city-label">Фаргос</text>
       {placed && <g aria-label="Поселение вашей гильдии"><circle cx={placed.x} cy={placed.y} r="10" fill="#8c3226" stroke="#fff3cf" strokeWidth="3"/><text x={placed.x+14} y={placed.y-12} className="frontier-city-label">{state.guild_name}</text></g>}
