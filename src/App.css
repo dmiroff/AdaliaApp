@@ -3446,3 +3446,12 @@ body {
   .equipment-layout .equipment-layout__slot.ring_3 { top:38%; left:calc(50% - 22px); }
   .equipment-layout .equipment-layout__slot.left_hand { left:calc(50% - 22px); }
 }
+
+/* Player shops add another entry: keep the authenticated menu inside the header. */
+.fantasy-navbar .navbar-brand,
+.fantasy-navbar__settings {
+  flex-shrink: 0;
+}
+.fantasy-navbar__desktop .fantasy-navbar__links {
+  flex-wrap: wrap;
+}
