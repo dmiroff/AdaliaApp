@@ -276,10 +276,7 @@ export const GetGuildLeaderboard = async () => {
 // Создать гильдию
 export const CreateGuild = async (guildName, description = "") => {
   try {
-    const response = await apiClient.post(`/guild/actions/create`, {
-      name: guildName,
-      description: description
-    });
+    const response = await apiClient.post(`/guild/create`, {}, {params:{name:guildName,description}});
     
     return {
       status: response.data.status || response.status,

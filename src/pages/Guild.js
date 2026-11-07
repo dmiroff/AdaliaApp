@@ -1117,6 +1117,7 @@ const Guild = observer(() => {
       </Modal.Header>
       <Modal.Body className="fantasy-card">
         <Form>
+          <p>Регистрация у писаря: 5000 далеонов. Пошлина списывается один раз при создании гильдии.</p>
           <Form.Group className="mb-3">
             <Form.Label className="fantasy-text-dark">Название гильдии</Form.Label>
             <Form.Control
