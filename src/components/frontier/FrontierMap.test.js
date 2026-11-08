@@ -79,17 +79,17 @@ test('read-only fallback does not conceal a failure to load the map itself',asyn
  expect(container.querySelector('svg')).toBeNull();
 });
 
-test('only scouted sectors show guard elements and ownership has a separate outline',async()=>{
+test('scouted sectors use guild ownership fills and neutral guards are grey',async()=>{
  api.get.mockResolvedValue({data:{can_place:false,position:null}});
  const [a,b,c]=grid.sectors;
- await act(async()=>root.render(<FrontierMap strategy={{guild_id:0,sectors:[{id:a.id,element:'Death',owner:null},{id:b.id,element:'Light',owner:0}],bases:[],armies:[],enemy_armies:[],caravans:[]}}/>));
+ await act(async()=>root.render(<FrontierMap strategy={{guild_id:0,guild_name:'Свои',guild_colours:{0:'#d95b43'},sectors:[{id:a.id,element:'Death',owner:null},{id:b.id,element:'Light',owner:0}],bases:[],armies:[],enemy_armies:[],caravans:[]}}/>));
  const polygon=id=>container.querySelector(`polygon[data-sector-id="${id}"]`);
- expect(polygon(a.id).getAttribute('fill')).toBe('#8862a988');
- expect(polygon(b.id).getAttribute('fill')).toBe('#e3bd3888');
- expect(polygon(b.id).getAttribute('stroke')).toBe('#23834b');
+ expect(polygon(a.id).getAttribute('fill')).toBe('#808080');
+ expect(polygon(b.id).getAttribute('fill')).toBe('#d95b43');
+ expect(polygon(b.id).getAttribute('stroke')).toBe('#fff4c7');
  expect(polygon(c.id).getAttribute('fill')).toBe('none');
  expect(polygon(c.id).textContent).toContain('Не разведан');
- expect(container.querySelector('[aria-label="Стихии гарнизонов"]').textContent).toContain('Смерть');
+ expect(container.querySelector('[aria-label="Владельцы секторов"]').textContent).toContain('Защитники Обителей');
 });
 
 test('a collision does not place the settlement optimistically',async()=>{
@@ -98,4 +98,14 @@ test('a collision does not place the settlement optimistically',async()=>{
  expect(container.querySelector('[role="alert"]').textContent).toContain('Рядом уже есть поселение.');
  expect(container.querySelector('[aria-label="Поселение вашей гильдии"]')).toBeNull();
  expect(button('Основать поселение здесь')).toBeTruthy();
+});
+
+
+test('ordinary mirror map loads known ownership without revealing unexplored sectors',async()=>{
+ const [a,b]=grid.sectors;
+ api.get.mockImplementation(path=>Promise.resolve({data:path==='/frontier-strategy/state'?{available:true,guild_id:0,guild_name:'Свои',guild_colours:{0:'#dc008a',4:'#2ca9de'},guilds:[{id:4,name:'Соседи',colour:'#2ca9de'}],sectors:[{id:a.id,owner:4,element:'Fire'}],bases:[],armies:[],caravans:[]}: {can_place:false,position:null}}));
+ await render();
+ expect(container.querySelector(`polygon[data-sector-id="${a.id}"]`).getAttribute('fill')).toBe('#2ca9de');
+ expect(container.querySelector(`polygon[data-sector-id="${b.id}"]`).getAttribute('fill')).toBe('none');
+ expect(api.post).not.toHaveBeenCalled();
 });
