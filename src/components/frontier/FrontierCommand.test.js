@@ -77,3 +77,19 @@ test('a cancelled battle is displayed as cancelled rather than a draw',async()=>
  await render();await click('Донесения');await click('Отчёт о бое');
  const dialog=document.querySelector('[role="dialog"]');expect(dialog.textContent).toContain('Бой отменён.');expect(dialog.textContent).not.toContain('ничья');expect(dialog.textContent).not.toContain('Победитель:');
 });
+
+
+test('battle recruitment essence is distinct from supplies, shows reserve and own coalition share',async()=>{
+ api.get.mockImplementation(path=>Promise.resolve({data:path.includes('/battles/')?
+   {status:'finished',sector:'Л050',result:{winner:1,rounds:2,log:[],recruitment_rewards:{0:4500000,1:9000000}}}:
+   {...fixture,recruitment:{current:500,capacity:500,pending_rewards:3.5,battle_reward_percent:5},
+   events:[{id:'e1',title:'Получена эссенция найма за победу',recruitment_essence:4.5,battle:'b1'}]}}));
+ await render();await click('Донесения');
+ expect(container.textContent).toContain('Эссенция найма: 500 / 500');
+ expect(container.textContent).toContain('Награды в резерве: 3,5');
+ expect(container.textContent).toContain('Эссенция найма за бой: +4,5');
+ await click('Отчёт о бое');
+ const dialog=document.querySelector('[role="dialog"]');
+ expect(dialog.textContent).toContain('Эссенция найма вашей гильдии: +4,5');
+ expect(dialog.textContent).not.toContain('+9');
+});

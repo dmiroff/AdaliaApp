@@ -729,7 +729,7 @@ const SettlementGarrison = observer(() => {
                             </small>
                             <small className="text-muted d-block mb-1">
                                 <i className="fas fa-clock me-1"></i>
-                                Время найма: {unit.hireTime} мин.
+                                Время найма: {Number(unit.hireTime).toLocaleString('ru-RU',{maximumFractionDigits:2})} мин.
                             </small>
                             <small className="text-muted d-block mb-1">
                                 <i className="fas fa-star me-1"></i>
@@ -1313,7 +1313,7 @@ const SettlementGarrison = observer(() => {
                                         </div>
                                         <div className="col-6">
                                             <div className="mass-total-label">Общее время:</div>
-                                            <div className="mass-total-value">{selectedHireUnit.hireTime * hireQuantity} мин</div>
+                                            <div className="mass-total-value">{Number(selectedHireUnit.hireTime * hireQuantity).toLocaleString('ru-RU',{maximumFractionDigits:2})} мин</div>
                                         </div>
                                     </div>
                                     {Object.keys(hireCostData.resourceCosts || {}).length > 0 && (

@@ -602,6 +602,7 @@ const SettlementBuildings = observer(() => {
                     </Card.Header>
                     
                     <Card.Body>
+                        {isFrontierObservationHost()&&currentData?.hire_speed_multiplier>1&&<p className="text-success">Темп найма: ×{Number(currentData.hire_speed_multiplier).toLocaleString('ru-RU')}. Время одного бойца: примерно {Number(currentData.hire_time).toLocaleString('ru-RU',{maximumFractionDigits:2})} мин.</p>}
                         {isFrontierObservationHost()&&key==='unit_t1_1'&&currentLevel>0&&settlementData.provisions_production&&<p className="text-success" role="status">Производство за сутки: {Number(settlementData.provisions_production.food_day||0).toLocaleString('ru-RU')} провианта, {Number(settlementData.provisions_production.essence_day||0).toLocaleString('ru-RU',{maximumFractionDigits:2})} эссенции содержания. Производство растёт с уровнем здания.</p>}
                         <div className="mb-3">
                             <div className="d-flex justify-content-between mb-1">
