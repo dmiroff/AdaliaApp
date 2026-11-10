@@ -14,3 +14,11 @@ test('fire breath scaling is readable and internal fields stay hidden', () => {
 test('different current and maximum charges are presented together', () => {
     expect(abilityRows({charges:1,max_charges:2})).toEqual([['Заряды','1 / 2']]);
 });
+
+test('vampire strike keeps player charges and hides monster roll metadata', () => {
+    const rows = abilityRows({type:'Attack_ability', apply_on:[1,2,3,4,5,6], charges:2, max_charges:2, effects:{vampirism:50, apply_on:[1,2,3,4,5,6]}});
+    expect(rows.filter(([key]) => key==='Заряды')).toEqual([['Заряды','2']]);
+    expect(JSON.stringify(rows)).toContain('Вампиризм');
+    expect(JSON.stringify(rows)).not.toContain('apply_on');
+    expect(JSON.stringify(rows)).not.toContain('1, 2, 3, 4, 5, 6');
+});

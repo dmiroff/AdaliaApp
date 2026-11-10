@@ -388,7 +388,9 @@ const Character = observer(() => {
   };
 
   const AbilityCard = ({ abilityKey, abilityData }) => {
-    const description = abilityData?.description || getDescription("Умения", abilityKey);
+    const description = abilityKey === 'Удар вампира'
+      ? getDescription("Умения", abilityKey)
+      : abilityData?.description || getDescription("Умения", abilityKey);
     return (
       <Col xs={12} sm={6} md={4} lg={3} className="mb-3">
         <Card className="h-100 fantasy-card">
