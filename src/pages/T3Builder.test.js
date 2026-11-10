@@ -65,6 +65,12 @@ test('inactive profiles are directed to test_t3', async () => {
   await mount({active:false});expect(container.textContent).toContain('Начните с test_t3');
 });
 
+test('locks the draft while the player waits in the duel queue', async () => {
+  const value=fixture();value.player.waiting_for_duel=true;await mount(value);
+  expect(container.textContent).toContain('Вы ожидаете дуэль');
+  expect(labelled('Добавить Личный ответ').disabled).toBe(true);
+});
+
 test.each([['Пиромант','Огонь · все воздействия'],['Неистовый','Оружейный класс']])('displays the selected class and its actual magic access: %s', async (name,label) => {
   const value=fixture();value.player.Character_class=name;value.magic_label=label;
   await mount(value);

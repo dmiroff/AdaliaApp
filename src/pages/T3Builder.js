@@ -45,7 +45,7 @@ export default function T3Builder() {
     row.name.toLocaleLowerCase('ru').includes(itemQuery.toLocaleLowerCase('ru')) &&
     (category === 'all' || (category === 'weapons' ? row.type === 'right_hand' : row.type !== 'right_hand'))), [data, itemQuery, category]);
   const selected = (data?.catalogue || []).find(row => row.name === selectedItem);
-  const blocked = busy || data?.player?.in_fight;
+  const blocked = busy || data?.player?.in_fight || data?.player?.waiting_for_duel || data?.player?.preparing_duel;
   const dirty = JSON.stringify([...draft].sort()) !== JSON.stringify([...(data?.player?.talents || [])].sort());
   const add = row => {
     if (!blocked && draft.length < data.talent_budget && canAddTalent(row, counts[row.name] || 0, savedCounts[row.name] || 0))
@@ -62,6 +62,7 @@ export default function T3Builder() {
     {data?.active && <>
       <div className="t3-builder__stats"><strong>{data.player.Character_class} · {data.player.level} ур.</strong><span>❤ {data.player.max_health}</span><span>⏳ {data.player.action_points} ОД</span><span>✦ {data.player.magic_slots} ОЗ</span><Badge bg="secondary">{data.magic_label || 'Власть · все воздействия'}</Badge></div>
       {data.player.in_fight && <Alert variant="warning">Идёт бой. Изменить сборку можно после завершения или прерывания тренировки.</Alert>}
+      {!data.player.in_fight && (data.player.waiting_for_duel || data.player.preparing_duel) && <Alert variant="warning">Вы ожидаете дуэль. Перед изменением сборки выйдите из очереди в игровом чате.</Alert>}
       <Tabs defaultActiveKey="talents" className="mb-3">
         <Tab eventKey="talents" title="Таланты">
           <div className="t3-builder__talent-actions"><strong>Выбрано {draft.length} из {data.talent_budget}</strong><span>Осталось: {Math.max(0, data.talent_budget - draft.length)}</span><Button variant="outline-secondary" disabled={blocked || !draft.length} onClick={() => setDraft([])}>Сбросить выбор</Button><Button className="fantasy-btn" disabled={blocked || !dirty} onClick={() => mutate('put','talents',{talents: draft},'Таланты сохранены. Параметры пересчитаны.')}>Сохранить таланты</Button></div>
