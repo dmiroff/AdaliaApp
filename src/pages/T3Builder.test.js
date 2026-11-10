@@ -64,3 +64,11 @@ test('locks changes during combat and gives a clear entry instruction', async ()
 test('inactive profiles are directed to test_t3', async () => {
   await mount({active:false});expect(container.textContent).toContain('Начните с test_t3');
 });
+
+test.each([['Пиромант','Огонь · все воздействия'],['Неистовый','Оружейный класс']])('displays the selected class and its actual magic access: %s', async (name,label) => {
+  const value=fixture();value.player.Character_class=name;value.magic_label=label;
+  await mount(value);
+  expect(container.textContent).toContain(name);
+  expect(container.textContent).toContain(label);
+  expect(container.textContent).not.toContain('Власть · все воздействия');
+});

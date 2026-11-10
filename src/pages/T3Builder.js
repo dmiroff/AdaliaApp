@@ -58,9 +58,9 @@ export default function T3Builder() {
     {error && <Alert variant="danger" role="alert">{typeof error === 'string' ? error : 'Проверьте выбранные параметры сборки.'}</Alert>}
     {notice && <Alert variant="success" role="status">{notice}</Alert>}
     {!data && !error && <p role="status"><Spinner size="sm"/> Загружаем сборку…</p>}
-    {data && !data.active && <div><h2>Начните с test_t3</h2><p>Введите <strong>test_t3</strong> в личном диалоге с зеркалом или в игровом чате, затем нажмите «Получить Арбитра».</p><p>Исходный персонаж сохраняется. После входа здесь появятся таланты и снаряжение тестового персонажа.</p></div>}
+    {data && !data.active && <div><h2>Начните с test_t3</h2><p>Введите <strong>test_t3</strong> в личном диалоге с зеркалом или в игровом чате, затем нажмите «Выбрать класс».</p><p>Исходный персонаж сохраняется. После входа здесь появятся таланты и снаряжение тестового персонажа.</p></div>}
     {data?.active && <>
-      <div className="t3-builder__stats"><strong>{data.player.Character_class} · {data.player.level} ур.</strong><span>❤ {data.player.max_health}</span><span>⏳ {data.player.action_points} ОД</span><span>✦ {data.player.magic_slots} ОЗ</span><Badge bg="secondary">Власть · все воздействия</Badge></div>
+      <div className="t3-builder__stats"><strong>{data.player.Character_class} · {data.player.level} ур.</strong><span>❤ {data.player.max_health}</span><span>⏳ {data.player.action_points} ОД</span><span>✦ {data.player.magic_slots} ОЗ</span><Badge bg="secondary">{data.magic_label || 'Власть · все воздействия'}</Badge></div>
       {data.player.in_fight && <Alert variant="warning">Идёт бой. Изменить сборку можно после завершения или прерывания тренировки.</Alert>}
       <Tabs defaultActiveKey="talents" className="mb-3">
         <Tab eventKey="talents" title="Таланты">
