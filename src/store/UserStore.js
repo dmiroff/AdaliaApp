@@ -9,12 +9,16 @@ export default class UserStore {
         this._filters = [];
         this._selected_type = null;
         this._loading = false;
+        this._polygonOnly = false;
         makeAutoObservable(this);
     }
 
     setIsAuth(bool) {
         this._isAuth = bool;
     }
+
+    setPolygonOnly(value) { this._polygonOnly = Boolean(value); }
+    get PolygonOnly() { return this._polygonOnly; }
 
     setUser(user) {
         if (typeof user === 'object' && user.id) {
@@ -110,6 +114,7 @@ export default class UserStore {
         localStorage.removeItem("token_expires");
         localStorage.removeItem("username");
         this.setIsAuth(false);
+        this.setPolygonOnly(false);
         this.setUser(0);
         this.setPlayer({});
         this.setPlayerInventory({});

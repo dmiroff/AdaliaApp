@@ -1,4 +1,5 @@
 import {isPlayerShopsEnabled} from '../utils/playerShops';
+import {isT3BuilderEnabled} from '../utils/t3Builder';
 import { isPlayerEventsEnabled } from '../utils/playerEvents';
 import { GAME_DRAFT_ROUTE, isGameDraftEnabled } from '../utils/gameDraftProtocol';
 import { observer } from "mobx-react-lite";
@@ -48,7 +49,7 @@ const NavBar = observer(() => {
 
   useEffect(() => {
     setCanPlayNavyi(false);
-    if (!user.IsAuth || window.location.hostname !== 'test.adaliagame.ru') return;
+    if (!user.IsAuth || user.PolygonOnly || window.location.hostname !== 'test.adaliagame.ru') return;
     const controller = new AbortController();
     let pending = false;
     const checkAccess = async () => {
@@ -72,7 +73,7 @@ const NavBar = observer(() => {
       window.removeEventListener('focus', checkAccess);
       window.clearInterval(timer);
     };
-  }, [user.IsAuth, user.user.id, location.pathname]);
+  }, [user.IsAuth, user.PolygonOnly, user.user.id, location.pathname]);
 
   useEffect(() => {
     document.body.classList.toggle("has-mobile-bottom-nav", user.IsAuth);
@@ -93,8 +94,10 @@ const NavBar = observer(() => {
     navigate(path);
   };
 
-  const desktopItems = [...(isGameDraftEnabled() ? [[GAME_DRAFT_ROUTE, 'Игровой чат'], ...navigationItems] : navigationItems), ...(canPlayNavyi ? [['/navyi/', '🌲 Навьи тропы']] : [])];
-  const moreItems = [...(isGameDraftEnabled() ? [[GAME_DRAFT_ROUTE, '✉️', 'Игровой чат'], ...mobileMoreItems] : mobileMoreItems), ...(canPlayNavyi ? [['/navyi/', '🌲', 'Навьи тропы']] : [])];
+  const trialLinks = isT3BuilderEnabled() ? [['/t3', '🧪 Сборка Т3']] : [];
+  const desktopItems = user.PolygonOnly ? [[GAME_DRAFT_ROUTE, 'Игровой чат'], ...trialLinks] : [...trialLinks, ...(isGameDraftEnabled() ? [[GAME_DRAFT_ROUTE, 'Игровой чат'], ...navigationItems] : navigationItems), ...(canPlayNavyi ? [['/navyi/', '🌲 Навьи тропы']] : [])];
+  const primaryItems = user.PolygonOnly ? [[GAME_DRAFT_ROUTE, '✉️', 'Игровой чат'], ['/t3', '🧪', 'Сборка Т3']] : mobilePrimaryItems;
+  const moreItems = user.PolygonOnly ? [] : [...(isT3BuilderEnabled() ? [['/t3', '🧪', 'Сборка Т3']] : []), ...(isGameDraftEnabled() ? [[GAME_DRAFT_ROUTE, '✉️', 'Игровой чат'], ...mobileMoreItems] : mobileMoreItems), ...(canPlayNavyi ? [['/navyi/', '🌲', 'Навьи тропы']] : [])];
   const moreSectionIsActive = moreItems.some(([path]) => location.pathname.startsWith(path));
 
   return (
@@ -104,7 +107,7 @@ const NavBar = observer(() => {
         variant="light"
       >
         <div className="fantasy-navbar__inner">
-          <Navbar.Brand onClick={() => handleNavLinkClick(user.IsAuth ? '/inventory' : '/notauth')}>
+          <Navbar.Brand onClick={() => handleNavLinkClick(user.IsAuth ? (user.PolygonOnly ? '/t3' : '/inventory') : '/notauth')}>
             <span className="fantasy-navbar__crest" aria-hidden="true">A</span>
             <span className="fantasy-navbar__title">Адалия</span>
           </Navbar.Brand>
@@ -128,22 +131,22 @@ const NavBar = observer(() => {
                 ))}
               </Nav>
 
-              <Button
+              {!user.PolygonOnly && <Button
                 onClick={handleSettingsClick}
                 className="fantasy-navbar__settings"
                 title="Настройки"
                 aria-label="Настройки"
               >
                 <span aria-hidden="true">⚙️</span>
-              </Button>
+              </Button>}
             </div>
           )}
         </div>
       </Navbar>
 
       {user.IsAuth && (
-        <nav className="mobile-bottom-nav d-lg-none" aria-label="Основная навигация">
-          {mobilePrimaryItems.map(([path, icon, label]) => (
+        <nav className="mobile-bottom-nav d-lg-none" aria-label="Основная навигация" style={user.PolygonOnly ? {gridTemplateColumns:'repeat(2,minmax(0,1fr))'} : undefined}>
+          {primaryItems.map(([path, icon, label]) => (
             <button
               key={path}
               type="button"
@@ -155,7 +158,7 @@ const NavBar = observer(() => {
               <span>{label}</span>
             </button>
           ))}
-          <button
+          {!user.PolygonOnly && <button
             type="button"
             className={`mobile-bottom-nav__item ${moreSectionIsActive ? "is-active" : ""}`}
             onClick={() => setShowMobileMore(true)}
@@ -164,7 +167,7 @@ const NavBar = observer(() => {
           >
             <span className="mobile-bottom-nav__icon" aria-hidden="true">☰</span>
             <span>Ещё</span>
-          </button>
+          </button>}
         </nav>
       )}
 

@@ -1,4 +1,5 @@
 import {isPlayerShopsEnabled} from './utils/playerShops';
+import {isT3BuilderEnabled} from './utils/t3Builder';
 import { isPlayerEventsEnabled } from './utils/playerEvents';
 import { 
   ADMIN_ROUTE, 
@@ -16,6 +17,7 @@ import {
 } from "./utils/constants";
 
 export const authRoutes = [
+    ...(isT3BuilderEnabled() ? [{path:'/t3',name:'T3Builder'}] : []),
     ...(isPlayerShopsEnabled() ? [{path:'/player-shops',name:'PlayerShops'}] : []),
     ...(isPlayerEventsEnabled() ? [{path: '/player-events', name: 'PlayerEvents'}, {path: '/sign-techniques', name: 'SignTechniques'}] : []),
     {

@@ -23,6 +23,7 @@ const ItemPage = React.lazy(() => import('../pages/ItemPage'));
 const Guild = React.lazy(() => import('../pages/Guild'));
 const TermsAndPrivacyPage = React.lazy(() => import('../pages/TermsAndPrivacyPage'));
 const Help = React.lazy(() => import('../pages/Help'));
+const T3Builder = React.lazy(() => import('../pages/T3Builder'));
 
 const LoadingScreen = ({ message = "Загружаем Адалию…" }) => (
     <div className="app-loading" role="status" aria-live="polite">
@@ -104,13 +105,18 @@ const AppRouter = observer(() => {
                 return;
             }
             if (verifyResult.valid) {
-                if (window.location.hostname === 'test.adaliagame.ru' && sessionStorage.getItem('navyi_return') === '1') {
+                const polygonOnly = verifyResult.data?.polygon_only === true;
+                user.setPolygonOnly?.(polygonOnly);
+                if (!polygonOnly && window.location.hostname === 'test.adaliagame.ru' && sessionStorage.getItem('navyi_return') === '1') {
                     sessionStorage.removeItem('navyi_return');
                     window.location.assign('/navyi/');
                     return;
                 }
                 user.setIsAuth(true);
                 user.setUser(parseInt(userId));
+                if (polygonOnly && !['/t3', '/play-draft', '/help'].includes(location.pathname)) {
+                    navigate('/t3', {replace: true});
+                }
             } else {
                 clearAuthData();
                 user.setIsAuth(false);
@@ -134,6 +140,9 @@ const AppRouter = observer(() => {
     }, [checkAuth]);
 
     const ProtectedRoute = ({ children }) => {
+        if (user.PolygonOnly && !['/t3', '/play-draft', '/help'].includes(location.pathname)) {
+            return <Navigate to="/t3" replace />;
+        }
         if (isChecking && !isInitialized) {
             return <LoadingScreen message="Проверяем вход…" />;
         }
@@ -193,6 +202,7 @@ const AppRouter = observer(() => {
                 {authRoutes.map(({ path, name }) => {                    
                     let Component;
                     switch (name) {
+                        case 'T3Builder': Component = T3Builder; break;
                         case 'PlayerEvents': Component = PlayerEvents; break;
                         case 'SignTechniques': Component = SignTechniques; break;
                         case 'Admin': Component = Admin; break;
