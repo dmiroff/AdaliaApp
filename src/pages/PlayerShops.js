@@ -2,6 +2,7 @@ import React, {useContext, useEffect, useRef, useState} from 'react';
 import {Context} from '../index';
 import api from '../http/apiClient';
 import './PlayerShops.css';
+import PlayerShopSearch from '../components/PlayerShopSearch';
 import {isPlayerShopMirror} from '../utils/playerShops';
 
 const number = value => Number(value);
@@ -28,8 +29,6 @@ export default function PlayerShops() {
     const [testReport,setTestReport] = useState(null);
     useEffect(() => {let current=true;api.get('/player').then(r => {if(current)setAdmin(r.data?.data?.is_admin === true);}).catch(() => {});return () => {current=false;};}, []);
     const [shopId,setShopId] = useState('');
-    const [shopQuery,setShopQuery] = useState('');
-    const [searchResults,setSearchResults] = useState(null);
     const [editingSnapshot,setEditingSnapshot] = useState(null);
     const [deletingRule,setDeletingRule] = useState(null);
     const ruleEditor=useRef(null);
@@ -80,11 +79,6 @@ export default function PlayerShops() {
             setShopId(String(id));setLoadedShop(info);setCatalog(rows);setBalance(funds);setQuote(null);
         });
     }
-    async function searchShops(event,offset=0,query=shopQuery.trim()) {
-        event?.preventDefault();
-        if (/^\d+$/.test(query) && offset===0) {await openShopById(query);return;}
-        await act(async () => setSearchResults({...((await api.get('/v1/shops/search',{params:{q:query,offset}})).data),query}));
-    }
     function editRule(value) {
         setEditingSnapshot(JSON.parse(JSON.stringify(value)));
         const f=value.filters,p=value.price;
@@ -132,8 +126,7 @@ export default function PlayerShops() {
     return <main className="player-shops"><header><p className="ps-eyebrow">ТОРГОВЫЕ ДОМА АДАЛИИ{isPlayerShopMirror() ? ' · ЗЕРКАЛО' : ''}</p><h1>Магазины игроков</h1><p>Своя лавка, своя валюта. Покупайте с подтверждением цены и настройте торговлю без программирования.</p></header>
         <nav className="ps-tabs" aria-label="Разделы магазина">{[['browse','Витрина'],['manage','Мой магазин'],['history','История']].map(([id,label]) => <button key={id} className={tab===id?'active':''} onClick={() => {setTab(id);setError('');setNotice('');}}>{label}</button>)}</nav>
         {error && <div role="alert" className="ps-error">{error}</div>}{notice && <div role="status" className="ps-notice">{notice}</div>}
-        {tab==='browse' && <><section className="ps-panel"><h2>Найти магазин</h2><form onSubmit={searchShops} className="ps-inline"><label>Название магазина или имя владельца<input maxLength="60" placeholder="Например, Лавка Кабачка" value={shopQuery} onChange={e => setShopQuery(e.target.value)}/></label><button disabled={busy}>Найти магазин</button></form>
-            {searchResults && <div aria-live="polite"><ul className="ps-search-results">{searchResults.items.map(r => <li key={r.shop_id}><div><strong>{r.name}</strong><p>Владелец: {r.owner_name} · Валюта: {r.currency_name}</p></div><button disabled={busy} onClick={() => openShopById(r.shop_id)}>Открыть «{r.name}»</button></li>)}</ul>{searchResults.items.length===0 && <p>Открытые магазины не найдены. Попробуйте часть названия.</p>}<div className="ps-inline">{searchResults.offset>0 && <button disabled={busy} onClick={() => searchShops(null,Math.max(0,searchResults.offset-20),searchResults.query)}>Назад к результатам</button>}{searchResults.has_more && <button disabled={busy} onClick={() => searchShops(null,searchResults.offset+20,searchResults.query)}>Ещё магазины</button>}</div></div>}</section>
+        {tab==='browse' && <><section className="ps-panel"><PlayerShopSearch disabled={busy} onOpen={openShopById}/></section>
             {loadedShop && <><section className="ps-panel"><h2>{loadedShop.name}</h2><p>Ваша валюта: <strong>{fmt(balance?.balance)} {loadedShop.currency_name}</strong></p>
                 <div className="ps-products">{catalog.items.map(item => <article className="ps-product" key={item.item_id}><small>Предмет №{item.item_id}</small><h3>{item.name}</h3><p>{fmt(item.offer.unit_price)} {moneyName(item.offer.currency,loadedShop.currency_name)} / шт.</p><p>Доступно: {fmt(item.offer.quantity)}</p><label>Количество<input aria-label={`Количество: ${item.name}`} type="number" min="1" max={item.offer.quantity} value={qty[item.item_id] || 1} onChange={e => setQty({...qty,[item.item_id]:e.target.value})}/></label><button disabled={busy} onClick={() => askQuote(item.item_id,qty[item.item_id] || 1)}>Рассчитать покупку</button></article>)}</div>{catalog.items.length===0 && <p>В этой части витрины нет доступных товаров.</p>}
                 <div className="ps-inline">{catalog.offset>0 && <button disabled={busy} onClick={() => act(async () => setCatalog((await api.get(url(loadedShop.shop_id,`/offers?offset=${Math.max(0,catalog.offset-100)}`))).data))}>Предыдущие товары</button>}{catalog.next_offset!==null && catalog.next_offset!==undefined && <button disabled={busy} onClick={() => act(async () => setCatalog((await api.get(url(loadedShop.shop_id,`/offers?offset=${catalog.next_offset}`))).data))}>Следующие товары</button>}</div>
