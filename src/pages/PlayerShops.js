@@ -3,6 +3,7 @@ import {Context} from '../index';
 import api from '../http/apiClient';
 import './PlayerShops.css';
 import PlayerShopSearch from '../components/PlayerShopSearch';
+import ShopCatalog from '../components/ShopCatalog';
 import {isPlayerShopMirror} from '../utils/playerShops';
 
 const number = value => Number(value);
@@ -32,8 +33,9 @@ export default function PlayerShops() {
     const [editingSnapshot,setEditingSnapshot] = useState(null);
     const [deletingRule,setDeletingRule] = useState(null);
     const ruleEditor=useRef(null);
+    const offerEditor=useRef(null);
     const [loadedShop,setLoadedShop] = useState(null);
-    const [catalog,setCatalog] = useState({items:[]});
+    const [catalogRevision,setCatalogRevision] = useState(0);
     const [balance,setBalance] = useState(null);
     const [manage,setManage] = useState(null);
     const [stock,setStock] = useState({items:[]});
@@ -43,7 +45,6 @@ export default function PlayerShops() {
     const [notice,setNotice] = useState('');
     const [error,setError] = useState('');
     const [busy,setBusy] = useState(false);
-    const [qty,setQty] = useState({});
     const [quote,setQuote] = useState(null);
     const [history,setHistory] = useState([]);
     const [offerItem,setOfferItem] = useState('');
@@ -74,9 +75,8 @@ export default function PlayerShops() {
     async function openShopById(id) {
         await act(async () => {
             const info=(await api.get(url(id))).data;
-            const rows=(await api.get(url(id,'/offers'))).data;
             const funds=(await api.get(url(id,`/wallets/${ownerId}`))).data;
-            setShopId(String(id));setLoadedShop(info);setCatalog(rows);setBalance(funds);setQuote(null);
+            setShopId(String(id));setLoadedShop(info);setBalance(funds);setQuote(null);setCatalogRevision(v => v+1);
         });
     }
     function editRule(value) {
@@ -113,7 +113,7 @@ export default function PlayerShops() {
         await act(async () => {
             const order=await mutate(loadedShop.shop_id,'/orders',{quote_id:quote.quote_id},'post','confirm:'+quote.quote_id);
             setQuote(null); setNotice(`Готово: ${order.item_name}, ${order.quantity} шт. Заказ ${order.order_id}.`);
-            setCatalog((await api.get(url(loadedShop.shop_id,'/offers'))).data);
+            setCatalogRevision(v => v+1);
             setBalance((await api.get(url(loadedShop.shop_id,`/wallets/${ownerId}`))).data);
         });
     }
@@ -128,13 +128,11 @@ export default function PlayerShops() {
         {error && <div role="alert" className="ps-error">{error}</div>}{notice && <div role="status" className="ps-notice">{notice}</div>}
         {tab==='browse' && <><section className="ps-panel"><PlayerShopSearch disabled={busy} onOpen={openShopById}/></section>
             {loadedShop && <><section className="ps-panel"><h2>{loadedShop.name}</h2><p>Ваша валюта: <strong>{fmt(balance?.balance)} {loadedShop.currency_name}</strong></p>
-                <div className="ps-products">{catalog.items.map(item => <article className="ps-product" key={item.item_id}><small>Предмет №{item.item_id}</small><h3>{item.name}</h3><p>{fmt(item.offer.unit_price)} {moneyName(item.offer.currency,loadedShop.currency_name)} / шт.</p><p>Доступно: {fmt(item.offer.quantity)}</p><label>Количество<input aria-label={`Количество: ${item.name}`} type="number" min="1" max={item.offer.quantity} value={qty[item.item_id] || 1} onChange={e => setQty({...qty,[item.item_id]:e.target.value})}/></label><button disabled={busy} onClick={() => askQuote(item.item_id,qty[item.item_id] || 1)}>Рассчитать покупку</button></article>)}</div>{catalog.items.length===0 && <p>В этой части витрины нет доступных товаров.</p>}
-                <div className="ps-inline">{catalog.offset>0 && <button disabled={busy} onClick={() => act(async () => setCatalog((await api.get(url(loadedShop.shop_id,`/offers?offset=${Math.max(0,catalog.offset-100)}`))).data))}>Предыдущие товары</button>}{catalog.next_offset!==null && catalog.next_offset!==undefined && <button disabled={busy} onClick={() => act(async () => setCatalog((await api.get(url(loadedShop.shop_id,`/offers?offset=${catalog.next_offset}`))).data))}>Следующие товары</button>}</div>
+                <ShopCatalog key={loadedShop.shop_id} shopId={loadedShop.shop_id} currencyName={loadedShop.currency_name} disabled={busy} revision={catalogRevision} onBuy={askQuote}/>
             </section><section className="ps-panel"><h2>Продать магазину</h2><p>Магазин рассчитает цену по первому подходящему правилу скупки. До подтверждения вещи остаются у вас.</p><form className="ps-grid" onSubmit={e => {e.preventDefault();askQuote(sell.item_id,sell.quantity,'sell');}}><label>ID вашего предмета<input required type="number" value={sell.item_id} onChange={e => setSell({...sell,item_id:e.target.value})}/></label><label>Количество<input required type="number" min="1" value={sell.quantity} onChange={e => setSell({...sell,quantity:e.target.value})}/></label><button disabled={busy}>Рассчитать продажу</button></form></section></>}
         </>}
         {tab==='manage' && <>{admin && isPlayerShopMirror() && <section className="ps-panel"><h2>Проверка на фиктивных участниках</h2><p>Только для администратора зеркала. Тест временно создаёт магазин, покупателя и вещи, проверяет сделки через настоящий API и команду бота, затем откатывает все изменения. Ваш персонаж не используется в сделках.</p><button disabled={busy} onClick={() => act(async () => {setTestReport(null);setTestReport((await api.post(url(ownerId,'/self-test'),null,{timeout:90000})).data);})}>Проверить магазин без второй учётки</button>{testReport && <div className="ps-notice" role="status"><strong>{testReport.status==='passed'?'Все проверки пройдены':'Проверка завершена'}</strong><ul>{testReport.steps.map((step,i) => <li key={i}>{step}</li>)}</ul><p>Откат: {testReport.rolled_back?'подтверждён':'не подтверждён'}. Персонаж: {testReport.actor_unchanged?'без изменений':'требуется проверка'}.</p></div>}</section>}<section className="ps-panel"><h2>Настройка лавки</h2><p>Для аккаунтов класса «Магазин». Ваш ID: {ownerId}. Переименование валюты сохраняет все балансы.</p><button disabled={busy} onClick={loadManager}>Загрузить мои настройки и склад</button><form onSubmit={e => {e.preventDefault();act(async () => {const c=await mutate(ownerId,'',{name,currency_name:currencyName,enabled},'patch');setManage(c);setNotice('Настройки сохранены.');});}} className="ps-grid"><label>Название магазина<input required maxLength="60" value={name} onChange={e => setName(e.target.value)}/></label><label>Название валюты<input required maxLength="60" value={currencyName} onChange={e => setCurrencyName(e.target.value)}/></label><label className="ps-check"><input type="checkbox" checked={enabled} onChange={e => setEnabled(e.target.checked)}/>Магазин открыт</label><button disabled={busy}>Сохранить настройки</button></form></section>
-            <section className="ps-panel"><h2>Товар со склада</h2><p>Точный товар важнее шаблона. Количество 0 снимает товар с продажи. Остаток проверяется при покупке.</p><form onSubmit={e => {e.preventDefault();act(async () => {const r=await mutate(ownerId,`/offers/${offerItem}`,{quantity:number(offerQty),currency:offerCurrency,price:priceData(offerPrice)},'put');setNotice(`${r.name}: цена ${fmt(r.unit_price)} сохранена.`);});}}><div className="ps-grid"><label>Предмет<select aria-label="Предмет" required value={offerItem} onChange={e => setOfferItem(e.target.value)}><option value="">Выберите предмет</option>{stock.items.map(item => <option key={item.item_id} value={item.item_id}>{item.name} (#{item.item_id}, {item.free} шт.)</option>)}</select></label><label>Лимит штук<input required type="number" min="0" max={selected?.free || 1000000} value={offerQty} onChange={e => setOfferQty(e.target.value)}/></label><label>Валюта<select value={offerCurrency} onChange={e => setOfferCurrency(e.target.value)}><option value="shop">{currencyName}</option><option value="gold">Золото</option></select></label></div><PriceFields value={offerPrice} onChange={setOfferPrice}/>{preview!==null && <p className="ps-notice">Предпросмотр: {fmt(preview)} {moneyName(offerCurrency,currencyName)} / шт. Окончательную цену проверит сервер.</p>}<button disabled={busy || !selected}>Сохранить товар</button></form>
-                {stock.next_offset!==null && stock.next_offset!==undefined && <button disabled={busy} onClick={() => act(async () => {const more=(await api.get(url(ownerId,`/inventory?offset=${stock.next_offset}`))).data;setStock({...more,items:[...stock.items,...more.items]});})}>Ещё предметы склада</button>}
+            <section className="ps-panel"><h2>Товар со склада</h2>{manage && <ShopCatalog shopId={ownerId} privateStock disabled={busy} revision={catalogRevision+manage.revision} onSelect={item => {setOfferItem(String(item.item_id));setStock(current => ({...current,items:[...current.items.filter(row => row.item_id!==item.item_id),item]}));offerEditor.current?.scrollIntoView({behavior:'smooth',block:'start'});}}/>}<p>Точный товар важнее шаблона. Количество 0 снимает товар с продажи. Остаток проверяется при покупке.</p><form ref={offerEditor} onSubmit={e => {e.preventDefault();act(async () => {const r=await mutate(ownerId,`/offers/${offerItem}`,{quantity:number(offerQty),currency:offerCurrency,price:priceData(offerPrice)},'put');setNotice(`${r.name}: цена ${fmt(r.unit_price)} сохранена.`);setCatalogRevision(v => v+1);});}}><div className="ps-grid"><label>Предмет<select aria-label="Предмет" required value={offerItem} onChange={e => setOfferItem(e.target.value)}><option value="">Выберите предмет</option>{stock.items.map(item => <option key={item.item_id} value={item.item_id}>{item.name} (#{item.item_id}, {item.free} шт.)</option>)}</select></label><label>Лимит штук<input required type="number" min="0" max={selected?.free || 1000000} value={offerQty} onChange={e => setOfferQty(e.target.value)}/></label><label>Валюта<select value={offerCurrency} onChange={e => setOfferCurrency(e.target.value)}><option value="shop">{currencyName}</option><option value="gold">Золото</option></select></label></div><PriceFields value={offerPrice} onChange={setOfferPrice}/>{preview!==null && <p className="ps-notice">Предпросмотр: {fmt(preview)} {moneyName(offerCurrency,currencyName)} / шт. Окончательную цену проверит сервер.</p>}<button disabled={busy || !selected}>Сохранить товар</button></form>
             </section>
             <section className="ps-panel" ref={ruleEditor}><h2>{editingSnapshot ? `Редактирование: ${editingSnapshot.id}` : 'Шаблоны продажи и скупки'}</h2><p>Правила применяются по порядку: первое совпадение. Лимиты штук и бюджета уменьшаются после каждой сделки. Скупка за валюту магазина начисляет её продавцу в пределах бюджета.</p><form onSubmit={e => {e.preventDefault();act(async () => {
                 const filters={...(rule.item_id!==''?{item_id:number(rule.item_id)}:{}),...(rule.type?{type:rule.type}:{}),...(rule.min_level!==''?{min_level:number(rule.min_level)}:{}),...(rule.max_level!==''?{max_level:number(rule.max_level)}:{}),...(rule.rarity!==''?{rarity:number(rule.rarity)}:{}),...(rule.prefix!=='any'?{prefix:rule.prefix==='yes'}:{})};
