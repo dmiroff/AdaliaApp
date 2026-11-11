@@ -107,11 +107,13 @@ export default function GameLive(){
   const restLeft=restMatch?Math.max(0,Math.ceil((Number(lastBot.time)+Number(restMatch[1])*1000-clock)/1000)):0;
   const battle=player?.in_fight?[...messages].reverse().find(message=>message.role==='bot'&&/Текущий ход:|Свободных очков действий:/.test(message.text)):null;
   const battleAP=battle?.text.match(/🏃\s*(\d+)|Свободных очков действий:\s*(\d+)/);
+  const combat=player?.in_fight?player?.combat:null;
+  const actionPoints=combat?.current_action_points??(battleAP?Number(battleAP[1]??battleAP[2]):null);
   const warnings=battle?.text.split('\n').filter(line=>/◈|⚠️/.test(line)) || [];
   const statusIndex=battle?.text.search(/Текущий ход:|Команда 2:/) ?? -1;
   const battleState=battle && statusIndex>=0?battle.text.slice(statusIndex):battle?.text;
   const turnLog=battle && statusIndex>0?battle.text.slice(0,statusIndex).trim():'';
-  const health=Number(player?.current_health)||0,maxHealth=Number(player?.max_health)||1;
+  const health=Number(combat?.current_health??player?.current_health)||0,maxHealth=Number(combat?.max_health??player?.max_health)||1;
   return <section className="game-draft game-live-mobile" aria-labelledby="game-live-title">
     <header className="game-draft-heading"><div><h1 id="game-live-title">Игровой чат</h1></div><a className="game-draft-app-link" href="/inventory">К рюкзаку ↗</a></header>
     {!authenticated?<div className="game-draft-banner"><strong>Войдите в приложение</strong><span>Откройте свою ссылку из бота, затем вернитесь в игровой чат.</span></div>:<>
@@ -126,7 +128,7 @@ export default function GameLive(){
         <button type="button" className="game-draft-action mt-3" disabled={!data||!!pending||!!retry} onClick={()=>send('Где я')}>Обновить игровую клавиатуру</button>
       </aside><div className="game-draft-chat"><div className="game-draft-chat__heading"><span>{player?.in_fight?'Бой':'Сейчас'}</span><button className="game-history-toggle" type="button" aria-expanded={showHistory} onClick={()=>setShowHistory(value=>!value)}>{showHistory?'К текущему событию':'История сообщений'}</button></div>
         {!showHistory&&<section className="game-current-state" aria-label="Текущая ситуация">
-          <div className="game-current-vitals"><strong>❤️ {health}/{maxHealth}</strong>{battleAP&&<strong>🏃 {battleAP[1] || battleAP[2]} ОД</strong>}<span>{player?.name}</span></div>
+          <div className="game-current-vitals"><strong>❤️ {health}/{maxHealth}</strong>{actionPoints!==null&&<strong>🏃 {actionPoints} ОД</strong>}{combat?.active_magic_slots!=null&&<strong>🔹 {combat.active_magic_slots} ОЗ</strong>}<span>{player?.name}</span></div>
           {restLeft>0&&<p role="status">Отдых · осталось {restLeft} сек.</p>}
           {warnings.map((warning,index)=><p key={index} className="game-current-warning">{warning}</p>)}
           {currentMessage?.image_url&&!player?.in_fight&&<MessageImage url={currentMessage.image_url}/>}
