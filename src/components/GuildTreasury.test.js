@@ -18,7 +18,7 @@ test('treasury is available on base and member cannot withdraw or order', async 
   expect(api.get).toHaveBeenCalledWith('/frontier-economy/guild-state');
   expect(screen.getByRole('button',{name:'Внести в казну'})).toBeEnabled();
   expect(screen.queryByRole('button',{name:'Получить из казны'})).not.toBeInTheDocument();
-  expect(screen.queryByRole('button',{name:'Заказать аватарку за 200 далеонов'})).not.toBeInTheDocument();
+  expect(screen.queryByRole('button',{name:'Заказать аватарку за 1000 далеонов'})).not.toBeInTheDocument();
 });
 
 test('avatar is charged only after confirmation, retry retains paid order id', async () => {
@@ -26,8 +26,8 @@ test('avatar is charged only after confirmation, retry retains paid order id', a
   api.post.mockImplementation((url) => url.endsWith('/draft') ? Promise.resolve({data:{id:request_id,guild_id:0,brief:'Рыцарь'}}) : Promise.reject(new Error('offline')));
   render(<GuildTreasury/>);await screen.findByText('Рыцари');
   fireEvent.change(screen.getByLabelText('Какую аватарку нарисовать?'),{target:{value:'Рыцарь'}});
-  fireEvent.click(screen.getByRole('button',{name:'Заказать аватарку за 200 далеонов'}));
-  await screen.findByText('Списать 200 далеонов из казны и отправить заказ администраторам?');
+  fireEvent.click(screen.getByRole('button',{name:'Заказать аватарку за 1000 далеонов'}));
+  await screen.findByText('Списать 1000 далеонов из казны и отправить заказ администраторам?');
   expect(api.post).toHaveBeenCalledTimes(1);
   fireEvent.click(screen.getByRole('button',{name:'Подтвердить'}));
   await screen.findByText(/Ответ не получен. Повторное подтверждение/);

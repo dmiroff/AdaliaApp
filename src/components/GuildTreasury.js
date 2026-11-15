@@ -52,7 +52,7 @@ export default function GuildTreasury() {
         const request = {...pending}; delete request.uncertain;
         await api.post('/frontier-economy/treasury-action', request);
       }
-      setSuccess(pending.kind === 'avatar' ? (avatarStatus === 'rejected' ? 'Заявка отклонена. 200 далеонов возвращены в казну.' : avatarStatus === 'completed' ? 'Аватарка уже установлена.' : 'Заявка на аватарку оплачена из казны и добавлена в очередь администраторам.') : 'Операция сохранена.');
+      setSuccess(pending.kind === 'avatar' ? (avatarStatus === 'rejected' ? 'Заявка отклонена. Оплаченные далеоны возвращены в казну.' : avatarStatus === 'completed' ? 'Аватарка уже установлена.' : 'Заявка на аватарку оплачена из казны и добавлена в очередь администраторам.') : 'Операция сохранена.');
       remember(null); setAmount(''); setBrief(''); await load();
     } catch (e) {
       remember({...pending, uncertain: !e.response || e.response.status >= 500});
@@ -83,13 +83,13 @@ export default function GuildTreasury() {
         {data.can_manage && <Button disabled={disabled} onClick={() => propose('withdraw')}>Получить из казны</Button>}
       </div>
       <h3>Аватарка гильдии</h3>
-      <p>Заказ у администраторов — <strong>200 далеонов из казны</strong>. Картинка появится в списке гильдий. При отказе 200 далеонов вернутся в казну.</p>
+      <p>Заказ у администраторов — <strong>1000 далеонов из казны</strong>. Картинка появится в списке гильдий. При отказе 1000 далеонов вернутся в казну.</p>
       {(data.avatar_orders || []).map(order => <Alert key={order.id} variant="info">Оплаченная заявка: {order.brief}<br/>Номер: {order.id}</Alert>)}
       {data.can_manage && <>
         <Form.Group className="mb-3"><Form.Label htmlFor="guild-avatar-brief">Какую аватарку нарисовать?</Form.Label>
           <Form.Control as="textarea" id="guild-avatar-brief" maxLength={1000} value={brief} onChange={e => setBrief(e.target.value)}/>
         </Form.Group>
-        <Button disabled={disabled || !!data.avatar_orders?.length} onClick={draftAvatar}>Заказать аватарку за 200 далеонов</Button>
+        <Button disabled={disabled || !!data.avatar_orders?.length} onClick={draftAvatar}>Заказать аватарку за 1000 далеонов</Button>
       </>}
       {data.ledger?.length > 0 && <><h3 className="mt-4">Журнал казны</h3><Table responsive size="sm"><thead><tr><th>Когда</th><th>Операция</th><th>Изменение</th></tr></thead><tbody>
         {data.ledger.map(entry => <tr key={entry.id}><td>{new Date(entry.created_at).toLocaleString('ru-RU')}</td><td>{{deposit:'Взнос',withdraw:'Снятие',avatar_order:'Заказ аватарки',avatar_refund:'Возврат за аватарку'}[entry.kind] || entry.kind}</td><td>{entry.payload.daleons !== undefined ? `${entry.payload.daleons} далеонов` : `${entry.payload.amount} ${entry.payload.currency === 'gold' ? 'монет' : 'далеонов'}`}</td></tr>)}
@@ -98,7 +98,7 @@ export default function GuildTreasury() {
     <Modal className="frontier-operation-modal" backdropClassName="frontier-operation-backdrop" show={!!pending} onHide={cancel} backdrop="static" centered aria-labelledby="guild-treasury-confirm-title">
       <Modal.Header closeButton={!cancelBlocked}><Modal.Title id="guild-treasury-confirm-title">Подтвердить операцию</Modal.Title></Modal.Header>
       <Modal.Body>
-        {pending?.kind === 'avatar' ? <><p>{pending.brief}</p><p>Списать 200 далеонов из казны и отправить заказ администраторам?</p></> : <p>{pending?.kind === 'deposit' ? 'Внести в казну' : 'Получить из казны'}: {fmt(pending?.amount)} {pending?.currency === 'gold' ? 'монет' : 'далеонов'}.</p>}
+        {pending?.kind === 'avatar' ? <><p>{pending.brief}</p><p>Списать 1000 далеонов из казны и отправить заказ администраторам?</p></> : <p>{pending?.kind === 'deposit' ? 'Внести в казну' : 'Получить из казны'}: {fmt(pending?.amount)} {pending?.currency === 'gold' ? 'монет' : 'далеонов'}.</p>}
         {pending?.guild_id !== undefined && data && pending.guild_id !== data.guild_id && <Alert variant="danger">Гильдия изменилась. Эта операция относится к прежней гильдии.</Alert>}
         {pending?.uncertain && <p>Ответ не получен. Повторное подтверждение использует тот же номер операции и не спишет средства дважды.</p>}
         {error && <Alert variant="danger">{error}</Alert>}
