@@ -91,8 +91,8 @@ export default function GuildTreasury() {
         </Form.Group>
         <Button disabled={disabled || !!data.avatar_orders?.length} onClick={draftAvatar}>Заказать аватарку за 1000 далеонов</Button>
       </>}
-      {data.ledger?.length > 0 && <><h3 className="mt-4">Журнал казны</h3><Table responsive size="sm"><thead><tr><th>Когда</th><th>Операция</th><th>Изменение</th></tr></thead><tbody>
-        {data.ledger.map(entry => <tr key={entry.id}><td>{new Date(entry.created_at).toLocaleString('ru-RU')}</td><td>{{deposit:'Взнос',withdraw:'Снятие',avatar_order:'Заказ аватарки',avatar_refund:'Возврат за аватарку'}[entry.kind] || entry.kind}</td><td>{entry.payload.daleons !== undefined ? `${entry.payload.daleons} далеонов` : `${entry.payload.amount} ${entry.payload.currency === 'gold' ? 'монет' : 'далеонов'}`}</td></tr>)}
+      {data.ledger?.length > 0 && <><h3 className="mt-4">Журнал казны</h3><Table responsive size="sm"><thead><tr><th>Когда</th><th>Кто</th><th>Операция</th><th>Изменение</th></tr></thead><tbody>
+        {data.ledger.map(entry => <tr key={entry.id}><td>{new Date(entry.created_at).toLocaleString('ru-RU')}</td><td>{entry.actor_name || 'Игрок'} (ID {entry.actor_id})</td><td>{{deposit:'Взнос',withdraw:'Снятие',avatar_order:'Заказ аватарки',avatar_refund:'Возврат за аватарку'}[entry.kind] || entry.kind}</td><td>{entry.payload.daleons !== undefined ? `${entry.payload.daleons} далеонов` : `${entry.payload.amount} ${entry.payload.currency === 'gold' ? 'монет' : 'далеонов'}`}</td></tr>)}
       </tbody></Table></>}
     </>}
     <Modal className="frontier-operation-modal" backdropClassName="frontier-operation-backdrop" show={!!pending} onHide={cancel} backdrop="static" centered aria-labelledby="guild-treasury-confirm-title">

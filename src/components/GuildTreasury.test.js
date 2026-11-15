@@ -68,3 +68,12 @@ test('old uncertain operation can be closed after changing guild, without a new 
   fireEvent.click(screen.getByRole('button',{name:'Отмена'}));
   expect(api.post).not.toHaveBeenCalled();
 });
+
+test('treasury ledger shows contributor identity, amount and time',async()=>{
+  api.get.mockResolvedValue({data:{...state(),ledger:[{id:1,kind:'deposit',actor_id:8,actor_name:'Михаил',created_at:'2026-11-15T10:39:00+03:00',payload:{amount:800,currency:'daleons'}}]}});
+  render(<GuildTreasury/>);
+  await screen.findByText('Михаил (ID 8)');
+  expect(screen.getByText('800 далеонов')).toBeInTheDocument();
+  expect(screen.getByText('Кто')).toBeInTheDocument();
+  expect(screen.getByText(new Date('2026-11-15T10:39:00+03:00').toLocaleString('ru-RU'))).toBeInTheDocument();
+});
