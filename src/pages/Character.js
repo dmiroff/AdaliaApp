@@ -1,3 +1,4 @@
+import SpellBook from '../components/SpellBook';
 import {Link} from 'react-router-dom';
 import {isPlayerEventsEnabled} from '../utils/playerEvents';
 import { useState, useContext, useEffect, useMemo } from "react";
@@ -81,7 +82,7 @@ const Character = observer(() => {
   console.log("[Character] initialData:", initialData, "initialLoading:", initialLoading, "initialError:", initialError);
 
   const [playerData, setPlayerData] = useState(null);
-  const [activeSection, setActiveSection] = useState('Параметры');
+  const [activeSection, setActiveSection] = useState(()=>window.location.hash==='#magic'?'Магия':'Параметры');
   const [delay, setDelay] = useState(false);
   const [useBlueTheme, setUseBlueTheme] = useState(true);
   const [canUpgrade, setCanUpgrade] = useState(false);
@@ -462,11 +463,9 @@ const Character = observer(() => {
         return (
           <>
           {isPlayerEventsEnabled() && <p><Link className="fantasy-btn" to="/sign-techniques">Приёмы знаков · открываются автоматически</Link></p>}
-          <Row>
-            {Object.entries(categoryData.data).map(([key, value]) => (
-              <MagicCard key={key} spellKey={key} spellData={value} />
-            ))}
-          </Row>
+          <SpellBook spells={categoryData.data}
+            onSaved={spells=>{setPlayerData(previous=>({...previous,prepared_magic:spells}));}}
+            renderSpell={(key,value)=><MagicCard spellKey={key} spellData={value}/>}/>
           </>
         );
       case "abilityCards":

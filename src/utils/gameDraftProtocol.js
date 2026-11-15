@@ -22,9 +22,10 @@ export const normalizeKeyboard = source => {
   if (!keyboard || typeof keyboard !== 'object') return {inline:false, rows:[]};
   const rows = keyboard.buttons || keyboard.keyboard || keyboard.inline_keyboard;
   if (!Array.isArray(rows)) return {inline:false, rows:[]};
+  const spells=rows.length>0&&rows.every(row=>(Array.isArray(row)?row:[row]).every(button=>parse((button?.action||button)?.payload)?.action_selected==='Spells'));
   return {
     inline: Boolean(keyboard.inline || keyboard.inline_keyboard),
-    rows: rows.slice(0, 10).map((row, ri) => (Array.isArray(row) ? row : [row]).slice(0, 5).map((button, bi) => {
+    rows: rows.slice(0, spells ? 500 : 10).map((row, ri) => (Array.isArray(row) ? row : [row]).slice(0, 5).map((button, bi) => {
       const action = button?.action || button || {};
       const label = String(action.label ?? action.text ?? '').slice(0, 200);
       const payload = parse(action.payload ?? action.callback_data);

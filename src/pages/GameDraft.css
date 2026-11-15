@@ -89,3 +89,5 @@
 .game-live-error {background:#452e28;border:1px solid #96715a;color:#f5d2ba;padding:14px;border-radius:9px;margin-bottom:15px;font-size:13px;}
 .game-live-error button {display:block;margin-top:10px;}
 .game-live-image {min-height:50px;color:#b8ad96;font-size:12px;margin-bottom:12px;}
+
+.game-spell-grouping{display:flex;gap:8px;align-items:center;min-height:44px;flex-wrap:wrap}.game-spell-group{min-width:0}.game-spell-group h4{font-size:1rem;margin:12px 0 8px;color:inherit}.game-spell-grouping input{width:20px;height:20px}
