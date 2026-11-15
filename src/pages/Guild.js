@@ -31,6 +31,7 @@ import {
 } from "../http/guildService";
 import { dict_translator, attributes_dict } from "../utils/Helpers";
 import "./Guild.css";
+import GuildTreasury from '../components/GuildTreasury';
 import CastleStorage from "../components/CastleStorage";
 import SettlementComponent from "../components/settlement_tabs/SettlementComponent";
 
@@ -1811,6 +1812,10 @@ const Guild = observer(() => {
           {renderGeneralTab()}
         </Tab>
         
+        <Tab eventKey="treasury" title="Казна и аватарка" mountOnEnter unmountOnExit>
+          <GuildTreasury/>
+        </Tab>
+
         <Tab eventKey="castles" title={
           <>
             <i className="fas fa-castle me-2"></i>
