@@ -1,3 +1,4 @@
+import {effectRows} from '../utils/effectPresentation';
 import SpellBook from '../components/SpellBook';
 import {Link} from 'react-router-dom';
 import {isPlayerEventsEnabled} from '../utils/playerEvents';
@@ -423,7 +424,7 @@ const Character = observer(() => {
             </Card.Header>
             <Card.Body>
               {typeof content === "object" && content !== null ? (
-                Object.entries(content).map(
+                (category === 'Эффекты' ? effectRows(content) : Object.entries(content)).map(
                   ([key, value]) =>
                     key !== "name" && (
                       <div key={key} className="fantasy-stat-row">
