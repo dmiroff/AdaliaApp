@@ -29,6 +29,7 @@ export const dict_translator = {
   "crit_chance": "Шанс крит. удара",
   "2handed": "Двуручный",
   "add_damage_multiplicator": "Мульт. доб. урона",
+  "staff_spell_bonus": "Урон заклинаний и духа",
   "defence": "Класс защиты",
   "piercing_deduction": "Вычет колющего",
   "bludge_deduction": "Вычет дробящего",

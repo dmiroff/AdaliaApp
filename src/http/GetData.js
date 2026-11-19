@@ -62,9 +62,9 @@ export const GetTournament = async () => {
 };
 
 
-export const GetItemById = async (itemId) => {
+export const GetItemById = async (itemId, characterLevel) => {
   try {
-    const response = await apiClient.get(`/item/${itemId}`);
+    const response = await apiClient.get(`/item/${itemId}`, { params: { character_level: characterLevel } });
     return response.status === 200 ? response.data : false;
   } catch (error) {
     console.error("Error fetching item data:", error);

@@ -19,6 +19,7 @@ import ActionNotice from '../components/ActionNotice';
 
 const Item = () => {
   const { user } = useContext(Context);
+  const characterLevel = user.player_data?.level;
   const inventory_new = user.inventory_new || {}; 
   const [itemData, setItemData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -57,7 +58,7 @@ const Item = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const data = await GetItemById(num);
+        const data = await GetItemById(num, characterLevel);
         if (isMounted) {
           setItemData(data.data);
           setImageSrc(data.data.Image ? `/assets/Images/${data.data.Image.split("Images/")[1].replace(/\.(png|jpg|jpeg)$/, '.webp')}` : exampleImage);
@@ -78,7 +79,7 @@ const Item = () => {
     return () => {
       isMounted = false;
     };
-  }, [num]);
+  }, [num, characterLevel]);
   
   useEffect(() => {
     if ((itemData?.is_equippable || itemData?.food_data?.recipe_id) && !user.player_data?.inventory_new) {

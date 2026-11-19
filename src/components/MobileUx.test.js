@@ -98,6 +98,22 @@ test('comparison does not invent dice arithmetic and exposes all ring slots',()=
  expect(comparisonStats({weight:2},{weight:3})[0].delta).toBe(-1);
 });
 
+test('staff item card shows the spell damage bonus for the character level', async () => {
+  user.setPlayer({level: 50, inventory_new: {}});
+  GetItemById.mockResolvedValue({data: {
+    name: 'Посох Вирдана',
+    type: 'right_hand',
+    skill: 'staffs',
+    staff_spell_bonus: '+110 к базовому урону, число после кубиков ×22',
+  }});
+  await render(<ItemPage />, '/item/-34');
+  expect(GetItemById).toHaveBeenCalledWith(-34, 50);
+  const row = [...container.querySelectorAll('.stat-item')]
+    .find(stat => stat.querySelector('.stat-label').textContent.trim() === 'Урон заклинаний и духа:');
+  expect(row?.querySelector('.stat-value').textContent.trim())
+    .toBe('+110 к базовому урону, число после кубиков ×22');
+});
+
 test('confirmed expired session clears credentials', async()=>{
  localStorage.setItem('access_token','expired');localStorage.setItem('id','1');
  apiClient.get.mockRejectedValue({response:{status:401}});
