@@ -1,7 +1,10 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { buildGlossary, helpHref, helpIdFromHash, searchHelp, splitHelpTerms, validateHelp } from '../utils/gameHelp';
+import T3ClassGuide from './T3ClassGuide';
 import './Help.css';
+
+const classGuideId = 'дерево-классов';
 
 const kindNames = { guide: 'Раздел', attribute: 'Атрибут', skill: 'Навык', talent: 'Талант',
   parameter: 'Параметр', term: 'Механика', eon: 'Эон', handbook: 'Руководство', spell: 'Заклинание',
@@ -39,8 +42,10 @@ export default function Help() {
   const location = useLocation();
   const navigate = useNavigate();
   const selectedId = helpIdFromHash(location.hash) || 'справка';
+  const showClassGuide = selectedId === classGuideId;
 
   useEffect(() => {
+    if (showClassGuide || data) return undefined;
     const controller = new AbortController();
     setError(false);
     fetch('/help-data.json', { signal: controller.signal, cache: 'no-cache', credentials: 'omit' })
@@ -48,7 +53,7 @@ export default function Help() {
       .then(value => { if (!controller.signal.aborted) setData(validateHelp(value)); })
       .catch(() => { if (!controller.signal.aborted) setError(true); });
     return () => controller.abort();
-  }, [attempt]);
+  }, [attempt, data, showClassGuide]);
 
   const topics = data?.topics;
   const filtered = useMemo(() => searchHelp(topics || [], query, category), [topics, query, category]);
@@ -115,18 +120,19 @@ export default function Help() {
   }, [preview, closePreview]);
 
   useEffect(() => {
-    closePreview();
-    setCopied(false);
-    if (topics && selected) {
-      document.title = `${selected.title} — Справка Адалии`;
-      // Direct links and browser Back/Forward keep the selected article visible.
-      if (location.hash) contentRef.current?.scrollIntoView?.({ behavior: 'auto', block: 'start' });
-    }
-  }, [selected, topics, location.hash, closePreview]);
-  useEffect(() => {
     const title = document.title;
     return () => { document.title = title; clearTimeout(closeTimer.current); };
   }, []);
+  useEffect(() => {
+    closePreview();
+    setCopied(false);
+    if (showClassGuide || selected) {
+      const title = showClassGuide ? 'Дерево классов Т3' : selected.title;
+      document.title = `${title} — Справка Адалии`;
+      // Direct links and browser Back/Forward keep the selected section visible.
+      if (location.hash) contentRef.current?.scrollIntoView?.({ behavior: 'auto', block: 'start' });
+    }
+  }, [selected, showClassGuide, location.hash, closePreview]);
 
   const openTopic = id => {
     closePreview();
@@ -146,8 +152,12 @@ export default function Help() {
       </div>
       <span className="help-hero__note">Открыто для всех<br />Вход в игру не нужен</span>
     </header>
+    <nav className="help-sections" aria-label="Разделы справочника">
+      <Link to="/help" aria-current={!showClassGuide ? 'page' : undefined}>Статьи справки</Link>
+      <Link to={helpHref(classGuideId)} aria-current={showClassGuide ? 'page' : undefined}>Дерево классов</Link>
+    </nav>
 
-    {error ? <div className="help-status" role="alert"><h2>Справка пока не загрузилась</h2>
+    {showClassGuide ? <T3ClassGuide contentRef={contentRef} /> : error ? <div className="help-status" role="alert"><h2>Справка пока не загрузилась</h2>
       <p>Проверьте соединение и попробуйте ещё раз.</p>
       <button type="button" className="fantasy-btn" onClick={() => setAttempt(value => value + 1)}>Повторить</button>
     </div> : !data ? <p className="help-status" role="status">Открываем справочник…</p> : <>
@@ -195,6 +205,7 @@ export default function Help() {
             }} aria-label="Скопировать ссылку на статью">{copied ? '✓ Скопировано' : '↗ Ссылка'}</button></div>
             <div className="help-article__body" onMouseLeave={leavePreview}>
               <HelpText text={selected.body} glossary={glossary} currentId={selected.id} onPreview={showPreview} />
+              {selected.id === 'классы' && <p><Link to={helpHref(classGuideId)}>Открыть дерево классов Т3 →</Link></p>}
             </div>
             {selected.images?.map(picture => <figure className="help-map" key={picture.src}>
               <a href={picture.src} target="_blank" rel="noopener noreferrer" aria-label={`Открыть карту: ${picture.alt}`}>
