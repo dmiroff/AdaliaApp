@@ -141,6 +141,17 @@ const DonationTab = observer(() => {
   // Список товаров с категориями
   const donationProducts = [
     {
+      id: 31,
+      name: "🎒 Подсумок для зелий",
+      description: "Закрепите до пяти видов зелий в начале списка питья и броска в бою",
+      price: 200,
+      currency: "💎",
+      features: ["Разовая покупка навсегда", "Настраивается вне боя через «Инвентарь» → «Подсумок» в боте"],
+      purchased: playerData?.upgrades?.includes("Подсумок для зелий") || false,
+      type: "permanent",
+      category: "premium"
+    },
+    {
       id: 30,
       name: "⭐ Избранное",
       description: "Отмечайте важные вещи, чтобы случайно не продать и не передать их",
