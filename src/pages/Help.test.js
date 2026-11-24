@@ -71,3 +71,42 @@ test('failed loading can be retried and an unknown article has a recovery link',
   act(() => container.querySelector('.help-article a').click());
   expect(container.querySelector('#help-article-title').textContent).toBe('Добро пожаловать в Адалию');
 });
+
+test('the public tree switches from a starting class to T2 and follows its T3 paths', async () => {
+  await mount('/help#дерево-классов');
+  expect(global.fetch).not.toHaveBeenCalled();
+  const book = container.querySelector('a[download]');
+  expect(book.getAttribute('href')).toBe('/help-books/adalia-class-book.pdf');
+  const toggle = label => [...container.querySelectorAll('.class-guide__tiers button')]
+    .find(button => button.textContent === label);
+  const origin = () => container.querySelector('#class-guide-parent');
+
+  expect(container.querySelector('#class-guide-title').textContent).toBe('Дерево классов Т3');
+  act(() => toggle('Т1 → Т2').click());
+  expect([...origin().options].map(option => option.value)).toEqual(['Воин', 'Плут', 'Маг', 'Жрец']);
+  act(() => Simulate.change(origin(), { target: { value: 'Жрец' } }));
+  expect([...container.querySelectorAll('.class-guide__card strong')].map(name => name.textContent))
+    .toEqual(['Жрец Жизни', 'Жрец Света', 'Жрец Тьмы']);
+
+  const light = [...container.querySelectorAll('.class-guide__card')]
+    .find(card => card.querySelector('strong').textContent === 'Жрец Света');
+  light.open = true;
+  act(() => light.querySelector('button').click());
+  expect(toggle('Т2 → Т3').getAttribute('aria-pressed')).toBe('true');
+  expect(origin().value).toBe('Жрец Света');
+  expect(document.activeElement).toBe(origin());
+  expect(container.querySelector('.class-guide__paths').textContent).toContain('Иерофант');
+  act(() => toggle('Т1 → Т2').click());
+  expect(origin().value).toBe('Жрец');
+});
+
+test('Oathbreaker appears in the Paladin branch with its special unlock note', async () => {
+  await mount('/help#дерево-классов');
+  const origin = container.querySelector('#class-guide-parent');
+  act(() => Simulate.change(origin, { target: { value: 'Паладин' } }));
+  const cards = [...container.querySelectorAll('.class-guide__card')];
+  const oathbreaker = cards.find(card => card.querySelector('strong').textContent === 'Клятвопреступник');
+  expect(oathbreaker.querySelector('small').textContent).toContain('после особой истории');
+  expect(oathbreaker.textContent).toContain('Разрыв обета');
+  expect([...origin.options].map(option => option.value)).not.toContain('Жрец Смерти');
+});

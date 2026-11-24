@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { buildGlossary, helpHref, helpIdFromHash, searchHelp, splitHelpTerms, validateHelp } from '../utils/gameHelp';
-import T3ClassGuide from './T3ClassGuide';
+import ClassGuide from './ClassGuide';
 import './Help.css';
 
 const classGuideId = 'дерево-классов';
@@ -127,7 +127,7 @@ export default function Help() {
     closePreview();
     setCopied(false);
     if (showClassGuide || selected) {
-      const title = showClassGuide ? 'Дерево классов Т3' : selected.title;
+      const title = showClassGuide ? 'Дерево классов' : selected.title;
       document.title = `${title} — Справка Адалии`;
       // Direct links and browser Back/Forward keep the selected section visible.
       if (location.hash) contentRef.current?.scrollIntoView?.({ behavior: 'auto', block: 'start' });
@@ -157,7 +157,7 @@ export default function Help() {
       <Link to={helpHref(classGuideId)} aria-current={showClassGuide ? 'page' : undefined}>Дерево классов</Link>
     </nav>
 
-    {showClassGuide ? <T3ClassGuide contentRef={contentRef} /> : error ? <div className="help-status" role="alert"><h2>Справка пока не загрузилась</h2>
+    {showClassGuide ? <ClassGuide contentRef={contentRef} /> : error ? <div className="help-status" role="alert"><h2>Справка пока не загрузилась</h2>
       <p>Проверьте соединение и попробуйте ещё раз.</p>
       <button type="button" className="fantasy-btn" onClick={() => setAttempt(value => value + 1)}>Повторить</button>
     </div> : !data ? <p className="help-status" role="status">Открываем справочник…</p> : <>
@@ -205,7 +205,7 @@ export default function Help() {
             }} aria-label="Скопировать ссылку на статью">{copied ? '✓ Скопировано' : '↗ Ссылка'}</button></div>
             <div className="help-article__body" onMouseLeave={leavePreview}>
               <HelpText text={selected.body} glossary={glossary} currentId={selected.id} onPreview={showPreview} />
-              {selected.id === 'классы' && <p><Link to={helpHref(classGuideId)}>Открыть дерево классов Т3 →</Link></p>}
+              {selected.id === 'классы' && <p><Link to={helpHref(classGuideId)}>Открыть дерево классов Т2 и Т3 →</Link></p>}
             </div>
             {selected.images?.map(picture => <figure className="help-map" key={picture.src}>
               <a href={picture.src} target="_blank" rel="noopener noreferrer" aria-label={`Открыть карту: ${picture.alt}`}>
