@@ -9,7 +9,7 @@ import GetDataById from "../http/GetData";
 import apiClient from "../http/apiClient";
 import { Spinner } from "react-bootstrap";
 import ItemFilters from './ItemFilters';
-import {browseConditions, emptyBrowse, itemFieldNames} from '../utils/itemBrowseFields';
+import {emptyBrowse, itemFieldNames} from '../utils/itemBrowseFields';
 import {browseLocalItems, itemFilterOptions} from '../utils/localItemBrowse';
 import { MassTransferModal, MassDropModal, MassSellModal } from "../components/MassTransferModal";
 import "./InventoryList.css";
@@ -119,14 +119,6 @@ const InventoryList = observer(() => {
     }
   }, [user.player_data, user.inventory_new]);
 
-  const applyBrowse = value => {
-    if (value.q !== browse.q || value.category !== browse.category ||
-        JSON.stringify(browseConditions(value)) !== JSON.stringify(browseConditions(browse))) {
-      setSelectedItems(new Set());
-    }
-    setBrowse(value);
-  };
-
   const handleShowModal = (message) => {
     setModalMessage(message);
     setShowModal(true);
@@ -150,7 +142,7 @@ const InventoryList = observer(() => {
     });
   }, []);
 
-  const selectAllItems = () => setSelectedItems(new Set(results.map(item => item.id)));
+  const selectAllItems = () => setSelectedItems(previous => new Set([...previous, ...results.map(item => item.id)]));
 
   const clearSelection = () => setSelectedItems(new Set());
 
@@ -215,7 +207,7 @@ const InventoryList = observer(() => {
         {identifying ? `Распознаём… ${identifiedCount}` : `Распознать всё (${unidentifiedCount})`}
       </button>}
       <ItemFilters categoryShortcuts initialValue={browse} label="Фильтры инвентаря" options={filterOptions} fields={inventoryFields}
-        onApply={applyBrowse} result={`Найдено: ${results.length} из ${items.length}`} />
+        onApply={setBrowse} result={`Найдено: ${results.length} из ${items.length}`} />
       {/* Панель массовых операций */}
       {selectedItems.size > 0 && (
         <div className="mass-operations-panel mb-3 p-3">
@@ -278,7 +270,7 @@ const InventoryList = observer(() => {
               className="mass-action-btn"
             >
               <i className="fas fa-check-square me-1"></i>
-              Выбрать все ({results.length})
+              Выбрать найденные ({results.length})
             </Button>
           </div>
         </div>
