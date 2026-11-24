@@ -18,7 +18,6 @@ import { observer } from "mobx-react-lite";
 import { Context } from "../../index";
 import { toJS } from 'mobx';
 import { settlementService } from '../../services/SettlementService';
-import GetDataById from "../../http/GetData";
 
 // Полный список реагентов (без изменений)
 const RESOURCES_DATA = {
@@ -265,7 +264,7 @@ const getResourceTypeDisplay = (resourceId) => {
     return 'Кожа';
   }
   
-  const hideIds = [67, 70, 402, 403, 407, 417, 419, 421, 429, 442];
+  const hideIds = [67, 70, 402, 403, 407, 417, 419, 421, 429, 442, 1197];
   if (hideIds.includes(id)) {
     return 'Шкура';
   }
@@ -291,7 +290,7 @@ const getResourceBadgeColor = (resourceId) => {
     if (resourceId === 'leather_t3' || resourceId === 10003) return 'danger';
   }
   
-  const hideIds = [67, 70, 402, 403, 407, 417, 419, 421, 429, 442];
+  const hideIds = [67, 70, 402, 403, 407, 417, 419, 421, 429, 442, 1197];
   if (hideIds.includes(id)) {
     if ([403, 1197, 417, 421].includes(id)) return 'danger';
     if ([70, 407, 419, 429, 442].includes(id)) return 'primary';
@@ -696,7 +695,8 @@ const SettlementStorage = observer(() => {
   const [notification, setNotification] = useState({ show: false, type: '', message: '' });
   
   const [playerInventory, setPlayerInventory] = useState({});
-  const [playerData, setPlayerData] = useState(null);
+  const [hasMessenger, setHasMessenger] = useState(false);
+  const [inventoryError, setInventoryError] = useState(null);
   const [inventoryLoading, setInventoryLoading] = useState(true);
   
   const showNotification = (type, message) => {
@@ -708,22 +708,26 @@ const SettlementStorage = observer(() => {
     setTimeout(() => setNotification({ show: false, type: '', message: '' }), 5000);
   };
   
-  const fetchInventoryData = async () => {
+  const playerId = user.user?.id;
+  const fetchInventoryData = useCallback(async () => {
+    if (!playerId) return false;
     setInventoryLoading(true);
+    setInventoryError(null);
     try {
-      const response = await GetDataById();
-      if (response && response.data) {
-        setPlayerData(response.data);
-        const inventory = response.data.inventory_new || {};
-        setPlayerInventory(inventory);
+      const response = await settlementService.getPlayerResources(playerId, 'settlement');
+      if (response.status !== 200 || !response.data?.resources) {
+        throw new Error('Не удалось загрузить ресурсы. Нажмите «Обновить», чтобы повторить.');
       }
+      setPlayerInventory(response.data.resources);
+      setHasMessenger(Boolean(response.data.has_messenger));
+      return true;
     } catch (error) {
-      console.error('Error fetching inventory:', error);
-      showNotification('error', 'Ошибка загрузки инвентаря');
+      setInventoryError(error.message);
+      return false;
     } finally {
       setInventoryLoading(false);
     }
-  };
+  }, [playerId]);
   
   const storageData = useMemo(() => {
     if (!settlement.settlementData) return {};
@@ -735,10 +739,6 @@ const SettlementStorage = observer(() => {
     return guild.guildData?.id;
   }, [guild.guildData]);
   
-  const playerId = useMemo(() => {
-    return user.user?.id;
-  }, [user.user]);
-  
   const playerRole = useMemo(() => {
     if (guild.guildData && guild.guildData.player_role) {
       return guild.guildData.player_role;
@@ -746,10 +746,6 @@ const SettlementStorage = observer(() => {
     return 'member';
   }, [guild.guildData]);
 
-  const hasMessenger = useMemo(() => {
-    return playerData?.upgrades?.includes("Гильдейский посланник") || false;
-  }, [playerData]);
-  
   const canTakeResources = useMemo(() => {
     return playerRole === 'leader' || playerRole === 'officer';
   }, [playerRole]);
@@ -768,8 +764,7 @@ const SettlementStorage = observer(() => {
       if (settlement.fetchSettlementData && hasGuildData && guildId !== undefined) {
         await settlement.fetchSettlementData(guildId);
       }
-      await fetchInventoryData();
-      showNotification('success', 'Данные обновлены');
+      if (await fetchInventoryData()) showNotification('success', 'Данные обновлены');
     } catch (error) {
       console.error('Error refreshing data:', error);
       showNotification('error', 'Ошибка при обновлении данных');
@@ -780,7 +775,7 @@ const SettlementStorage = observer(() => {
   
   useEffect(() => {
     fetchInventoryData();
-  }, []);
+  }, [fetchInventoryData]);
   
   const getPlayerResourcesByType = useMemo(() => {
     if (!playerInventory || typeof playerInventory !== 'object' || Object.keys(playerInventory).length === 0) {
@@ -1105,7 +1100,7 @@ const SettlementStorage = observer(() => {
                 </Badge>
                 {!canTakeResources && (
                   <span className="ms-2 text-warning">
-                    <small>(Только чтение)</small>
+                    <small>(Забирать могут лидер и офицеры)</small>
                   </span>
                 )}
                 {isOfficerOrLeader && (
@@ -1174,6 +1169,7 @@ const SettlementStorage = observer(() => {
             </div>
           </div>
           
+          {inventoryError && <Alert variant="warning">{inventoryError}</Alert>}
           <Row className="mb-4">
             <Col md={6} className="mb-3 mb-md-0">
               <Card className="fantasy-card h-100">
@@ -1184,16 +1180,16 @@ const SettlementStorage = observer(() => {
                   </h6>
                   <div className="mb-3">
                     <Badge bg="info" className="fantasy-badge p-2 mb-2 d-block">
-                      У вас: {getPlayerResourcesByType.construction.length} видов
+                      {inventoryError ? 'Ресурсы не загружены' : `У вас: ${getPlayerResourcesByType.construction.length} видов`}
                     </Badge>
                     <Badge bg="success" className="fantasy-badge p-2 d-block">
-                      Всего: {getPlayerConstructionCount()} шт
+                      {inventoryError ? 'Всего: —' : `Всего: ${getPlayerConstructionCount()} шт`}
                     </Badge>
                   </div>
                   <Button 
                     variant="outline-success" 
                     onClick={handleStoreAllConstruction}
-                    disabled={storeAllLoading || getPlayerResourcesByType.construction.length === 0 || inventoryLoading}
+                    disabled={storeAllLoading || getPlayerResourcesByType.construction.length === 0 || inventoryLoading || Boolean(inventoryError)}
                     className="fantasy-btn w-100"
                   >
                     {storeAllLoading ? (
@@ -1225,16 +1221,16 @@ const SettlementStorage = observer(() => {
                   </h6>
                   <div className="mb-3">
                     <Badge bg="info" className="fantasy-badge p-2 mb-2 d-block">
-                      Всего видов: {getPlayerResourcesByType.hides.length + getPlayerResourcesByType.leatherTier.length}
+                      {inventoryError ? 'Ресурсы не загружены' : `Всего видов: ${getPlayerResourcesByType.hides.length + getPlayerResourcesByType.leatherTier.length}`}
                     </Badge>
                     <Badge bg="success" className="fantasy-badge p-2 d-block">
-                      Всего: {getPlayerHidesCountByTier('all') + getPlayerResourcesByType.leatherTier.reduce((sum, r) => sum + r.amount, 0)}
+                      {inventoryError ? 'Всего: —' : `Всего: ${getPlayerHidesCountByTier('all') + getPlayerResourcesByType.leatherTier.reduce((sum, r) => sum + r.amount, 0)}`}
                     </Badge>
                   </div>
                   <Button 
                     variant="outline-warning" 
                     onClick={handleStoreAllHides}
-                    disabled={storeHidesLoading || (getPlayerResourcesByType.hides.length === 0 && getPlayerResourcesByType.leatherTier.length === 0) || inventoryLoading}
+                    disabled={storeHidesLoading || (getPlayerResourcesByType.hides.length === 0 && getPlayerResourcesByType.leatherTier.length === 0) || inventoryLoading || Boolean(inventoryError)}
                     className="fantasy-btn w-100"
                   >
                     {storeHidesLoading ? (
