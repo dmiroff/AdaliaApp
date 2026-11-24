@@ -14,23 +14,27 @@ const freshId=()=>{
 };
 const startupKeyboard=normalizeKeyboard({buttons:[[{action:{type:'text',label:'Где я'}},{action:{type:'text',label:'Персонаж'}}]]});
 
-function messageText(message) {
+function messageText(message, start = 0) {
   const text = message?.text || '';
   if (message?.role !== 'bot' || !Array.isArray(message.emphasis) || !message.emphasis.length) {
-    return text;
+    return text.slice(start);
   }
   const parts = [];
-  let position = 0;
+  let position = start;
   for (const span of message.emphasis) {
-    const {offset, length} = span || {};
+    const {offset, length, type} = span || {};
     if (!Number.isInteger(offset) || !Number.isInteger(length) ||
-        offset < position || length < 1 || offset + length > text.length) {
+        offset < 0 || length < 1 || offset + length > text.length) {
       continue;
     }
+    const left = Math.max(offset, start);
     const end = offset + length;
-    parts.push(text.slice(position, offset), <strong key={offset}>{text.slice(offset, end)}</strong>);
+    if (left < position || end <= left) continue;
+    const Tag = type === 'italic' ? 'em' : 'strong';
+    parts.push(text.slice(position, left), <Tag key={left}>{text.slice(left, end)}</Tag>);
     position = end;
   }
+  if (!parts.length) return text.slice(start);
   parts.push(text.slice(position));
   return parts;
 }
@@ -132,7 +136,7 @@ export default function GameLive(){
   const actionPoints=combat?.current_action_points??(battleAP?Number(battleAP[1]??battleAP[2]):null);
   const warnings=battle?.text.split('\n').filter(line=>/◈|⚠️/.test(line)) || [];
   const statusIndex=battle?.text.search(/Текущий ход:|Команда 2:/) ?? -1;
-  const battleState=battle && statusIndex>=0?battle.text.slice(statusIndex):battle?.text;
+  const battleState=messageText(battle, Math.max(0,statusIndex));
   const turnLog=battle && statusIndex>0?battle.text.slice(0,statusIndex).trim():'';
   const health=Number(combat?.current_health??player?.current_health)||0,maxHealth=Number(combat?.max_health??player?.max_health)||1;
   return <section className="game-draft game-live-mobile" aria-labelledby="game-live-title">
@@ -142,14 +146,14 @@ export default function GameLive(){
       {error&&<div className="game-live-error" role="alert">{error}</div>}
       {(commandError||retry)&&<div className="game-live-error" role="alert">{commandError}{retry&&<button type="button" className="game-draft-action" disabled={sending.current} onClick={()=>deliver(retry)}>Проверить отправку</button>}</div>}
       {pending?.status==='unknown'&&!retry&&<div className="game-live-error" role="alert">Результат предыдущей команды требует проверки. Посмотрите сообщения и персонажа перед продолжением.<button type="button" className="game-draft-action" onClick={acknowledge}>Проверено: продолжить</button></div>}
-      <div className="game-draft-layout"><aside className="game-draft-side"><div className="game-draft-hero"><span className="game-draft-hero__crest" aria-hidden="true">А</span><div><h2>{player?.name||'Ваш персонаж'}</h2><span>{player?`Уровень ${player.level}`:'Загружаем данные'}</span></div></div>
+      <div className="game-draft-layout"><aside className="game-draft-side"><div className="game-draft-hero"><span className="game-draft-hero__crest" aria-hidden="true">А</span><div><h2>{player?.name?<em>{player.name}</em>:'Ваш персонаж'}</h2><span>{player?`Уровень ${player.level}`:'Загружаем данные'}</span></div></div>
         <div className="game-draft-stats"><span>Здоровье <strong>{health}/{maxHealth}</strong></span><span>Монеты <strong>{player?.money??'—'}</strong></span></div>
         <div className="game-draft-health" role="progressbar" aria-label="Здоровье персонажа" aria-valuenow={Math.max(0,health)} aria-valuemin={0} aria-valuemax={maxHealth}><span style={{width:`${Math.max(0,Math.min(100,health/maxHealth*100))}%`}}/></div>
         <p className="game-draft-location">{dict_translator[player?.location] || player?.location}</p>{player?.in_fight&&<p className="game-draft-enemy">Вы в бою</p>}
         <button type="button" className="game-draft-action mt-3" disabled={!data||!!pending||!!retry} onClick={()=>send('Где я')}>Обновить игровую клавиатуру</button>
       </aside><div className="game-draft-chat"><div className="game-draft-chat__heading"><span>{player?.in_fight?'Бой':'Сейчас'}</span><button className="game-history-toggle" type="button" aria-expanded={showHistory} onClick={()=>setShowHistory(value=>!value)}>{showHistory?'К текущему событию':'История сообщений'}</button></div>
         {!showHistory&&<section className="game-current-state" aria-label="Текущая ситуация">
-          <div className="game-current-vitals"><strong>❤️ {health}/{maxHealth}</strong>{actionPoints!==null&&<strong>🏃 {actionPoints} ОД</strong>}{combat?.active_magic_slots!=null&&<strong>🔹 {combat.active_magic_slots} ОЗ</strong>}<span>{player?.name}</span></div>
+          <div className="game-current-vitals"><strong>❤️ {health}/{maxHealth}</strong>{actionPoints!==null&&<strong>🏃 {actionPoints} ОД</strong>}{combat?.active_magic_slots!=null&&<strong>🔹 {combat.active_magic_slots} ОЗ</strong>}<em>{player?.name}</em></div>
           {restLeft>0&&<p role="status">Отдых · осталось {restLeft} сек.</p>}
           {warnings.map((warning,index)=><p key={index} className="game-current-warning">{warning}</p>)}
           {currentMessage?.image_url&&!player?.in_fight&&<MessageImage url={currentMessage.image_url}/>}

@@ -39,16 +39,39 @@ test('leaving a fight discards stale combat stats',async()=>{
     expect(vitals).toContain('9000/9000');expect(vitals).not.toContain('ОД');expect(vitals).not.toContain('ОЗ');
 });
 
-test('bot titles are bold in the current reply and history without interpreting HTML',async()=>{
+test('dish names are bold and author names are italic in the current reply and history',async()=>{
     const title = 'Ромашковый морс';
-    const prefix = '🍲 ';
-    const text = prefix + title + '\n<em>Эффект</em>';
+    const author = 'Лис_Ян';
+    const heading = '🍲 ';
+    const byline = heading + title + ' · ';
+    const text = byline + author + ' (Повар 27)\n<em>Эффект</em>';
     api.get.mockResolvedValue({data:{messages:[{
-        id:'1',role:'bot',text,time:Date.now(),emphasis:[{offset:prefix.length,length:title.length}],
+        id:'1',role:'bot',text,time:Date.now(),emphasis:[
+            {offset:heading.length,length:title.length},
+            {type:'italic',offset:byline.length,length:author.length},
+        ],
     }],player:{name:'Тестер',current_health:100,max_health:100},pending_command:null}});
     await act(async()=>root.render(<GameLive/>));
-    expect(container.querySelector('.game-current-text strong').textContent).toBe(title);
-    expect(container.querySelector('.game-draft-message p strong').textContent).toBe(title);
-    expect(container.querySelector('.game-draft-message p').textContent).toBe(text);
-    expect(container.querySelector('.game-draft-message p em')).toBeNull();
+    for (const selector of ['.game-current-text', '.game-draft-message p']) {
+        const reply = container.querySelector(selector);
+        expect(reply.querySelector('strong').textContent).toBe(title);
+        expect([...reply.querySelectorAll('em')].map(node=>node.textContent)).toEqual([author]);
+        expect(reply.textContent).toBe(text);
+    }
+});
+
+test('the combat roster retains the nickname style after the turn log is split off',async()=>{
+    const log = '🎯 Стрела прошла мимо.';
+    const board = '\nТекущий ход: 3\nКоманда 2:\nГоблин\nКоманда 1:\n➡️';
+    const nickname = 'Рунный_Лис';
+    const text = log + board + nickname + '\n🏃 9';
+    api.get.mockResolvedValue({data:{messages:[{
+        id:'1',role:'bot',text,time:Date.now(),
+        emphasis:[{type:'italic',offset:(log + board).length,length:nickname.length}],
+    }],player:{name:nickname,in_fight:true,current_health:100,max_health:100},pending_command:null}});
+    await act(async()=>root.render(<GameLive/>));
+    const current = container.querySelector('.game-current-text');
+    expect(current.querySelector('em').textContent).toBe(nickname);
+    expect(current.textContent).toBe(board.trimStart() + nickname + '\n🏃 9');
+    expect(container.querySelector('.game-turn-log p').textContent).toBe(log);
 });
