@@ -3,28 +3,32 @@ import { observer } from "mobx-react-lite";
 import { useContext, useEffect, useState, useCallback, useMemo, useRef } from "react";
 import InventoryItem from "./InventoryItem";
 import ActionNotice from "./ActionNotice";
-import { Row, Col, Form, Modal, Button, Badge } from "react-bootstrap";
+import { Modal, Button } from "react-bootstrap";
 import { Context } from "../index";
 import GetDataById from "../http/GetData";
 import apiClient from "../http/apiClient";
 import { Spinner } from "react-bootstrap";
-import Fuse from "fuse.js";
+import ItemFilters from './ItemFilters';
+import {browseConditions, emptyBrowse, itemFieldNames} from '../utils/itemBrowseFields';
+import {browseLocalItems, itemFilterOptions} from '../utils/localItemBrowse';
 import { MassTransferModal, MassDropModal, MassSellModal } from "../components/MassTransferModal";
 import "./InventoryList.css";
 
-// Импортируем словарь переводов
-import { dict_translator } from "../utils/Helpers";
+const inventoryFields = [...Object.keys(itemFieldNames), 'favorite'];
+const inventorySearch = {threshold:0.4};
 
 const InventoryList = observer(() => {
   const { user } = useContext(Context);
   const [playerData, setPlayerData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [query, setQuery] = useState("");
+  const [browse, setBrowse] = useState(emptyBrowse);
   const [loadError, setLoadError] = useState(false);
-  const [quickCategory, setQuickCategory] = useState('all');
-  const [sortOrder, setSortOrder] = useState('default');
   const [user_inventory, setUserInventory] = useState({});
-  const inventoryWithFavorites = useMemo(() => withFavorites(user_inventory, playerData), [user_inventory, playerData]);
+  const items = useMemo(() => Object.entries(withFavorites(user_inventory, playerData))
+    .filter(([, item]) => item && typeof item === 'object')
+    .map(([id, item]) => ({...item, id})), [user_inventory, playerData]);
+  const filterOptions = useMemo(() => itemFilterOptions(items), [items]);
+  const results = useMemo(() => browseLocalItems(items, browse, inventorySearch), [items, browse]);
   
   const [notice, setNotice] = useState(null);
   const [showModal, setShowModal] = useState(false);
@@ -75,110 +79,6 @@ const InventoryList = observer(() => {
   const [showMassDropModal, setShowMassDropModal] = useState(false);
   const [massOperationLoading, setMassOperationLoading] = useState(false);
 
-  // Состояния для двух фильтров
-  const [filters, setFilters] = useState([
-    { field: "type", operator: "equals", value: "" },
-    { field: "is_equippable", operator: "equals", value: "" }
-  ]);
-
-  // Функция для перевода значений с использованием словаря
-  const translateValue = useCallback((value) => {
-    if (value === null || value === undefined) return "";
-    
-    const strValue = String(value).toLowerCase();
-    return dict_translator[strValue] || dict_translator[value] || value;
-  }, []);
-
-  // Функция для получения перевода типа предмета
-  const getTranslatedType = useCallback((type) => {
-    if (!type) return type;
-    return translateValue(type);
-  }, [translateValue]);
-
-  // Доступные поля для фильтрации
-  const filterFields = useMemo(() => [
-    {
-      id: "favorite",
-      name: "Избранное?",
-      type: "boolean",
-      options: [{value: "true", label: "Да"}, {value: "false", label: "Нет"}]
-    },
-    { 
-      id: "type", 
-      name: "Тип предмета", 
-      type: "select",
-      options: () => {
-        const types = Array.from(
-          new Set(Object.values(user_inventory).map(item => item.type).filter(Boolean))
-        );
-        return types.map(type => ({ 
-          value: type, 
-          label: getTranslatedType(type)
-        })).sort((a, b) => a.label.localeCompare(b.label));
-      }
-    },
-    { 
-      id: "is_equippable", 
-      name: "Можно надеть", 
-      type: "boolean",
-      options: [
-        { value: "true", label: "Да" },
-        { value: "false", label: "Нет" }
-      ]
-    },
-    { 
-      id: "value", 
-      name: "Стоимость", 
-      type: "number",
-      operators: [
-        { id: "greater", name: ">" },
-        { id: "less", name: "<" },
-        { id: "equals", name: "=" },
-        { id: "greaterOrEquals", name: "≥" },
-        { id: "lessOrEquals", name: "≤" }
-      ]
-    },
-    { 
-      id: "weight", 
-      name: "Вес", 
-      type: "number",
-      operators: [
-        { id: "greater", name: ">" },
-        { id: "less", name: "<" },
-        { id: "equals", name: "=" },
-        { id: "greaterOrEquals", name: "≥" },
-        { id: "lessOrEquals", name: "≤" }
-      ]
-    },
-    { 
-      id: "undefined", 
-      name: "Распознан", 
-      type: "boolean",
-      options: [
-        { value: "false", label: "Распознанный" },
-        { value: "true", label: "Нераспознанный" }
-      ]
-    },
-    { 
-      id: "junk", 
-      name: "Хлам", 
-      type: "boolean",
-      options: [
-        { value: "true", label: "Да" },
-        { value: "false", label: "Нет" }
-      ]
-    },
-    { 
-      id: "corrupted", 
-      name: "Проклят", 
-      type: "boolean",
-      options: [
-        { value: "true", label: "Да" },
-        { value: "false", label: "Нет" }
-      ]
-    }
-  ], [user_inventory, getTranslatedType]);
-
   // Функция для обновления данных игрока
   const fetchPlayerData = useCallback(async () => {
     setLoadError(false);
@@ -219,10 +119,13 @@ const InventoryList = observer(() => {
     }
   }, [user.player_data, user.inventory_new]);
 
-  // Очистка выбора при изменении фильтров или поиска
-  useEffect(() => {
-    setSelectedItems(new Set());
-  }, [filters, query, quickCategory]);
+  const applyBrowse = value => {
+    if (value.q !== browse.q || value.category !== browse.category ||
+        JSON.stringify(browseConditions(value)) !== JSON.stringify(browseConditions(browse))) {
+      setSelectedItems(new Set());
+    }
+    setBrowse(value);
+  };
 
   const handleShowModal = (message) => {
     setModalMessage(message);
@@ -247,152 +150,9 @@ const InventoryList = observer(() => {
     });
   }, []);
 
-  const selectAllItems = useCallback(() => {
-    const inventory = inventoryWithFavorites;
-    const filteredItems = filterInventoryItems(inventory);
-    const allIds = filteredItems.map(([id]) => id);
-    setSelectedItems(new Set(allIds));
-  }, [user_inventory, filters, query, quickCategory, sortOrder]);
+  const selectAllItems = () => setSelectedItems(new Set(results.map(item => item.id)));
 
-  const clearSelection = useCallback(() => {
-    setSelectedItems(new Set());
-  }, []);
-
-  // Обработчики для фильтров
-  const updateFilter = useCallback((index, field, value) => {
-    setFilters(prev => {
-      const newFilters = [...prev];
-      if (field === "field") {
-        // При изменении поля сбрасываем оператор и значение
-        const fieldConfig = filterFields.find(f => f.id === value);
-        newFilters[index] = { 
-          field: value, 
-          operator: fieldConfig?.type === "number" ? "greater" : "equals",
-          value: "" 
-        };
-      } else {
-        newFilters[index] = { ...newFilters[index], [field]: value };
-      }
-      return newFilters;
-    });
-  }, [filterFields]);
-
-  const removeFilter = useCallback((index) => {
-    setFilters(prev => {
-      const newFilters = [...prev];
-      newFilters[index] = { field: "", operator: "equals", value: "" };
-      return newFilters;
-    });
-  }, []);
-
-  const resetFilters = useCallback(() => {
-    setFilters([
-      { field: "", operator: "equals", value: "" },
-      { field: "", operator: "equals", value: "" }
-    ]);
-  }, []);
-
-  // Функция применения фильтров к предметам
-  const applyFiltersToItems = useCallback((items) => {
-    return items.filter(([id, item]) => {
-      // Применяем оба фильтра
-      return filters.every(filter => {
-        if (!filter.field || filter.value === "") return true;
-        
-        const fieldConfig = filterFields.find(f => f.id === filter.field);
-        if (!fieldConfig) return true;
-        
-        let itemValue = item[filter.field];
-        
-        // Для поля "corrupted" проверяем наличие свойства
-        if (filter.field === "corrupted") {
-          itemValue = item.corrupted || false;
-        }
-        
-        // Обработка разных типов полей
-        switch (fieldConfig.type) {
-          case "boolean":
-            // Для boolean сравниваем строковые значения
-            return String(itemValue) === filter.value;
-            
-          case "number":
-            const numValue = parseFloat(itemValue) || 0;
-            const filterNumValue = parseFloat(filter.value) || 0;
-            
-            switch (filter.operator) {
-              case "greater":
-                return numValue > filterNumValue;
-              case "less":
-                return numValue < filterNumValue;
-              case "equals":
-                return numValue === filterNumValue;
-              case "greaterOrEquals":
-                return numValue >= filterNumValue;
-              case "lessOrEquals":
-                return numValue <= filterNumValue;
-              default:
-                return true;
-            }
-            
-          case "select":
-            // Для типа предмета
-            return itemValue === filter.value;
-            
-          default:
-            return true;
-        }
-      });
-    });
-  }, [filters, filterFields]);
-
-  // Функция фильтрации предметов (фильтры + поиск)
-  const filterInventoryItems = useCallback((inventory) => {
-    let items = Object.entries(withFavorites(inventory, playerData)).filter(([key, item]) => {
-      return item && typeof item === 'object';
-    });
-
-    const armorSlots = ['head', 'breast_armor', 'cloak', 'gloves', 'leg_armor', 'boots', 'belt', 'arm_armor'];
-    if (quickCategory !== 'all') items = items.filter(([, item]) => {
-      if (quickCategory === 'weapons') return ['right_hand', 'left_hand', 'secondary_weapon'].includes(item.type);
-      if (quickCategory === 'armor') return armorSlots.includes(item.type);
-      if (quickCategory === 'consumables') return ['food', 'potion', 'potions', 'scroll', 'scrolls', 'consumable_items'].includes(item.type);
-      return !item.is_equippable;
-    });
-    // Применяем кастомные фильтры
-    items = applyFiltersToItems(items);
-
-    // Применяем поиск
-    if (query) {
-      try {
-        const itemObjects = items.map(([id, data]) => ({ 
-          id, 
-          ...(data || {})
-        }));
-        
-        const fuse = new Fuse(itemObjects, {
-          keys: ["name", "description"],
-          includeScore: true,
-          threshold: 0.4
-        });
-        
-        const searchResults = fuse.search(query);
-        items = searchResults.map(result => {
-          const { id, ...data } = result.item;
-          return [id, data];
-        });
-      } catch (error) {
-        console.error("Fuse.js error:", error);
-        items = items.filter(([key, item]) => 
-          item.name && item.name.toLowerCase().includes(query.toLowerCase())
-        );
-      }
-    }
-
-    if (sortOrder !== 'default') items.sort(([, a], [, b]) => sortOrder === 'name'
-      ? String(a.name || '').localeCompare(String(b.name || ''), 'ru')
-      : Number(b[sortOrder] || 0) - Number(a[sortOrder] || 0));
-    return items;
-  }, [applyFiltersToItems, query, quickCategory, sortOrder, playerData]);
+  const clearSelection = () => setSelectedItems(new Set());
 
   // Обработчик успешного завершения массовой операции
   const handleOperationSuccess = useCallback((message) => {
@@ -401,12 +161,6 @@ const InventoryList = observer(() => {
     setSelectedItems(new Set());
   }, [fetchPlayerData]);
 
-  // Подсчет статистики по активным фильтрам
-  const activeFiltersCount = useMemo(() => {
-    return filters.filter(f => f.field && f.value !== "").length;
-  }, [filters]);
-
-  // Условные возвраты должны быть ПОСЛЕ всех хуков
   if (loading) {
     return (
       <div className="d-flex justify-content-center align-items-center fantasy-paper p-4">
@@ -433,19 +187,7 @@ const InventoryList = observer(() => {
     );
   }
 
-  const inventory = user_inventory || {};
-  
-  // Получаем отфильтрованные предметы
-  const filteredItems = filterInventoryItems(inventory);
-  
-  const itemObjects = filteredItems.map(([id, data]) => ({ 
-    id, 
-    ...(data || {})
-  }));
-
-  let results = itemObjects;
-
-  if (!Object.keys(inventory).length) {
+  if (!items.length) {
     return (
       <div className="fantasy-paper p-4 text-center">
         <div className="fantasy-text-muted">Вот инвентарь пустой, он предмет простой</div>
@@ -472,59 +214,8 @@ const InventoryList = observer(() => {
         onClick={identifyAll}>
         {identifying ? `Распознаём… ${identifiedCount}` : `Распознать всё (${unidentifiedCount})`}
       </button>}
-      {/* Поиск */}
-      <div className="inventory-search-panel mb-2">
-        <Form className="fantasy-form">
-          <div className="search-input-wrapper">
-            <i className="fas fa-search search-icon"></i>
-            <Form.Control
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Поиск в рюкзаке"
-              aria-label="Поиск предметов"
-              className="inventory-search-input bulk-purchase"
-            />
-            {query && (
-              <Button
-                variant="link"
-                size="sm"
-                className="clear-search-btn"
-                onClick={() => setQuery('')}
-                title="Очистить поиск"
-                aria-label="Очистить поиск"
-              >
-                <i className="fas fa-times"></i>
-              </Button>
-            )}
-          </div>
-          <Form.Text className="text-muted" style={{ fontSize: '0.75rem' }}>
-            Найдено предметов: {results.length}
-            {activeFiltersCount > 0 && (
-              <span className="ms-2">
-                <i className="fas fa-filter text-info me-1"></i>
-                Активных фильтров: {activeFiltersCount}
-              </span>
-            )}
-          </Form.Text>
-        </Form>
-      </div>
-
-
-      <label className="inventory-category-picker">Категория<select className="form-select" value={quickCategory} onChange={event => setQuickCategory(event.target.value)}>
-        {[['all','Все предметы'],['weapons','Оружие'],['armor','Броня'],['consumables','Расходники'],['other','Прочее']].map(([value,label]) => <option key={value} value={value}>{label}</option>)}
-      </select></label>
-      <div className="inventory-quick-filters" role="group" aria-label="Категория предметов">
-        {[['all', 'Все'], ['weapons', 'Оружие'], ['armor', 'Броня'], ['consumables', 'Расходники'], ['other', 'Прочее']].map(([value, label]) =>
-          <Button key={value} className="fantasy-btn" aria-pressed={quickCategory === value}
-            onClick={() => setQuickCategory(value)}>{label}</Button>)}
-      </div>
-      <label className="inventory-sort">Сортировка
-        <select className="form-select" value={sortOrder} onChange={event => setSortOrder(event.target.value)}>
-          <option value="default">Как в рюкзаке</option><option value="name">По названию</option>
-          <option value="level">По уровню</option><option value="value">По цене</option><option value="count">По количеству</option>
-        </select>
-      </label>
+      <ItemFilters categoryShortcuts initialValue={browse} label="Фильтры инвентаря" options={filterOptions} fields={inventoryFields}
+        onApply={applyBrowse} result={`Найдено: ${results.length} из ${items.length}`} />
       {/* Панель массовых операций */}
       {selectedItems.size > 0 && (
         <div className="mass-operations-panel mb-3 p-3">
@@ -593,191 +284,6 @@ const InventoryList = observer(() => {
         </div>
       )}
 
-      {/* Два настраиваемых фильтра */}
-      <details className="custom-filters-container mb-3">
-        <summary>Фильтры{unidentifiedCount > 0 ? ` · Неопознано: ${unidentifiedCount}` : ''} {activeFiltersCount > 0 ? `(${activeFiltersCount})` : ''}</summary>
-
-
-        <div className="d-flex justify-content-between align-items-center mb-3">
-          <h6 className="fantasy-text-dark mb-0">Фильтры предметов</h6>
-          <div className="d-flex gap-2">
-            {activeFiltersCount > 0 && (
-              <Button
-                variant="outline-secondary"
-                size="sm"
-                onClick={resetFilters}
-              >
-                <i className="fas fa-times-circle me-1"></i>
-                Сбросить все фильтры
-              </Button>
-            )}
-          </div>
-        </div>
-        
-        <Row className="g-3">
-          {filters.map((filter, index) => {
-            const fieldConfig = filterFields.find(f => f.id === filter.field);
-            
-            return (
-              <Col md={6} key={index}>
-                <div className="filter-card p-3">
-                  <div className="d-flex justify-content-between align-items-center mb-2">
-                    <small className="text-muted">Фильтр {index + 1}</small>
-                    {filter.field && (
-                      <Button
-                        variant="link"
-                        size="sm"
-                        className="text-danger p-0"
-                        onClick={() => removeFilter(index)}
-                        title="Удалить фильтр"
-                      >
-                        <i className="fas fa-times"></i>
-                      </Button>
-                    )}
-                  </div>
-                  
-                  <div className="filter-controls">
-                    {/* Выбор поля */}
-                    <Form.Group className="mb-2">
-                      <Form.Label size="sm">Поле</Form.Label>
-                      <Form.Select
-                        size="sm"
-                        value={filter.field}
-                        onChange={(e) => updateFilter(index, "field", e.target.value)}
-                      >
-                        <option value="">Выберите поле...</option>
-                        {filterFields.map(field => (
-                          <option key={field.id} value={field.id}>
-                            {field.name}
-                          </option>
-                        ))}
-                      </Form.Select>
-                    </Form.Group>
-                    
-                    {/* Выбор оператора (для числовых полей) */}
-                    {fieldConfig?.type === "number" && filter.field && (
-                      <Form.Group className="mb-2">
-                        <Form.Label size="sm">Условие</Form.Label>
-                        <Form.Select
-                          size="sm"
-                          value={filter.operator}
-                          onChange={(e) => updateFilter(index, "operator", e.target.value)}
-                        >
-                          {fieldConfig.operators.map(op => (
-                            <option key={op.id} value={op.id}>
-                              {op.name}
-                            </option>
-                          ))}
-                        </Form.Select>
-                      </Form.Group>
-                    )}
-                    
-                    {/* Поле ввода значения */}
-                    {filter.field && (
-                      <Form.Group className="mb-2">
-                        <Form.Label size="sm">Значение</Form.Label>
-                        
-                        {fieldConfig?.type === "select" && (
-                          <Form.Select
-                            size="sm"
-                            value={filter.value}
-                            onChange={(e) => updateFilter(index, "value", e.target.value)}
-                          >
-                            <option value="">Любое...</option>
-                            {fieldConfig.options().map(opt => (
-                              <option key={opt.value} value={opt.value}>
-                                {opt.label}
-                              </option>
-                            ))}
-                          </Form.Select>
-                        )}
-                        
-                        {fieldConfig?.type === "boolean" && (
-                          <Form.Select
-                            size="sm"
-                            value={filter.value}
-                            onChange={(e) => updateFilter(index, "value", e.target.value)}
-                          >
-                            <option value="">Любое...</option>
-                            {fieldConfig.options.map(opt => (
-                              <option key={opt.value} value={opt.value}>
-                                {opt.label}
-                              </option>
-                            ))}
-                          </Form.Select>
-                        )}
-                        
-                        {fieldConfig?.type === "number" && (
-                          <Form.Control
-                            type="number"
-                            size="sm"
-                            value={filter.value}
-                            onChange={(e) => updateFilter(index, "value", e.target.value)}
-                            placeholder="Введите число..."
-                            min="0"
-                            step="0.1"
-                          />
-                        )}
-                      </Form.Group>
-                    )}
-                  </div>
-                </div>
-              </Col>
-            );
-          })}
-        </Row>
-        
-        {/* Отображение активных фильтров */}
-        {activeFiltersCount > 0 && (
-          <div className="active-filters-display mt-3 p-2">
-            <small className="text-muted d-flex align-items-center flex-wrap gap-1">
-              <i className="fas fa-filter"></i>
-              <span>Активные фильтры:</span>
-              {filters.map((filter, index) => {
-                if (!filter.field || filter.value === "") return null;
-                
-                const fieldConfig = filterFields.find(f => f.id === filter.field);
-                let displayValue = filter.value;
-                
-                // Форматирование значения для отображения
-                if (fieldConfig?.type === "boolean") {
-                  const option = fieldConfig.options.find(opt => opt.value === filter.value);
-                  displayValue = option ? option.label : filter.value;
-                } else if (fieldConfig?.type === "select") {
-                  const options = fieldConfig.options();
-                  const option = options.find(opt => opt.value === filter.value);
-                  displayValue = option ? option.label : filter.value;
-                } else if (fieldConfig?.type === "number") {
-                  const operatorName = fieldConfig.operators?.find(op => op.id === filter.operator)?.name || filter.operator;
-                  displayValue = `${operatorName} ${filter.value}`;
-                }
-                
-                return (
-                  <Badge 
-                    key={index}
-                    bg="info"
-                    className="d-flex align-items-center gap-1 me-1 mb-1"
-                    style={{ fontSize: '0.75rem' }}
-                  >
-                    {fieldConfig?.name}: {displayValue}
-                    <Button
-                      variant="link"
-                      size="sm"
-                      className="text-white p-0 filter-remove-button"
-                      aria-label={`Убрать фильтр: ${fieldConfig?.name}`}
-                      onClick={() => removeFilter(index)}
-                      style={{ minWidth: '44px', minHeight: '44px' }}
-                    >
-                      <i className="fas fa-times" style={{ fontSize: '0.6rem' }}></i>
-                    </Button>
-                  </Badge>
-                );
-              })}
-            </small>
-          </div>
-        )}
-      </details>
-
       {/* Список предметов */}
       <div className="inventory-items-container">
         {results.length > 0 ? (
@@ -797,8 +303,6 @@ const InventoryList = observer(() => {
           <div className="text-center p-4 fantasy-text-muted">
             <i className="fas fa-search fa-2x mb-3"></i>
             <p>Предметы не найдены</p>
-            {query && <p>Попробуйте изменить поисковый запрос</p>}
-            {activeFiltersCount > 0 && <p>Или измените фильтры</p>}
           </div>
         )}
       </div>

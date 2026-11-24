@@ -2,16 +2,25 @@
 import React from 'react';
 import { observer } from "mobx-react-lite";
 import { useContext, useEffect, useState, useCallback, useMemo } from "react";
-import { Row, Col, Form, Button, Card, Badge, Alert, Modal } from "react-bootstrap";
+import { Row, Col, Button, Card, Badge, Alert, Modal } from "react-bootstrap";
 import { Context } from "../index";
 import { Spinner } from "react-bootstrap";
-import Fuse from "fuse.js";
+import ItemFilters from './ItemFilters';
+import {emptyBrowse, itemSorts, productSorts} from '../utils/itemBrowseFields';
+import {browseLocalItems} from '../utils/localItemBrowse';
 import CreateBuyRequestModal from "./CreateBuyRequestModal";
 import SellModal from "./SellModal";
 import CancelRequestModal from "./CancelRequestModal";
 import StorageCollectModal from "./StorageCollectModal";
 import { fetchBuyRequests, createBuyRequest, sellToBuyRequest, collectPurchasedItems, cancelBuyRequest, getPlayerStorage } from "../http/bulkPurchase";
 import GetDataById from "../http/GetData";
+
+const requestFields = ['price', 'count', 'own_request', 'sellable'];
+const requestShortcuts = {own_request:'Мои', sellable:'Можно продать'};
+const storageFields = ['value', 'weight', 'count'];
+const requestSorts = [...productSorts, ...itemSorts.filter(([field]) => field === 'count')];
+const storageSorts = itemSorts.filter(([field]) => field !== 'level' && field !== 'level_asc');
+const tradeSearch = {keys:['name'], threshold:0.3};
 
 const BulkPurchaseTab = observer(() => {
   const { user } = useContext(Context);
@@ -24,7 +33,7 @@ const BulkPurchaseTab = observer(() => {
   const [buyRequests, setBuyRequests] = useState([]);
   const [storageData, setStorageData] = useState([]);
   const [loading, setLoading] = useState(!dataLoaded);
-  const [query, setQuery] = useState("");
+  const [browse, setBrowse] = useState(emptyBrowse);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [selectedStorageItem, setSelectedStorageItem] = useState(null);
   
@@ -40,10 +49,6 @@ const BulkPurchaseTab = observer(() => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [currentMode, setCurrentMode] = useState('requests');
-  
-  // Фильтры
-  const [showOnlyMyRequests, setShowOnlyMyRequests] = useState(false);
-  const [showOnlySellable, setShowOnlySellable] = useState(false);
   
   // Триггер для принудительного обновления данных игрока
   const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -61,14 +66,8 @@ const BulkPurchaseTab = observer(() => {
 
   // Переключение режимов
   const toggleMode = useCallback(() => {
-    setCurrentMode(prev => {
-      const newMode = prev === 'requests' ? 'storage' : 'requests';
-      // При переключении сбрасываем поиск
-      setQuery("");
-      return newMode;
-    });
-    setShowOnlyMyRequests(false);
-    setShowOnlySellable(false);
+    setCurrentMode(previous => previous === 'requests' ? 'storage' : 'requests');
+    setBrowse(emptyBrowse());
   }, []);
 
   // Загрузка данных игрока (обновляет контекст и состояния)
@@ -279,51 +278,18 @@ const BulkPurchaseTab = observer(() => {
       .map(([id, data]) => ({ id: parseInt(id), ...data }));
   }, [userInventory]);
 
-  // Фильтрация заявок
   const filteredRequests = useMemo(() => {
-    let requests = buyRequests;
-    if (!Array.isArray(requests)) return [];
+    if (currentMode !== 'requests') return [];
+    const rows = buyRequests.map(request => {
+      const ownRequest = request.user_id === playerData?.id;
+      return {...request, name:request.item_name, price:request.buy_price, count:request.buy_amount,
+        own_request:ownRequest, sellable:!ownRequest && userInventory[String(request.item_id)]?.count > 0};
+    });
+    return browseLocalItems(rows, browse, tradeSearch);
+  }, [buyRequests, browse, playerData, userInventory, currentMode]);
 
-    if (showOnlyMyRequests && playerData?.id) {
-      requests = requests.filter(req => req.user_id === playerData.id);
-    }
-
-    if (showOnlySellable && playerData?.id && Object.keys(userInventory).length > 0) {
-      requests = requests.filter(req => 
-        req.user_id !== playerData.id && userInventory[req.item_id.toString()]?.count > 0
-      );
-    }
-
-    if (query && requests.length > 0) {
-      try {
-        const fuse = new Fuse(requests, {
-          keys: ["item_name"],
-          threshold: 0.3
-        });
-        return fuse.search(query).map(result => result.item);
-      } catch (error) {
-        console.error("Search error:", error);
-      }
-    }
-    return requests;
-  }, [buyRequests, query, showOnlyMyRequests, showOnlySellable, playerData, userInventory]);
-
-  // Фильтрация склада
-  const filteredStorage = useMemo(() => {
-    if (!Array.isArray(storageData)) return [];
-    if (query && storageData.length > 0 && currentMode === 'storage') {
-      try {
-        const fuse = new Fuse(storageData, {
-          keys: ["name"],
-          threshold: 0.3
-        });
-        return fuse.search(query).map(result => result.item);
-      } catch (error) {
-        console.error("Search error:", error);
-      }
-    }
-    return storageData;
-  }, [storageData, query, currentMode]);
+  const filteredStorage = useMemo(() => currentMode === 'storage' ? browseLocalItems(storageData, browse, tradeSearch) : [],
+    [storageData, browse, currentMode]);
 
   // Состояния загрузки
   if (loading) {
@@ -394,74 +360,19 @@ const BulkPurchaseTab = observer(() => {
         </Modal.Footer>
       </Modal>
 
-      {/* Панель управления */}
-      <Row className="mb-3">
-        <Col md={7}>
-          <Form.Control
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder={`🔍 Поиск по ${currentMode === 'requests' ? 'заявкам' : 'складу'}...`}
-            className="inventory-search-input"
-          />
-        </Col>
-        <Col md={5}>
-          <div className="d-flex gap-2">
-            {/* Кнопка "Мои заявки" */}
-            {currentMode === 'requests' && (
-              <Button
-                className="fantasy-btn"
-                variant={showOnlyMyRequests ? "warning" : "outline-warning"}
-                onClick={() => setShowOnlyMyRequests(prev => !prev)}
-                title={showOnlyMyRequests ? "Показать все заявки" : "Показать только мои заявки"}
-              >
-                {showOnlyMyRequests ? "👥 Все" : "👤 Мои"}
-              </Button>
-            )}
-
-            {/* Кнопка "Можно продать" */}
-            {currentMode === 'requests' && (
-              <Button
-                className="fantasy-btn"
-                variant={showOnlySellable ? "success" : "outline-success"}
-                onClick={() => setShowOnlySellable(prev => !prev)}
-                title={showOnlySellable ? "Показать все заявки" : "Показать только продаваемые (есть в инвентаре)"}
-              >
-                {showOnlySellable ? "📦 Все" : "💰 Продать"}
-              </Button>
-            )}
-
-            {/* Кнопка переключения режимов */}
-            <Button 
-              className="fantasy-btn"
-              onClick={toggleMode}
-            >
-              {currentMode === 'requests' ? '📦 Склад' : '📋 Заявки'}
-            </Button>
-
-            {/* Кнопка создания заявки */}
-            {currentMode === 'requests' && (
-              <Button 
-                className="fantasy-btn"
-                onClick={() => setShowCreateModal(true)}
-              >
-                💰 Создать
-              </Button>
-            )}
-          </div>
-        </Col>
-      </Row>
+      <div className="d-flex flex-wrap gap-2 mb-3">
+        <Button className="fantasy-btn" onClick={toggleMode}>
+          {currentMode === 'requests' ? '📦 Склад' : '📋 Заявки'}
+        </Button>
+        {currentMode === 'requests' && <Button className="fantasy-btn" onClick={() => setShowCreateModal(true)}>
+          💰 Создать
+        </Button>}
+      </div>
 
       {/* Заголовок текущего режима */}
       <div className="mb-3">
         <h4 className="fantasy-text-primary">
           {currentMode === 'requests' ? '📋 Заявки на скупку' : '📦 Мой склад'}
-          {currentMode === 'requests' && showOnlyMyRequests && (
-            <Badge bg="warning" className="ms-2">Мои заявки</Badge>
-          )}
-          {currentMode === 'requests' && showOnlySellable && (
-            <Badge bg="success" className="ms-2">Можно продать</Badge>
-          )}
         </h4>
         <div className="fantasy-text-dark small">
           {currentMode === 'requests' 
@@ -470,6 +381,13 @@ const BulkPurchaseTab = observer(() => {
           }
         </div>
       </div>
+
+      {currentMode === 'requests' ? <ItemFilters key="requests" initialValue={browse} label="Фильтры заявок на скупку"
+        fields={requestFields} shortcuts={requestShortcuts} categories={[]} sorts={requestSorts} onApply={setBrowse}
+        result={`Найдено: ${filteredRequests.length} из ${buyRequests.length}`} /> :
+        <ItemFilters key="storage" initialValue={browse} label="Фильтры склада скупки"
+          fields={storageFields} categories={[]} sorts={storageSorts} onApply={setBrowse}
+          result={`Найдено: ${filteredStorage.length} из ${storageData.length}`} />}
 
       {/* Режим заявок */}
       {currentMode === 'requests' && (
@@ -497,14 +415,7 @@ const BulkPurchaseTab = observer(() => {
 
           {filteredRequests.length === 0 && (
             <div className="text-center fantasy-text-dark py-4">
-              {query 
-                ? "Заявки по вашему запросу не найдены" 
-                : showOnlyMyRequests 
-                  ? "У вас нет активных заявок" 
-                  : showOnlySellable
-                    ? "Нет заявок, которые можно продать (предметы отсутствуют в инвентаре)"
-                    : "Заявок на скупку нет"
-              }
+              {buyRequests.length ? "Заявки по этим фильтрам не найдены" : "Заявок на скупку нет"}
             </div>
           )}
         </>
@@ -529,7 +440,7 @@ const BulkPurchaseTab = observer(() => {
 
           {filteredStorage.length === 0 && (
             <div className="text-center fantasy-text-dark py-4">
-              {query ? "Предметы по вашему запросу не найдены" : "Ваш склад пуст"}
+              {storageData.length ? "Предметы по этим фильтрам не найдены" : "Ваш склад пуст"}
             </div>
           )}
         </>

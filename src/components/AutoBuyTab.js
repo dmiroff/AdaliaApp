@@ -3,11 +3,17 @@ import { DONATION_ROUTE } from '../utils/constants';
 import React, { useEffect, useState } from 'react';
 import { Alert, Button, Card, Form, ListGroup, Modal } from 'react-bootstrap';
 import apiClient from '../http/apiClient';
+import ItemFilters from './ItemFilters';
+import {emptyBrowse, productSorts} from '../utils/itemBrowseFields';
+import {browseLocalItems} from '../utils/localItemBrowse';
+
+const priceListFields = ['price', 'enabled'];
 
 export default function AutoBuyTab({ onOpenPremium, active = true }) {
   const navigate = useNavigate();
   const [data, setData] = useState(null);
   const [query, setQuery] = useState('');
+  const [browse, setBrowse] = useState(emptyBrowse);
   const [items, setItems] = useState([]);
   const [selected, setSelected] = useState(null);
   const [price, setPrice] = useState('');
@@ -58,6 +64,7 @@ export default function AutoBuyTab({ onOpenPremium, active = true }) {
     <Button onClick={() => onOpenPremium ? onOpenPremium() : navigate(DONATION_ROUTE)}>В премиум-магазин</Button>{' '}
     <Button variant="outline-secondary" onClick={() => load().catch(failure)}>Проверить покупку</Button>
   </div>;
+  const rules = browseLocalItems(data.rules, browse);
   return <div className="fantasy-paper p-3">
     <h3>📜 Торговый приказчик — мой прайс-лист</h3>
     <p>При передаче вам предметов из списка вы автоматически платите отправителю указанную цену за штуку. Доступно: {data.money} 🌕.</p>
@@ -83,7 +90,10 @@ export default function AutoBuyTab({ onOpenPremium, active = true }) {
       </Form>
     </Modal.Body></Modal>
     {data.rules.length === 0 && <p>Прайс-лист пуст. Добавьте первый предмет.</p>}
-    {data.rules.map(rule => <Card key={rule.item_id} className="mb-2"><Card.Body>
+    {data.rules.length > 0 && <ItemFilters initialValue={browse} label="Фильтры прайс-листа"
+      fields={priceListFields} categories={[]} sorts={productSorts} onApply={setBrowse}
+      result={`Найдено: ${rules.length} из ${data.rules.length}`} />}
+    {rules.map(rule => <Card key={rule.item_id} className="mb-2"><Card.Body>
       <strong>{rule.name}</strong> · ID {rule.item_id}<p>{rule.price} 🌕/шт. · {rule.enabled ? 'Автопокупка включена' : 'Пауза'}</p>
       <Button size="sm" disabled={busy} onClick={() => select({id: rule.item_id, name: rule.name})}>Цена</Button>{' '}
       <Button size="sm" variant="outline-secondary" disabled={busy} onClick={() => save(rule, !rule.enabled)}>{rule.enabled ? 'Пауза' : 'Включить'}</Button>{' '}

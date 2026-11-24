@@ -2,11 +2,15 @@ import React, {useEffect, useState} from 'react';
 import {Alert, Badge, Button, Card, Col, Form, Modal, Row, Spinner, Tab, Tabs} from 'react-bootstrap';
 import {eventShopPurchase, getCurrentEventShop} from '../http/eventShopApi';
 import EventShopHistory from './EventShopHistory';
+import ItemFilters from './ItemFilters';
+import {emptyBrowse, productFields, productSorts} from '../utils/itemBrowseFields';
+import {browseLocalItems, itemFilterOptions} from '../utils/localItemBrowse';
 
 const requestId = () => window.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
 export default function EventShopTab() {
   const [shop, setShop] = useState(null);
+  const [browse, setBrowse] = useState(emptyBrowse);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [selected, setSelected] = useState(null);
@@ -46,6 +50,9 @@ export default function EventShopTab() {
     finally {setBusy(false);}
   };
 
+  const products = shop?.products || [];
+  const filteredProducts = browseLocalItems(products, browse);
+
   return <div className="fantasy-paper content-overlay p-3">
     <h2 className="fantasy-text-dark">🍂 {shop?.event_name || 'Магазин осеннего ивента'}</h2>
     {error && <Alert variant="danger" role="alert">{error}</Alert>}
@@ -55,7 +62,11 @@ export default function EventShopTab() {
       <Badge bg="secondary" className="my-3 p-2">💀 Осколки Некрополя: {shop.balance}</Badge>
       <Tabs defaultActiveKey="shop" mountOnEnter unmountOnExit>
         <Tab eventKey="shop" title="Товары">
-          <Row className="g-3 mt-1">{shop.products.map(product => <Col xs={12} md={6} key={product.id}>
+          <ItemFilters initialValue={browse} label="Фильтры магазина события" fields={productFields} categories={[]}
+            options={itemFilterOptions(products)} sorts={productSorts} onApply={setBrowse} disabled={busy}
+            result={`Найдено: ${filteredProducts.length} из ${products.length}`} />
+          {filteredProducts.length === 0 && <p>Товары не найдены.</p>}
+          <Row className="g-3 mt-1">{filteredProducts.map(product => <Col xs={12} md={6} key={product.id}>
             <Card className="fantasy-card h-100"><Card.Body className="d-flex flex-column">
               <Card.Title>{product.image} {product.name}</Card.Title>
               <Card.Text>{product.description}</Card.Text>

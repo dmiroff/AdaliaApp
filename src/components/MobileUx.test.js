@@ -66,9 +66,27 @@ test('quick categories filter items without opening the advanced form',async()=>
  await click(button('Броня'));
  expect(container.textContent).toContain('Шлем тестовый');
  expect(container.textContent).not.toContain('Меч тестовый');
- await click(button('Прочее'));
+ const form = container.querySelector('form[aria-label="Фильтры инвентаря"]');
+ const category = form.querySelector('.item-filters-category-mobile select');
+ await act(async () => Simulate.change(category, {target:{value:'materials'}}));
  expect(container.textContent).toContain('Зелье тестовое');
  expect(container.textContent).not.toContain('Шлем тестовый');
+});
+
+test('inventory search keeps fuzzy results when another item matches exactly', async () => {
+ GetDataById.mockResolvedValue({data:{inventory_new:{
+  1:{name:'Ледяной топор', type:'right_hand', is_equippable:true},
+  2:{name:'Огненный тапор', type:'right_hand', is_equippable:true},
+  3:{name:'Медное кольцо', type:'ring'}
+ }}});
+ await render(<InventoryList />);
+ const form = container.querySelector('form[aria-label="Фильтры инвентаря"]');
+ await act(async () => Simulate.change(form.querySelector('input[type="search"]'), {target:{value:'топор'}}));
+ expect(container.textContent).toContain('Ледяной топор');
+ expect(container.textContent).toContain('Огненный тапор');
+ expect(container.textContent).not.toContain('Медное кольцо');
+ await click(form.querySelector('button[aria-label="Очистить поиск"]'));
+ expect(container.textContent).toContain('Медное кольцо');
 });
 
 test('explicit item actions open a sheet and rapid double wear sends one request',async()=>{

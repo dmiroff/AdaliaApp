@@ -1,4 +1,7 @@
 import React, { useState, useContext, useEffect, useRef, useCallback } from 'react';
+import ItemFilters from './ItemFilters';
+import {emptyBrowse, productFields, productSorts} from '../utils/itemBrowseFields';
+import {browseLocalItems, itemFilterOptions} from '../utils/localItemBrowse';
 import { observer } from "mobx-react-lite";
 import { Row, Col, Card, Button, Badge, Alert, Modal, Spinner, Form, Tabs, Tab } from "react-bootstrap";
 import { Context } from "../index";
@@ -28,6 +31,7 @@ const DonationTab = observer(() => {
   const [purchasingName, setPurchasingName] = useState(false);
   const namePurchaseInFlight = useRef(false);
   const [activeTab, setActiveTab] = useState("premium");
+  const [browse, setBrowse] = useState(emptyBrowse);
   const [selectedWeapon, setSelectedWeapon] = useState("");
   const [transferOptions, setTransferOptions] = useState(null);
   const [selectedAbode, setSelectedAbode] = useState("");
@@ -513,7 +517,7 @@ const DonationTab = observer(() => {
   ];
 
   // Фильтруем товары по активной вкладке и скрываем уже купленные новичковые
-  const filteredProducts = donationProducts.filter(product => {
+  const visibleProducts = donationProducts.filter(product => {
     if (activeTab === "premium") return product.category === "premium";
     // Для вкладки beginner показываем только товары категории beginner, которые не куплены
     if (activeTab === "beginner") {
@@ -524,6 +528,8 @@ const DonationTab = observer(() => {
     }
     return false;
   });
+
+  const filteredProducts = browseLocalItems(visibleProducts, browse);
 
   const selectedTransferOption = transferOptions?.options?.find(
     option => option.dungeon_key === selectedAbode
@@ -784,7 +790,7 @@ const DonationTab = observer(() => {
       {/* Вкладки */}
       <Tabs
         activeKey={activeTab}
-        onSelect={(k) => setActiveTab(k)}
+        onSelect={key => {setActiveTab(key); setBrowse(emptyBrowse());}}
         className="mb-4 fantasy-tabs"
         id="donation-tabs"
       >
@@ -792,7 +798,11 @@ const DonationTab = observer(() => {
         <Tab eventKey="beginner" title="Для новичков" />
       </Tabs>
 
-      {/* Список товаров */}
+      <ItemFilters key={activeTab} label="Фильтры премиум-магазина" fields={productFields} categories={[]}
+        options={itemFilterOptions(visibleProducts)} sorts={productSorts} onApply={setBrowse}
+        result={`Найдено: ${filteredProducts.length} из ${visibleProducts.length}`} />
+      {filteredProducts.length === 0 && <p>Товары не найдены.</p>}
+
       <Row>
         {filteredProducts.map((product) => {
           // Для постоянных улучшений проверяем, куплено ли (только для премиум товаров)

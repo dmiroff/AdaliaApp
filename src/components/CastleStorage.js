@@ -5,8 +5,6 @@ import {
   Col,
   Card,
   Button,
-  Modal,
-  Form,
   Alert,
   Spinner,
   ListGroup,
@@ -21,7 +19,9 @@ import {
   GetCastleStorage
 } from "../http/guildService";
 import GetDataById from "../http/GetData";
-import Fuse from "fuse.js";
+import ItemFilters from './ItemFilters';
+import {emptyBrowse, itemFieldNames, itemSorts} from '../utils/itemBrowseFields';
+import {browseLocalItems, itemFilterOptions} from '../utils/localItemBrowse';
 import { dict_translator } from "../utils/Helpers";
 import "./CastleStorage.css";
 import { 
@@ -29,19 +29,12 @@ import {
   MassTransferFromCastleModal 
 } from './CastleStorageModal';
 
-// Хук для дебаунса
-const useDebounce = (value, delay) => {
-  const [debouncedValue, setDebouncedValue] = useState(value);
-  
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedValue(value);
-    }, delay);
-    return () => clearTimeout(handler);
-  }, [value, delay]);
-  
-  return debouncedValue;
-};
+const inventoryFields = [...Object.keys(itemFieldNames), 'equipped'];
+const storageFields = [...Object.keys(itemFieldNames), 'added_by'];
+const legacyStorageFields = storageFields.filter(field => !['level', 'rarity', 'prefix', 'suffix'].includes(field));
+const legacyStorageSorts = itemSorts.filter(([field]) => field !== 'level' && field !== 'level_asc');
+const castleSearch = {keys:['name', 'description', 'nameAndDescription'], threshold:0.4,
+  minMatchCharLength:2, ignoreLocation:true};
 
 // Вспомогательная функция для нормализации ID
 const normalizeId = (id) => {
@@ -235,162 +228,8 @@ const CastleStorageItem = ({
   );
 };
 
-// Компонент FilterCard – теперь без кастомного селекта
-const FilterCard = ({ 
-  filter, 
-  index, 
-  filterFields, 
-  onUpdateFilter, 
-  onRemoveFilter,
-  source 
-}) => {
-  const fieldConfig = filterFields.find(f => f.id === filter.field);
-  
-  const handleFieldChange = (e) => {
-    e.stopPropagation();
-    onUpdateFilter(index, "field", e.target.value);
-  };
-
-  const handleOperatorChange = (e) => {
-    e.stopPropagation();
-    onUpdateFilter(index, "operator", e.target.value);
-  };
-
-  const handleValueChange = (e) => {
-    e.stopPropagation();
-    onUpdateFilter(index, "value", e.target.value);
-  };
-
-  const handleValueInputChange = (e) => {
-    e.stopPropagation();
-    onUpdateFilter(index, "value", e.target.value);
-  };
-
-  const handleRemoveFilter = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    onRemoveFilter(index);
-  };
-
-  const handleFormClick = (e) => {
-    e.stopPropagation();
-  };
-
-  return (
-    <div className="filter-card p-3 mb-3" onClick={handleFormClick}>
-      <div className="d-flex justify-content-between align-items-center mb-2">
-        <small className="text-dark">
-          {source === "inventory" ? "Фильтр инвентаря" : "Фильтр хранилища"} {index + 1}
-        </small>
-        {filter.field && (
-          <Button
-            variant="link"
-            size="sm"
-            className="text-danger p-0"
-            onClick={handleRemoveFilter}
-            title="Удалить фильтр"
-            type="button"
-          >
-            <i className="fas fa-times"></i>
-          </Button>
-        )}
-      </div>
-      
-      <div className="filter-controls" onClick={handleFormClick}>
-        <Form.Group className="mb-2">
-          <Form.Label size="sm" className="text-dark">Поле</Form.Label>
-          <Form.Select
-            size="sm"
-            value={filter.field}
-            onChange={handleFieldChange}
-            className="w-100"
-          >
-            <option value="">Выберите поле...</option>
-            {filterFields.map(field => (
-              <option key={field.id} value={field.id}>
-                {field.name}
-              </option>
-            ))}
-          </Form.Select>
-        </Form.Group>
-        
-        {fieldConfig?.type === "number" && filter.field && (
-          <Form.Group className="mb-2">
-            <Form.Label size="sm" className="text-dark">Условие</Form.Label>
-            <Form.Select
-              size="sm"
-              value={filter.operator}
-              onChange={handleOperatorChange}
-              className="w-100"
-            >
-              {fieldConfig.operators.map(op => (
-                <option key={op.id} value={op.id}>
-                  {op.name}
-                </option>
-              ))}
-            </Form.Select>
-          </Form.Group>
-        )}
-        
-        {filter.field && (
-          <Form.Group className="mb-2">
-            <Form.Label size="sm" className="text-dark">Значение</Form.Label>
-            
-            {fieldConfig?.type === "select" && (
-              <Form.Select
-                size="sm"
-                value={filter.value}
-                onChange={handleValueChange}
-                className="w-100"
-              >
-                <option value="">Любое...</option>
-                {fieldConfig.options().map(opt => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </Form.Select>
-            )}
-            
-            {fieldConfig?.type === "boolean" && (
-              <Form.Select
-                size="sm"
-                value={filter.value}
-                onChange={handleValueChange}
-                className="w-100"
-              >
-                <option value="">Любое...</option>
-                {fieldConfig.options.map(opt => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </Form.Select>
-            )}
-            
-            {fieldConfig?.type === "number" && (
-              <Form.Control
-                type="number"
-                size="sm"
-                value={filter.value}
-                onChange={handleValueInputChange}
-                onClick={handleFormClick}
-                placeholder="Введите число..."
-                min="0"
-                step="0.1"
-                className="w-100"
-              />
-            )}
-          </Form.Group>
-        )}
-      </div>
-    </div>
-  );
-};
-
-// Основной компонент хранилища замка
 const CastleStorage = observer(() => {
-  const { user, guild } = useContext(Context);
+  const { guild } = useContext(Context);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [activeCastle, setActiveCastle] = useState(null);
@@ -409,21 +248,8 @@ const CastleStorage = observer(() => {
   
   const [isCastleEventActive, setIsCastleEventActive] = useState(false);
 
-  // Состояния для фильтрации и поиска
-  const [searchQueryInventory, setSearchQueryInventory] = useState("");
-  const [searchQueryStorage, setSearchQueryStorage] = useState("");
-  const debouncedInventorySearch = useDebounce(searchQueryInventory, 300);
-  const debouncedStorageSearch = useDebounce(searchQueryStorage, 300);
-  
-  const [inventoryFilters, setInventoryFilters] = useState([
-    { field: "", operator: "equals", value: "" },
-    { field: "", operator: "equals", value: "" }
-  ]);
-  
-  const [storageFilters, setStorageFilters] = useState([
-    { field: "", operator: "equals", value: "" },
-    { field: "", operator: "equals", value: "" }
-  ]);
+  const [inventoryBrowse, setInventoryBrowse] = useState(emptyBrowse);
+  const [storageBrowse, setStorageBrowse] = useState(emptyBrowse);
 
   // Проверка наличия улучшения "Гильдейский посланник"
   const hasMessenger = useMemo(() => {
@@ -460,208 +286,6 @@ const CastleStorage = observer(() => {
     
     return equippedIds;
   }, [playerData]);
-
-  const translateValue = useCallback((value) => {
-    if (value === null || value === undefined) return "";
-    const strValue = String(value).toLowerCase();
-    return dict_translator[strValue] || dict_translator[value] || value;
-  }, []);
-
-  const getTranslatedType = useCallback((type) => {
-    if (!type) return type;
-    return translateValue(type);
-  }, [translateValue]);
-
-  const uniqueTypes = useMemo(() => {
-    const allItems = [];
-    if (playerInventory) {
-      Object.values(playerInventory).forEach(item => {
-        if (item) allItems.push(item);
-      });
-    }
-    if (storageItems) {
-      storageItems.forEach(item => {
-        if (item) allItems.push(item);
-      });
-    }
-    return Array.from(new Set(allItems.map(item => item.type).filter(Boolean)));
-  }, [playerInventory, storageItems]);
-
-  const uniqueAddedBy = useMemo(() => {
-    const addedBySet = new Set();
-    storageItems.forEach(item => {
-      if (item.added_by) addedBySet.add(item.added_by);
-    });
-    return Array.from(addedBySet);
-  }, [storageItems]);
-
-  // Поля фильтров для инвентаря (включая "Экипирован")
-  const filterFieldsInventory = useMemo(() => {
-    return [
-      { 
-        id: "type", 
-        name: "Тип предмета", 
-        type: "select",
-        options: () => uniqueTypes.map(type => ({ 
-          value: type, 
-          label: getTranslatedType(type)
-        })).sort((a, b) => a.label.localeCompare(b.label))
-      },
-      { 
-        id: "is_equippable", 
-        name: "Можно надеть", 
-        type: "boolean",
-        options: [
-          { value: "true", label: "Да" },
-          { value: "false", label: "Нет" }
-        ]
-      },
-      { 
-        id: "equipped", 
-        name: "Экипирован", 
-        type: "boolean",
-        options: [
-          { value: "true", label: "Экипировано" },
-          { value: "false", label: "Не экипировано" }
-        ]
-      },
-      { 
-        id: "value", 
-        name: "Стоимость", 
-        type: "number",
-        operators: [
-          { id: "greater", name: ">" },
-          { id: "less", name: "<" },
-          { id: "equals", name: "=" },
-          { id: "greaterOrEquals", name: "≥" },
-          { id: "lessOrEquals", name: "≤" }
-        ]
-      },
-      { 
-        id: "weight", 
-        name: "Вес", 
-        type: "number",
-        operators: [
-          { id: "greater", name: ">" },
-          { id: "less", name: "<" },
-          { id: "equals", name: "=" },
-          { id: "greaterOrEquals", name: "≥" },
-          { id: "lessOrEquals", name: "≤" }
-        ]
-      },
-      { 
-        id: "undefined",
-        name: "Распознан", 
-        type: "boolean",
-        options: [
-          { value: "true", label: "Нераспознанный" },
-          { value: "false", label: "Распознанный" }
-        ]
-      },
-      { 
-        id: "junk", 
-        name: "Хлам", 
-        type: "boolean",
-        options: [
-          { value: "true", label: "Да" },
-          { value: "false", label: "Нет" }
-        ]
-      },
-      { 
-        id: "corrupted", 
-        name: "Проклят", 
-        type: "boolean",
-        options: [
-          { value: "true", label: "Да" },
-          { value: "false", label: "Нет" }
-        ]
-      }
-    ];
-  }, [uniqueTypes, getTranslatedType]);
-
-  // Поля фильтров для хранилища (без "Экипирован")
-  const filterFieldsStorage = useMemo(() => {
-    return [
-      { 
-        id: "type", 
-        name: "Тип предмета", 
-        type: "select",
-        options: () => uniqueTypes.map(type => ({ 
-          value: type, 
-          label: getTranslatedType(type)
-        })).sort((a, b) => a.label.localeCompare(b.label))
-      },
-      { 
-        id: "is_equippable", 
-        name: "Можно надеть", 
-        type: "boolean",
-        options: [
-          { value: "true", label: "Да" },
-          { value: "false", label: "Нет" }
-        ]
-      },
-      { 
-        id: "value", 
-        name: "Стоимость", 
-        type: "number",
-        operators: [
-          { id: "greater", name: ">" },
-          { id: "less", name: "<" },
-          { id: "equals", name: "=" },
-          { id: "greaterOrEquals", name: "≥" },
-          { id: "lessOrEquals", name: "≤" }
-        ]
-      },
-      { 
-        id: "weight", 
-        name: "Вес", 
-        type: "number",
-        operators: [
-          { id: "greater", name: ">" },
-          { id: "less", name: "<" },
-          { id: "equals", name: "=" },
-          { id: "greaterOrEquals", name: "≥" },
-          { id: "lessOrEquals", name: "≤" }
-        ]
-      },
-      { 
-        id: "undefined",
-        name: "Распознан", 
-        type: "boolean",
-        options: [
-          { value: "true", label: "Нераспознанный" },
-          { value: "false", label: "Распознанный" }
-        ]
-      },
-      { 
-        id: "junk", 
-        name: "Хлам", 
-        type: "boolean",
-        options: [
-          { value: "true", label: "Да" },
-          { value: "false", label: "Нет" }
-        ]
-      },
-      { 
-        id: "corrupted", 
-        name: "Проклят", 
-        type: "boolean",
-        options: [
-          { value: "true", label: "Да" },
-          { value: "false", label: "Нет" }
-        ]
-      },
-      { 
-        id: "added_by", 
-        name: "Добавлено игроком", 
-        type: "select",
-        options: () => uniqueAddedBy.map(name => ({ 
-          value: name, 
-          label: name 
-        })).sort((a, b) => a.label.localeCompare(b.label))
-      }
-    ];
-  }, [uniqueTypes, uniqueAddedBy, getTranslatedType]);
 
   // Загрузка данных
   useEffect(() => {
@@ -789,285 +413,15 @@ const CastleStorage = observer(() => {
     fetchPlayerData();
   }, [fetchPlayerData]);
 
-  // Функция применения фильтров (общая)
-  const applyFiltersToItems = useCallback((items, filters, isArray = false, source = "inventory") => {
-    // Для инвентаря используем filterFieldsInventory, для хранилища - filterFieldsStorage
-    const fields = source === "inventory" ? filterFieldsInventory : filterFieldsStorage;
-    
-    return items.filter(itemData => {
-      if (!isArray) {
-        const [key, item] = itemData;
-        return filters.every(filter => {
-          if (!filter.field || filter.value === "") return true;
-          
-          const fieldConfig = fields.find(f => f.id === filter.field);
-          if (!fieldConfig) return true;
-          
-          let itemValue = item[filter.field];
-          
-          if (filter.field === "undefined") {
-            const isUndefined = item.undefined === true || item.undefined === "true";
-            itemValue = String(isUndefined);
-          } else if (filter.field === "corrupted") {
-            itemValue = item.corrupted || false;
-          } else if (filter.field === "junk") {
-            itemValue = item.junk || false;
-          } else if (filter.field === "is_equippable") {
-            itemValue = item.is_equippable || false;
-          } else if (filter.field === "equipped") {
-            // Для поля "Экипирован" значение уже есть в item.equipped
-            itemValue = item.equipped || false;
-          } else if (filter.field === "added_by") {
-            itemValue = item.added_by || "";
-          }
-          
-          switch (fieldConfig.type) {
-            case "boolean":
-              return String(itemValue) === filter.value;
-              
-            case "number":
-              const numValue = parseFloat(itemValue) || 0;
-              const filterNumValue = parseFloat(filter.value) || 0;
-              
-              switch (filter.operator) {
-                case "greater":
-                  return numValue > filterNumValue;
-                case "less":
-                  return numValue < filterNumValue;
-                case "equals":
-                  return numValue === filterNumValue;
-                case "greaterOrEquals":
-                  return numValue >= filterNumValue;
-                case "lessOrEquals":
-                  return numValue <= filterNumValue;
-                default:
-                  return true;
-              }
-              
-            case "select":
-              return itemValue === filter.value;
-              
-            default:
-              return true;
-          }
-        });
-      } else {
-        const item = itemData;
-        return filters.every(filter => {
-          if (!filter.field || filter.value === "") return true;
-          
-          const fieldConfig = fields.find(f => f.id === filter.field);
-          if (!fieldConfig) return true;
-          
-          let itemValue = item[filter.field];
-          
-          if (filter.field === "undefined") {
-            const isUndefined = item.undefined === true || item.undefined === "true";
-            itemValue = String(isUndefined);
-          } else if (filter.field === "corrupted") {
-            itemValue = item.corrupted || false;
-          } else if (filter.field === "junk") {
-            itemValue = item.junk || false;
-          } else if (filter.field === "is_equippable") {
-            itemValue = item.is_equippable || false;
-          } else if (filter.field === "added_by") {
-            itemValue = item.added_by || "";
-          }
-          
-          switch (fieldConfig.type) {
-            case "boolean":
-              return String(itemValue) === filter.value;
-              
-            case "number":
-              const numValue = parseFloat(itemValue) || 0;
-              const filterNumValue = parseFloat(filter.value) || 0;
-              
-              switch (filter.operator) {
-                case "greater":
-                  return numValue > filterNumValue;
-                case "less":
-                  return numValue < filterNumValue;
-                case "equals":
-                  return numValue === filterNumValue;
-                case "greaterOrEquals":
-                  return numValue >= filterNumValue;
-                case "lessOrEquals":
-                  return numValue <= filterNumValue;
-                default:
-                  return true;
-              }
-              
-            case "select":
-              return itemValue === filter.value;
-              
-            default:
-              return true;
-          }
-        });
-      }
-    });
-  }, [filterFieldsInventory, filterFieldsStorage]);
-
-  // Фильтрация предметов
-  const filterItems = useCallback((items, query, filters, isArray = false, source = "inventory") => {
-    const hasActiveFilters = filters.some(f => f.field && f.value !== "");
-    
-    if (!hasActiveFilters && !query) {
-      return isArray ? items : Object.entries(items).filter(([key, item]) => 
-        item && typeof item === 'object' && key !== null && key !== undefined
-      );
-    }
-
-    let filteredItems = isArray ? items : Object.entries(items).filter(([key, item]) => 
-      item && typeof item === 'object' && key !== null && key !== undefined
-    );
-
-    if (hasActiveFilters) {
-      filteredItems = applyFiltersToItems(filteredItems, filters, isArray, source);
-    }
-
-    if (query && filteredItems.length > 0) {
-      try {
-        const itemObjects = isArray 
-          ? filteredItems.map(item => ({ 
-              ...item, 
-              id: normalizeId(item.id),
-              searchKey: `${item.name || ''} ${item.description || ''}`
-            }))
-          : filteredItems.map(([id, data]) => ({ 
-              id: normalizeId(id),
-              ...(data || {}),
-              searchKey: `${data?.name || ''} ${data?.description || ''}`
-            }));
-        
-        const fuse = new Fuse(itemObjects, {
-          keys: ["name", "description", "searchKey"],
-          includeScore: true,
-          threshold: 0.4,
-          shouldSort: true,
-          minMatchCharLength: 2,
-          ignoreLocation: true,
-        });
-        
-        const searchResults = fuse.search(query);
-        
-        if (isArray) {
-          filteredItems = searchResults.map(result => result.item);
-        } else {
-          filteredItems = searchResults.map(result => {
-            const { id, ...data } = result.item;
-            return [id, data];
-          });
-        }
-      } catch (error) {
-        console.error("Fuse.js error:", error);
-        const lowerQuery = query.toLowerCase();
-        if (isArray) {
-          filteredItems = filteredItems.filter(item => 
-            (item.name && item.name.toLowerCase().includes(lowerQuery)) ||
-            (item.description && item.description.toLowerCase().includes(lowerQuery))
-          );
-        } else {
-          filteredItems = filteredItems.filter(([key, item]) => 
-            (item.name && item.name.toLowerCase().includes(lowerQuery)) ||
-            (item.description && item.description.toLowerCase().includes(lowerQuery))
-          );
-        }
-      }
-    }
-    
-    return filteredItems;
-  }, [applyFiltersToItems]);
-
-  // Отфильтрованные списки с добавлением флага equipped для инвентаря
-  const filteredInventory = useMemo(() => {
-    const rawFiltered = filterItems(playerInventory, debouncedInventorySearch, inventoryFilters, false, "inventory");
-    // Добавляем флаг equipped каждому предмету инвентаря
-    return rawFiltered.map(([id, item]) => {
-      const equipped = equippedItemsSet.has(normalizeId(id));
-      return [id, { ...item, equipped }];
-    });
-  }, [playerInventory, debouncedInventorySearch, inventoryFilters, filterItems, equippedItemsSet]);
-
-  const filteredStorage = useMemo(() => {
-    return filterItems(storageItems, debouncedStorageSearch, storageFilters, true, "storage");
-  }, [storageItems, debouncedStorageSearch, storageFilters, filterItems]);
-
-  // Обновление фильтров инвентаря
-  const updateInventoryFilter = (index, field, value) => {
-    setInventoryFilters(prev => {
-      const newFilters = [...prev];
-      if (field === "field") {
-        const fieldConfig = filterFieldsInventory.find(f => f.id === value);
-        newFilters[index] = { 
-          field: value, 
-          operator: fieldConfig?.type === "number" ? "greater" : "equals",
-          value: "" 
-        };
-      } else {
-        newFilters[index] = { ...newFilters[index], [field]: value };
-      }
-      return newFilters;
-    });
-  };
-
-  const removeInventoryFilter = (index) => {
-    setInventoryFilters(prev => {
-      const newFilters = [...prev];
-      newFilters[index] = { field: "", operator: "equals", value: "" };
-      return newFilters;
-    });
-  };
-
-  const resetInventoryFilters = () => {
-    setInventoryFilters([
-      { field: "", operator: "equals", value: "" },
-      { field: "", operator: "equals", value: "" }
-    ]);
-    setSearchQueryInventory("");
-  };
-
-  // Обновление фильтров хранилища
-  const updateStorageFilter = (index, field, value) => {
-    setStorageFilters(prev => {
-      const newFilters = [...prev];
-      if (field === "field") {
-        const fieldConfig = filterFieldsStorage.find(f => f.id === value);
-        newFilters[index] = { 
-          field: value, 
-          operator: fieldConfig?.type === "number" ? "greater" : "equals",
-          value: "" 
-        };
-      } else {
-        newFilters[index] = { ...newFilters[index], [field]: value };
-      }
-      return newFilters;
-    });
-  };
-
-  const removeStorageFilter = (index) => {
-    setStorageFilters(prev => {
-      const newFilters = [...prev];
-      newFilters[index] = { field: "", operator: "equals", value: "" };
-      return newFilters;
-    });
-  };
-
-  const resetStorageFilters = () => {
-    setStorageFilters([
-      { field: "", operator: "equals", value: "" },
-      { field: "", operator: "equals", value: "" }
-    ]);
-    setSearchQueryStorage("");
-  };
-
-  const activeInventoryFiltersCount = useMemo(() => {
-    return inventoryFilters.filter(f => f.field && f.value !== "").length;
-  }, [inventoryFilters]);
-
-  const activeStorageFiltersCount = useMemo(() => {
-    return storageFilters.filter(f => f.field && f.value !== "").length;
-  }, [storageFilters]);
+  const inventoryItems = useMemo(() => Object.entries(playerInventory)
+    .filter(([, item]) => item && typeof item === 'object')
+    .map(([id, item]) => ({...item, id, equipped:equippedItemsSet.has(id)})),
+    [playerInventory, equippedItemsSet]);
+  const inventoryOptions = useMemo(() => itemFilterOptions(inventoryItems), [inventoryItems]);
+  const storageOptions = useMemo(() => itemFilterOptions(storageItems), [storageItems]);
+  const storageHasDetails = !storageItems.length || storageItems.some(item => 'level' in item);
+  const filteredInventory = useMemo(() => browseLocalItems(inventoryItems, inventoryBrowse, castleSearch), [inventoryItems, inventoryBrowse]);
+  const filteredStorage = useMemo(() => browseLocalItems(storageItems, storageBrowse, castleSearch), [storageItems, storageBrowse]);
 
   // Вспомогательные функции
   const handleCastleSelect = (castle) => {
@@ -1101,7 +455,7 @@ const CastleStorage = observer(() => {
   };
 
   const selectAllFilteredInventory = () => {
-    const allIds = filteredInventory.map(([key]) => normalizeId(key));
+    const allIds = filteredInventory.map(item => item.id);
     setSelectedInventoryItems(new Set(allIds));
   };
 
@@ -1353,152 +707,24 @@ const CastleStorage = observer(() => {
                           </div>
                         )}
 
-                        <div className="mb-3">
-                          <div className="fantasy-paper content-overlay bulk-purchase-tab">
-                            <Form>
-                              <div className="search-input-wrapper">
-                                <i className="fas fa-search search-icon"></i>
-                                <Form.Control
-                                  type="text"
-                                  value={searchQueryInventory}
-                                  onChange={(e) => setSearchQueryInventory(e.target.value)}
-                                  placeholder="Название или описание предмета..."
-                                  className="inventory-search-input bulk-purchase"
-                                />
-                                {searchQueryInventory && (
-                                  <Button
-                                    variant="link"
-                                    size="sm"
-                                    className="clear-search-btn"
-                                    onClick={() => setSearchQueryInventory('')}
-                                    title="Очистить поиск"
-                                    type="button"
-                                  >
-                                    <i className="fas fa-times"></i>
-                                  </Button>
-                                )}
-                              </div>
-                              <Form.Text className="text-dark">
-                                Найдено: {filteredInventory.length} предметов
-                                {activeInventoryFiltersCount > 0 && (
-                                  <span className="ms-2">
-                                    <i className="fas fa-filter text-info me-1"></i>
-                                    Активных фильтров: {activeInventoryFiltersCount}
-                                  </span>
-                                )}
-                              </Form.Text>
-                            </Form>
-                          </div>
-                        </div>
-
-                        <div className="custom-filters-container mb-3">
-                          <div className="d-flex justify-content-between align-items-center mb-3">
-                            <h6 className="text-dark mb-0">Фильтры предметов</h6>
-                            <div className="d-flex gap-2">
-                              <Button
-                                variant="outline-success"
-                                size="sm"
-                                onClick={selectAllFilteredInventory}
-                                className="fantasy-btn"
-                                disabled={filteredInventory.length === 0}
-                                type="button"
-                              >
-                                <i className="fas fa-check-double me-1"></i>
-                                Выбрать всё
-                              </Button>
-                              {activeInventoryFiltersCount > 0 && (
-                                <Button
-                                  variant="outline-secondary"
-                                  size="sm"
-                                  onClick={resetInventoryFilters}
-                                  className="fantasy-btn"
-                                  type="button"
-                                >
-                                  <i className="fas fa-times-circle me-1"></i>
-                                  Сбросить все фильтры
-                                </Button>
-                              )}
-                            </div>
-                          </div>
-                          
-                          <Row className="g-3">
-                            {inventoryFilters.map((filter, index) => (
-                              <Col xs={12} key={index}>
-                                <FilterCard
-                                  filter={filter}
-                                  index={index}
-                                  filterFields={filterFieldsInventory}
-                                  onUpdateFilter={updateInventoryFilter}
-                                  onRemoveFilter={removeInventoryFilter}
-                                  source="inventory"
-                                />
-                              </Col>
-                            ))}
-                          </Row>
-                          
-                          {activeInventoryFiltersCount > 0 && (
-                            <div className="active-filters-display mt-3 p-2">
-                              <small className="text-dark d-flex align-items-center flex-wrap gap-1">
-                                <i className="fas fa-filter"></i>
-                                <span>Активные фильтры:</span>
-                                {inventoryFilters.map((filter, index) => {
-                                  if (!filter.field || filter.value === "") return null;
-                                  
-                                  const fieldConfig = filterFieldsInventory.find(f => f.id === filter.field);
-                                  let displayValue = filter.value;
-                                  
-                                  if (fieldConfig?.type === "boolean") {
-                                    const option = fieldConfig.options.find(opt => opt.value === filter.value);
-                                    displayValue = option ? option.label : filter.value;
-                                  } else if (fieldConfig?.type === "select") {
-                                    const options = fieldConfig.options();
-                                    const option = options.find(opt => opt.value === filter.value);
-                                    displayValue = option ? option.label : filter.value;
-                                  } else if (fieldConfig?.type === "number") {
-                                    const operatorName = fieldConfig.operators?.find(op => op.id === filter.operator)?.name || filter.operator;
-                                    displayValue = `${operatorName} ${filter.value}`;
-                                  }
-                                  
-                                  return (
-                                    <Badge 
-                                      key={index}
-                                      bg="info"
-                                      className="d-flex align-items-center gap-1 me-1 mb-1"
-                                      style={{ fontSize: '0.75rem' }}
-                                    >
-                                      {fieldConfig?.name}: {displayValue}
-                                      <Button
-                                        variant="link"
-                                        size="sm"
-                                        className="text-white p-0"
-                                        onClick={() => removeInventoryFilter(index)}
-                                        style={{ minWidth: '16px', height: '16px' }}
-                                        type="button"
-                                      >
-                                        <i className="fas fa-times" style={{ fontSize: '0.6rem' }}></i>
-                                      </Button>
-                                    </Badge>
-                                  );
-                                })}
-                              </small>
-                            </div>
-                          )}
-                        </div>
-                        
+                        <ItemFilters initialValue={inventoryBrowse} label="Фильтры инвентаря для переноса в замок" fields={inventoryFields} options={inventoryOptions}
+                          onApply={setInventoryBrowse} result={`Найдено: ${filteredInventory.length} из ${inventoryItems.length}`} />
+                        {selectedInventoryItems.size === 0 &&
+                          <Button className="mb-3" variant="outline-primary" type="button"
+                            onClick={selectAllFilteredInventory} disabled={!filteredInventory.length}>
+                            Выбрать всё ({filteredInventory.length})
+                          </Button>}
                         <div className="inventory-items-grid">
                           {filteredInventory.length > 0 ? (
-                            filteredInventory.map(([key, item]) => {
-                              const normalizedId = normalizeId(key);
-                              return (
-                                <CastleStorageItem 
-                                  key={`inventory-${key}`}
-                                  item={{ id: normalizedId, key: key, ...item }}
-                                  isSelected={selectedInventoryItems.has(normalizedId)}
-                                  onToggleSelect={toggleInventoryItem}
-                                  source="inventory"
-                                />
-                              );
-                            })
+                            filteredInventory.map(item => (
+                              <CastleStorageItem
+                                key={item.id}
+                                item={item}
+                                isSelected={selectedInventoryItems.has(item.id)}
+                                onToggleSelect={toggleInventoryItem}
+                                source="inventory"
+                              />
+                            ))
                           ) : (
                             <div className="text-center py-5">
                               <i className="fas fa-inbox fa-3x text-muted mb-3"></i>
@@ -1569,138 +795,15 @@ const CastleStorage = observer(() => {
                           </div>
                         )}
 
-                        <div className="mb-3">
-                          <div className="fantasy-paper content-overlay bulk-purchase-tab">
-                            <Form>
-                              <div className="search-input-wrapper">
-                                <i className="fas fa-search search-icon"></i>
-                                <Form.Control
-                                  type="text"
-                                  value={searchQueryStorage}
-                                  onChange={(e) => setSearchQueryStorage(e.target.value)}
-                                  placeholder="Название или описание предмета..."
-                                  className="inventory-search-input bulk-purchase"
-                                />
-                                {searchQueryStorage && (
-                                  <Button
-                                    variant="link"
-                                    size="sm"
-                                    className="clear-search-btn"
-                                    onClick={() => setSearchQueryStorage('')}
-                                    title="Очистить поиск"
-                                    type="button"
-                                  >
-                                    <i className="fas fa-times"></i>
-                                  </Button>
-                                )}
-                              </div>
-                              <Form.Text className="text-dark">
-                                Найдено: {filteredStorage.length} предметов
-                                {activeStorageFiltersCount > 0 && (
-                                  <span className="ms-2">
-                                    <i className="fas fa-filter text-info me-1"></i>
-                                    Активных фильтров: {activeStorageFiltersCount}
-                                  </span>
-                                )}
-                              </Form.Text>
-                            </Form>
-                          </div>
-                        </div>
-
-                        <div className="custom-filters-container mb-3">
-                          <div className="d-flex justify-content-between align-items-center mb-3">
-                            <h6 className="text-dark mb-0">Фильтры хранилища</h6>
-                            <div className="d-flex gap-2">
-                              <Button
-                                variant="outline-success"
-                                size="sm"
-                                onClick={selectAllFilteredStorage}
-                                className="fantasy-btn"
-                                disabled={filteredStorage.length === 0 || !canTakeItemsFromStorage}
-                                type="button"
-                              >
-                                <i className="fas fa-check-double me-1"></i>
-                                Выбрать всё
-                              </Button>
-                              {activeStorageFiltersCount > 0 && (
-                                <Button
-                                  variant="outline-secondary"
-                                  size="sm"
-                                  onClick={resetStorageFilters}
-                                  className="fantasy-btn"
-                                  type="button"
-                                >
-                                  <i className="fas fa-times-circle me-1"></i>
-                                  Сбросить все фильтры
-                                </Button>
-                              )}
-                            </div>
-                          </div>
-                          
-                          <Row className="g-3">
-                            {storageFilters.map((filter, index) => (
-                              <Col xs={12} key={index}>
-                                <FilterCard
-                                  filter={filter}
-                                  index={index}
-                                  filterFields={filterFieldsStorage}
-                                  onUpdateFilter={updateStorageFilter}
-                                  onRemoveFilter={removeStorageFilter}
-                                  source="storage"
-                                />
-                              </Col>
-                            ))}
-                          </Row>
-                          
-                          {activeStorageFiltersCount > 0 && (
-                            <div className="active-filters-display mt-3 p-2">
-                              <small className="text-dark d-flex align-items-center flex-wrap gap-1">
-                                <i className="fas fa-filter"></i>
-                                <span>Активные фильтры:</span>
-                                {storageFilters.map((filter, index) => {
-                                  if (!filter.field || filter.value === "") return null;
-                                  
-                                  const fieldConfig = filterFieldsStorage.find(f => f.id === filter.field);
-                                  let displayValue = filter.value;
-                                  
-                                  if (fieldConfig?.type === "boolean") {
-                                    const option = fieldConfig.options.find(opt => opt.value === filter.value);
-                                    displayValue = option ? option.label : filter.value;
-                                  } else if (fieldConfig?.type === "select") {
-                                    const options = fieldConfig.options();
-                                    const option = options.find(opt => opt.value === filter.value);
-                                    displayValue = option ? option.label : filter.value;
-                                  } else if (fieldConfig?.type === "number") {
-                                    const operatorName = fieldConfig.operators?.find(op => op.id === filter.operator)?.name || filter.operator;
-                                    displayValue = `${operatorName} ${filter.value}`;
-                                  }
-                                  
-                                  return (
-                                    <Badge 
-                                      key={index}
-                                      bg="info"
-                                      className="d-flex align-items-center gap-1 me-1 mb-1"
-                                      style={{ fontSize: '0.75rem' }}
-                                    >
-                                      {fieldConfig?.name}: {displayValue}
-                                      <Button
-                                        variant="link"
-                                        size="sm"
-                                        className="text-white p-0"
-                                        onClick={() => removeStorageFilter(index)}
-                                        style={{ minWidth: '16px', height: '16px' }}
-                                        type="button"
-                                      >
-                                        <i className="fas fa-times" style={{ fontSize: '0.6rem' }}></i>
-                                      </Button>
-                                    </Badge>
-                                  );
-                                })}
-                              </small>
-                            </div>
-                          )}
-                        </div>
-                        
+                        <ItemFilters initialValue={storageBrowse} label="Фильтры склада замка" options={storageOptions}
+                          fields={storageHasDetails ? storageFields : legacyStorageFields}
+                          sorts={storageHasDetails ? itemSorts : legacyStorageSorts}
+                          onApply={setStorageBrowse} result={`Найдено: ${filteredStorage.length} из ${storageItems.length}`} />
+                        {selectedStorageItems.size === 0 &&
+                          <Button className="mb-3" variant="outline-primary" type="button"
+                            onClick={selectAllFilteredStorage} disabled={!filteredStorage.length || !canTakeItemsFromStorage}>
+                            Выбрать всё ({filteredStorage.length})
+                          </Button>}
                         <div className="storage-items-grid">
                           {filteredStorage.length > 0 ? (
                             filteredStorage.map(item => (

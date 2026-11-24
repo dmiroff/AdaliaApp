@@ -95,8 +95,8 @@ test('additional inventory conditions and all eight birds serialize without losi
 test('older servers cannot silently ignore filters and unknown birds are not displayed as absent', async () => {
     const old=page();delete old.data.filter_options;delete old.data.total;
     api.get.mockResolvedValueOnce(old);await render();
-    expect(container.querySelector('.ps-browse-controls').disabled).toBe(true);
+    expect(container.querySelector('.item-filters-fields').disabled).toBe(true);
     expect(container.textContent).toContain('Фильтры пока недоступны');
     expect(container.textContent).not.toContain('Без птицы');
-    await click('Обновить каталог');expect(container.querySelector('.ps-browse-controls').disabled).toBe(false);
+    await click('Обновить каталог');expect(container.querySelector('.item-filters-fields').disabled).toBe(false);
 });

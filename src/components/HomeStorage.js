@@ -1,11 +1,14 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, Button, Form, Modal, Spinner } from 'react-bootstrap';
 import apiClient from '../http/apiClient';
-import { dict_translator } from '../utils/Helpers';
+import ItemFilters from './ItemFilters';
+import {emptyBrowse, itemFieldNames} from '../utils/itemBrowseFields';
+import {browseLocalItems, itemFilterOptions} from '../utils/localItemBrowse';
 import './HomeStorage.css';
 
 const kg = value => Number(value || 0).toLocaleString('ru-RU', {maximumFractionDigits: 2});
-const searchText = value => String(value || '').toLocaleLowerCase('ru-RU').replace(/ё/g, 'е').trim();
+const storageFields = [...Object.keys(itemFieldNames), 'available'];
+const depositFields = [...storageFields, 'equipped'];
 const errorText = error => [404, 502].includes(error.response?.status)
   ? 'Хранилище временно недоступно. Попробуйте обновить позже.'
   : (typeof error.response?.data?.detail === 'string' ? error.response.data.detail : 'Не удалось связаться с хранилищем. Обновите список перед повторной попыткой.');
@@ -14,8 +17,10 @@ export default function HomeStorage({onInventoryChanged}) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [direction, setDirection] = useState('deposit');
-  const [query, setQuery] = useState('');
-  const [category, setCategory] = useState('');
+  const [depositBrowse, setDepositBrowse] = useState(emptyBrowse);
+  const [withdrawBrowse, setWithdrawBrowse] = useState(emptyBrowse);
+  const browse = direction === 'deposit' ? depositBrowse : withdrawBrowse;
+  const setBrowse = direction === 'deposit' ? setDepositBrowse : setWithdrawBrowse;
   const [selected, setSelected] = useState({});
   const [notice, setNotice] = useState(null);
   const [confirm, setConfirm] = useState(false);
@@ -31,7 +36,7 @@ export default function HomeStorage({onInventoryChanged}) {
     try {
       const response = await apiClient.get('/home-storage');
       setData(response.data);
-      if (response.data.can_deposit === false && response.data.can_withdraw) setDirection("withdraw");
+      if (response.data.can_deposit === false && response.data.can_withdraw) setDirection('withdraw');
       setSelected({});
     } catch (error) {
       setData(null);
@@ -41,12 +46,8 @@ export default function HomeStorage({onInventoryChanged}) {
   useEffect(() => { load(); }, [load]);
 
   const source = useMemo(() => data ? data[direction === 'deposit' ? 'inventory' : 'storage'] : [], [data, direction]);
-  const categories = [...new Set(source.map(item => item.type).filter(Boolean))].sort();
-  const terms = searchText(query).split(/\s+/).filter(Boolean);
-  const filtered = source.filter(item => {
-    const text = searchText([item.name, item.type, dict_translator[item.type]].filter(Boolean).join(' '));
-    return (!category || item.type === category) && terms.every(term => text.includes(term));
-  });
+  const filterOptions = useMemo(() => itemFilterOptions(source), [source]);
+  const filtered = useMemo(() => browseLocalItems(source, browse), [source, browse]);
   const chosen = source.filter(item => selected[item.id] !== undefined);
   const selectedWeight = chosen.reduce((total, item) => total + Number(item.weight || 0) * Number(selected[item.id] || 0), 0);
   const valid = chosen.length > 0 && chosen.every(item => Number.isInteger(Number(selected[item.id])) &&
@@ -71,7 +72,7 @@ export default function HomeStorage({onInventoryChanged}) {
         items: chosen.map(item => ({item_id: item.id, quantity: Number(selected[item.id])}))
       });
       setData(response.data);
-      if (response.data.can_deposit === false && response.data.can_withdraw) setDirection("withdraw");
+      if (response.data.can_deposit === false && response.data.can_withdraw) setDirection('withdraw');
       setSelected({});
       setNotice({variant: 'success', text: response.data.message});
       onInventoryChanged?.();
@@ -104,28 +105,18 @@ export default function HomeStorage({onInventoryChanged}) {
       <div className="home-storage-tabs" role="group" aria-label="Направление переноса">
         {[['deposit', 'Сложить из инвентаря'], ['withdraw', 'Забрать из сундука']].map(([value, label]) =>
           <Button key={value} variant={direction === value ? 'primary' : 'outline-primary'} aria-pressed={direction === value}
-            disabled={busy || loading} onClick={() => {setDirection(value); setSelected({}); setCategory(''); setQuery(''); setNotice(null);}}>{label}</Button>)}
+            disabled={busy || loading} onClick={() => {setDirection(value); setSelected({}); setNotice(null);}}>{label}</Button>)}
       </div>
-      <div className="home-storage-filters">
-        <Form.Group className="home-storage-search" controlId="home-storage-search">
-          <Form.Label>Поиск в {direction === 'withdraw' ? 'домашнем хранилище' : 'инвентаре'}</Form.Label>
-          <div className="home-storage-search-input">
-            <Form.Control type="search" aria-label="Поиск предметов" placeholder="Название или тип предмета" value={query} disabled={busy || loading} onChange={event => setQuery(event.target.value)} />
-            {query && <Button variant="outline-secondary" aria-label="Очистить поиск" disabled={busy || loading} onClick={() => setQuery('')}>Сбросить</Button>}
-          </div>
-          <Form.Text aria-live="polite">Найдено: {filtered.length} из {source.length}. Выбранные предметы сохраняются при поиске.</Form.Text>
-        </Form.Group>
-        <Form.Select aria-label="Тип предмета" value={category} disabled={busy || loading} onChange={event => setCategory(event.target.value)}>
-          <option value="">Все типы</option>
-          {categories.map(type => <option key={type} value={type}>{dict_translator[type] || type}</option>)}
-        </Form.Select>
-      </div>
+      <ItemFilters key={direction} initialValue={browse} label="Фильтры домашнего хранилища"
+        options={filterOptions} fields={direction === 'deposit' ? depositFields : storageFields}
+        onApply={setBrowse} disabled={busy || loading} searchPlaceholder="Название или тип предмета"
+        result={`Найдено: ${filtered.length} из ${source.length}`} />
       <div className="home-storage-selection">
         <Button size="sm" variant="outline-primary" disabled={disabled || !filtered.some(item => item.available > 0)}
           onClick={() => setSelected(current => ({...current, ...Object.fromEntries(filtered.filter(item => item.available > 0).map(item => [item.id, item.available]))}))}>Выбрать найденные</Button>
         <Button size="sm" variant="outline-secondary" disabled={disabled || !chosen.length} onClick={() => setSelected({})}>Снять выбор</Button>
       </div>
-      {!filtered.length && <p className="my-4">{query || category ? 'Предметы не найдены.' : direction === 'deposit' ? 'Инвентарь пуст.' : 'Сундук пуст.'}</p>}
+      {!filtered.length && <p className="my-4">{source.length ? 'Предметы не найдены.' : direction === 'deposit' ? 'Инвентарь пуст.' : 'Сундук пуст.'}</p>}
       <div className="home-storage-items">
         {filtered.map(item => <article key={item.id} className={'home-storage-item ' + (selected[item.id] !== undefined ? 'is-selected' : '')}>
           <label className="home-storage-item-name">
@@ -146,7 +137,7 @@ export default function HomeStorage({onInventoryChanged}) {
           </div>}
         </article>)}
       </div>
-      <div className="home-storage-footer">
+      <div className={chosen.length ? 'home-storage-footer is-sticky' : 'home-storage-footer'}>
         <div aria-live="polite">Выбрано: {chosen.length} · {kg(selectedWeight)} кг</div>
         {!valid && chosen.length > 0 && <span className="text-danger">Укажите целое количество в пределах доступного.</span>}
         {overCapacity && <span className="text-danger">Не хватает места в сундуке. Уменьшите количество.</span>}

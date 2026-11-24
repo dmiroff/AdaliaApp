@@ -65,16 +65,20 @@ test('a failed save leaves the item unmarked and shows the error',async()=>{
 
 test('favorites filter supports both yes and no',async()=>{
  await render(<InventoryList/>);
- const field=[...container.querySelectorAll('select')].find(s=>s.querySelector('option[value="favorite"]'));
- expect(field).toBeTruthy();
- await act(async()=>Simulate.change(field,{target:{value:'favorite'}}));
- const value=[...field.closest('.filter-card, .col-md-6, .col').querySelectorAll('select')].find(s=>s!==field && s.querySelector('option[value="true"]'));
- expect(value).toBeTruthy();
- await act(async()=>Simulate.change(value,{target:{value:'true'}}));
+ const form = container.querySelector('form[aria-label="Фильтры инвентаря"]');
+ const addCondition = [...form.querySelectorAll('button')].find(button => button.textContent === 'Добавить условие');
+ await act(async () => Simulate.click(addCondition));
+ const condition = form.querySelector('.item-filter-condition');
+ await act(async () => Simulate.change(condition.querySelector('select'), {target:{value:'favorite'}}));
+ const value = condition.querySelectorAll('select')[1];
+ await act(async () => Simulate.change(value, {target:{value:'true'}}));
  expect(container.textContent).toContain(items['123'].name);
  expect(container.textContent).not.toContain(items['456'].name);
- await act(async()=>Simulate.change(value,{target:{value:'false'}}));
+ await act(async () => Simulate.change(value, {target:{value:'false'}}));
  expect(container.textContent).not.toContain(items['123'].name);
+ expect(container.textContent).toContain(items['456'].name);
+ await click(form.querySelector('button[aria-label="Убрать фильтр: Избранное Нет"]'));
+ expect(container.textContent).toContain(items['123'].name);
  expect(container.textContent).toContain(items['456'].name);
 });
 

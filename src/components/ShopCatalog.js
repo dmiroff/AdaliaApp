@@ -1,11 +1,13 @@
-import React, {useEffect, useId, useRef, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import api from '../http/apiClient';
-import {booleanFields, browseParams, emptyBrowse, itemFieldNames, itemOptionLabel, numberOperators, numericFields} from '../utils/itemBrowseFields';
+import {browseParams, emptyBrowse, itemOptionLabel, itemSorts, priceSorts} from '../utils/itemBrowseFields';
+import ItemFilters from './ItemFilters';
+
+const offerSorts = [...itemSorts, ...priceSorts];
 
 const fmt = value => Number(value || 0).toLocaleString('ru-RU');
 
 export default function ShopCatalog({shopId, privateStock=false, currencyName='', disabled=false, revision=0, onBuy, onSelect}) {
-    const [draft,setDraft] = useState(emptyBrowse);
     const [applied,setApplied] = useState(emptyBrowse);
     const [offset,setOffset] = useState(0);
     const [page,setPage] = useState({items:[],filter_options:{},total:0});
@@ -14,7 +16,6 @@ export default function ShopCatalog({shopId, privateStock=false, currencyName=''
     const [retry,setRetry] = useState(0);
     const [quantities,setQuantities] = useState({});
     const request = useRef(0);
-    const id = useId();
     useEffect(() => {
         const sequence=++request.current, controller=new AbortController();
         setLoading(true);setError('');
@@ -31,33 +32,17 @@ export default function ShopCatalog({shopId, privateStock=false, currencyName=''
             }).finally(() => {if (sequence === request.current && !controller.signal.aborted) setLoading(false);});
         return () => controller.abort();
     }, [shopId,privateStock,applied,offset,revision,retry]);
-    const update = (field,value) => setDraft(v => ({...v,[field]:value}));
-    const changeExtra = (index,change) => setDraft(v => ({...v,extra:v.extra.map((f,i) => i===index ? {...f,...change} : f)}));
-    const options = field => (page.filter_options?.[field] || []).map(value => <option key={value} value={value}>{itemOptionLabel(field,value)}</option>);
-    function apply(event) {event.preventDefault();setOffset(0);setApplied({...draft});setQuantities({});}
-    function reset() {const value=emptyBrowse();setDraft(value);setApplied(value);setOffset(0);setQuantities({});}
+    function apply(value) {
+        setOffset(0);
+        setApplied({...value});
+        setQuantities({});
+    }
     const locked = loading || disabled || !!error;
     const supportsFilters = page.filter_options !== undefined;
     return <div className="ps-catalog">
-        <form aria-label={privateStock?'Фильтры склада':'Фильтры витрины'} onSubmit={apply}>
-            <fieldset className="ps-browse-controls" disabled={disabled || !supportsFilters}>
-            <div className="ps-grid">
-                <label htmlFor={`${id}-search`}>Название<input id={`${id}-search`} type="search" maxLength="100" placeholder="Поиск по названию" value={draft.q} onChange={e => update('q',e.target.value)}/></label>
-                <label>Категория<select value={draft.category} onChange={e => update('category',e.target.value)}>{[['all','Все предметы'],['weapons','Оружие'],['armor','Броня'],['consumables','Расходники'],['materials','Материалы и прочее']].map(([v,label]) => <option key={v} value={v}>{label}</option>)}</select></label>
-                <fieldset className="ps-level-range"><legend>Уровень</legend><div><label>От<input aria-label="Уровень от" type="number" min="0" step="1" max={draft.maxLevel || undefined} value={draft.minLevel} onChange={e => update('minLevel',e.target.value)}/></label><label>До<input aria-label="Уровень до" type="number" min={draft.minLevel || 0} step="1" value={draft.maxLevel} onChange={e => update('maxLevel',e.target.value)}/></label></div></fieldset>
-                {['prefix','suffix'].map(field => <label key={field}>{itemFieldNames[field]}<select aria-label={itemFieldNames[field]} value={draft[field]} onChange={e => update(field,e.target.value)}><option value="">Все</option>{options(field)}</select></label>)}
-                <label>Сортировка<select value={draft.sort} onChange={e => update('sort',e.target.value)}>{[['default','По порядку'],['name','По названию'],['level','Уровень: сначала высокий'],['level_asc','Уровень: сначала низкий'],['value','Базовая стоимость: сначала дорогие'],['count','Количество: сначала больше'],['weight','Вес: сначала тяжелее'],...(!privateStock ? [['price_asc','Цена: сначала дешевле'],['price_desc','Цена: сначала дороже']] : [])].map(([v,label]) => <option key={v} value={v}>{label}</option>)}</select></label>
-            </div>
-            <details className="ps-more-filters"><summary>Дополнительные фильтры</summary><div className="ps-grid">
-                {['type','rarity'].map(field => <label key={field}>{itemFieldNames[field]}<select value={draft[field]} onChange={e => update(field,e.target.value)}><option value="">Все</option>{options(field)}</select></label>)}
-            </div>{draft.extra.map((filter,index) => <div className="ps-grid ps-extra-filter" key={index}>
-                <label>Поле фильтра {index+1}<select value={filter.field} onChange={e => changeExtra(index,{field:e.target.value,operator:'equals',value:''})}>{Object.entries(itemFieldNames).map(([v,label]) => <option key={v} value={v}>{label}</option>)}</select></label>
-                {numericFields.includes(filter.field) ? <><label>Сравнение<select value={filter.operator} onChange={e => changeExtra(index,{operator:e.target.value})}>{numberOperators.map(op => <option key={op.id} value={op.id}>{op.name}</option>)}</select></label><label>Значение<input required type="number" min="0" step="any" value={filter.value} onChange={e => changeExtra(index,{value:e.target.value})}/></label></> : <label>Значение<select required value={filter.value} onChange={e => changeExtra(index,{value:e.target.value})}><option value="">Выберите</option>{booleanFields.includes(filter.field) ? <><option value="true">Да</option><option value="false">Нет</option></> : options(filter.field)}</select></label>}
-                <button type="button" onClick={() => setDraft(v => ({...v,extra:v.extra.filter((_,i) => i!==index)}))}>Убрать условие {index+1}</button>
-            </div>)}<button type="button" disabled={draft.extra.length>=6} onClick={() => setDraft(v => ({...v,extra:[...v.extra,{field:'weight',operator:'lessOrEquals',value:''}]}))}>Добавить условие</button></details>
-            <div className="ps-inline ps-filter-actions"><button disabled={disabled}>Применить фильтры</button><button type="button" disabled={disabled} onClick={reset}>Сбросить фильтры</button></div>
-            </fieldset>
-        </form>
+        <ItemFilters manual label={privateStock ? 'Фильтры склада магазина' : 'Фильтры витрины магазина'}
+            options={page.filter_options} sorts={privateStock ? itemSorts : offerSorts}
+            disabled={disabled || !supportsFilters} onApply={apply} />
         {!supportsFilters && !loading && <p role="status">Фильтры пока недоступны. Каталог можно листать. <button onClick={() => setRetry(v => v+1)}>Обновить каталог</button></p>}
         {loading && <p role="status">Загружаем товары…</p>}
         {error && <div role="alert" className="ps-error">{error} <button onClick={() => setRetry(v => v+1)}>Повторить загрузку</button></div>}

@@ -5,16 +5,22 @@ import { useContext, useEffect, useState } from "react";
 import { Row, Col, Form, Modal, Button, Card, Badge, Alert } from "react-bootstrap";
 import { Context } from "../index";
 import { Spinner } from "react-bootstrap";
-import Fuse from "fuse.js";
+import ItemFilters from './ItemFilters';
+import {emptyBrowse, productSorts} from '../utils/itemBrowseFields';
+import {browseLocalItems} from '../utils/localItemBrowse';
+
 import CreateAuctionModal from "./CreateAuctionModal";
 import { fetchAuctionLots, createAuctionLot, placeBid, buyoutLot } from "../http/auction";
 import GetDataById from "../http/GetData";
+
+const auctionFields = ['price'];
+const auctionSearch = {keys:['name'], threshold:0.3};
 
 const AuctionTab = observer(() => {
   const { user } = useContext(Context);
   const [auctionLots, setAuctionLots] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [query, setQuery] = useState("");
+  const [browse, setBrowse] = useState(emptyBrowse);
   const [selectedLot, setSelectedLot] = useState(null);
   const [showBidModal, setShowBidModal] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -179,20 +185,9 @@ const AuctionTab = observer(() => {
     setShowCreateModal(true);
   };
 
-  let filteredLots = auctionLots;
-  if (query && auctionLots.length > 0) {
-    try {
-      const fuse = new Fuse(auctionLots, {
-        keys: ["name"],
-        threshold: 0.3
-      });
-      const searchResults = fuse.search(query);
-      filteredLots = searchResults.map(result => result.item);
-    } catch (error) {
-      console.error("Search error:", error);
-      filteredLots = auctionLots;
-    }
-  }
+  const filteredLots = React.useMemo(() => browseLocalItems(
+    auctionLots.map(lot => ({...lot, price:lot.start_price})), browse, auctionSearch
+  ), [auctionLots, browse]);
 
   const inventoryArray = React.useMemo(() => {
     if (!userInventory || Object.keys(userInventory).length === 0) {
@@ -268,26 +263,11 @@ const AuctionTab = observer(() => {
         </Modal.Footer>
       </Modal>
 
-      <Row className="mb-4">
-        <Col md={8}>
-          <Form.Control
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="🔍 Поиск по названию лота..."
-            className="inventory-search-input bulk-purchase"
-          />
-        </Col>
-        <Col md={4}>
-          <Button 
-            className="fantasy-btn w-100"
-            onClick={handleCreateButtonClick}
-            disabled={inventoryArray.length === 0}
-          >
-            {inventoryArray.length === 0 ? "📦 Нет предметов" : "📦 Выставить предмет"}
-          </Button>
-        </Col>
-      </Row>
+      <ItemFilters initialValue={browse} label="Фильтры аукциона" fields={auctionFields} categories={[]} sorts={productSorts}
+        onApply={setBrowse} result={`Найдено: ${filteredLots.length} из ${auctionLots.length}`} />
+      <Button className="fantasy-btn mb-3" onClick={handleCreateButtonClick} disabled={!inventoryArray.length}>
+        {inventoryArray.length === 0 ? "📦 Нет предметов" : "📦 Выставить предмет"}
+      </Button>
 
       <Row>
         {filteredLots.map((lot) => (
@@ -309,9 +289,8 @@ const AuctionTab = observer(() => {
 
       {filteredLots.length === 0 && !loading && (
         <div className="text-center fantasy-text-muted py-4">
-          <p>{query ? "Лоты по вашему запросу не найдены" : "На аукционе пока нет лотов"}</p>
+          <p>{auctionLots.length ? "Лоты по вашему запросу не найдены" : "На аукционе пока нет лотов"}</p>
           <div className="empty-state-actions">
-            {query && <Button className="fantasy-btn" onClick={() => setQuery('')}>Сбросить поиск</Button>}
             <Button className="fantasy-btn" onClick={() => setRefreshTrigger(value => value + 1)}>Обновить лоты</Button>
             <Button className="fantasy-btn" disabled={!inventoryArray.length} onClick={handleCreateButtonClick}>Выставить свой предмет</Button>
           </div>
