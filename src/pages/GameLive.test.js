@@ -38,3 +38,17 @@ test('leaving a fight discards stale combat stats',async()=>{
     const vitals=container.querySelector('.game-current-vitals').textContent;
     expect(vitals).toContain('9000/9000');expect(vitals).not.toContain('ОД');expect(vitals).not.toContain('ОЗ');
 });
+
+test('bot titles are bold in the current reply and history without interpreting HTML',async()=>{
+    const title = 'Ромашковый морс';
+    const prefix = '🍲 ';
+    const text = prefix + title + '\n<em>Эффект</em>';
+    api.get.mockResolvedValue({data:{messages:[{
+        id:'1',role:'bot',text,time:Date.now(),emphasis:[{offset:prefix.length,length:title.length}],
+    }],player:{name:'Тестер',current_health:100,max_health:100},pending_command:null}});
+    await act(async()=>root.render(<GameLive/>));
+    expect(container.querySelector('.game-current-text strong').textContent).toBe(title);
+    expect(container.querySelector('.game-draft-message p strong').textContent).toBe(title);
+    expect(container.querySelector('.game-draft-message p').textContent).toBe(text);
+    expect(container.querySelector('.game-draft-message p em')).toBeNull();
+});

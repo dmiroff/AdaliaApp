@@ -14,6 +14,27 @@ const freshId=()=>{
 };
 const startupKeyboard=normalizeKeyboard({buttons:[[{action:{type:'text',label:'Где я'}},{action:{type:'text',label:'Персонаж'}}]]});
 
+function messageText(message) {
+  const text = message?.text || '';
+  if (message?.role !== 'bot' || !Array.isArray(message.emphasis) || !message.emphasis.length) {
+    return text;
+  }
+  const parts = [];
+  let position = 0;
+  for (const span of message.emphasis) {
+    const {offset, length} = span || {};
+    if (!Number.isInteger(offset) || !Number.isInteger(length) ||
+        offset < position || length < 1 || offset + length > text.length) {
+      continue;
+    }
+    const end = offset + length;
+    parts.push(text.slice(position, offset), <strong key={offset}>{text.slice(offset, end)}</strong>);
+    position = end;
+  }
+  parts.push(text.slice(position));
+  return parts;
+}
+
 function MessageImage({url,onLoad}){
   const element=useRef(null);
   const [src,setSrc]=useState(''),[failed,setFailed]=useState(false);
@@ -132,15 +153,15 @@ export default function GameLive(){
           {restLeft>0&&<p role="status">Отдых · осталось {restLeft} сек.</p>}
           {warnings.map((warning,index)=><p key={index} className="game-current-warning">{warning}</p>)}
           {currentMessage?.image_url&&!player?.in_fight&&<MessageImage url={currentMessage.image_url}/>}
-          <p className="game-current-text">{battleState || currentMessage?.text || (loading?'Загружаем ситуацию…':'Нажмите «Где я», чтобы обновить ситуацию.')}</p>
+          <p className="game-current-text">{battleState || messageText(currentMessage) || (loading?'Загружаем ситуацию…':'Нажмите «Где я», чтобы обновить ситуацию.')}</p>
           {turnLog&&<details className="game-turn-log"><summary>События хода</summary><p className="game-current-text">{turnLog}</p></details>}
-          {lastBot&&lastBot.id!==currentMessage?.id&&lastBot.id!==battle?.id&&<p className="game-current-text game-latest-reply">{lastBot.text}</p>}
+          {lastBot&&lastBot.id!==currentMessage?.id&&lastBot.id!==battle?.id&&<p className="game-current-text game-latest-reply">{messageText(lastBot)}</p>}
           {currentKeyboard?.inline&&<GameDraftKeyboard spellbook={data?.player?.spells} keyboard={currentKeyboard} revision={data?.revision} sourceId={currentMessage.id} disabled={!!pending||!!retry||currentMessage.id!==data?.displayRevision} onCommand={send}/>}
         </section>}
         <div hidden={!showHistory} ref={log} className="game-draft-log" role="log" aria-label="Сообщения бота" aria-live="polite" aria-relevant="additions" onScroll={()=>{keepBottom.current=log.current.scrollHeight-log.current.scrollTop-log.current.clientHeight<60;}}>
           {loading&&<p>Загружаем сообщения…</p>}{data&&!data.messages.length&&<p>Начните с «Где я», чтобы получить текущую локацию и клавиатуру бота.</p>}
           {data?.messages.map(message=><article className={`game-draft-message game-draft-message--${message.role}`} key={message.id}><div className="game-draft-message__meta"><strong>{message.role==='user'?'Вы':'Адалия'}</strong><time dateTime={new Date(message.time).toISOString()}>{new Date(message.time).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})}</time></div>
-            {message.image_url&&<MessageImage url={message.image_url} onLoad={scrollBottom}/>}<p>{message.text}</p>
+            {message.image_url&&<MessageImage url={message.image_url} onLoad={scrollBottom}/>}<p>{messageText(message)}</p>
             {message.keyboard&&normalizeKeyboard(message.keyboard).inline&&<GameDraftKeyboard spellbook={data?.player?.spells} keyboard={normalizeKeyboard(message.keyboard)} revision={data.revision} sourceId={message.id} disabled={!!pending||!!retry||message.id!==data.displayRevision} onCommand={send}/>}
           </article>)}
         </div><div className="game-draft-controls"><div className="game-controls-heading"><span>Действия бота</span><button type="button" className="game-history-toggle" disabled={!data||!!pending||!!retry} onClick={()=>send('Где я')}>Обновить ситуацию</button></div>{!currentKeyboard?.inline&&<GameDraftKeyboard spellbook={data?.player?.spells} compactCosts={!!player?.in_fight} keyboard={data?.displayKeyboard?normalizeKeyboard(data.displayKeyboard):startupKeyboard} revision={data?.revision} sourceId={data?.displayKeyboardSource} disabled={!data||!!pending||!!retry} onCommand={send}/>}
