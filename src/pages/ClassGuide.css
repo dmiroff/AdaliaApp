@@ -79,6 +79,26 @@
   gap: var(--branch-gap);
 }
 
+.class-guide__catalogue {
+  display: grid;
+  gap: 14px;
+}
+
+.class-guide__catalogue .class-guide__origin {
+  width: min(100%, 340px);
+}
+
+.class-guide__catalogue .class-guide__paths {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+
+.class-guide[data-tier="t1"] .class-guide__paths {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .class-guide__origin {
   position: relative;
   min-width: 0;
@@ -88,9 +108,9 @@
   background: #efe0c3;
 }
 
-.class-guide__origin::after,
-.class-guide__paths > li::before,
-.class-guide__paths > li::after {
+.class-guide__tree .class-guide__origin::after,
+.class-guide__tree .class-guide__paths > li::before,
+.class-guide__tree .class-guide__paths > li::after {
   content: '';
   position: absolute;
   background: var(--branch-stroke);
@@ -129,12 +149,12 @@
   min-width: 0;
 }
 
-.class-guide__paths > li {
+.class-guide__tree .class-guide__paths > li {
   position: relative;
   padding-bottom: 10px;
 }
 
-.class-guide__paths > li:last-child {
+.class-guide__tree .class-guide__paths > li:last-child {
   padding-bottom: 0;
 }
 
@@ -174,16 +194,31 @@
 }
 
 .class-guide__card summary {
+  display: block;
+  border-radius: 7px;
+  cursor: pointer;
+  list-style: none;
+  font: 14px/1.5 system-ui, sans-serif;
+  overflow: hidden;
+}
+
+.class-guide__art {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 640 / 300;
+  object-fit: cover;
+  background: #3c3029;
+  border-bottom: 1px solid #d3c09e;
+}
+
+.class-guide__card-text {
   display: flex;
   flex-direction: column;
   align-items: start;
   gap: 4px;
   position: relative;
   padding: 15px 44px 15px 16px;
-  border-radius: 7px;
-  cursor: pointer;
-  list-style: none;
-  font: 14px/1.5 system-ui, sans-serif;
 }
 
 .class-guide__card summary::-webkit-details-marker {
@@ -195,7 +230,7 @@
   background: #f9efd9;
 }
 
-.class-guide__card summary::after {
+.class-guide__card-text::after {
   content: '';
   position: absolute;
   right: 18px;
@@ -207,7 +242,7 @@
   transform: rotate(45deg);
 }
 
-.class-guide__card[open] summary::after {
+.class-guide__card[open] .class-guide__card-text::after {
   top: 27px;
   transform: rotate(225deg);
 }
@@ -245,6 +280,21 @@
   font: 14px/1.65 system-ui, sans-serif;
 }
 
+.class-guide__stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 20px;
+  margin: 0 0 12px;
+  color: #694e2e;
+  font: 13px/1.5 system-ui, sans-serif;
+}
+
+.class-guide__stats dd {
+  margin: 0;
+  color: var(--help-ink);
+  font-weight: 600;
+}
+
 .class-guide__continue {
   min-height: 44px;
   padding: 0;
@@ -255,6 +305,25 @@
   font: 600 14px/1.4 system-ui, sans-serif;
   text-decoration: underline;
   text-underline-offset: 3px;
+}
+
+@media (min-width: 768px) {
+  .class-guide__tree .class-guide__card summary {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+    align-items: center;
+  }
+
+  .class-guide__tree .class-guide__art {
+    border: 0;
+    border-right: 1px solid #d3c09e;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1010px) {
+  .class-guide__catalogue .class-guide__paths {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 767px) {
@@ -282,15 +351,20 @@
     height: 15px;
   }
 
-  .class-guide__paths {
+  .class-guide__tree .class-guide__paths {
     margin-left: var(--branch-gap);
+  }
+
+  .class-guide__catalogue .class-guide__paths,
+  .class-guide[data-tier="t1"] .class-guide__paths {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .class-guide__paths > li:first-child::before {
     top: 0;
   }
 
-  .class-guide__card summary {
+  .class-guide__card-text {
     padding-left: 12px;
     padding-right: 36px;
   }

@@ -81,10 +81,18 @@ test('the public tree switches from a starting class to T2 and follows its T3 pa
     .find(button => button.textContent === label);
   const origin = () => container.querySelector('#class-guide-parent');
 
-  expect(container.querySelector('#class-guide-title').textContent).toBe('Дерево классов Т3');
-  act(() => toggle('Т1 → Т2').click());
-  expect([...origin().options].map(option => option.value)).toEqual(['Воин', 'Плут', 'Маг', 'Жрец']);
-  act(() => Simulate.change(origin(), { target: { value: 'Жрец' } }));
+  expect(container.querySelector('#class-guide-title').textContent).toBe('Дерево классов Т1');
+  const starters = [...container.querySelectorAll('.class-guide__card')];
+  expect(starters.map(card => card.querySelector('strong').textContent)).toEqual(['Воин', 'Плут', 'Маг', 'Жрец']);
+  const priest = starters[3];
+  expect(priest.querySelector('img').getAttribute('src')).toContain('/help-images/classes/t1/');
+  expect(priest.querySelector('.class-guide__stats').textContent).toContain('16 (+9 за уровень)');
+  priest.open = true;
+  act(() => priest.querySelector('button').click());
+  expect(toggle('Т2').getAttribute('aria-pressed')).toBe('true');
+  expect([...origin().options].map(option => option.value)).toEqual(['', 'Воин', 'Плут', 'Маг', 'Жрец']);
+  expect(origin().value).toBe('Жрец');
+  expect(document.activeElement).toBe(origin());
   expect([...container.querySelectorAll('.class-guide__card strong')].map(name => name.textContent))
     .toEqual(['Жрец Жизни', 'Жрец Света', 'Жрец Тьмы']);
 
@@ -92,20 +100,25 @@ test('the public tree switches from a starting class to T2 and follows its T3 pa
     .find(card => card.querySelector('strong').textContent === 'Жрец Света');
   light.open = true;
   act(() => light.querySelector('button').click());
-  expect(toggle('Т2 → Т3').getAttribute('aria-pressed')).toBe('true');
+  expect(toggle('Т3').getAttribute('aria-pressed')).toBe('true');
   expect(origin().value).toBe('Жрец Света');
   expect(document.activeElement).toBe(origin());
   expect(container.querySelector('.class-guide__paths').textContent).toContain('Иерофант');
-  act(() => toggle('Т1 → Т2').click());
+  act(() => toggle('Т2').click());
   expect(origin().value).toBe('Жрец');
 });
 
-test('Oathbreaker appears in the Paladin branch with its special unlock note', async () => {
+test('illustrated Oathbreaker can be found in the full T3 catalogue and in the Paladin branch', async () => {
   await mount('/help#дерево-классов');
+  const t3 = [...container.querySelectorAll('.class-guide__tiers button')].find(button => button.textContent === 'Т3');
+  act(() => t3.click());
   const origin = container.querySelector('#class-guide-parent');
+  const findOathbreaker = () => [...container.querySelectorAll('.class-guide__card')]
+    .find(card => card.querySelector('strong').textContent === 'Клятвопреступник');
+  expect(origin.value).toBe('');
+  expect(findOathbreaker().querySelector('img').getAttribute('src')).toContain('/help-images/classes/t3/');
   act(() => Simulate.change(origin, { target: { value: 'Паладин' } }));
-  const cards = [...container.querySelectorAll('.class-guide__card')];
-  const oathbreaker = cards.find(card => card.querySelector('strong').textContent === 'Клятвопреступник');
+  const oathbreaker = findOathbreaker();
   expect(oathbreaker.querySelector('small').textContent).toContain('после особой истории');
   expect(oathbreaker.textContent).toContain('Разрыв обета');
   expect([...origin.options].map(option => option.value)).not.toContain('Жрец Смерти');

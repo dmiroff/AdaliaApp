@@ -205,7 +205,7 @@ export default function Help() {
             }} aria-label="Скопировать ссылку на статью">{copied ? '✓ Скопировано' : '↗ Ссылка'}</button></div>
             <div className="help-article__body" onMouseLeave={leavePreview}>
               <HelpText text={selected.body} glossary={glossary} currentId={selected.id} onPreview={showPreview} />
-              {selected.id === 'классы' && <p><Link to={helpHref(classGuideId)}>Открыть дерево классов Т2 и Т3 →</Link></p>}
+              {selected.id === 'классы' && <p><Link to={helpHref(classGuideId)}>Открыть карточки классов Т1–Т3 →</Link></p>}
             </div>
             {selected.images?.map(picture => <figure className="help-map" key={picture.src}>
               <a href={picture.src} target="_blank" rel="noopener noreferrer" aria-label={`Открыть карту: ${picture.alt}`}>

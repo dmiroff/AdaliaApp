@@ -1,73 +1,96 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import t1Classes from '../data/t1ClassGuide.json';
 import t2Guide from '../data/t2ClassGuide.json';
 import t3Guide from '../data/t3ClassGuide.json';
 import './ClassGuide.css';
 
-const t1Classes = [...new Set(t2Guide.classes.flatMap(entry => entry.parents))];
 const bookHref = '/help-books/adalia-class-book.pdf';
+const tiers = {
+  t1: { label: 'Т1', description: 'Начальные классы, доступные при создании персонажа.', classes: t1Classes },
+  t2: { label: 'Т2', description: 'Задания на специализацию Т2 доступны у тренера с 10-го уровня.', classes: t2Guide.classes },
+  t3: { label: 'Т3', description: 'Классы Т3 проходят испытания на зеркале.', classes: t3Guide.classes },
+};
 
 export default function ClassGuide({ contentRef }) {
-  const [tier, setTier] = useState('t3');
-  const [origins, setOrigins] = useState({ t2: t1Classes[0], t3: t3Guide.families[0].parents[0] });
+  const [tier, setTier] = useState('t1');
+  const [origins, setOrigins] = useState({ t2: '', t3: '' });
   const originRef = useRef(null);
+  const focusOrigin = useRef(false);
+  const isT1 = tier === 't1';
   const isT2 = tier === 't2';
-  const parent = origins[tier];
-  const tierLabel = isT2 ? 'Т2' : 'Т3';
-  const paths = (isT2 ? t2Guide : t3Guide).classes.filter(entry => entry.parents.includes(parent));
+  const parent = origins[tier] || '';
+  const { label, description, classes } = tiers[tier];
+  const paths = parent ? classes.filter(entry => entry.parents.includes(parent)) : classes;
+  const nextTier = isT1 ? 't2' : isT2 ? 't3' : null;
 
-  const openT3 = name => {
-    setOrigins(previous => ({ ...previous, t3: name }));
-    setTier('t3');
+  useEffect(() => {
+    if (!focusOrigin.current) return;
+    focusOrigin.current = false;
     contentRef.current?.scrollIntoView?.({ block: 'start' });
     originRef.current?.focus({ preventScroll: true });
+  }, [contentRef, tier]);
+
+  const openPath = name => {
+    focusOrigin.current = true;
+    setOrigins(previous => ({ ...previous, [nextTier]: name }));
+    setTier(nextTier);
   };
 
   return (
-    <section className="class-guide" ref={contentRef} aria-labelledby="class-guide-title">
+    <section className="class-guide" ref={contentRef} data-tier={tier} aria-labelledby="class-guide-title">
       <div className="class-guide__header">
         <div>
-          <h2 id="class-guide-title">Дерево классов {tierLabel}</h2>
-          <p className="class-guide__intro">
-            {isT2 ? 'Задания на специализацию Т2 доступны у тренера с 10-го уровня.'
-              : 'Классы Т3 проходят испытания на зеркале.'}
-          </p>
+          <h2 id="class-guide-title">Дерево классов {label}</h2>
+          <p className="class-guide__intro">{description}</p>
         </div>
         <a className="class-guide__book" href={bookHref} download>Скачать книгу классов (PDF)</a>
       </div>
       <div className="class-guide__tiers" role="group" aria-label="Ступень развития класса">
-        <button type="button" aria-pressed={isT2} onClick={() => setTier('t2')}>Т1 → Т2</button>
-        <button type="button" aria-pressed={!isT2} onClick={() => setTier('t3')}>Т2 → Т3</button>
+        {Object.entries(tiers).map(([key, option]) => (
+          <button key={key} type="button" aria-pressed={tier === key}
+            onClick={() => setTier(key)}>{option.label}</button>
+        ))}
       </div>
-      <div className="class-guide__tree">
-        <div className="class-guide__origin">
+      <div className={parent ? 'class-guide__tree' : 'class-guide__catalogue'}>
+        {!isT1 && <div className="class-guide__origin">
           <label htmlFor="class-guide-parent">Исходный класс {isT2 ? 'Т1' : 'Т2'}</label>
           <select id="class-guide-parent" ref={originRef} value={parent}
             onChange={event => setOrigins({ ...origins, [tier]: event.target.value })}>
-            {isT2 ? t1Classes.map(name => <option key={name}>{name}</option>) : t3Guide.families.map(family => (
+            <option value="">Все классы {label}</option>
+            {isT2 ? t1Classes.map(({ name }) => <option key={name}>{name}</option>) : t3Guide.families.map(family => (
               <optgroup key={family.name} label={family.name}>
                 {family.parents.map(name => <option key={name}>{name}</option>)}
               </optgroup>
             ))}
           </select>
-        </div>
+        </div>}
         <ul key={`${tier}:${parent}`} className="class-guide__paths"
-          aria-label={`Ветки ${tierLabel} для класса «${parent}»`}>
-          {paths.map(({ name, parents, pathNote, summary, play }) => {
-            const otherParent = parents.find(origin => origin !== parent);
+          aria-label={parent ? `Ветки ${label} для класса «${parent}»` : `Классы ${label}`}>
+          {paths.map(({ name, parents = [], pathNote, summary, play, health, healthPerLevel, spellSlots }) => {
+            const otherParent = parent && parents.find(origin => origin !== parent);
             return (
               <li key={name}>
                 <details className="class-guide__card">
                   <summary>
-                    <strong>{name}</strong>
-                    <span>{summary}</span>
-                    {otherParent && <small>Также из ветки «{otherParent}»</small>}
-                    {pathNote && <small>{pathNote}</small>}
+                    <img className="class-guide__art" src={`/help-images/classes/${tier}/${encodeURIComponent(name)}.webp`}
+                      alt="" width="640" height="300" loading="lazy" decoding="async" />
+                    <span className="class-guide__card-text">
+                      <strong>{name}</strong>
+                      <span>{summary}</span>
+                      {pathNote && <small>{pathNote}</small>}
+                      {!parent && parents.length > 0 && <small>Путь из ветки «{parents.join('» / «')}»</small>}
+                      {otherParent && <small>Также из ветки «{otherParent}»</small>}
+                    </span>
                   </summary>
                   <div className="class-guide__details">
+                    {isT1 && <dl className="class-guide__stats">
+                      <div><dt>Базовое здоровье</dt><dd>{health} (+{healthPerLevel} за уровень)</dd></div>
+                      <div><dt>Базовые ячейки заклинаний</dt><dd>{spellSlots}</dd></div>
+                    </dl>}
                     <h3>В бою</h3>
                     <p>{play}</p>
-                    {isT2 && <button type="button" className="class-guide__continue"
-                      onClick={() => openT3(name)}>Посмотреть ветки Т3</button>}
+                    {nextTier && <button type="button" className="class-guide__continue"
+                      onClick={() => openPath(name)}>Посмотреть ветки {tiers[nextTier].label}</button>}
                   </div>
                 </details>
               </li>
