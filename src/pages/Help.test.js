@@ -121,5 +121,7 @@ test('illustrated Oathbreaker can be found in the full T3 catalogue and in the P
   const oathbreaker = findOathbreaker();
   expect(oathbreaker.querySelector('small').textContent).toContain('после особой истории');
   expect(oathbreaker.textContent).toContain('Разрыв обета');
+  const fullCard = oathbreaker.querySelector('a');
+  expect(decodeURIComponent(fullCard.getAttribute('href'))).toBe('/help-images/classes/t3-cards/Клятвопреступник.webp');
   expect([...origin.options].map(option => option.value)).not.toContain('Жрец Смерти');
 });

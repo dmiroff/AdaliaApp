@@ -296,6 +296,9 @@
 }
 
 .class-guide__continue {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 5px;
   min-height: 44px;
   padding: 0;
   border: 0;
@@ -305,6 +308,10 @@
   font: 600 14px/1.4 system-ui, sans-serif;
   text-decoration: underline;
   text-underline-offset: 3px;
+}
+
+.class-guide__continue:hover {
+  color: #432b14;
 }
 
 @media (min-width: 768px) {
