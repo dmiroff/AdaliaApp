@@ -1,15 +1,18 @@
 #!/usr/bin/env python3
-"""Build the public class book with T1 and T2 portraits and approved T3 cards.
+"""Build the public class book and optionally export the full T1 and T2 WebP cards.
 
-Pass --t3-cards a directory of the public card exports named NN-Class-name.png.
-Install Pillow and ReportLab and have the DejaVu fonts available.
+Use --t3-cards to substitute the approved NN-Class-name.png artwork exports.
+Install Pillow and ReportLab and have the DejaVu fonts available. WebP card
+export also uses pdftoppm.
 """
 
 import argparse
 import json
+import subprocess
 from collections import defaultdict
 from io import BytesIO
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from xml.sax.saxutils import escape
 
 from PIL import Image, ImageOps
@@ -32,19 +35,16 @@ FONT_DIR = Path("/usr/share/fonts/truetype/dejavu")
 WIDTH, HEIGHT = A5
 MARGIN = 31
 CARD_WIDTH = WIDTH - 2 * MARGIN
-CARD_PADDING = 13
-CARD_TOP = HEIGHT - 100
-CARD_BOTTOM = 56
-CARD_GAP = 10
-T2_ART_WIDTH = 96
-T2_ART_HEIGHT = 45
-T2_ART_GAP = 12
+CARD_PADDING = 21
+PORTRAIT_HEIGHT = CARD_WIDTH * 300 / 640
 INK = HexColor("#30241d")
 MUTED = HexColor("#71583d")
 GOLD = HexColor("#ad865b")
 PAPER = HexColor("#faf3e3")
-CARD = HexColor("#fffcf4")
 CREAM = HexColor("#fff1d6")
+CARD_INK = HexColor("#eeeae0")
+CARD_GOLD = HexColor("#c1ac79")
+CARD_BACKGROUND = HexColor("#18191a")
 TRANSITIONS = {1: "Классы Т1", 2: "Т1 → Т2", 3: "Т2 → Т3"}
 
 
@@ -58,6 +58,13 @@ def load_t3_art(directory, cards):
     # Restrict the inputs to the public roster. Full mirror exports also contain
     # cards for undisclosed classes.
     known_names = {card["name"] for card in cards}
+    if directory is None:
+        directory = PORTRAITS / "t3-cards"
+        art = {name: directory / f"{name}.webp" for name in known_names}
+        for path in art.values():
+            if not path.is_file():
+                raise FileNotFoundError(path)
+        return art
     art = {}
     for path in sorted(directory.glob("*.png")):
         name = path.stem.partition("-")[2].replace("-", " ")
@@ -78,9 +85,10 @@ def fonts():
         pdfmetrics.registerFont(TTFont(name, str(FONT_DIR / file)))
     pdfmetrics.registerFontFamily("BookSans", normal="BookSans", bold="BookSansBold")
     return {
-        "name": ParagraphStyle("name", fontName="BookSerif", fontSize=15, leading=19, textColor=INK),
-        "parents": ParagraphStyle("parents", fontName="BookSans", fontSize=8.6, leading=11.5, textColor=MUTED),
-        "body": ParagraphStyle("body", fontName="BookSans", fontSize=9.6, leading=13.4, textColor=INK),
+        "name": ParagraphStyle("name", fontName="BookSerif", fontSize=26, leading=33, textColor=CARD_INK),
+        "tier": ParagraphStyle("tier", fontName="BookSans", fontSize=8.2, leading=12, textColor=CARD_GOLD),
+        "heading": ParagraphStyle("heading", fontName="BookSerif", fontSize=10, leading=14, textColor=CARD_GOLD),
+        "body": ParagraphStyle("body", fontName="BookSans", fontSize=9.6, leading=13.4, textColor=CARD_INK),
     }
 
 
@@ -88,43 +96,39 @@ def plain(text):
     return escape(text.translate(str.maketrans({"–": "-", "—": "-", "‑": "-"})))
 
 
-def layout_card(card, styles):
-    parents = " / ".join(card["parents"])
-    parts = (
-        (plain(card["name"]), "name", 2),
-        (f"Исходный класс Т1 · {plain(parents)}", "parents", 5),
-        (plain(card["summary"]), "body", 4),
-        ("<b>В бою.</b> " + plain(card["play"]), "body", 0),
-    )
+def layout_lower_card(card, tier, t2_cards, styles):
+    step = "ПЕРВАЯ" if tier == 1 else "ВТОРАЯ"
+    parts = [
+        (f"АДАЛИЯ / {step} СТУПЕНЬ", "tier", 3),
+        (plain(card["name"]), "name", 12),
+        (plain(card["summary"]), "body", 13),
+        ("В БОЮ", "heading", 3),
+        (plain(card["play"]), "body", 12),
+    ]
+    if tier == 1:
+        branches = ", ".join(entry["name"] for entry in t2_cards if card["name"] in entry["parents"])
+        parts.extend([
+            ("ХАРАКТЕРИСТИКИ", "heading", 3),
+            (f'<b>Базовое здоровье.</b> {card["health"]} (+{card["healthPerLevel"]} за уровень)', "body", 3),
+            (f'<b>Базовые ячейки заклинаний.</b> {card["spellSlots"]}', "body", 12),
+            ("ВЕТКИ Т2", "heading", 3),
+            (plain(branches), "body", 0),
+        ])
+    else:
+        parts.extend([
+            ("ИСХОДНЫЙ КЛАСС Т1", "heading", 3),
+            (plain(" / ".join(card["parents"])), "body", 0),
+        ])
     blocks = []
     for text, style, gap in parts:
         paragraph = Paragraph(text, styles[style])
-        _, height = paragraph.wrap(CARD_WIDTH - 2 * CARD_PADDING - T2_ART_WIDTH - T2_ART_GAP, HEIGHT)
-        blocks.append((paragraph, height, gap))
-    height = 2 * CARD_PADDING + max(T2_ART_HEIGHT, sum(height + gap for _, height, gap in blocks))
-    return card["name"], blocks, height
+        _, height = paragraph.wrap(CARD_WIDTH - 2 * CARD_PADDING, HEIGHT)
+        blocks.append((paragraph, height, gap, style))
+    height = PORTRAIT_HEIGHT + CARD_PADDING + sum(height + gap for _, height, gap, _ in blocks)
+    return height, blocks
 
 
-def paginate_t2(cards, styles):
-    pages = []
-    page = []
-    top = CARD_TOP
-    for card in cards:
-        layout = layout_card(card, styles)
-        height = layout[2]
-        if height > CARD_TOP - CARD_BOTTOM:
-            raise ValueError(f"Карточка не помещается на странице: {card['name']}")
-        if top - height < CARD_BOTTOM:
-            pages.append(page)
-            page, top = [], CARD_TOP
-        page.append(layout)
-        top -= height + CARD_GAP
-    if page:
-        pages.append(page)
-    return pages
-
-
-def chapters(cards_by_tier, styles):
+def chapters(cards_by_tier):
     t1_by_t2 = {card["name"]: card["parents"][0] for card in cards_by_tier[2]}
     starters = cards_by_tier[1]
     yield 1, "Начальные классы", "tier1-starters", len(starters), 3, starters
@@ -140,9 +144,8 @@ def chapters(cards_by_tier, styles):
             branch = families[family]
             if not branch:
                 continue
-            pages = paginate_t2(branch, styles) if tier == 2 else branch
-            yield tier, family, f"tier{tier}-branch{index}", len(branch), page_number, pages
-            page_number += len(pages)
+            yield tier, family, f"tier{tier}-branch{index}", len(branch), page_number, branch
+            page_number += len(branch)
 
 
 def text(canvas, label, x, y, *, font="BookSans", size=10, color=INK):
@@ -225,49 +228,37 @@ def contents(canvas, chapter_list):
 def draw_portrait(canvas, tier, name, x, top, width, height):
     picture = BytesIO()
     with Image.open(PORTRAITS / f"t{tier}" / f"{name}.webp") as original:
-        original.convert("RGB").save(picture, "JPEG", quality=88, optimize=True)
+        portrait = original.convert("RGB")
+    fade_height = round(portrait.height * 24 / height)
+    fade = Image.linear_gradient("L").point([round(255 * (value / 255) ** 1.5) for value in range(256)])
+    fade = fade.resize((portrait.width, fade_height), Image.Resampling.BILINEAR)
+    faded_area = (0, portrait.height - fade_height, portrait.width, portrait.height)
+    background = tuple(round(255 * value) for value in CARD_BACKGROUND.rgb())
+    portrait.paste(background, faded_area, fade)
+    portrait.save(picture, "JPEG", quality=88, optimize=True)
     picture.seek(0)
     canvas.drawImage(ImageReader(picture), x, top - height, width, height)
 
 
-def draw_starter_page(canvas, card, t2_cards, styles):
-    name = card["name"]
-    text(canvas, f"{name} · Т1", MARGIN, HEIGHT - 77, font="BookSerif", size=25)
-    art_height = CARD_WIDTH * 300 / 640
-    draw_portrait(canvas, 1, name, MARGIN, CARD_TOP, CARD_WIDTH, art_height)
+def draw_lower_card(canvas, tier, name, layout, x, top):
+    height, blocks = layout
+    canvas.setFillColor(CARD_BACKGROUND)
+    canvas.rect(x, top - height, CARD_WIDTH, height, stroke=0, fill=1)
+    draw_portrait(canvas, tier, name, x, top, CARD_WIDTH, PORTRAIT_HEIGHT)
+    art_bottom = top - PORTRAIT_HEIGHT
 
-    branches = ", ".join(entry["name"] for entry in t2_cards if name in entry["parents"])
-    stats = (
-        f'<b>Базовое здоровье.</b> {card["health"]} (+{card["healthPerLevel"]} за уровень)',
-        f'<b>Базовые ячейки заклинаний.</b> {card["spellSlots"]}',
-    )
-    cursor = CARD_TOP - art_height - 18
-    for line in (
-        plain(card["summary"]),
-        "<b>В бою.</b> " + plain(card["play"]),
-        *stats,
-        "<b>Ветки Т2.</b> " + plain(branches),
-    ):
-        paragraph = Paragraph(line, styles["body"])
-        _, height = paragraph.wrap(CARD_WIDTH, HEIGHT)
-        paragraph.drawOn(canvas, MARGIN, cursor - height)
-        cursor -= height + 11
-
-
-def draw_t2_page(canvas, family, cards):
-    text(canvas, f"{family} · {TRANSITIONS[2]}", MARGIN, HEIGHT - 77, font="BookSerif", size=22)
-    top = CARD_TOP
-    for name, blocks, height in cards:
-        canvas.setFillColor(CARD)
-        canvas.setStrokeColor(GOLD)
-        canvas.roundRect(MARGIN, top - height, CARD_WIDTH, height, 6, stroke=1, fill=1)
-        cursor = top - CARD_PADDING
-        draw_portrait(canvas, 2, name, MARGIN + CARD_PADDING, cursor, T2_ART_WIDTH, T2_ART_HEIGHT)
-        text_x = MARGIN + CARD_PADDING + T2_ART_WIDTH + T2_ART_GAP
-        for paragraph, block_height, gap in blocks:
-            paragraph.drawOn(canvas, text_x, cursor - block_height)
-            cursor -= block_height + gap
-        top -= height + CARD_GAP
+    horizontal_margin = x + CARD_PADDING
+    cursor = art_bottom
+    for paragraph, block_height, gap, style in blocks:
+        paragraph.drawOn(canvas, horizontal_margin, cursor - block_height)
+        cursor -= block_height + gap
+        if style == "name":
+            canvas.setStrokeColor(CARD_GOLD)
+            canvas.setLineWidth(0.55)
+            canvas.line(horizontal_margin, cursor + 5, x + CARD_WIDTH - CARD_PADDING, cursor + 5)
+    canvas.setLineWidth(0.55)
+    canvas.setStrokeColor(CARD_GOLD)
+    canvas.roundRect(x + 6, top - height + 6, CARD_WIDTH - 12, height - 12, 6, stroke=1, fill=0)
 
 
 def draw_t3_page(canvas, card, source):
@@ -310,25 +301,49 @@ def draw_chapters(canvas, chapter_list, t2_cards, art, styles):
                     previous_tier = tier
                 canvas.bookmarkPage(key)
                 canvas.addOutlineEntry(family, key, level=1)
-            if tier == 2:
-                draw_t2_page(canvas, family, page)
+            name = page["name"]
+            class_key = f"{key}-class{index}"
+            canvas.bookmarkPage(class_key)
+            canvas.addOutlineEntry(name, class_key, level=2)
+            if tier < 3:
+                layout = layout_lower_card(page, tier, t2_cards, styles)
+                top = HEIGHT - 47
+                if top - layout[0] < 51:
+                    raise ValueError(f"Карточка не помещается на странице: {name}")
+                draw_lower_card(canvas, tier, name, layout, MARGIN, top)
             else:
-                name = page["name"]
-                class_key = f"{key}-class{index}"
-                canvas.bookmarkPage(class_key)
-                canvas.addOutlineEntry(name, class_key, level=2)
-                if tier == 1:
-                    draw_starter_page(canvas, page, t2_cards, styles)
-                else:
-                    draw_t3_page(canvas, page, art[name])
+                draw_t3_page(canvas, page, art[name])
             canvas.showPage()
 
 
-def build(path, card_directory):
+def export_lower_cards(cards_by_tier, styles):
+    with TemporaryDirectory(prefix="adalia-class-card-") as temporary:
+        scratch = Path(temporary)
+        pdf = scratch / "card.pdf"
+        preview = scratch / "card"
+        for tier in (1, 2):
+            directory = PORTRAITS / f"t{tier}-cards"
+            directory.mkdir(parents=True, exist_ok=True)
+            for card in cards_by_tier[tier]:
+                name = card["name"]
+                layout = layout_lower_card(card, tier, cards_by_tier[2], styles)
+                canvas = Canvas(str(pdf), pagesize=(CARD_WIDTH, layout[0]), pageCompression=1, invariant=1)
+                draw_lower_card(canvas, tier, name, layout, 0, layout[0])
+                canvas.save()
+                subprocess.run(
+                    ["pdftoppm", "-singlefile", "-png", "-scale-to-x", "900", "-scale-to-y", "-1",
+                     str(pdf), str(preview)],
+                    check=True,
+                )
+                with Image.open(preview.with_suffix(".png")) as rendered:
+                    rendered.save(directory / f"{name}.webp", "WEBP", quality=90, method=6)
+
+
+def build(path, card_directory, *, export_cards=False):
     cards_by_tier = {tier: load_cards(tier) for tier in TRANSITIONS}
     art = load_t3_art(card_directory, cards_by_tier[3])
     styles = fonts()
-    chapter_list = list(chapters(cards_by_tier, styles))
+    chapter_list = list(chapters(cards_by_tier))
     path.parent.mkdir(parents=True, exist_ok=True)
     rl_config.useA85 = 0
     canvas = Canvas(str(path), pagesize=A5, pageCompression=1, invariant=1)
@@ -338,11 +353,14 @@ def build(path, card_directory):
     contents(canvas, chapter_list)
     draw_chapters(canvas, chapter_list, cards_by_tier[2], art, styles)
     canvas.save()
+    if export_cards:
+        export_lower_cards(cards_by_tier, styles)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--t3-cards", type=Path, required=True, help="Directory with approved public T3 card PNGs")
+    parser.add_argument("--t3-cards", type=Path, help="Optional directory with approved public T3 card PNGs")
     parser.add_argument("--output", type=Path, default=BOOK)
+    parser.add_argument("--export-lower-cards", action="store_true", help="Export the full public T1 and T2 WebP cards")
     args = parser.parse_args()
-    build(args.output, args.t3_cards)
+    build(args.output, args.t3_cards, export_cards=args.export_lower_cards)

@@ -295,6 +295,12 @@
   font-weight: 600;
 }
 
+.class-guide__actions {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: 16px;
+}
+
 .class-guide__continue {
   display: inline-flex;
   align-items: center;

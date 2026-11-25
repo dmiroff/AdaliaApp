@@ -18,7 +18,6 @@ export default function ClassGuide({ contentRef }) {
   const focusOrigin = useRef(false);
   const isT1 = tier === 't1';
   const isT2 = tier === 't2';
-  const isT3 = tier === 't3';
   const parent = origins[tier] || '';
   const { label, description, classes } = tiers[tier];
   const paths = parent ? classes.filter(entry => entry.parents.includes(parent)) : classes;
@@ -94,12 +93,14 @@ export default function ClassGuide({ contentRef }) {
                     </dl>}
                     <h3>В бою</h3>
                     <p>{play}</p>
-                    {nextTier && <button type="button" className="class-guide__continue"
-                      onClick={() => openPath(name)}>Посмотреть ветки {tiers[nextTier].label}</button>}
-                    {isT3 && <a className="class-guide__continue" href={`/help-images/classes/t3-cards/${artName}.webp`}
-                      target="_blank" rel="noopener noreferrer" aria-label={`Открыть полную карточку «${name}»`}>
-                      Открыть полную карточку ↗
-                    </a>}
+                    <div className="class-guide__actions">
+                      {nextTier && <button type="button" className="class-guide__continue"
+                        onClick={() => openPath(name)}>Посмотреть ветки {tiers[nextTier].label}</button>}
+                      <a className="class-guide__continue" href={`/help-images/classes/${tier}-cards/${artName}.webp`}
+                        target="_blank" rel="noopener noreferrer" aria-label={`Открыть полную карточку «${name}»`}>
+                        Открыть полную карточку ↗
+                      </a>
+                    </div>
                   </div>
                 </details>
               </li>

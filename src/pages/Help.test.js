@@ -86,6 +86,7 @@ test('the public tree switches from a starting class to T2 and follows its T3 pa
   expect(starters.map(card => card.querySelector('strong').textContent)).toEqual(['Воин', 'Плут', 'Маг', 'Жрец']);
   const priest = starters[3];
   expect(priest.querySelector('img').getAttribute('src')).toContain('/help-images/classes/t1/');
+  expect(decodeURIComponent(priest.querySelector('a').getAttribute('href'))).toBe('/help-images/classes/t1-cards/Жрец.webp');
   expect(priest.querySelector('.class-guide__stats').textContent).toContain('16 (+9 за уровень)');
   priest.open = true;
   act(() => priest.querySelector('button').click());
@@ -98,6 +99,7 @@ test('the public tree switches from a starting class to T2 and follows its T3 pa
 
   const light = [...container.querySelectorAll('.class-guide__card')]
     .find(card => card.querySelector('strong').textContent === 'Жрец Света');
+  expect(decodeURIComponent(light.querySelector('a').getAttribute('href'))).toBe('/help-images/classes/t2-cards/Жрец Света.webp');
   light.open = true;
   act(() => light.querySelector('button').click());
   expect(toggle('Т3').getAttribute('aria-pressed')).toBe('true');
