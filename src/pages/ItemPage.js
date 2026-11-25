@@ -249,7 +249,9 @@ const Item = () => {
           }).filter(Boolean);
         } else {
           const translatedKey = dict_translator[key] || key;
-          const translatedValue = dict_translator[value] ? dict_translator[value] : value;
+          const translatedValue = key === "lightning_resistance"
+            ? `+${value}`
+            : (dict_translator[value] || value);
           return (
             <div key={key} className="stat-item">
               <span className="stat-label fantasy-text-primary">

@@ -684,6 +684,9 @@ const Character = observer(() => {
                   Огонь: playerData.fire_deduction,
                   Лёд: playerData.ice_deduction,
                   Молния: playerData.electric_deduction,
+                  ...(playerData.lightning_resistance > 0 && {
+                    [dict_translator.lightning_resistance]: `+${playerData.lightning_resistance}`,
+                  }),
                   Тьма: playerData.dark_deduction,
                   Свет: playerData.light_deduction,
                   Жизнь: playerData.life_deduction,

@@ -36,6 +36,7 @@ export const dict_translator = {
   "slashing_deduction": "Вычет рубящего",
   "fire_deduction": "Вычет огненного",
   "electric_deduction": "Вычет молнией",
+  "lightning_resistance": "Бонус к спасброску от разряда молнии",
   "ice_deduction": "Вычет ледяного",
   "sound_deduction": "Вычет звукового",
   "wind_deduction": "Вычет воздушного",
