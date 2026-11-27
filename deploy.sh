@@ -84,10 +84,21 @@ ssh "${ssh_options[@]}" "$remote" \
   "test -f '$release_path/index.html' && ln -sfn '$release_path' '$deploy_path/current.next' && mv -Tf '$deploy_path/current.next' '$deploy_path/current'"
 
 health_url="${site_url}?release=${release_id}"
+curl_options=()
+if [[ -n "${VERIFY_IP:-}" ]]; then
+  verify_address=$VERIFY_IP
+  if [[ "$verify_address" == *:* ]]; then
+    verify_address="[$verify_address]"
+  fi
+  site_host=${site_url#https://}
+  site_host=${site_host%/}
+  curl_options=(--noproxy '*' --resolve "$site_host:443:$verify_address")
+fi
 echo "Checking $health_url..."
-if ! curl --fail --silent --show-error --retry 2 --retry-delay 2 \
+if ! curl --fail --silent --show-error --connect-timeout 10 --max-time 25 --retry 2 --retry-delay 2 \
+  "${curl_options[@]}" \
   -H "Cache-Control: no-cache" "$health_url" >/dev/null; then
-  if [[ "$target" == test ]] && curl --fail --silent --show-error \
+  if [[ "$target" == test && -z "${VERIFY_IP:-}" ]] && curl --fail --silent --show-error --connect-timeout 10 --max-time 15 \
     -H "Host: test.adaliagame.ru" "http://$ssh_host/" >/dev/null; then
     echo "Release is online over HTTP; public DNS/HTTPS is still updating."
   else

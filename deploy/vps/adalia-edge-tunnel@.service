@@ -1,0 +1,13 @@
+[Unit]
+Description=Adalia reverse SSH tunnels to the public VPS
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=%i
+ExecStart=/usr/bin/ssh -NT -F /etc/adalia/edge-ssh.conf adalia-edge
+Restart=always
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target

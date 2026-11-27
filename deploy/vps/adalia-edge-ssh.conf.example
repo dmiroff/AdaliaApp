@@ -1,0 +1,15 @@
+Host adalia-edge
+    HostName NEW_IPV4
+    User adalia-tunnel
+    IdentityFile /etc/adalia/edge-tunnel.key
+    UserKnownHostsFile /etc/adalia/edge-known-hosts
+    StrictHostKeyChecking yes
+    IdentitiesOnly yes
+    BatchMode yes
+    ForwardAgent no
+    ConnectTimeout 10
+    ServerAliveInterval 15
+    ServerAliveCountMax 3
+    ExitOnForwardFailure yes
+    RemoteForward 127.0.0.1:7001 127.0.0.1:7000
+    RemoteForward 127.0.0.1:7003 127.0.0.1:7002

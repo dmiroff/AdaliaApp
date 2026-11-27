@@ -84,6 +84,9 @@ After the test site has been accepted and production deployment has been
 enabled on the server, use `./deploy.sh production`. It requires typing
 `deploy` before anything is uploaded.
 
+The [VPS migration guide](deploy/vps/README.md) covers nginx, certificates,
+the reverse SSH tunnels and the checks to run before moving DNS.
+
 ## Черновой игровой чат
 
 Маршрут `https://test.adaliagame.ru/play-draft` показывает клиент существующего бота. Маршрут и пункт меню доступны только на точном тестовом домене и localhost/127.0.0.1. Основной домен использует прежнюю маршрутизацию.
