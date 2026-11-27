@@ -20,7 +20,7 @@ import {
 } from "../http/guildService";
 import GetDataById from "../http/GetData";
 import ItemFilters from './ItemFilters';
-import {emptyBrowse, itemFieldNames, itemSorts} from '../utils/itemBrowseFields';
+import {emptyBrowse, itemFieldNames} from '../utils/itemBrowseFields';
 import {browseLocalItems, itemFilterOptions} from '../utils/localItemBrowse';
 import { dict_translator } from "../utils/Helpers";
 import "./CastleStorage.css";
@@ -31,8 +31,6 @@ import {
 
 const inventoryFields = [...Object.keys(itemFieldNames), 'equipped'];
 const storageFields = [...Object.keys(itemFieldNames), 'added_by'];
-const legacyStorageFields = storageFields.filter(field => !['level', 'rarity', 'prefix', 'suffix'].includes(field));
-const legacyStorageSorts = itemSorts.filter(([field]) => field !== 'level' && field !== 'level_asc');
 const castleSearch = {keys:['name', 'description', 'nameAndDescription'], threshold:0.4,
   minMatchCharLength:2, ignoreLocation:true};
 
@@ -419,7 +417,6 @@ const CastleStorage = observer(() => {
     [playerInventory, equippedItemsSet]);
   const inventoryOptions = useMemo(() => itemFilterOptions(inventoryItems), [inventoryItems]);
   const storageOptions = useMemo(() => itemFilterOptions(storageItems), [storageItems]);
-  const storageHasDetails = !storageItems.length || storageItems.some(item => 'level' in item);
   const filteredInventory = useMemo(() => browseLocalItems(inventoryItems, inventoryBrowse, castleSearch), [inventoryItems, inventoryBrowse]);
   const filteredStorage = useMemo(() => browseLocalItems(storageItems, storageBrowse, castleSearch), [storageItems, storageBrowse]);
 
@@ -796,8 +793,7 @@ const CastleStorage = observer(() => {
                         )}
 
                         <ItemFilters initialValue={storageBrowse} label="Фильтры склада замка" options={storageOptions}
-                          fields={storageHasDetails ? storageFields : legacyStorageFields}
-                          sorts={storageHasDetails ? itemSorts : legacyStorageSorts}
+                          fields={storageFields}
                           onApply={setStorageBrowse} result={`Найдено: ${filteredStorage.length} из ${storageItems.length}`} />
                         {selectedStorageItems.size === 0 &&
                           <Button className="mb-3" variant="outline-primary" type="button"
