@@ -31,7 +31,6 @@ const Inventory = () => {
           <Col xs="auto" className="inventory-storage-tools">
             <details><summary className="fantasy-btn">Ещё</summary><div className="inventory-storage-menu">
               <Button className="fantasy-btn" onClick={() => togglePanel('wardrobe')}>Зал облачений</Button>
-              <Button className="fantasy-btn" onClick={() => togglePanel('home')}>Домашнее хранилище</Button>
             </div></details>
           </Col>
           <Col xs={12} sm={6} lg={4}>
