@@ -18,3 +18,26 @@ test('curse has no invented expiry, metadata is hidden and offset dates retain t
     expect(effectDuration(3601)).toBe('1 ч 1 сек');
     expect(effectRows({end_date:'2026-11-17T12:52:55Z'})[0][1]).toContain('15:52');
 });
+
+test.each([
+    ['piercing', 'к колющему урону'],
+    ['bludge', 'к дробящему урону'],
+    ['slashing', 'к рубящему урону'],
+    ['fire', 'к огню'],
+    ['ice', 'ко льду'],
+    ['electric', 'к молнии'],
+    ['sound', 'к звуку'],
+    ['power', 'к власти'],
+    ['death', 'к смерти'],
+    ['wind', 'к ветру'],
+    ['light', 'к свету'],
+    ['dark', 'ко тьме'],
+    ['life', 'к жизни'],
+    ['mind', 'к урону мысли'],
+    ['percing', 'к колющему урону'],
+    ['stone', 'к дробящему урону'],
+    ['lighting', 'к молнии'],
+    ['poison', 'к яду'],
+])('effect cards decline the %s deduction label', (type, phrase) => {
+    expect(effectRows({effects: {[type + '_deduction']: 7}})).toEqual([[`Вычет ${phrase}`, '7']]);
+});

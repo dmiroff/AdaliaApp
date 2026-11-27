@@ -669,9 +669,9 @@ const Character = observer(() => {
                 "🛡️",
                 {
                   "Класс защиты": playerData.current_defence,
-                  "От колющего": playerData.piercing_deduction,
-                  "От дробящего": playerData.bludge_deduction,
-                  "От рубящего": playerData.slashing_deduction,
+                  [dict_translator.piercing_deduction]: playerData.piercing_deduction,
+                  [dict_translator.bludge_deduction]: playerData.bludge_deduction,
+                  [dict_translator.slashing_deduction]: playerData.slashing_deduction,
                 },
                 "info"
               )}
@@ -681,18 +681,18 @@ const Character = observer(() => {
                 "🪄",
                 {
                   "Магическое сопротивление": playerData.magic_resist,
-                  Огонь: playerData.fire_deduction,
-                  Лёд: playerData.ice_deduction,
-                  Молния: playerData.electric_deduction,
+                  [dict_translator.fire_deduction]: playerData.fire_deduction,
+                  [dict_translator.ice_deduction]: playerData.ice_deduction,
+                  [dict_translator.electric_deduction]: playerData.electric_deduction,
                   ...(playerData.lightning_resistance > 0 && {
                     [dict_translator.lightning_resistance]: `+${playerData.lightning_resistance}`,
                   }),
-                  Тьма: playerData.dark_deduction,
-                  Свет: playerData.light_deduction,
-                  Жизнь: playerData.life_deduction,
-                  Звук: playerData.sound_deduction,
-                  Воздух: playerData.wind_deduction,
-                  Смерть: playerData.death_deduction,
+                  [dict_translator.dark_deduction]: playerData.dark_deduction,
+                  [dict_translator.light_deduction]: playerData.light_deduction,
+                  [dict_translator.life_deduction]: playerData.life_deduction,
+                  [dict_translator.sound_deduction]: playerData.sound_deduction,
+                  [dict_translator.wind_deduction]: playerData.wind_deduction,
+                  [dict_translator.death_deduction]: playerData.death_deduction,
                 },
                 "magic"
               )}
